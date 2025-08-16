@@ -4,7 +4,7 @@
 # Site settings
 title: TimeTracker
 description: Self-hosted time tracking for teams and freelancers
-url: "https://yourusername.github.io"
+url: "https://drytrix.github.io"
 baseurl: "/TimeTracker"
 
 # Build settings
@@ -52,16 +52,16 @@ plugins:
 # SEO settings
 author: TimeTracker Team
 email: your-email@example.com
-github_username: yourusername
+github_username: DRYTRIX
 github_repo: TimeTracker
 
 # Social media
 social:
   name: TimeTracker
   links:
-    - https://github.com/yourusername/TimeTracker
-    - https://github.com/yourusername/TimeTracker/issues
-    - https://github.com/yourusername/TimeTracker/discussions
+    - https://github.com/DRYTRIX/TimeTracker
+    - https://github.com/DRYTRIX/TimeTracker/issues
+    - https://github.com/DRYTRIX/TimeTracker/discussions
 
 # Defaults
 defaults:
