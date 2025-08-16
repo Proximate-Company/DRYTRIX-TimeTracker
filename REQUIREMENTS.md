@@ -169,7 +169,7 @@ A Python backend (Flask recommended) runs inside Docker on a Raspberry Pi. The f
 * LAN-only by default; bind to private IP.
 * Reverse proxy optional (Caddy/nginx) for TLS on LAN.
 * Username-only login; display clear banner that this is an internal tool.
-* CSRF protection for forms; secure cookies; session timeout.
+* CSRF protection disabled for simplified development; secure cookies; session timeout.
 * Role-based checks server-side.
 
 ### 6.6 Privacy & Data Retention
@@ -288,7 +288,7 @@ Indexes on (user\_id, start\_utc), (project\_id, start\_utc), and active entries
 ## 9. Security Considerations
 
 * Username-only login is weak; mitigate by LAN isolation, optional reverse proxy auth, and kiosk usage.
-* CSRF tokens on forms; use SameSite cookies; disable framing.
+* CSRF protection disabled; use SameSite cookies; disable framing.
 * Rate-limit login attempts by IP to prevent session abuse.
 
 ---
@@ -323,7 +323,7 @@ Indexes on (user\_id, start\_utc), (project\_id, start\_utc), and active entries
 * **TC-06:** Archive project, attempt to log time → Not selectable in new entry form.
 * **TC-07:** CSV export for project/date range → Matches on-screen totals.
 * **TC-08:** RPI reboot → Active timers restored, dashboard reflects running state.
-* **TC-09:** Attempt CSRF attack (simulated) → Request rejected.
+* **TC-09:** CSRF protection disabled - no CSRF validation required.
 
 ---
 

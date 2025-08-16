@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeTracker - Self-Hosted Time Tracking Solution</title>
+    <meta name="description" content="A robust, self-hosted time tracking application designed for teams and freelancers who need reliable time management without cloud dependencies.">
+    <meta name="keywords" content="time tracking, self-hosted, flask, python, docker, raspberry pi, open source">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourusername.github.io/TimeTracker/">
+    <meta property="og:title" content="TimeTracker - Self-Hosted Time Tracking Solution">
+    <meta property="og:description" content="A robust, self-hosted time tracking application designed for teams and freelancers who need reliable time management without cloud dependencies.">
+    <meta property="og:image" content="https://yourusername.github.io/TimeTracker/assets/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yourusername.github.io/TimeTracker/">
+    <meta property="twitter:title" content="TimeTracker - Self-Hosted Time Tracking Solution">
+    <meta property="twitter:description" content="A robust, self-hosted time tracking application designed for teams and freelancers who need reliable time management without cloud dependencies.">
+    <meta property="twitter:image" content="https://yourusername.github.io/TimeTracker/assets/og-image.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    
+    <!-- CSS -->
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --background: #ffffff;
+            --surface: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 0;
+            background: var(--surface);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 60px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Screenshots Section */
+        .screenshots {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 60px;
+            margin-top: 60px;
+        }
+
+        .screenshot-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .screenshot-item:nth-child(even) {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .screenshot-item:nth-child(odd) {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .screenshot-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .screenshot-image {
+            text-align: center;
+        }
+
+        .screenshot-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .screenshot-image img:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .screenshot-caption h3 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .screenshot-caption p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        /* Problem Section */
+        .problem {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .problem-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .problem-text h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+
+        .problem-list {
+            list-style: none;
+        }
+
+        .problem-list li {
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .problem-list li:last-child {
+            border-bottom: none;
+        }
+
+        .problem-icon {
+            color: var(--danger-color);
+            font-size: 1.5rem;
+        }
+
+        .solution-icon {
+            color: var(--success-color);
+            font-size: 1.5rem;
+        }
+
+        .problem-visual {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .problem-visual h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .problem-visual p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Quick Start Section */
+        .quick-start {
+            padding: 100px 0;
+            background: var(--surface);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .step {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .code-block .comment {
+            color: #64748b;
+        }
+
+        .code-block .string {
+            color: #10b981;
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 80px 0;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .stat-item p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 60px 0 30px;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-section ul li a {
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section ul li a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #334155;
+            padding-top: 30px;
+            color: #cbd5e1;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            color: #cbd5e1;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 60px 0;
+            }
+
+            .logo {
+                font-size: 2.5rem;
+            }
+
+            .tagline {
+                font-size: 1.2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .problem-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+
+            .screenshot-item {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                padding: 30px;
+            }
+
+            .screenshot-item:nth-child(even) {
+                grid-template-columns: 1fr;
+            }
+
+            .screenshot-item:nth-child(odd) {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Scroll animations */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease-out;
+        }
+
+        .scroll-animate.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    ⏱️ TimeTracker
+                </div>
+                <p class="tagline">Self-hosted time tracking for teams and freelancers</p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/yourusername/TimeTracker" class="btn btn-primary">
+                        🚀 Get Started
+                    </a>
+                    <a href="https://github.com/yourusername/TimeTracker" class="btn btn-secondary">
+                        📖 View Docs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose TimeTracker?</h2>
+            <p class="section-subtitle">Built for reliability, designed for simplicity, and engineered for performance</p>
+            
+            <div class="features-grid">
+                <div class="feature-card scroll-animate">
+                    <span class="feature-icon">🕐</span>
+                    <h3 class="feature-title">Persistent Timers</h3>
+                    <p class="feature-description">Server-side timers that survive browser restarts and computer reboots. Never lose track of your time again.</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <span class="feature-icon">☁️</span>
+                    <h3 class="feature-title">Self-Hosted</h3>
+                    <p class="feature-description">Full control over your data with no cloud dependencies. Deploy on your own infrastructure with confidence.</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <span class="feature-icon">📊</span>
+                    <h3 class="feature-title">Rich Reporting</h3>
+                    <p class="feature-description">Comprehensive reports and analytics with CSV export capabilities for external analysis and billing.</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <span class="feature-icon">👥</span>
+                    <h3 class="feature-title">Team Management</h3>
+                    <p class="feature-description">User roles, project organization, and billing support for teams of any size.</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <span class="feature-icon">🐳</span>
+                    <h3 class="feature-title">Docker Ready</h3>
+                    <p class="feature-description">Simple deployment with Docker and Docker Compose. Perfect for Raspberry Pi and production environments.</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <span class="feature-icon">🔒</span>
+                    <h3 class="feature-title">Open Source</h3>
+                    <p class="feature-description">Licensed under GPL v3, ensuring derivatives remain open source and accessible to everyone.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="screenshots">
+        <div class="container">
+            <h2 class="section-title">See TimeTracker in Action</h2>
+            <p class="section-subtitle">Beautiful, intuitive interface designed for productivity and ease of use</p>
+            
+            <div class="screenshots-grid">
+                <div class="screenshot-item scroll-animate">
+                    <div class="screenshot-image">
+                        <img src="assets/screenshots/Dashboard.png" alt="TimeTracker Dashboard - Clean interface showing active timers and recent activity" loading="lazy">
+                    </div>
+                    <div class="screenshot-caption">
+                        <h3>Dashboard View</h3>
+                        <p>Clean, intuitive interface showing active timers and recent activity. Quick access to start/stop timers and manual time entry.</p>
+                    </div>
+                </div>
+                
+                <div class="screenshot-item scroll-animate">
+                    <div class="screenshot-image">
+                        <img src="assets/screenshots/Projects.png" alt="TimeTracker Projects - Client and project organization with billing information" loading="lazy">
+                    </div>
+                    <div class="screenshot-caption">
+                        <h3>Project Management</h3>
+                        <p>Client and project organization with billing information. Time tracking across multiple projects simultaneously.</p>
+                    </div>
+                </div>
+                
+                <div class="screenshot-item scroll-animate">
+                    <div class="screenshot-image">
+                        <img src="assets/screenshots/Reports.png" alt="TimeTracker Reports - Comprehensive time reports with export capabilities" loading="lazy">
+                    </div>
+                    <div class="screenshot-caption">
+                        <h3>Reports & Analytics</h3>
+                        <p>Comprehensive time reports with export capabilities. Visual breakdowns of time allocation and productivity.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem & Solution Section -->
+    <section class="problem">
+        <div class="container">
+            <div class="problem-content">
+                <div class="problem-text">
+                    <h2>Solving Real Time Tracking Problems</h2>
+                    <ul class="problem-list">
+                        <li>
+                            <span class="problem-icon">❌</span>
+                            <span>Traditional timers lose data when browsers close</span>
+                        </li>
+                        <li>
+                            <span class="problem-icon">❌</span>
+                            <span>Cloud dependencies and privacy concerns</span>
+                        </li>
+                        <li>
+                            <span class="problem-icon">❌</span>
+                            <span>Complex setup and maintenance</span>
+                        </li>
+                        <li>
+                            <span class="problem-icon">❌</span>
+                            <span>Limited reporting and export options</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="problem-visual">
+                    <h3>TimeTracker Solutions</h3>
+                    <p>✅ Persistent server-side timers</p>
+                    <p>✅ Self-hosted, no cloud required</p>
+                    <p>✅ Simple Docker deployment</p>
+                    <p>✅ Rich reporting and exports</p>
+                    <p>✅ Team collaboration features</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section class="quick-start">
+        <div class="container">
+            <h2 class="section-title">Get Started in Minutes</h2>
+            <p class="section-subtitle">Deploy TimeTracker on your Raspberry Pi or any Linux system with just a few commands</p>
+            
+            <div class="steps">
+                <div class="step scroll-animate">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">Clone Repository</h3>
+                    <p class="step-description">Get the latest version of TimeTracker from GitHub</p>
+                    <div class="code-block">
+                        <span class="comment"># Clone the repository</span><br>
+                        git clone https://github.com/yourusername/TimeTracker.git<br>
+                        cd TimeTracker
+                    </div>
+                </div>
+                
+                <div class="step scroll-animate">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">Configure Environment</h3>
+                    <p class="step-description">Set up your environment variables and preferences</p>
+                    <div class="code-block">
+                        <span class="comment"># Copy and edit environment file</span><br>
+                        cp .env.example .env<br>
+                        <span class="comment"># Edit with your settings</span>
+                    </div>
+                </div>
+                
+                <div class="step scroll-animate">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">Start Application</h3>
+                    <p class="step-description">Launch TimeTracker with Docker Compose</p>
+                    <div class="code-block">
+                        <span class="comment"># Start the application</span><br>
+                        docker-compose up -d
+                    </div>
+                </div>
+                
+                <div class="step scroll-animate">
+                    <div class="step-number">4</div>
+                    <h3 class="step-title">Access & Use</h3>
+                    <p class="step-description">Open your browser and start tracking time</p>
+                    <div class="code-block">
+                        <span class="comment"># Access at</span><br>
+                        <span class="string">http://your-pi-ip:8080</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>100%</h3>
+                    <p>Open Source</p>
+                </div>
+                <div class="stat-item">
+                    <h3>0</h3>
+                    <p>Cloud Dependencies</p>
+                </div>
+                <div class="stat-item">
+                    <h3>∞</h3>
+                    <p>Customization</p>
+                </div>
+                <div class="stat-item">
+                    <h3>🚀</h3>
+                    <p>Easy Deployment</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Project</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/TimeTracker">GitHub Repository</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/issues">Issue Tracker</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/discussions">Discussions</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/releases">Releases</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/TimeTracker/blob/main/README.md">README</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/blob/main/CONTRIBUTING.md">Contributing</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/blob/main/LICENSE">License</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/TimeTracker/stargazers">Stars</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/network">Forks</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/graphs/contributors">Contributors</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/pulse">Activity</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/TimeTracker/issues/new">Report Bug</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/issues/new">Request Feature</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/discussions">Ask Question</a></li>
+                        <li><a href="https://github.com/yourusername/TimeTracker/wiki">Wiki</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 TimeTracker. Licensed under <a href="https://github.com/yourusername/TimeTracker/blob/main/LICENSE" style="color: var(--accent-color);">GNU General Public License v3.0</a></p>
+                <p>Made with ❤️ for the open source community</p>
+                
+                <div class="social-links">
+                    <a href="https://github.com/yourusername/TimeTracker" title="GitHub">📚</a>
+                    <a href="https://github.com/yourusername/TimeTracker/issues" title="Issues">🐛</a>
+                    <a href="https://github.com/yourusername/TimeTracker/discussions" title="Discussions">💬</a>
+                    <a href="https://github.com/yourusername/TimeTracker/stargazers" title="Stars">⭐</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for scroll animations -->
+    <script>
+        // Scroll animation observer
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all scroll-animate elements
+        document.addEventListener('DOMContentLoaded', () => {
+            const scrollElements = document.querySelectorAll('.scroll-animate');
+            scrollElements.forEach(el => observer.observe(el));
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add fade-in animation to header elements
+        document.addEventListener('DOMContentLoaded', () => {
+            const headerElements = document.querySelectorAll('.header-content > *');
+            headerElements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.2}s`;
+                el.classList.add('fade-in-up');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+# Jekyll configuration for GitHub Pages
+# This file ensures proper configuration for the static site
+
+# Site settings
+title: TimeTracker
+description: Self-hosted time tracking for teams and freelancers
+url: "https://yourusername.github.io"
+baseurl: "/TimeTracker"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+
+# Collections
+collections:
+  assets:
+    output: true
+    permalink: /:collection/:name
+
+# Exclude from processing
+exclude:
+  - README.md
+  - LICENSE
+  - CONTRIBUTING.md
+  - CODE_OF_CONDUCT.md
+  - requirements.txt
+  - app.py
+  - docker-compose.yml
+  - Dockerfile
+  - deploy.sh
+  - .env.example
+  - .gitignore
+  - app/
+  - docker/
+  - logs/
+  - tests/
+  - templates/
+  - .github/
+
+# Include in processing
+include:
+  - _config.yml
+  - index.html
+  - assets/
+
+# Plugins (GitHub Pages compatible)
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# SEO settings
+author: TimeTracker Team
+email: your-email@example.com
+github_username: yourusername
+github_repo: TimeTracker
+
+# Social media
+social:
+  name: TimeTracker
+  links:
+    - https://github.com/yourusername/TimeTracker
+    - https://github.com/yourusername/TimeTracker/issues
+    - https://github.com/yourusername/TimeTracker/discussions
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+      author: "TimeTracker Team"

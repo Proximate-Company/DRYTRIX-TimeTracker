@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Time Entry - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-edit me-2 text-primary"></i>
+                    <h5 class="mb-0">Edit Time Entry</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-control-plaintext">
+                                    <strong>Project:</strong> {{ timer.project.name }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-control-plaintext">
+                                    <strong>Start:</strong> {{ timer.start_utc.strftime('%Y-%m-%d %H:%M') }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-control-plaintext">
+                                    <strong>End:</strong>
+                                    {% if timer.end_utc %}
+                                        {{ timer.end_utc.strftime('%Y-%m-%d %H:%M') }}
+                                    {% else %}
+                                        <span class="text-warning">Running</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-primary">Duration: {{ timer.duration_formatted }}</span>
+                            {% if timer.source == 'manual' %}
+                                <span class="badge bg-secondary">Manual</span>
+                            {% else %}
+                                <span class="badge bg-info">Automatic</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('timer.edit_timer', timer_id=timer.id) }}">
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-semibold">
+                                <i class="fas fa-sticky-note me-1"></i>Notes
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Describe what you worked on">{{ timer.notes or '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-4">
+                                    <label for="tags" class="form-label fw-semibold">
+                                        <i class="fas fa-tags me-1"></i>Tags
+                                    </label>
+                                    <input type="text" class="form-control" id="tags" name="tags" placeholder="tag1, tag2" value="{{ timer.tags or '' }}">
+                                    <div class="form-text">Separate tags with commas</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-center">
+                                <div class="form-check form-switch mt-4">
+                                    <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if timer.billable %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="billable">
+                                        <i class="fas fa-dollar-sign me-1"></i>Billable
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

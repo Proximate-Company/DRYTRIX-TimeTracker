@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Log Time - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-plus me-2 text-primary"></i>
+                    <h5 class="mb-0">Log Time Manually</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('timer.manual_entry') }}">
+                        <div class="mb-4">
+                            <label for="project_id" class="form-label fw-semibold">
+                                <i class="fas fa-project-diagram me-1"></i>Project *
+                            </label>
+                            <select class="form-select" id="project_id" name="project_id" required>
+                                <option value="">Select a project...</option>
+                                {% set selected_project_id = (request.form.get('project_id') or '')|int %}
+                                {% for project in projects %}
+                                    <option value="{{ project.id }}" {% if project.id == selected_project_id %}selected{% endif %}>{{ project.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-play me-1"></i>Start *
+                                    </label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="date" class="form-control" name="start_date" id="start_date" required value="{{ request.form.get('start_date','') }}">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="time" class="form-control" name="start_time" id="start_time" required value="{{ request.form.get('start_time','') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-stop me-1"></i>End *
+                                    </label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="date" class="form-control" name="end_date" id="end_date" required value="{{ request.form.get('end_date','') }}">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="time" class="form-control" name="end_time" id="end_time" required value="{{ request.form.get('end_time','') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-semibold">
+                                <i class="fas fa-sticky-note me-1"></i>Notes
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="What did you work on?">{{ request.form.get('notes','') }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-4">
+                                    <label for="tags" class="form-label fw-semibold">
+                                        <i class="fas fa-tags me-1"></i>Tags
+                                    </label>
+                                    <input type="text" class="form-control" id="tags" name="tags" placeholder="tag1, tag2, tag3" value="{{ request.form.get('tags','') }}">
+                                    <div class="form-text">Separate tags with commas</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-center">
+                                <div class="form-check form-switch mt-4">
+                                    <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if request.form.get('billable') %}checked{% else %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="billable">
+                                        <i class="fas fa-dollar-sign me-1"></i>Billable
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Entry
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

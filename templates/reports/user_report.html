@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}User Report - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('reports.reports') }}">Reports</a></li>
+                            <li class="breadcrumb-item active">User Report</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-chart-pie text-primary"></i> User Report
+                    </h1>
+                </div>
+                <div>
+                    <a href="{{ url_for('reports.export_csv') }}?{{ request.query_string.decode() }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Export CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i> Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ request.args.get('start_date', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ request.args.get('end_date', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="user" class="form-label">User</label>
+                            <select class="form-select" id="user" name="user_id">
+                                <option value="">All Users</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if request.args.get('user_id')|int == user.id %}selected{% endif %}>
+                                    {{ user.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="project" class="form-label">Project</label>
+                            <select class="form-select" id="project" name="project_id">
+                                <option value="">All Projects</option>
+                                {% for project in projects %}
+                                <option value="{{ project.id }}" {% if request.args.get('project_id')|int == project.id %}selected{% endif %}>
+                                    {{ project.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Apply Filters
+                            </button>
+                            <a href="{{ url_for('reports.user_report') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                    <h4 class="text-primary">{{ "%.1f"|format(summary.total_hours) }}h</h4>
+                    <p class="text-muted mb-0">Total Hours</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                    <h4 class="text-success">{{ "%.1f"|format(summary.billable_hours) }}h</h4>
+                    <p class="text-muted mb-0">Billable Hours</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x text-info mb-2"></i>
+                    <h4 class="text-info">{{ summary.users_count }}</h4>
+                    <p class="text-muted mb-0">Users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-project-diagram fa-2x text-warning mb-2"></i>
+                    <h4 class="text-warning">{{ summary.projects_count }}</h4>
+                    <p class="text-muted mb-0">Projects</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Breakdown -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> User Breakdown ({{ user_totals|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user_totals %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Total Hours</th>
+                                    <th>Billable Hours</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for username, totals in user_totals.items() %}
+                                <tr>
+                                    <td><strong>{{ username }}</strong></td>
+                                    <td>{{ "%.1f"|format(totals.hours) }}h</td>
+                                    <td>
+                                        {% if totals.billable_hours > 0 %}
+                                        <span class="text-success">{{ "%.1f"|format(totals.billable_hours) }}h</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Data Found</h4>
+                        <p class="text-muted">Try adjusting your filters.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Entries -->
+    {% if entries %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Time Entries ({{ entries|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Project</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Duration</th>
+                                    <th>Notes</th>
+                                    <th>Tags</th>
+                                    <th>Billable</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in entries %}
+                                <tr>
+                                    <td>{{ entry.user.username }}</td>
+                                    <td>
+                                        <a href="{{ url_for('projects.view_project', project_id=entry.project.id) }}">
+                                            {{ entry.project.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ entry.start_utc.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {{ entry.start_utc.strftime('%H:%M') }} - 
+                                        {% if entry.end_utc %}
+                                        {{ entry.end_utc.strftime('%H:%M') }}
+                                        {% else %}
+                                        <span class="text-warning">Running</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ entry.duration_formatted }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if entry.notes %}
+                                        <span title="{{ entry.notes }}">{{ entry.notes[:50] }}{% if entry.notes|length > 50 %}...{% endif %}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if entry.tag_list %}
+                                        {% for tag in entry.tag_list %}
+                                        <span class="badge bg-light text-dark">{{ tag }}</span>
+                                        {% endfor %}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if entry.billable %}
+                                        <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+

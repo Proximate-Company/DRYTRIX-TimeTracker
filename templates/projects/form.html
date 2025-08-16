@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}{% if project %}Edit{% else %}New{% endif %} Project - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('projects.list_projects') }}">Projects</a></li>
+                            <li class="breadcrumb-item active">{% if project %}Edit{% else %}New{% endif %}</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-project-diagram text-primary"></i> 
+                        {% if project %}Edit Project{% else %}New Project{% endif %}
+                    </h1>
+                </div>
+                <div>
+                    <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Projects
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit"></i> Project Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    {{ form.name.label(class="form-label") }}
+                                    {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.name.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.client.label(class="form-label") }}
+                                    {{ form.client(class="form-control" + (" is-invalid" if form.client.errors else "")) }}
+                                    {% if form.client.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.client.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows="3" + (" is-invalid" if form.description.errors else "")) }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.billable(class="form-check-input") }}
+                                        {{ form.billable.label(class="form-check-label") }}
+                                    </div>
+                                    {% if form.billable.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.billable.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.status.label(class="form-label") }}
+                                    {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                                    {% if form.status.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.status.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.hourly_rate.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">{{ currency }}</span>
+                                        {{ form.hourly_rate(class="form-control" + (" is-invalid" if form.hourly_rate.errors else "")) }}
+                                    </div>
+                                    {% if form.hourly_rate.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.hourly_rate.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">Leave empty for non-billable projects</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.billing_ref.label(class="form-label") }}
+                                    {{ form.billing_ref(class="form-control" + (" is-invalid" if form.billing_ref.errors else "")) }}
+                                    {% if form.billing_ref.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.billing_ref.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">Optional billing reference</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if project %}Update Project{% else %}Create Project{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Help
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>Project Name</h6>
+                    <p class="text-muted small">Choose a descriptive name that clearly identifies the project.</p>
+                    
+                    <h6>Client</h6>
+                    <p class="text-muted small">Optional client name for organization. You can group projects by client.</p>
+                    
+                    <h6>Description</h6>
+                    <p class="text-muted small">Provide details about the project scope, objectives, or any relevant information.</p>
+                    
+                    <h6>Billable</h6>
+                    <p class="text-muted small">Check this if time spent on this project should be tracked for billing purposes.</p>
+                    
+                    <h6>Hourly Rate</h6>
+                    <p class="text-muted small">Set the hourly rate for billable time. Leave empty for non-billable projects.</p>
+                    
+                    <h6>Billing Reference</h6>
+                    <p class="text-muted small">Optional reference number or code for billing systems.</p>
+                    
+                    <h6>Status</h6>
+                    <p class="text-muted small">Active projects can have time tracked. Archived projects are hidden from timers but retain data.</p>
+                </div>
+            </div>
+
+            {% if project %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Current Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="h5 text-primary">{{ "%.1f"|format(project.total_hours) }}</div>
+                            <small class="text-muted">Total Hours</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="h5 text-success">{{ "%.1f"|format(project.total_billable_hours) }}</div>
+                            <small class="text-muted">Billable Hours</small>
+                        </div>
+                        {% if project.billable and project.hourly_rate %}
+                        <div class="col-12">
+                            <div class="h5 text-success">{{ currency }} {{ "%.2f"|format(project.estimated_cost) }}</div>
+                            <small class="text-muted">Estimated Cost</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show/hide hourly rate field based on billable checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const billableCheckbox = document.getElementById('billable');
+    const hourlyRateField = document.getElementById('hourly_rate').closest('.mb-3');
+    
+    function toggleHourlyRate() {
+        if (billableCheckbox.checked) {
+            hourlyRateField.style.display = 'block';
+        } else {
+            hourlyRateField.style.display = 'none';
+            document.getElementById('hourly_rate').value = '';
+        }
+    }
+    
+    billableCheckbox.addEventListener('change', toggleHourlyRate);
+    toggleHourlyRate(); // Initial state
+});
+</script>
+{% endblock %}

@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ app_name }}{% endblock %}
+
+{% block content %}
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+<!-- Welcome Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body py-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-2">
+                            <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="me-2" width="24" height="24">
+                            <h2 class="mb-0">Welcome back, {{ current_user.username }}!</h2>
+                        </div>
+                        <p class="text-muted mb-0">Track your productivity and manage your time effectively with <strong>DryTrix</strong> TimeTracker</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="d-flex justify-content-center justify-content-md-end">
+                            <div class="text-center">
+                                <div class="h2 text-primary mb-1">{{ today_hours|round(1) }}</div>
+                                <small class="text-muted">Hours Today</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timer Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2 text-primary"></i>Timer Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        {% if active_timer %}
+                        <div class="d-flex align-items-center">
+                            <div class="me-4">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-play text-success fa-2x"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 text-success">Timer Running</h5>
+                                <p class="mb-2 text-muted">
+                                    <i class="fas fa-project-diagram me-1"></i>{{ active_timer.project.name }}
+                                </p>
+                                <div class="timer-display" id="timer-display">
+                                    {{ active_timer.duration_formatted }}
+                                </div>
+                                <small class="text-muted">
+                                    Started at {{ active_timer.start_utc.strftime('%H:%M') }}
+                                </small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="d-flex align-items-center">
+                            <div class="me-4">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-stop text-muted fa-2x"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 text-muted">No Active Timer</h5>
+                                <p class="mb-0 text-muted">Ready to start tracking your time?</p>
+                                <div class="mt-2">
+                                    <span class="badge bg-light text-dark">Idle</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 text-center text-md-end">
+                        {% if active_timer %}
+                        <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="fas fa-stop me-2"></i>Stop Timer
+                            </button>
+                        </form>
+                        {% else %}
+                        <button type="button" class="btn btn-success px-4" data-bs-toggle="modal" data-bs-target="#startTimerModal">
+                            <i class="fas fa-play me-2"></i>Start Timer
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-calendar-day text-primary fa-2x"></i>
+                </div>
+                <h3 class="h2 text-primary mb-2">{{ "%.1f"|format(today_hours) }}</h3>
+                <p class="mb-2 fw-semibold">Hours Today</p>
+                <small class="text-muted">
+                    {% if today_hours > 0 %}Active day{% else %}No activity yet{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-calendar-week text-success fa-2x"></i>
+                </div>
+                <h3 class="h2 text-success mb-2">{{ "%.1f"|format(week_hours) }}</h3>
+                <p class="mb-2 fw-semibold">Hours This Week</p>
+                <small class="text-muted">
+                    {% if week_hours > 0 %}Good progress{% else %}Start tracking{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-calendar-alt text-info fa-2x"></i>
+                </div>
+                <h3 class="h2 text-info mb-2">{{ "%.1f"|format(month_hours) }}</h3>
+                <p class="mb-2 fw-semibold">Hours This Month</p>
+                <small class="text-muted">
+                    {% if month_hours > 0 %}Consistent work{% else %}New month{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3 col-sm-6">
+                        <a href="{{ url_for('timer.manual_entry') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-plus text-primary fa-lg"></i>
+                                </div>
+                                <h6 class="fw-semibold mb-1">Log Time</h6>
+                                <small class="text-muted">Manual entry</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <a href="{{ url_for('projects.list_projects') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-project-diagram text-secondary fa-lg"></i>
+                                </div>
+                                <h6 class="fw-semibold mb-1">Projects</h6>
+                                <small class="text-muted">Manage projects</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <a href="{{ url_for('reports.reports') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-chart-bar text-info fa-lg"></i>
+                                </div>
+                                <h6 class="fw-semibold mb-1">Reports</h6>
+                                <small class="text-muted">View analytics</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <a href="{{ url_for('main.search') }}" class="card h-100 text-decoration-none">
+                            <div class="card-body text-center py-4">
+                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-search text-warning fa-lg"></i>
+                                </div>
+                                <h6 class="fw-semibold mb-1">Search</h6>
+                                <small class="text-muted">Find entries</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Entries -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2 text-primary"></i>Recent Entries
+                </h5>
+                <a href="{{ url_for('reports.reports') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-external-link-alt me-1"></i>View All
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_entries %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Project</th>
+                                <th>Duration</th>
+                                <th>Date</th>
+                                <th>Notes</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in recent_entries %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                <i class="fas fa-project-diagram text-primary"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block">{{ entry.project.name }}</strong>
+                                            <small class="text-muted">{{ entry.project.client }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ entry.duration_formatted }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-semibold">{{ entry.start_utc.strftime('%b %d') }}</span>
+                                        <small class="text-muted">{{ entry.start_utc.strftime('%H:%M') }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if entry.notes %}
+                                    <div class="text-truncate" style="max-width: 200px;" title="{{ entry.notes }}">
+                                        {{ entry.notes[:50] }}{% if entry.notes|length > 50 %}...{% endif %}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted fst-italic">No notes</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
+                                           class="btn btn-sm btn-outline-secondary" title="Edit entry">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if current_user.is_admin or entry.user_id == current_user.id %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger" title="Delete entry" 
+                                                onclick="showDeleteEntryModal('{{ entry.id }}', '{{ entry.project.name }}', '{{ entry.duration_formatted }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-clock fa-3x text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">No recent entries</h5>
+                    <p class="text-muted mb-4">Start tracking your time to see entries here</p>
+                    <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Log Your First Entry
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Start Timer Modal -->
+<div class="modal fade" id="startTimerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-play me-2 text-success"></i>Start Timer
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('timer.start_timer') }}">
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label for="project_id" class="form-label fw-semibold">
+                            <i class="fas fa-project-diagram me-1"></i>Select Project
+                        </label>
+                        <select class="form-select form-select-lg" id="project_id" name="project_id" required>
+                            <option value="">Choose a project...</option>
+                            {% for project in active_projects %}
+                            <option value="{{ project.id }}">
+                                {{ project.name }} ({{ project.client }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="timer_notes" class="form-label fw-semibold">
+                            <i class="fas fa-sticky-note me-1"></i>Notes (Optional)
+                        </label>
+                        <textarea class="form-control" id="timer_notes" name="notes" rows="3" 
+                                  placeholder="What are you working on?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-play me-2"></i>Start Timer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Time Entry Modal -->
+<div class="modal fade" id="deleteEntryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2 text-danger"></i>Delete Time Entry
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete the time entry for <strong id="deleteEntryProjectName"></strong>?</p>
+                <p class="text-muted mb-0">Duration: <strong id="deleteEntryDuration"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form method="POST" id="deleteEntryForm" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Entry
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let timerInterval;
+    
+    {% if active_timer %}
+    // Start timer update
+    function updateTimer() {
+        fetch('/api/timer/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.active && data.timer) {
+                    const display = document.getElementById('timer-display');
+                    if (display) {
+                        // Prefer server-provided current duration; fallback to computing from start_time
+                        let totalSeconds = typeof data.timer.current_duration === 'number'
+                            ? data.timer.current_duration
+                            : Math.floor((new Date() - new Date(data.timer.start_time)) / 1000);
+                        if (totalSeconds < 0 || Number.isNaN(totalSeconds)) totalSeconds = 0;
+                        const hours = Math.floor(totalSeconds / 3600);
+                        const minutes = Math.floor((totalSeconds % 3600) / 60);
+                        const seconds = totalSeconds % 60;
+                        display.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                } else {
+                    // Timer stopped, reload page
+                    clearInterval(timerInterval);
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error updating timer:', error);
+            });
+    }
+    
+    // Update timer immediately and then every second
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+    });
+    {% endif %}
+    
+    // Handle start timer form submission
+    document.querySelector('#startTimerModal form').addEventListener('submit', function(e) {
+        const projectId = document.getElementById('project_id').value;
+        if (!projectId) {
+            e.preventDefault();
+            showToast('Please select a project', 'warning');
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Starting...';
+        submitBtn.disabled = true;
+    });
+    
+    // Add hover effects to quick action buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        const quickActionBtns = document.querySelectorAll('.btn-outline-primary, .btn-outline-secondary, .btn-outline-info, .btn-outline-warning');
+        quickActionBtns.forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px) scale(1.02)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    });
+    
+    // Function to show delete time entry modal
+    function showDeleteEntryModal(entryId, projectName, duration) {
+        document.getElementById('deleteEntryProjectName').textContent = projectName;
+        document.getElementById('deleteEntryDuration').textContent = duration;
+        document.getElementById('deleteEntryForm').action = "{{ url_for('timer.delete_timer', timer_id=0) }}".replace('0', entryId);
+        new bootstrap.Modal(document.getElementById('deleteEntryModal')).show();
+    }
+    
+    // Add loading state to delete entry form
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteForm = document.getElementById('deleteEntryForm');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
+                submitBtn.disabled = true;
+            });
+        }
+    });
+</script>
+{% endblock %}

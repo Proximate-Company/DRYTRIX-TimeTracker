@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+	<div class="col-md-6">
+		<div class="card">
+			<div class="card-header">
+				<i class="fas fa-user-cog me-2"></i>Edit Profile
+			</div>
+			<div class="card-body">
+				<form method="POST">
+					<div class="mb-3">
+						<label class="form-label">Username</label>
+						<input type="text" class="form-control" value="{{ current_user.username }}" disabled>
+						<div class="form-text">Usernames cannot be changed.</div>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Role</label>
+						<input type="text" class="form-control" value="{{ current_user.role|capitalize }}" disabled>
+					</div>
+
+					<button type="submit" class="btn btn-primary">
+						<i class="fas fa-save me-1"></i>Save Changes
+					</button>
+					<a href="{{ url_for('auth.profile') }}" class="btn btn-outline-primary ms-2">Cancel</a>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+

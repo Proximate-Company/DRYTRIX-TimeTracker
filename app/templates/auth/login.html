@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Login - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-3" width="64" height="64">
+                    <h2 class="card-title mb-2">Welcome to TimeTracker</h2>
+                    <p class="text-muted mb-0">Powered by <strong>DryTrix</strong></p>
+                </div>
+                
+                <p class="text-muted mb-4">
+                    Enter your username to start tracking time
+                </p>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   name="username" 
+                                   placeholder="Enter your username"
+                                   required 
+                                   autofocus>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-sign-in-alt me-2"></i>Continue
+                    </button>
+                </form>
+                
+                <hr class="my-4">
+                
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Internal Tool:</strong> This is a private time tracking application for internal use only.
+                </div>
+                
+                {% if settings and settings.allow_self_register %}
+                <p class="text-muted small">
+                    <i class="fas fa-user-plus me-1"></i>
+                    New users will be created automatically
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                Version {{ app_version }} | 
+                <a href="{{ url_for('main.about') }}" class="text-decoration-none">About</a> | 
+                <a href="{{ url_for('main.help') }}" class="text-decoration-none">Help</a>
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-focus on username field
+    document.getElementById('username').focus();
+    
+    // Handle form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        if (!username) {
+            e.preventDefault();
+            alert('Please enter a username');
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing in...';
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %}

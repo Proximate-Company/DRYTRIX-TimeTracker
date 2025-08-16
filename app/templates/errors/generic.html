@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}{{ error.code }} {{ error.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> {{ error.code }} {{ error.name }}
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ error.name }}</h5>
+                    <p class="card-text">
+                        {% if error.description %}
+                            {{ error.description }}
+                        {% else %}
+                            An error occurred while processing your request.
+                        {% endif %}
+                    </p>
+                    <div class="mt-4">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-home"></i> Go to Dashboard
+                        </a>
+                        <button onclick="history.back()" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Go Back
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

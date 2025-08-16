@@ -1,0 +1,83 @@
+from datetime import datetime
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
+from app import db, login_manager
+
+class User(UserMixin, db.Model):
+    """User model for username-based authentication"""
+    
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    role = db.Column(db.String(20), default='user', nullable=False)  # 'user' or 'admin'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    last_login = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    
+    # Relationships
+    time_entries = db.relationship('TimeEntry', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def __init__(self, username, role='user'):
+        self.username = username.lower().strip()
+        self.role = role
+    
+    def __repr__(self):
+        return f'<User {self.username}>'
+    
+    @property
+    def is_admin(self):
+        """Check if user is an admin"""
+        return self.role == 'admin'
+    
+    @property
+    def active_timer(self):
+        """Get the user's currently active timer"""
+        from .time_entry import TimeEntry
+        return TimeEntry.query.filter_by(
+            user_id=self.id,
+            end_utc=None
+        ).first()
+    
+    @property
+    def total_hours(self):
+        """Calculate total hours worked by this user"""
+        from .time_entry import TimeEntry
+        total_seconds = db.session.query(
+            db.func.sum(TimeEntry.duration_seconds)
+        ).filter(
+            TimeEntry.user_id == self.id,
+            TimeEntry.end_utc.isnot(None)
+        ).scalar() or 0
+        return round(total_seconds / 3600, 2)
+    
+    def get_recent_entries(self, limit=10):
+        """Get recent time entries for this user"""
+        from .time_entry import TimeEntry
+        return self.time_entries.filter(
+            TimeEntry.end_utc.isnot(None)
+        ).order_by(
+            TimeEntry.start_utc.desc()
+        ).limit(limit).all()
+    
+    def update_last_login(self):
+        """Update the last login timestamp"""
+        self.last_login = datetime.utcnow()
+        db.session.commit()
+    
+    def to_dict(self):
+        """Convert user to dictionary for API responses"""
+        return {
+            'id': self.id,
+            'username': self.username,
+            'role': self.role,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'is_active': self.is_active,
+            'total_hours': self.total_hours
+        }
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Load user for Flask-Login"""
+    return User.query.get(int(user_id))

@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}About - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-5">
+                <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-4" width="80" height="80">
+                <h1 class="h2 mb-3">About TimeTracker</h1>
+                <p class="lead text-muted">
+                    A simple, efficient time tracking solution for teams and individuals.
+                </p>
+                <p class="text-muted">
+                    <strong>Developed by DryTrix</strong>
+                </p>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> What is {{ app_name }}?
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        {{ app_name }} is a web-based time tracking application designed for internal use within organizations. 
+                        It provides a simple and intuitive interface for tracking time spent on various projects and tasks.
+                    </p>
+                    <p>
+                        Built with modern web technologies, it offers real-time timer functionality, comprehensive reporting, 
+                        and user management features while maintaining simplicity and ease of use.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-star"></i> Key Features
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Real-time timer tracking
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Project and client management
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Comprehensive reporting
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    User role management
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Billable time tracking
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Data export capabilities
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs"></i> Technology
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-code text-primary me-2"></i>
+                                    Python 3.11+
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-code text-primary me-2"></i>
+                                    Flask web framework
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-code text-primary me-2"></i>
+                                    SQLAlchemy ORM
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-code text-primary me-2"></i>
+                                    Bootstrap 5 UI
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-code text-primary me-2"></i>
+                                    WebSocket support
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-code text-primary me-2"></i>
+                                    Docker deployment
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building"></i> About DryTrix
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <p>
+                                <strong>DryTrix</strong> is a software development company specializing in creating efficient, 
+                                user-friendly business applications. Our focus is on delivering solutions that streamline 
+                                workflows and improve productivity.
+                            </p>
+                            <p>
+                                TimeTracker represents our commitment to building software that is both powerful and 
+                                accessible, designed with the end-user in mind. We believe in creating tools that 
+                                teams actually want to use.
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" width="64" height="64">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt"></i> Security & Privacy
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        {{ app_name }} is designed for internal use and prioritizes data security and privacy:
+                    </p>
+                    <ul>
+                        <li>Username-only authentication for simplicity</li>
+                        <li>Role-based access control</li>
+                        <li>Secure session management</li>
+                        <li>Data stored locally on your infrastructure</li>
+                        <li>No external data sharing or tracking</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle"></i> Getting Help
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        Need help using {{ app_name }}? Here are some resources:
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Documentation</h6>
+                            <p class="text-muted small">
+                                Check the help section for detailed instructions on using all features.
+                            </p>
+                            <a href="{{ url_for('main.help') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-book"></i> View Help
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>System Information</h6>
+                            <p class="text-muted small">
+                                View system status and configuration details.
+                            </p>
+                            {% if current_user.is_admin %}
+                            <a href="{{ url_for('admin.system_info') }}" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-info-circle"></i> System Info
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Admin access required</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

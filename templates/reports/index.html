@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-chart-line text-primary"></i> Reports
+                </h1>
+                <div>
+                    <a href="{{ url_for('reports.export_csv') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Export CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                    <h4 class="text-primary">{{ "%.1f"|format(summary.total_hours) }}h</h4>
+                    <p class="text-muted mb-0">Total Hours</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                    <h4 class="text-success">{{ "%.1f"|format(summary.billable_hours) }}h</h4>
+                    <p class="text-muted mb-0">Billable Hours</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-project-diagram fa-2x text-info mb-2"></i>
+                    <h4 class="text-info">{{ summary.active_projects }}</h4>
+                    <p class="text-muted mb-0">Active Projects</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x text-warning mb-2"></i>
+                    <h4 class="text-warning">{{ summary.total_users }}</h4>
+                    <p class="text-muted mb-0">Users</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Options -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-project-diagram"></i> Project Reports
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Generate detailed reports by project with time breakdowns and user statistics.</p>
+                    <div class="d-grid">
+                        <a href="{{ url_for('reports.project_report') }}" class="btn btn-primary">
+                            <i class="fas fa-chart-bar"></i> Project Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user"></i> User Reports
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">View time tracking statistics by user with project breakdowns and productivity metrics.</p>
+                    <div class="d-grid">
+                        <a href="{{ url_for('reports.user_report') }}" class="btn btn-primary">
+                            <i class="fas fa-chart-pie"></i> User Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt"></i> Summary Report
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Get an overview of key metrics including total hours, billable amounts, and trends.</p>
+                    <div class="d-grid">
+                        <a href="{{ url_for('reports.summary_report') }}" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> Summary Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-download"></i> Data Export
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Export time entries to CSV format for external analysis or backup purposes.</p>
+                    <div class="d-grid">
+                        <a href="{{ url_for('reports.export_csv') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-file-csv"></i> Export CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_entries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Project</th>
+                                    <th>Date</th>
+                                    <th>Duration</th>
+                                    <th>Notes</th>
+                                    <th>Billable</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in recent_entries %}
+                                <tr>
+                                    <td>{{ entry.user.username }}</td>
+                                    <td>
+                                        <a href="{{ url_for('projects.view_project', project_id=entry.project.id) }}">
+                                            {{ entry.project.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ entry.start_utc.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <strong>{{ entry.duration_formatted }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if entry.notes %}
+                                        <span title="{{ entry.notes }}">{{ entry.notes[:50] }}{% if entry.notes|length > 50 %}...{% endif %}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if entry.billable %}
+                                        <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-2x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Recent Activity</h5>
+                        <p class="text-muted">No time entries have been recorded recently.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

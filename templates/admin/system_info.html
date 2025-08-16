@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}System Info - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="row justify-content-center">
+		<div class="col-lg-8">
+			<div class="card">
+				<div class="card-header">
+					<i class="fas fa-info-circle me-2"></i> System Information
+				</div>
+				<div class="card-body">
+					<div class="row mb-3">
+						<div class="col-sm-5 text-muted">Total Users</div>
+						<div class="col-sm-7"><strong>{{ total_users }}</strong></div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-sm-5 text-muted">Total Projects</div>
+						<div class="col-sm-7"><strong>{{ total_projects }}</strong></div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-sm-5 text-muted">Time Entries</div>
+						<div class="col-sm-7"><strong>{{ total_entries }}</strong></div>
+					</div>
+					<div class="row mb-3">
+						<div class="col-sm-5 text-muted">Active Timers</div>
+						<div class="col-sm-7"><strong>{{ active_timers }}</strong></div>
+					</div>
+					<div class="row">
+						<div class="col-sm-5 text-muted">Database Size</div>
+						<div class="col-sm-7"><span class="badge bg-info">{{ db_size_mb }} MB</span></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+

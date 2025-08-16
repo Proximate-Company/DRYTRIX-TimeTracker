@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-sliders-h text-primary"></i> System Settings
+                </h1>
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cog me-1"></i> Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="timezone">Timezone</label>
+                                <input type="text" class="form-control" id="timezone" name="timezone" value="{{ settings.timezone if settings else 'Europe/Brussels' }}" placeholder="e.g. Europe/Brussels">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="currency">Currency</label>
+                                <input type="text" class="form-control" id="currency" name="currency" value="{{ settings.currency if settings else 'EUR' }}" placeholder="e.g. EUR">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="rounding_minutes">Rounding (minutes)</label>
+                                <input type="number" min="0" step="1" class="form-control" id="rounding_minutes" name="rounding_minutes" value="{{ settings.rounding_minutes if settings else 1 }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="idle_timeout_minutes">Idle Timeout (minutes)</label>
+                                <input type="number" min="0" step="1" class="form-control" id="idle_timeout_minutes" name="idle_timeout_minutes" value="{{ settings.idle_timeout_minutes if settings else 30 }}">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="backup_retention_days">Backup Retention (days)</label>
+                                <input type="number" min="0" step="1" class="form-control" id="backup_retention_days" name="backup_retention_days" value="{{ settings.backup_retention_days if settings else 30 }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="backup_time">Backup Time (HH:MM)</label>
+                                <input type="time" class="form-control" id="backup_time" name="backup_time" value="{{ settings.backup_time if settings else '02:00' }}">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="export_delimiter">Export Delimiter</label>
+                                <select class="form-select" id="export_delimiter" name="export_delimiter">
+                                    {% set delim = (settings.export_delimiter if settings else ',') %}
+                                    <option value="," {% if delim == ',' %}selected{% endif %}>, (comma)</option>
+                                    <option value=";" {% if delim == ';' %}selected{% endif %}>; (semicolon)</option>
+                                    <option value="\t" {% if delim == '\t' %}selected{% endif %}>Tab</option>
+                                    <option value="|" {% if delim == '|' %}selected{% endif %}>| (pipe)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check me-4">
+                                    <input class="form-check-input" type="checkbox" id="single_active_timer" name="single_active_timer" {% if settings and settings.single_active_timer %}checked{% endif %}>
+                                    <label class="form-check-label" for="single_active_timer">Single Active Timer</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="allow_self_register" name="allow_self_register" {% if settings and settings.allow_self_register %}checked{% endif %}>
+                                    <label class="form-check-label" for="allow_self_register">Allow Self Register</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-1"></i> Help</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Configure application-wide settings such as timezone, currency, timer behavior, and data export options.</p>
+                    <ul class="text-muted mb-0">
+                        <li>Rounding affects how durations are rounded when displayed.</li>
+                        <li>Single Active Timer stops any running timer when a new one is started.</li>
+                        <li>Self Register allows new usernames to be created on login.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

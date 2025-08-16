@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('projects.list_projects') }}">Projects</a></li>
+                            <li class="breadcrumb-item active">{{ project.name }}</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-project-diagram text-primary"></i> {{ project.name }}
+                    </h1>
+                </div>
+                <div>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-clock"></i> Start Timer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Details -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Project Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Name:</dt>
+                                <dd class="col-sm-8">{{ project.name }}</dd>
+                                
+                                <dt class="col-sm-4">Client:</dt>
+                                <dd class="col-sm-8">
+                                    {% if project.client %}
+                                    <a href="{{ url_for('projects.view_client', client_name=project.client) }}">
+                                        {{ project.client }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </dd>
+                                
+                                <dt class="col-sm-4">Status:</dt>
+                                <dd class="col-sm-8">
+                                    {% if project.status == 'active' %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Archived</span>
+                                    {% endif %}
+                                </dd>
+                                
+                                <dt class="col-sm-4">Created:</dt>
+                                <dd class="col-sm-8">{{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Billable:</dt>
+                                <dd class="col-sm-8">
+                                    {% if project.billable %}
+                                    <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </dd>
+                                
+                                {% if project.billable and project.hourly_rate %}
+                                <dt class="col-sm-4">Hourly Rate:</dt>
+                                <dd class="col-sm-8">{{ currency }} {{ "%.2f"|format(project.hourly_rate) }}</dd>
+                                {% endif %}
+                                
+                                {% if project.billing_ref %}
+                                <dt class="col-sm-4">Billing Ref:</dt>
+                                <dd class="col-sm-8">{{ project.billing_ref }}</dd>
+                                {% endif %}
+                                
+                                <dt class="col-sm-4">Last Updated:</dt>
+                                <dd class="col-sm-8">{{ project.updated_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    {% if project.description %}
+                    <div class="mt-3">
+                        <h6>Description:</h6>
+                        <p class="text-muted">{{ project.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-primary">{{ "%.1f"|format(project.total_hours) }}</div>
+                            <small class="text-muted">Total Hours</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-success">{{ "%.1f"|format(project.total_billable_hours) }}</div>
+                            <small class="text-muted">Billable Hours</small>
+                        </div>
+                        {% if project.billable and project.hourly_rate %}
+                        <div class="col-12">
+                            <div class="h4 text-success">{{ currency }} {{ "%.2f"|format(project.estimated_cost) }}</div>
+                            <small class="text-muted">Estimated Cost</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {% if project.billable and project.hourly_rate %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users"></i> User Breakdown
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for user_total in project.get_user_totals() %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ user_total.username }}</span>
+                        <span class="text-primary">{{ "%.1f"|format(user_total.total_hours) }}h</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Time Entries -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Time Entries
+                    </h5>
+                    <div>
+                        <a href="{{ url_for('reports.project_report', project_id=project.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-chart-line"></i> View Report
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if entries %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Duration</th>
+                                    <th>Notes</th>
+                                    <th>Tags</th>
+                                    <th>Billable</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in entries %}
+                                <tr>
+                                    <td>{{ entry.user.username }}</td>
+                                    <td>{{ entry.start_utc.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {{ entry.start_utc.strftime('%H:%M') }} - 
+                                        {% if entry.end_utc %}
+                                        {{ entry.end_utc.strftime('%H:%M') }}
+                                        {% else %}
+                                        <span class="text-warning">Running</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ entry.duration_formatted }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if entry.notes %}
+                                        <span title="{{ entry.notes }}">{{ entry.notes[:50] }}{% if entry.notes|length > 50 %}...{% endif %}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if entry.tag_list %}
+                                        {% for tag in entry.tag_list %}
+                                        <span class="badge bg-light text-dark">{{ tag }}</span>
+                                        {% endfor %}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if entry.billable %}
+                                        <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if current_user.is_admin or entry.user_id == current_user.id %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" 
+                                                    onclick="showDeleteEntryModal('{{ entry.id }}', '{{ entry.project.name }}', '{{ entry.duration_formatted }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if pagination.pages > 1 %}
+                    <nav aria-label="Time entries pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('projects.view_project', project_id=project.id, page=pagination.prev_num) }}">Previous</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != pagination.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('projects.view_project', project_id=project.id, page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('projects.view_project', project_id=project.id, page=pagination.next_num) }}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Time Entries</h4>
+                        <p class="text-muted">No time has been tracked for this project yet.</p>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Start Timer
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Time Entry Modal -->
+<div class="modal fade" id="deleteEntryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2 text-danger"></i>Delete Time Entry
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete the time entry for <strong id="deleteEntryProjectName"></strong>?</p>
+                <p class="text-muted mb-0">Duration: <strong id="deleteEntryDuration"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form method="POST" id="deleteEntryForm" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Entry
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Function to show delete time entry modal
+function showDeleteEntryModal(entryId, projectName, duration) {
+    document.getElementById('deleteEntryProjectName').textContent = projectName;
+    document.getElementById('deleteEntryDuration').textContent = duration;
+    document.getElementById('deleteEntryForm').action = "{{ url_for('timer.delete_timer', timer_id=0) }}".replace('0', entryId);
+    new bootstrap.Modal(document.getElementById('deleteEntryModal')).show();
+}
+
+// Add loading state to delete entry form
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('deleteEntryForm').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}
