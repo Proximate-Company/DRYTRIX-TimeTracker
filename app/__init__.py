@@ -149,14 +149,30 @@ def setup_logging(app):
     log_level = os.getenv('LOG_LEVEL', 'INFO')
     log_file = os.getenv('LOG_FILE')
     
+    # Prepare handlers
+    handlers = [logging.StreamHandler()]
+    
+    # Add file handler if log_file is specified
+    if log_file:
+        try:
+            # Ensure log directory exists
+            log_dir = os.path.dirname(log_file)
+            if log_dir and not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+            
+            # Test if we can write to the log file
+            file_handler = logging.FileHandler(log_file)
+            handlers.append(file_handler)
+        except (PermissionError, OSError) as e:
+            print(f"Warning: Could not create log file '{log_file}': {e}")
+            print("Logging to console only")
+            # Don't add file handler, just use console logging
+    
     # Configure logging
     logging.basicConfig(
         level=getattr(logging, log_level.upper()),
         format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler(log_file) if log_file else logging.NullHandler()
-        ]
+        handlers=handlers
     )
     
     # Suppress Werkzeug logs in production

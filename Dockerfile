@@ -21,12 +21,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Create data directory with proper permissions
-RUN mkdir -p /data && chmod 755 /data
+# Create data and logs directories with proper permissions
+RUN mkdir -p /data /app/logs && chmod 755 /data && chmod 755 /app/logs
 
 # Create non-root user
 RUN useradd -m -u 1000 timetracker && \
-    chown -R timetracker:timetracker /app /data
+    chown -R timetracker:timetracker /app /data /app/logs
 USER timetracker
 
 # Expose port
