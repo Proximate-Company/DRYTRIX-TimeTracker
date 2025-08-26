@@ -57,7 +57,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./TimeTracker
           platforms: ${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -101,7 +101,7 @@ jobs:
       - name: Create and push manifest
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./TimeTracker
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
