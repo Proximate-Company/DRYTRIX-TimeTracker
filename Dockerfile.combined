@@ -55,17 +55,17 @@ set -e\n\
 # Initialize PostgreSQL database\n\
 if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then\n\
     echo "Initializing PostgreSQL database..."\n\
-    su - postgres -c "/usr/bin/initdb -D /var/lib/postgresql/data"\n\
-    su - postgres -c "/usr/bin/pg_ctl -D /var/lib/postgresql/data -l logfile start"\n\
+    su - postgres -c "initdb -D /var/lib/postgresql/data"\n\
+    su - postgres -c "pg_ctl -D /var/lib/postgresql/data -l logfile start"\n\
     \n\
     # Create database and user\n\
-    su - postgres -c "/usr/bin/createdb timetracker"\n\
-    su - postgres -c "/usr/bin/createuser -s timetracker"\n\
+    su - postgres -c "createdb timetracker"\n\
+    su - postgres -c "createuser -s timetracker"\n\
     \n\
     # Run initialization SQL\n\
-    su - postgres -c "/usr/bin/psql -d timetracker -f /app/docker/init.sql"\n\
+    su - postgres -c "psql -d timetracker -f /app/docker/init.sql"\n\
     \n\
-    su - postgres -c "/usr/bin/pg_ctl -D /var/lib/postgresql/data stop"\n\
+    su - postgres -c "pg_ctl -D /var/lib/postgresql/data stop"\n\
     echo "PostgreSQL database initialized successfully"\n\
 else\n\
     echo "PostgreSQL database already exists"\n\
@@ -78,7 +78,7 @@ nodaemon=true\n\
 user=root\n\
 \n\
 [program:postgresql]\n\
-command=/usr/bin/postgres -D /var/lib/postgresql/data -c config_file=/etc/postgresql/main/postgresql.conf\n\
+command=postgres -D /var/lib/postgresql/data -c config_file=/etc/postgresql/main/postgresql.conf\n\
 user=postgres\n\
 autostart=true\n\
 autorestart=true\n\
@@ -110,7 +110,7 @@ export DATABASE_URL=postgresql+psycopg2://timetracker@localhost:5432/timetracker
 \n\
 # Wait for PostgreSQL to be ready\n\
 echo "Waiting for PostgreSQL..."\n\
-until su - postgres -c "/usr/bin/pg_isready -d timetracker"; do\n\
+until su - postgres -c "pg_isready -d timetracker"; do\n\
     sleep 1\n\
 done\n\
 echo "PostgreSQL is ready"\n\
@@ -118,7 +118,7 @@ echo "PostgreSQL is ready"\n\
 # Initialize database if needed\n\
 if [ ! -f /var/lib/postgresql/data/.initialized ]; then\n\
     echo "Running database initialization..."\n\
-    su - postgres -c "/usr/bin/psql -d timetracker -f /app/docker/init.sql"\n\
+    su - postgres -c "psql -d timetracker -f /app/docker/init.sql"\n\
     touch /var/lib/postgresql/data/.initialized\n\
     echo "Database initialization completed"\n\
 fi\n\
