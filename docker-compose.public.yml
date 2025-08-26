@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/${GITHUB_REPOSITORY:-yourusername/timetracker}:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-drytrix/timetracker}:latest
     container_name: timetracker-app
     environment:
       - TZ=${TZ:-Europe/Brussels}
