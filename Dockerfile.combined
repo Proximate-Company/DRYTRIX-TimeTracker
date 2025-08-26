@@ -44,7 +44,8 @@ RUN echo "local all all trust" > /etc/postgresql/main/pg_hba.conf && \
     echo "host all all ::1/128 trust" >> /etc/postgresql/main/pg_hba.conf
 
 # Create postgres user and set up directories
-RUN useradd -r -g postgres -s /bin/bash postgres && \
+RUN groupadd -r postgres && \
+    useradd -r -g postgres -s /bin/bash postgres && \
     mkdir -p /var/lib/postgresql/data && \
     chown postgres:postgres /var/lib/postgresql/data && \
     chmod 700 /var/lib/postgresql/data
