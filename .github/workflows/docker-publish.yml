@@ -42,43 +42,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Debug - List files
+      - name: Create simple Dockerfile
         run: |
-          pwd
-          ls -la
-          echo "--- Dockerfile content ---"
-          cat Dockerfile | head -10
-          echo "--- File encoding check ---"
-          file Dockerfile
-          echo "--- Line endings check ---"
-          hexdump -C Dockerfile | head -20
-
-      - name: Fix line endings
-        run: |
-          # Convert Windows line endings to Unix
-          dos2unix Dockerfile || true
-          # Ensure proper permissions
-          chmod 644 Dockerfile
-          echo "--- After fixing line endings ---"
-          file Dockerfile
-          hexdump -C Dockerfile | head -20
-
-      - name: Create clean Dockerfile
-        run: |
-          cat > Dockerfile.clean << 'EOF'
+          cat > Dockerfile.simple << 'EOF'
           FROM python:3.11-slim
           WORKDIR /app
           COPY requirements.txt .
@@ -88,17 +54,13 @@ jobs:
           CMD ["python", "app.py"]
           EOF
           
-          echo "--- Created Dockerfile.clean ---"
-          cat Dockerfile.clean
-          echo "--- File info ---"
-          file Dockerfile.clean
-          ls -la Dockerfile.clean
-          chmod 644 Dockerfile.clean
+          echo "--- Created Dockerfile.simple ---"
+          cat Dockerfile.simple
 
       - name: Build and push Docker image
         run: |
-          # Build the image
-          docker build -t ghcr.io/drytrix/timetracker:main .
+          # Build the image using our created Dockerfile
+          docker build -f Dockerfile.simple -t ghcr.io/drytrix/timetracker:main .
           
           # Push if not a PR
           if [ "${{ github.event_name }}" != "pull_request" ]; then
@@ -126,21 +88,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+
 
       - name: Create and push manifest
         run: |
+          # Create a simple Dockerfile for this job
+          cat > Dockerfile.simple << 'EOF'
+          FROM python:3.11-slim
+          WORKDIR /app
+          COPY requirements.txt .
+          RUN pip install --no-cache-dir -r requirements.txt
+          COPY . .
+          EXPOSE 8080
+          CMD ["python", "app.py"]
+          EOF
+          
           # Build and push with latest tag
-          docker build -t ghcr.io/drytrix/timetracker:latest .
+          docker build -f Dockerfile.simple -t ghcr.io/drytrix/timetracker:latest .
           docker push ghcr.io/drytrix/timetracker:latest
