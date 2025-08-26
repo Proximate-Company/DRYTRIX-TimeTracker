@@ -43,10 +43,30 @@ RUN echo "local all all trust" > /etc/postgresql/main/pg_hba.conf && \
     echo "host all all 127.0.0.1/32 trust" >> /etc/postgresql/main/pg_hba.conf && \
     echo "host all all ::1/128 trust" >> /etc/postgresql/main/pg_hba.conf
 
-# Set up PostgreSQL data directory
+# Set up PostgreSQL data directory and find binary locations
 RUN mkdir -p /var/lib/postgresql/data && \
     chown postgres:postgres /var/lib/postgresql/data && \
-    chmod 700 /var/lib/postgresql/data
+    chmod 700 /var/lib/postgresql/data && \
+    echo "--- Finding PostgreSQL binaries ---" && \
+    find /usr -name "postgres" -type f 2>/dev/null | head -5 && \
+    find /usr -name "initdb" -type f 2>/dev/null | head -5 && \
+    find /usr -name "pg_ctl" -type f 2>/dev/null | head -5 && \
+    find /usr -name "psql" -type f 2>/dev/null | head -5 && \
+    echo "--- Checking PATH ---" && \
+    echo $PATH && \
+    echo "--- Checking which postgres ---" && \
+    which postgres || echo "postgres not found in PATH"
+
+# Create symlinks for PostgreSQL binaries and database initialization script
+RUN find /usr -name "postgres" -type f 2>/dev/null | head -1 | xargs -I {} ln -sf {} /usr/bin/postgres && \
+    find /usr -name "initdb" -type f 2>/dev/null | head -1 | xargs -I {} ln -sf {} /usr/bin/initdb && \
+    find /usr -name "pg_ctl" -type f 2>/dev/null | head -1 | xargs -I {} ln -sf {} /usr/bin/pg_ctl && \
+    find /usr -name "createdb" -type f 2>/dev/null | head -1 | xargs -I {} ln -sf {} /usr/bin/createdb && \
+    find /usr -name "createuser" -type f 2>/dev/null | head -1 | xargs -I {} ln -sf {} /usr/bin/createuser && \
+    find /usr -name "psql" -type f 2>/dev/null | head -1 | xargs -I {} ln -sf {} /usr/bin/psql && \
+    find /usr -name "pg_isready" -type f 2>/dev/null | head -1 | xargs -I {} ln -sf {} /usr/bin/pg_isready && \
+    echo "--- PostgreSQL binaries linked ---" && \
+    ls -la /usr/bin/postgres* /usr/bin/initdb /usr/bin/pg_ctl /usr/bin/createdb /usr/bin/createuser /usr/bin/psql /usr/bin/pg_isready 2>/dev/null || echo "Some binaries not found"
 
 # Create database initialization script
 RUN echo '#!/bin/bash\n\
