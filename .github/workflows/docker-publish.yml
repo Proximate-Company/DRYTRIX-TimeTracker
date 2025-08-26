@@ -74,14 +74,18 @@ jobs:
         run: |
           IMAGE_ID=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           
-          # Strip "refs/tags/" prefix if it's a tag event
-          VERSION=${GITHUB_REF#refs/tags/}
-          
-          # Fallback: if it's not a tag, use branch name
-          if [ -z "$VERSION" ]; then
+          # Extract version from ref
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
             VERSION=${GITHUB_REF#refs/heads/}
+          else
+            VERSION=unknown
           fi
-          
+
+          # Replace any slashes with dashes (for feature branches etc.)
+          VERSION=${VERSION//\//-}
+
           echo "Image ID: $IMAGE_ID"
           echo "Version: $VERSION"
 
