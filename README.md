@@ -73,6 +73,50 @@ A robust, self-hosted time tracking application designed for teams and freelance
 - Comprehensive time reports with export capabilities
 - Visual breakdowns of time allocation and productivity
 
+## 🐳 Docker Images
+
+### Public Docker Image
+
+TimeTracker provides pre-built Docker images available on **GitHub Container Registry (GHCR)**:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/yourusername/timetracker:latest
+
+# Run with docker-compose
+docker-compose -f docker-compose.public.yml up -d
+
+# Or run directly
+docker run -d \
+  --name timetracker \
+  -p 8080:8080 \
+  -e SECRET_KEY=your-secret-key \
+  -e ADMIN_USERNAMES=admin \
+  ghcr.io/yourusername/timetracker:latest
+```
+
+**Available Tags:**
+- `latest` - Latest stable build from main branch
+- `v1.0.0` - Specific version releases
+- `main-abc123` - Build from specific commit
+
+**Supported Architectures:**
+- `linux/amd64` - Intel/AMD 64-bit
+- `linux/arm64` - ARM 64-bit (Apple Silicon, ARM servers)
+- `linux/arm/v7` - ARM 32-bit (Raspberry Pi 3/4)
+
+### Building Your Own Image
+
+For custom modifications or development:
+
+```bash
+# Build locally
+docker build -t timetracker .
+
+# Run with docker-compose
+docker-compose up -d
+```
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -82,6 +126,40 @@ A robust, self-hosted time tracking application designed for teams and freelance
 - **Network access** to the host system
 
 ### Installation
+
+#### Option 1: Using Public Docker Image (Recommended)
+
+**Fastest deployment with pre-built images:**
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/TimeTracker.git
+   cd TimeTracker
+   ```
+
+2. **Run the deployment script:**
+   ```bash
+   # Linux/macOS
+   ./deploy-public.sh
+   
+   # Windows
+   deploy-public.bat
+   ```
+
+3. **Access the application:**
+   ```
+   http://your-pi-ip:8080
+   ```
+
+**Benefits:**
+- ✅ No build time required
+- ✅ Consistent builds across environments
+- ✅ Automatic updates when you push to main
+- ✅ Multi-architecture support (AMD64, ARM64, ARMv7)
+
+#### Option 2: Build from Source
+
+**For development or custom modifications:**
 
 1. **Clone the repository:**
    ```bash

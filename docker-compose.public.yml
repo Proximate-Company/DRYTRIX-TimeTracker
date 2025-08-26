@@ -1,0 +1,73 @@
+services:
+  app:
+    image: ghcr.io/${GITHUB_REPOSITORY:-yourusername/timetracker}:latest
+    container_name: timetracker-app
+    environment:
+      - TZ=${TZ:-Europe/Brussels}
+      - CURRENCY=${CURRENCY:-EUR}
+      - ROUNDING_MINUTES=${ROUNDING_MINUTES:-1}
+      - SINGLE_ACTIVE_TIMER=${SINGLE_ACTIVE_TIMER:-true}
+      - ALLOW_SELF_REGISTER=${ALLOW_SELF_REGISTER:-true}
+      - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
+      - ADMIN_USERNAMES=${ADMIN_USERNAMES:-admin}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
+      - DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
+      - LOG_FILE=/app/logs/timetracker.log
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_data:/data
+      - ./logs:/app/logs
+    depends_on:
+      - db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:16-alpine
+    container_name: timetracker-db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-timetracker}
+      - POSTGRES_USER=${POSTGRES_USER:-timetracker}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-timetracker}
+      - TZ=${TZ:-Europe/Brussels}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Optional reverse proxy for TLS on LAN
+  proxy:
+    image: caddy:2-alpine
+    container_name: timetracker-proxy
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app
+    restart: unless-stopped
+    profiles:
+      - tls
+
+volumes:
+  app_data:
+    driver: local
+  db_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
