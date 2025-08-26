@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: timetracker
+  IMAGE_NAME: drytrix/timetracker
 
 jobs:
   build:
