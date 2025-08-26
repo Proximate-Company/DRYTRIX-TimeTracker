@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  timetracker:
+    image: ghcr.io/drytrix/timetracker:main
+    container_name: timetracker
+    environment:
+      - TZ=${TZ:-Europe/Brussels}
+      - CURRENCY=${CURRENCY:-EUR}
+      - ROUNDING_MINUTES=${ROUNDING_MINUTES:-1}
+      - SINGLE_ACTIVE_TIMER=${SINGLE_ACTIVE_TIMER:-true}
+      - ALLOW_SELF_REGISTER=${ALLOW_SELF_REGISTER:-true}
+      - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
+      - ADMIN_USERNAMES=${ADMIN_USERNAMES:-admin}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
+      - DATABASE_URL=postgresql+psycopg2://timetracker@localhost:5432/timetracker
+      - LOG_FILE=/app/logs/timetracker.log
+    ports:
+      - "8080:8080"
+    volumes:
+      - timetracker_data:/data
+      - timetracker_logs:/app/logs
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  timetracker_data:
+    driver: local
+  timetracker_logs:
+    driver: local
+  postgres_data:
+    driver: local

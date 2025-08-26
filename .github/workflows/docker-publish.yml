@@ -42,21 +42,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create simple Dockerfile
+      - name: Check files and create combined Dockerfile
         run: |
-          cat > Dockerfile.simple << 'EOF'
-          FROM python:3.11-slim
-          WORKDIR /app
-          COPY requirements.txt .
-          RUN pip install --no-cache-dir -r requirements.txt
-          COPY . .
-          EXPOSE 8080
-          CMD ["python", "app.py"]
-          EOF
-          
-          echo "--- Created Dockerfile.simple ---"
-          cat Dockerfile.simple
-          
           echo "--- Checking available files ---"
           pwd
           ls -la
@@ -69,6 +56,10 @@ jobs:
             echo "Available .txt files:"
             find . -name "*.txt" -type f
           fi
+          
+          echo "--- Creating combined Dockerfile ---"
+          cp Dockerfile.combined Dockerfile.final
+          echo "Combined Dockerfile created successfully"
 
       - name: Build and push Docker image
         run: |
@@ -90,7 +81,7 @@ jobs:
           echo "Version: $VERSION"
 
           # Build the Docker image
-          docker build -f Dockerfile.simple -t $IMAGE_ID:$VERSION .
+          docker build -f Dockerfile.final -t $IMAGE_ID:$VERSION .
 
           # Always push versioned tag on releases/tags
           if [ "${{ github.event_name }}" != "pull_request" ]; then
