@@ -76,29 +76,35 @@ jobs:
           file Dockerfile
           hexdump -C Dockerfile | head -20
 
-      - name: Test with simple Dockerfile
+      - name: Create clean Dockerfile
         run: |
-          echo "--- Testing with simple Dockerfile ---"
-          cat Dockerfile.test
+          cat > Dockerfile.clean << 'EOF'
+          FROM python:3.11-slim
+          WORKDIR /app
+          COPY requirements.txt .
+          RUN pip install --no-cache-dir -r requirements.txt
+          COPY . .
+          EXPOSE 8080
+          CMD ["python", "app.py"]
+          EOF
+          
+          echo "--- Created Dockerfile.clean ---"
+          cat Dockerfile.clean
           echo "--- File info ---"
-          file Dockerfile.test
-          ls -la Dockerfile.test
-          echo "--- Content check ---"
-          wc -l Dockerfile.test
-          echo "--- First few lines ---"
-          head -5 Dockerfile.test
+          file Dockerfile.clean
+          ls -la Dockerfile.clean
+          chmod 644 Dockerfile.clean
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.test
-          platforms: ${{ matrix.platform }}
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        run: |
+          # Build the image
+          docker build -t ghcr.io/drytrix/timetracker:main .
+          
+          # Push if not a PR
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker push ghcr.io/drytrix/timetracker:main
+          fi
 
   # Multi-platform manifest job
   manifest:
@@ -134,13 +140,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Create and push manifest
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.test
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        run: |
+          # Build and push with latest tag
+          docker build -t ghcr.io/drytrix/timetracker:latest .
+          docker push ghcr.io/drytrix/timetracker:latest
