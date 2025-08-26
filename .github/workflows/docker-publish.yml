@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}-timetracker
+  IMAGE_NAME: timetracker
 
 jobs:
   build:
@@ -76,11 +76,23 @@ jobs:
           file Dockerfile
           hexdump -C Dockerfile | head -20
 
+      - name: Test with simple Dockerfile
+        run: |
+          echo "--- Testing with simple Dockerfile ---"
+          cat Dockerfile.test
+          echo "--- File info ---"
+          file Dockerfile.test
+          ls -la Dockerfile.test
+          echo "--- Content check ---"
+          wc -l Dockerfile.test
+          echo "--- First few lines ---"
+          head -5 Dockerfile.test
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.test
           platforms: ${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -125,7 +137,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.test
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
