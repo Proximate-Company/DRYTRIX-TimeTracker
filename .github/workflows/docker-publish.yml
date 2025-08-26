@@ -61,6 +61,20 @@ jobs:
           ls -la
           echo "--- Dockerfile content ---"
           cat Dockerfile | head -10
+          echo "--- File encoding check ---"
+          file Dockerfile
+          echo "--- Line endings check ---"
+          hexdump -C Dockerfile | head -20
+
+      - name: Fix line endings
+        run: |
+          # Convert Windows line endings to Unix
+          dos2unix Dockerfile || true
+          # Ensure proper permissions
+          chmod 644 Dockerfile
+          echo "--- After fixing line endings ---"
+          file Dockerfile
+          hexdump -C Dockerfile | head -20
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
