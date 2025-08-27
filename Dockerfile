@@ -24,6 +24,9 @@ COPY . .
 # Create data and logs directories with proper permissions
 RUN mkdir -p /data /app/logs && chmod 755 /data && chmod 755 /app/logs
 
+# Make startup scripts executable
+RUN chmod +x /app/docker/start.sh /app/docker/init-database.py /app/docker/test-db.py
+
 # Create non-root user
 RUN useradd -m -u 1000 timetracker && \
     chown -R timetracker:timetracker /app /data /app/logs
@@ -36,20 +39,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/_health || exit 1
 
-# Create startup script
-RUN echo '#!/bin/bash\n\
-set -e\n\
-cd /app\n\
-export FLASK_APP=app\n\
-# Wait for Postgres if configured\n\
-python - <<"PY"\n\
-import os, time, sys\n\
-from sqlalchemy import create_engine, text\n\nurl = os.getenv("DATABASE_URL", "")\nif url.startswith("postgresql"):\n    for attempt in range(30):\n        try:\n            engine = create_engine(url, pool_pre_ping=True)\n            with engine.connect() as conn:\n                conn.execute(text("SELECT 1"))\n            print("Database is ready")\n            break\n        except Exception as e:\n            print(f"Waiting for database... (attempt {attempt+1}/30): {e}")\n            time.sleep(2)\n    else:\n        print("Database not ready after waiting, continuing anyway...")\n\nPY\n\
-echo "Initializing database..."\n\
-flask init-db || echo "Database initialization failed, continuing..."\n\
-echo "Starting application..."\n\
-exec gunicorn --bind 0.0.0.0:8080 --worker-class eventlet --workers 1 --timeout 120 "app:create_app()"\n\
-' > /app/start.sh && chmod +x /app/start.sh
-
 # Run the application
-CMD ["/app/start.sh"]
+CMD ["/app/docker/start.sh"]

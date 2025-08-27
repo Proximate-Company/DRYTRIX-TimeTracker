@@ -19,7 +19,8 @@ services:
       - app_data:/data
       - ./logs:/app/logs
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
@@ -43,6 +44,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   # Optional reverse proxy for TLS on LAN
@@ -57,7 +59,8 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     restart: unless-stopped
     profiles:
       - tls
