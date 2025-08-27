@@ -59,19 +59,23 @@ A robust, self-hosted time tracking application designed for teams and freelance
 
 ## 🖼️ Screenshots
 
-> *Note: Screenshots will be added here once the application is running*
-
 ### Dashboard View
+![Dashboard](assets/screenshots/Dashboard.png)
 - Clean, intuitive interface showing active timers and recent activity
 - Quick access to start/stop timers and manual time entry
+- Real-time timer status and project selection
 
 ### Project Management
+![Projects](assets/screenshots/Projects.png)
 - Client and project organization with billing information
 - Time tracking across multiple projects simultaneously
+- Project status management and billing configuration
 
 ### Reports & Analytics
+![Reports](assets/screenshots/Reports.png)
 - Comprehensive time reports with export capabilities
 - Visual breakdowns of time allocation and productivity
+- Detailed time tracking data and export options
 
 ## 🐳 Docker Images
 
