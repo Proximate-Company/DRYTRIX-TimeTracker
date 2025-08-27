@@ -75,120 +75,221 @@ A robust, self-hosted time tracking application designed for teams and freelance
 
 ## 🐳 Docker Images
 
-### Public Docker Image
+### GitHub Container Registry (GHCR)
 
 TimeTracker provides pre-built Docker images available on **GitHub Container Registry (GHCR)**:
 
+[![Docker Image](https://img.shields.io/badge/Docker%20Image-ghcr.io/drytrix/timetracker-blue.svg)](https://github.com/DRYTRIX/TimeTracker/pkgs/container/timetracker)
+
+**Pull the latest image:**
 ```bash
-# Pull the latest image
-docker pull ghcr.io/yourusername/timetracker:latest
-
-# Run with docker-compose
-docker-compose -f docker-compose.public.yml up -d
-
-# Or run directly
-docker run -d \
-  --name timetracker \
-  -p 8080:8080 \
-  -e SECRET_KEY=your-secret-key \
-  -e ADMIN_USERNAMES=admin \
-  ghcr.io/yourusername/timetracker:latest
+docker pull ghcr.io/drytrix/timetracker:latest
 ```
 
 **Available Tags:**
 - `latest` - Latest stable build from main branch
-- `v1.0.0` - Specific version releases
+- `main` - Latest build from main branch
+- `v1.0.2` - Specific version releases
 - `main-abc123` - Build from specific commit
 
 **Supported Architectures:**
 - `linux/amd64` - Intel/AMD 64-bit
-- `linux/arm64` - ARM 64-bit (Apple Silicon, ARM servers)
-- `linux/arm/v7` - ARM 32-bit (Raspberry Pi 3/4)
+
+### Container Types
+
+#### 1. Simple Container (Recommended for Production)
+
+The **simple container** is an all-in-one solution that includes both the TimeTracker application and PostgreSQL database in a single container. This is perfect for production deployments where you want simplicity and don't need separate database management.
+
+**Features:**
+- ✅ **All-in-one**: Flask app + PostgreSQL in single container
+- ✅ **Auto-initialization**: Database automatically created and configured
+- ✅ **Persistent storage**: Data survives container restarts
+- ✅ **Production ready**: Optimized for deployment
+
+**Run with docker-compose:**
+```bash
+# Clone the repository
+git clone https://github.com/DRYTRIX/TimeTracker.git
+cd TimeTracker
+
+# Start the simple container
+docker-compose -f docker-compose.simple.yml up -d
+```
+
+**Run directly:**
+```bash
+docker run -d \
+  --name timetracker \
+  -p 8080:8080 \
+  -v timetracker_data:/var/lib/postgresql/data \
+  -v timetracker_logs:/app/logs \
+  -e FORCE_REINIT=false \
+  ghcr.io/drytrix/timetracker:latest
+```
+
+**Environment Variables:**
+- `FORCE_REINIT`: Set to `true` to reinitialize database schema (default: `false`)
+- `TZ`: Timezone (default: `Europe/Brussels`)
+
+#### 2. Public Container (Development/Testing)
+
+The **public container** is designed for development and testing scenarios where you want to use external databases or have more control over the setup.
+
+**Features:**
+- 🔧 **Development focused**: External database configuration
+- 🔧 **Flexible setup**: Use your own PostgreSQL/MySQL
+- 🔧 **Custom configuration**: Full control over database settings
+
+**Run with docker-compose:**
+```bash
+# Use the public docker-compose file
+docker-compose -f docker-compose.public.yml up -d
+```
+
+**Run directly:**
+```bash
+docker run -d \
+  --name timetracker \
+  -p 8080:8080 \
+  -e DATABASE_URL=postgresql://user:pass@host:5432/db \
+  -e SECRET_KEY=your-secret-key \
+  ghcr.io/drytrix/timetracker:latest
+```
 
 ### Building Your Own Image
 
 For custom modifications or development:
 
 ```bash
-# Build locally
-docker build -t timetracker .
+# Build locally (simple container with PostgreSQL)
+docker build -f Dockerfile.simple -t timetracker:local .
 
 # Run with docker-compose
-docker-compose up -d
+docker-compose -f docker-compose.simple.yml up -d
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- **Raspberry Pi 4** (2GB+ RAM recommended) or any Linux system
 - **Docker** and **Docker Compose** installed
 - **Network access** to the host system
+- **Git** for cloning the repository
 
-### Installation
+### Installation Options
 
-#### Option 1: Using Public Docker Image (Recommended)
+#### Option 1: Simple Container (Recommended for Production)
 
-**Fastest deployment with pre-built images:**
+**All-in-one solution with built-in PostgreSQL database:**
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/TimeTracker.git
+   git clone https://github.com/DRYTRIX/TimeTracker.git
    cd TimeTracker
    ```
 
-2. **Run the deployment script:**
+2. **Start the application:**
    ```bash
-   # Linux/macOS
-   ./deploy-public.sh
-   
-   # Windows
-   deploy-public.bat
+   docker-compose -f docker-compose.simple.yml up -d
    ```
 
 3. **Access the application:**
    ```
-   http://your-pi-ip:8080
+   http://localhost:8080
    ```
 
 **Benefits:**
-- ✅ No build time required
-- ✅ Consistent builds across environments
-- ✅ Automatic updates when you push to main
-- ✅ Multi-architecture support (AMD64, ARM64, ARMv7)
+- ✅ **No external database required** - PostgreSQL included
+- ✅ **Automatic initialization** - Database created automatically
+- ✅ **Production ready** - Optimized for deployment
+- ✅ **Persistent storage** - Data survives restarts
+- ✅ **Simple setup** - One command deployment
 
-#### Option 2: Build from Source
+**Default credentials:**
+- **Username**: `admin`
+- **Password**: None required (username-based authentication)
 
-**For development or custom modifications:**
+**Database Initialization:**
+The container automatically:
+1. Creates a PostgreSQL database named `timetracker`
+2. Creates a user `timetracker` with full permissions
+3. Initializes all tables with proper schema
+4. Inserts default admin user and project
+5. Sets up triggers for automatic timestamp updates
+
+**Note:** Set `FORCE_REINIT=true` environment variable to reinitialize the database schema if you need to update the structure.
+
+#### Option 2: Public Container (Development/Testing)
+
+**For development or when you want external database control:**
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/TimeTracker.git
+   git clone https://github.com/DRYTRIX/TimeTracker.git
    cd TimeTracker
    ```
 
 2. **Configure environment variables:**
    ```bash
    cp .env.example .env
-   # Edit .env with your preferences
+   # Edit .env with your database settings
    ```
 
 3. **Start the application:**
    ```bash
-   docker-compose up -d
+   docker-compose -f docker-compose.public.yml up -d
    ```
 
 4. **Access the application:**
    ```
-   http://your-pi-ip:8080
+   http://localhost:8080
+   ```
+
+**Benefits:**
+- 🔧 **Flexible database** - Use your own PostgreSQL/MySQL
+- 🔧 **Development focused** - Full control over configuration
+- 🔧 **Custom setup** - Configure as needed for your environment
+
+#### Option 3: Using Pre-built Image
+
+**Fastest deployment with GitHub Container Registry:**
+
+1. **Pull the image:**
+   ```bash
+   docker pull ghcr.io/drytrix/timetracker:latest
+   ```
+
+2. **Run the container:**
+   ```bash
+   docker run -d \
+     --name timetracker \
+     -p 8080:8080 \
+     -v timetracker_data:/var/lib/postgresql/data \
+     -v timetracker_logs:/app/logs \
+     ghcr.io/drytrix/timetracker:latest
+   ```
+
+3. **Access the application:**
+   ```
+   http://localhost:8080
    ```
 
 ### Configuration
 
-Key environment variables in `.env`:
+#### Simple Container Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `FORCE_REINIT` | Reinitialize database schema | `false` |
+| `TZ` | Timezone | `Europe/Brussels` |
+
+#### Public Container Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | Database connection string | - |
+| `SECRET_KEY` | Flask secret key | - |
 | `TZ` | Timezone | `Europe/Brussels` |
 | `CURRENCY` | Currency for billing | `EUR` |
 | `ROUNDING_MINUTES` | Time rounding in minutes | `1` |
@@ -260,9 +361,25 @@ TimeTracker/
 #### Core Entities
 
 - **Users**: Username-based authentication with role-based access
-- **Projects**: Client projects with billing information
-- **Time Entries**: Manual and automatic time tracking with notes and tags
+- **Projects**: Client projects with billing information and client management
+- **Time Entries**: Manual and automatic time tracking with notes, tags, and billing support
 - **Settings**: System configuration and preferences
+
+#### Database Schema
+
+The simple container automatically creates and initializes a PostgreSQL database with the following structure:
+
+**Users Table:**
+- `id`, `username`, `role`, `created_at`, `last_login`, `is_active`, `updated_at`
+
+**Projects Table:**
+- `id`, `name`, `client`, `description`, `billable`, `hourly_rate`, `billing_ref`, `status`, `created_at`, `updated_at`
+
+**Time Entries Table:**
+- `id`, `user_id`, `project_id`, `start_utc`, `end_utc`, `duration_seconds`, `notes`, `tags`, `source`, `billable`, `created_at`, `updated_at`
+
+**Settings Table:**
+- `id`, `timezone`, `currency`, `rounding_minutes`, `single_active_timer`, `allow_self_register`, `idle_timeout_minutes`, `backup_retention_days`, `backup_time`, `export_delimiter`, `created_at`, `updated_at`
 
 #### Key Features
 
