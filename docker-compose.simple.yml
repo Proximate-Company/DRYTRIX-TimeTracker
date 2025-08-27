@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.simple
-    container_name: timetracker
+    container_name: timetracker-simple
     environment:
       - TZ=${TZ:-Europe/Brussels}
       - CURRENCY=${CURRENCY:-EUR}
@@ -15,21 +15,25 @@ services:
       - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
       - ADMIN_USERNAMES=${ADMIN_USERNAMES:-admin}
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
-      - DATABASE_URL=postgresql+psycopg2://timetracker@localhost:5432/timetracker
-      - LOG_FILE=/app/logs/timetracker.log
-      - FORCE_REINIT=true
+      - FORCE_REINIT=${FORCE_REINIT:-false}
     ports:
       - "8080:8080"
     volumes:
       - timetracker_data:/data
       - timetracker_logs:/app/logs
-      - postgres_data:/var/lib/postgresql/data
+      - timetracker_db:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
   timetracker_data:
     driver: local
   timetracker_logs:
     driver: local
-  postgres_data:
+  timetracker_db:
     driver: local
