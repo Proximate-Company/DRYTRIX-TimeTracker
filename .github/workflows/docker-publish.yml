@@ -58,7 +58,7 @@ jobs:
           fi
           
           echo "--- Creating combined Dockerfile ---"
-          cp Dockerfile.combined Dockerfile.final
+          cp Dockerfile.simple Dockerfile.final
           echo "Combined Dockerfile created successfully"
 
       - name: Build and push Docker image

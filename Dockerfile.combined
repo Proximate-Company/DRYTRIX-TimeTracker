@@ -28,7 +28,7 @@ RUN useradd -m -u 1000 timetracker && \
 
 # Create PostgreSQL configuration
 RUN mkdir -p /etc/postgresql/main && \
-    echo "listen_addresses = 'localhost'" > /etc/postgresql/main/postgresql.conf && \
+    echo "listen_addresses = '*'" > /etc/postgresql/main/postgresql.conf && \
     echo "port = 5432" >> /etc/postgresql/main/postgresql.conf && \
     echo "data_directory = '/var/lib/postgresql/data'" >> /etc/postgresql/main/postgresql.conf && \
     echo "log_destination = 'stderr'" >> /etc/postgresql/main/postgresql.conf && \
@@ -41,13 +41,11 @@ RUN mkdir -p /etc/postgresql/main && \
 # Create PostgreSQL access configuration
 RUN echo "local all all trust" > /etc/postgresql/main/pg_hba.conf && \
     echo "host all all 127.0.0.1/32 trust" >> /etc/postgresql/main/pg_hba.conf && \
+    echo "host all all ::1/128 trust" >> /etc/postgresql/main/pg_hba.conf && \
     echo "host all all ::1/128 trust" >> /etc/postgresql/main/pg_hba.conf
 
-# Set up PostgreSQL data directory and find binary locations
-RUN mkdir -p /var/lib/postgresql/data && \
-    chown postgres:postgres /var/lib/postgresql/data && \
-    chmod 700 /var/lib/postgresql/data && \
-    echo "--- Finding PostgreSQL binaries ---" && \
+# Find binary locations
+RUN echo "--- Finding PostgreSQL binaries ---" && \
     find /usr -name "postgres" -type f 2>/dev/null | head -5 && \
     find /usr -name "initdb" -type f 2>/dev/null | head -5 && \
     find /usr -name "pg_ctl" -type f 2>/dev/null | head -5 && \
@@ -68,84 +66,16 @@ RUN find /usr -name "postgres" -type f 2>/dev/null | head -1 | xargs -I {} ln -s
     echo "--- PostgreSQL binaries linked ---" && \
     ls -la /usr/bin/postgres* /usr/bin/initdb /usr/bin/pg_ctl /usr/bin/createdb /usr/bin/createuser /usr/bin/psql /usr/bin/pg_isready 2>/dev/null || echo "Some binaries not found"
 
-# Create database initialization script
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-# Initialize PostgreSQL database\n\
-if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then\n\
-    echo "Initializing PostgreSQL database..."\n\
-    su - postgres -c "initdb -D /var/lib/postgresql/data"\n\
-    su - postgres -c "pg_ctl -D /var/lib/postgresql/data -l logfile start"\n\
-    \n\
-    # Create database and user\n\
-    su - postgres -c "createdb timetracker"\n\
-    su - postgres -c "createuser -s timetracker"\n\
-    \n\
-    # Run initialization SQL\n\
-    su - postgres -c "psql -d timetracker -f /app/docker/init.sql"\n\
-    \n\
-    su - postgres -c "pg_ctl -D /var/lib/postgresql/data stop"\n\
-    echo "PostgreSQL database initialized successfully"\n\
-else\n\
-    echo "PostgreSQL database already exists"\n\
-fi\n\
-' > /app/init-db.sh && chmod +x /app/init-db.sh
+# Copy database initialization script
+COPY docker/init-db.sh /app/init-db.sh
+RUN chmod +x /app/init-db.sh
 
-# Create supervisor configuration
-RUN echo '[supervisord]\n\
-nodaemon=true\n\
-user=root\n\
-\n\
-[program:postgresql]\n\
-command=postgres -D /var/lib/postgresql/data -c config_file=/etc/postgresql/main/postgresql.conf\n\
-user=postgres\n\
-autostart=true\n\
-autorestart=true\n\
-priority=100\n\
-stdout_logfile=/dev/stdout\n\
-stdout_logfile_maxbytes=0\n\
-stderr_logfile=/dev/stderr\n\
-stderr_logfile_maxbytes=0\n\
-\n\
-[program:flask-app]\n\
-command=/app/start.sh\n\
-user=timetracker\n\
-autostart=true\n\
-autorestart=true\n\
-priority=200\n\
-depends_on=postgresql\n\
-stdout_logfile=/dev/stdout\n\
-stdout_logfile_maxbytes=0\n\
-stderr_logfile=/dev/stderr\n\
-stderr_logfile_maxbytes=0\n\
-' > /etc/supervisor/conf.d/supervisord.conf
+# Copy supervisor configuration
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Create startup script for Flask app
-RUN echo '#!/bin/bash\n\
-set -e\n\
-cd /app\n\
-export FLASK_APP=app\n\
-export DATABASE_URL=postgresql+psycopg2://timetracker@localhost:5432/timetracker\n\
-\n\
-# Wait for PostgreSQL to be ready\n\
-echo "Waiting for PostgreSQL..."\n\
-until su - postgres -c "pg_isready -d timetracker"; do\n\
-    sleep 1\n\
-done\n\
-echo "PostgreSQL is ready"\n\
-\n\
-# Initialize database if needed\n\
-if [ ! -f /var/lib/postgresql/data/.initialized ]; then\n\
-    echo "Running database initialization..."\n\
-    su - postgres -c "psql -d timetracker -f /app/docker/init.sql"\n\
-    touch /var/lib/postgresql/data/.initialized\n\
-    echo "Database initialization completed"\n\
-fi\n\
-\n\
-echo "Starting Flask application..."\n\
-exec gunicorn --bind 0.0.0.0:8080 --worker-class eventlet --workers 1 --timeout 120 "app:create_app()"\n\
-' > /app/start.sh && chmod +x /app/start.sh
+COPY docker/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Expose ports
 EXPOSE 8080 5432
@@ -154,5 +84,9 @@ EXPOSE 8080 5432
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/_health || exit 1
 
+# Copy main initialization script
+COPY docker/init.sh /app/init.sh
+RUN chmod +x /app/init.sh
+
 # Initialize database and start services
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/app/init.sh"]
