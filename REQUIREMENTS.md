@@ -162,7 +162,7 @@ A Python backend (Flask recommended) runs inside Docker on a Raspberry Pi. The f
 
 ### 6.4 Configurability
 
-* `.env`/config UI for: timezone (default Europe/Brussels), currency, default rounding, allow self-register, single-active-timer, idle timeout, export delimiter.
+* `.env`/config UI for: timezone (default Europe/Rome), currency, default rounding, allow self-register, single-active-timer, idle timeout, export delimiter.
 
 ### 6.5 Security
 
@@ -366,7 +366,7 @@ services:
     image: timetracker:latest
     build: .
     environment:
-      - TZ=Europe/Brussels
+      - TZ=Europe/Rome
       - ROUNDING_MINUTES=1
       - SINGLE_ACTIVE_TIMER=true
       - ALLOW_SELF_REGISTER=true

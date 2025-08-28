@@ -36,7 +36,7 @@ class User(UserMixin, db.Model):
         from .time_entry import TimeEntry
         return TimeEntry.query.filter_by(
             user_id=self.id,
-            end_utc=None
+            end_time=None
         ).first()
     
     @property
@@ -47,7 +47,7 @@ class User(UserMixin, db.Model):
             db.func.sum(TimeEntry.duration_seconds)
         ).filter(
             TimeEntry.user_id == self.id,
-            TimeEntry.end_utc.isnot(None)
+            TimeEntry.end_time.isnot(None)
         ).scalar() or 0
         return round(total_seconds / 3600, 2)
     
@@ -55,9 +55,9 @@ class User(UserMixin, db.Model):
         """Get recent time entries for this user"""
         from .time_entry import TimeEntry
         return self.time_entries.filter(
-            TimeEntry.end_utc.isnot(None)
+            TimeEntry.end_time.isnot(None)
         ).order_by(
-            TimeEntry.start_utc.desc()
+            TimeEntry.start_time.desc()
         ).limit(limit).all()
     
     def update_last_login(self):

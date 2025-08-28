@@ -21,14 +21,14 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-control-plaintext">
-                                    <strong>Start:</strong> {{ timer.start_utc.strftime('%Y-%m-%d %H:%M') }}
+                                    <strong>Start:</strong> {{ timer.start_time.strftime('%Y-%m-%d %H:%M') }}
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-control-plaintext">
                                     <strong>End:</strong>
-                                    {% if timer.end_utc %}
-                                        {{ timer.end_utc.strftime('%Y-%m-%d %H:%M') }}
+                                    {% if timer.end_time %}
+                                        {{ timer.end_time.strftime('%Y-%m-%d %H:%M') }}
                                     {% else %}
                                         <span class="text-warning">Running</span>
                                     {% endif %}

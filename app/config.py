@@ -29,7 +29,7 @@ class Config:
     )
     
     # Application settings
-    TZ = os.getenv('TZ', 'Europe/Brussels')
+    TZ = os.getenv('TZ', 'Europe/Rome')
     CURRENCY = os.getenv('CURRENCY', 'EUR')
     ROUNDING_MINUTES = int(os.getenv('ROUNDING_MINUTES', 1))
     SINGLE_ACTIVE_TIMER = os.getenv('SINGLE_ACTIVE_TIMER', 'true').lower() == 'true'

@@ -45,7 +45,7 @@ class Project(db.Model):
             db.func.sum(TimeEntry.duration_seconds)
         ).filter(
             TimeEntry.project_id == self.id,
-            TimeEntry.end_utc.isnot(None)
+            TimeEntry.end_time.isnot(None)
         ).scalar() or 0
         return round(total_seconds / 3600, 2)
     
@@ -57,7 +57,7 @@ class Project(db.Model):
             db.func.sum(TimeEntry.duration_seconds)
         ).filter(
             TimeEntry.project_id == self.id,
-            TimeEntry.end_utc.isnot(None),
+            TimeEntry.end_time.isnot(None),
             TimeEntry.billable == True
         ).scalar() or 0
         return round(total_seconds / 3600, 2)
@@ -72,18 +72,18 @@ class Project(db.Model):
     def get_entries_by_user(self, user_id=None, start_date=None, end_date=None):
         """Get time entries for this project, optionally filtered by user and date range"""
         from .time_entry import TimeEntry
-        query = self.time_entries.filter(TimeEntry.end_utc.isnot(None))
+        query = self.time_entries.filter(TimeEntry.end_time.isnot(None))
         
         if user_id:
             query = query.filter(TimeEntry.user_id == user_id)
         
         if start_date:
-            query = query.filter(TimeEntry.start_utc >= start_date)
+            query = query.filter(TimeEntry.start_time >= start_date)
         
         if end_date:
-            query = query.filter(TimeEntry.start_utc <= end_date)
+            query = query.filter(TimeEntry.start_time <= end_date)
         
-        return query.order_by(TimeEntry.start_utc.desc()).all()
+        return query.order_by(TimeEntry.start_time.desc()).all()
     
     def get_user_totals(self, start_date=None, end_date=None):
         """Get total hours per user for this project"""
@@ -95,14 +95,14 @@ class Project(db.Model):
             db.func.sum(TimeEntry.duration_seconds).label('total_seconds')
         ).join(TimeEntry).filter(
             TimeEntry.project_id == self.id,
-            TimeEntry.end_utc.isnot(None)
+            TimeEntry.end_time.isnot(None)
         )
         
         if start_date:
-            query = query.filter(TimeEntry.start_utc >= start_date)
+            query = query.filter(TimeEntry.start_time >= start_date)
         
         if end_date:
-            query = query.filter(TimeEntry.start_utc <= end_date)
+            query = query.filter(TimeEntry.start_time <= end_date)
         
         results = query.group_by(User.username).all()
         

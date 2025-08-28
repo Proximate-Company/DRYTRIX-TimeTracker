@@ -3,7 +3,7 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY:-drytrix/timetracker}:latest
     container_name: timetracker-app
     environment:
-      - TZ=${TZ:-Europe/Brussels}
+      - TZ=${TZ:-Europe/Rome}
       - CURRENCY=${CURRENCY:-EUR}
       - ROUNDING_MINUTES=${ROUNDING_MINUTES:-1}
       - SINGLE_ACTIVE_TIMER=${SINGLE_ACTIVE_TIMER:-true}
@@ -35,7 +35,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-timetracker}
       - POSTGRES_USER=${POSTGRES_USER:-timetracker}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-timetracker}
-      - TZ=${TZ:-Europe/Brussels}
+      - TZ=${TZ:-Europe/Rome}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:

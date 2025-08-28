@@ -262,15 +262,15 @@
                                             {{ entry.project.name }}
                                         </a>
                                     </td>
-                                    <td>{{ entry.start_utc.strftime('%Y-%m-%d') }}</td>
-                                    <td>
-                                        {{ entry.start_utc.strftime('%H:%M') }} - 
-                                        {% if entry.end_utc %}
-                                        {{ entry.end_utc.strftime('%H:%M') }}
-                                        {% else %}
-                                        <span class="text-warning">Running</span>
-                                        {% endif %}
-                                    </td>
+                                                                <td>{{ entry.start_time.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {{ entry.start_time.strftime('%H:%M') }} -
+                                {% if entry.end_time %}
+                                {{ entry.end_time.strftime('%H:%M') }}
+                                {% else %}
+                                <span class="text-warning">Running</span>
+                                {% endif %}
+                            </td>
                                     <td>
                                         <strong>{{ entry.duration_formatted }}</strong>
                                     </td>

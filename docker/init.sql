@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS time_entries (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
-    start_utc TIMESTAMP NOT NULL,
-    end_utc TIMESTAMP,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP,
     duration_seconds INTEGER,
     notes TEXT,
     tags VARCHAR(500),
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS time_entries (
 
 CREATE TABLE IF NOT EXISTS settings (
     id SERIAL PRIMARY KEY,
-    timezone VARCHAR(50) DEFAULT 'Europe/Brussels' NOT NULL,
+    timezone VARCHAR(50) DEFAULT 'Europe/Rome' NOT NULL,
     currency VARCHAR(3) DEFAULT 'EUR' NOT NULL,
     rounding_minutes INTEGER DEFAULT 1 NOT NULL,
     single_active_timer BOOLEAN DEFAULT true NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS settings (
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries(project_id);
-CREATE INDEX IF NOT EXISTS idx_time_entries_start_utc ON time_entries(start_utc);
+CREATE INDEX IF NOT EXISTS idx_time_entries_start_time ON time_entries(start_time);
 
 
 -- Insert default admin user (password: admin)
@@ -80,7 +80,7 @@ ON CONFLICT DO NOTHING;
 
 -- Insert default settings
 INSERT INTO settings (timezone, currency, rounding_minutes, single_active_timer, allow_self_register, idle_timeout_minutes, backup_retention_days, backup_time, export_delimiter) 
-VALUES ('Europe/Brussels', 'EUR', 1, true, true, 30, 30, '02:00', ',')
+VALUES ('Europe/Rome', 'EUR', 1, true, true, 30, 30, '02:00', ',')
 ON CONFLICT (id) DO NOTHING;
 
 -- Create function to update updated_at timestamp

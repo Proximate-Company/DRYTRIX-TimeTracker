@@ -31,6 +31,7 @@ A robust, self-hosted time tracking application designed for teams and freelance
 - **Manual Entry**: Log time with start/end dates and project selection
 - **Idle Detection**: Automatic timeout for inactive sessions
 - **Multiple Projects**: Track time across different clients and projects
+- **Timezone Support**: Full timezone awareness with configurable local time display
 
 ### 👥 User Management
 - **Role-Based Access**: Admin and regular user roles
@@ -53,9 +54,10 @@ A robust, self-hosted time tracking application designed for teams and freelance
 ### 🚀 Technical Features
 - **Responsive Design**: Works on desktop, tablet, and mobile
 - **HTMX Integration**: Dynamic interactions without JavaScript complexity
-- **SQLite Database**: Lightweight, file-based storage
+- **PostgreSQL Database**: Robust database with automatic initialization
 - **Docker Ready**: Easy deployment and scaling
 - **RESTful API**: Programmatic access to time data
+- **Timezone Management**: Comprehensive timezone support with 100+ options
 
 ## 🖼️ Screenshots
 
@@ -110,6 +112,7 @@ The **simple container** is an all-in-one solution that includes both the TimeTr
 - ✅ **Auto-initialization**: Database automatically created and configured
 - ✅ **Persistent storage**: Data survives container restarts
 - ✅ **Production ready**: Optimized for deployment
+- ✅ **Timezone support**: Full timezone management with 100+ options
 
 **Run with docker-compose:**
 ```bash
@@ -134,7 +137,7 @@ docker run -d \
 
 **Environment Variables:**
 - `FORCE_REINIT`: Set to `true` to reinitialize database schema (default: `false`)
-- `TZ`: Timezone (default: `Europe/Brussels`)
+- `TZ`: Timezone (default: `Europe/Rome`)
 
 #### 2. Public Container (Development/Testing)
 
@@ -209,6 +212,7 @@ docker-compose -f docker-compose.simple.yml up -d
 - ✅ **Production ready** - Optimized for deployment
 - ✅ **Persistent storage** - Data survives restarts
 - ✅ **Simple setup** - One command deployment
+- ✅ **Timezone support** - 100+ timezone options with automatic DST handling
 
 **Default credentials:**
 - **Username**: `admin`
@@ -236,7 +240,7 @@ The container automatically:
 
 2. **Configure environment variables:**
    ```bash
-   cp .env.example .env
+   cp env.example .env
    # Edit .env with your database settings
    ```
 
@@ -286,7 +290,7 @@ The container automatically:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `FORCE_REINIT` | Reinitialize database schema | `false` |
-| `TZ` | Timezone | `Europe/Brussels` |
+| `TZ` | Timezone | `Europe/Rome` |
 
 #### Public Container Environment Variables
 
@@ -294,7 +298,7 @@ The container automatically:
 |----------|-------------|---------|
 | `DATABASE_URL` | Database connection string | - |
 | `SECRET_KEY` | Flask secret key | - |
-| `TZ` | Timezone | `Europe/Brussels` |
+| `TZ` | Timezone | `Europe/Rome` |
 | `CURRENCY` | Currency for billing | `EUR` |
 | `ROUNDING_MINUTES` | Time rounding in minutes | `1` |
 | `SINGLE_ACTIVE_TIMER` | Allow only one active timer per user | `true` |
@@ -333,15 +337,23 @@ The container automatically:
 3. **Assign users** to projects
 4. **Track project status** and **completion**
 
+### Timezone Configuration
+
+1. **Access Admin Settings** (admin users only)
+2. **Select your timezone** from 100+ available options
+3. **View real-time preview** of current time in selected timezone
+4. **Save settings** to apply timezone changes application-wide
+
 ## 🏗️ Architecture
 
 ### Technology Stack
 
 - **Backend**: Flask with SQLAlchemy ORM
-- **Database**: SQLite (with upgrade path to PostgreSQL)
+- **Database**: PostgreSQL with automatic initialization
 - **Frontend**: Server-rendered templates with HTMX
 - **Real-time**: WebSocket for live timer updates
 - **Containerization**: Docker with docker-compose
+- **Timezone**: Full timezone support with pytz
 
 ### Project Structure
 
@@ -355,7 +367,9 @@ TimeTracker/
 │   └── config.py          # Configuration settings
 ├── docker/                # Docker configuration
 ├── tests/                 # Test suite
-├── docker-compose.yml     # Docker Compose configuration
+├── docker-compose.simple.yml     # Simple container setup
+├── docker-compose.public.yml     # Public container setup
+├── Dockerfile.simple      # Simple container Dockerfile
 ├── requirements.txt       # Python dependencies
 └── README.md             # This file
 ```
@@ -367,7 +381,7 @@ TimeTracker/
 - **Users**: Username-based authentication with role-based access
 - **Projects**: Client projects with billing information and client management
 - **Time Entries**: Manual and automatic time tracking with notes, tags, and billing support
-- **Settings**: System configuration and preferences
+- **Settings**: System configuration including timezone preferences
 
 #### Database Schema
 
@@ -391,6 +405,7 @@ The simple container automatically creates and initializes a PostgreSQL database
 - **Billing Support**: Hourly rates, billable flags, and cost calculations
 - **Export Capabilities**: CSV export for reports and data backup
 - **Responsive Design**: Works on desktop and mobile devices
+- **Timezone Support**: Full timezone awareness with automatic DST handling
 
 ## 🛠️ Development
 
@@ -408,7 +423,7 @@ The simple container automatically creates and initializes a PostgreSQL database
 
 3. **Set up environment:**
    ```bash
-   cp .env.example .env
+   cp env.example .env
    # Edit .env with development settings
    ```
 
@@ -451,7 +466,7 @@ python -m pytest tests/test_timer.py
 
 ## 💾 Backup and Maintenance
 
-- **Automatic backups**: Nightly SQLite database backups
+- **Automatic backups**: Nightly PostgreSQL database backups
 - **Manual exports**: On-demand CSV exports and full data dumps
 - **Health monitoring**: Built-in health check endpoints
 - **Database migrations**: Version-controlled schema changes
@@ -498,6 +513,7 @@ The GPL v3 license ensures that:
 - **Database errors**: Ensure proper permissions and disk space
 - **Docker issues**: Verify Docker and Docker Compose installation
 - **Network access**: Check firewall settings and port configuration
+- **Timezone issues**: Verify timezone settings in admin panel
 
 ## 🚀 Roadmap
 
@@ -515,6 +531,7 @@ The GPL v3 license ensures that:
 - **v1.0.0**: Initial release with core time tracking features
 - **v1.1.0**: Added comprehensive reporting and export capabilities
 - **v1.2.0**: Enhanced project management and billing support
+- **v1.3.0**: Added comprehensive timezone support with 100+ options
 
 ## 🙏 Acknowledgments
 

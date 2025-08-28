@@ -109,6 +109,10 @@ def create_app(config=None):
     from app.utils.context_processors import register_context_processors
     register_context_processors(app)
     
+    # Register template filters
+    from app.utils.template_filters import register_template_filters
+    register_template_filters(app)
+    
     # Register CLI commands
     from app.utils.cli import register_cli_commands
     register_cli_commands(app)

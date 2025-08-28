@@ -121,8 +121,8 @@ def test_time_entry_creation(app, user, project):
         entry = TimeEntry(
             user_id=user.id,
             project_id=project.id,
-            start_utc=start_time,
-            end_utc=end_time,
+            start_time=start_time,
+            end_time=end_time,
             notes='Test entry',
             tags='test,work',
             source='manual'
@@ -142,19 +142,19 @@ def test_active_timer(app, user, project):
         timer = TimeEntry(
             user_id=user.id,
             project_id=project.id,
-            start_utc=datetime.utcnow(),
+            start_time=datetime.utcnow(),
             source='auto'
         )
         db.session.add(timer)
         db.session.commit()
         
         assert timer.is_active is True
-        assert timer.end_utc is None
+        assert timer.end_time is None
         
         # Stop timer
         timer.stop_timer()
         assert timer.is_active is False
-        assert timer.end_utc is not None
+        assert timer.end_time is not None
         assert timer.duration_seconds > 0
 
 def test_user_active_timer_property(app, user, project):
@@ -167,7 +167,7 @@ def test_user_active_timer_property(app, user, project):
         timer = TimeEntry(
             user_id=user.id,
             project_id=project.id,
-            start_utc=datetime.utcnow(),
+            start_time=datetime.utcnow(),
             source='auto'
         )
         db.session.add(timer)
@@ -185,15 +185,15 @@ def test_project_totals(app, user, project):
         entry1 = TimeEntry(
             user_id=user.id,
             project_id=project.id,
-            start_utc=start_time,
-            end_utc=start_time + timedelta(hours=2),
+            start_time=start_time,
+            end_time=start_time + timedelta(hours=2),
             source='manual'
         )
         entry2 = TimeEntry(
             user_id=user.id,
             project_id=project.id,
-            start_utc=start_time + timedelta(hours=3),
-            end_utc=start_time + timedelta(hours=5),
+            start_time=start_time + timedelta(hours=3),
+            end_time=start_time + timedelta(hours=5),
             source='manual'
         )
         db.session.add_all([entry1, entry2])

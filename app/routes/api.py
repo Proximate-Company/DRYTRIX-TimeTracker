@@ -25,7 +25,7 @@ def timer_status():
             'id': active_timer.id,
             'project_name': active_timer.project.name,
             'project_id': active_timer.project_id,
-            'start_time': active_timer.start_utc.isoformat(),
+            'start_time': active_timer.start_time.isoformat(),
             'current_duration': active_timer.current_duration_seconds,
             'duration_formatted': active_timer.duration_formatted
         }
@@ -56,10 +56,11 @@ def api_start_timer():
             return jsonify({'error': 'User already has an active timer'}), 400
     
     # Create new timer
+    from app.models.time_entry import local_now
     new_timer = TimeEntry(
         user_id=current_user.id,
         project_id=project_id,
-        start_utc=datetime.utcnow(),
+        start_time=local_now(),
         source='auto'
     )
     
@@ -71,7 +72,7 @@ def api_start_timer():
         'user_id': current_user.id,
         'timer_id': new_timer.id,
         'project_name': project.name,
-        'start_time': new_timer.start_utc.isoformat()
+        'start_time': new_timer.start_time.isoformat()
     })
     
     return jsonify({
@@ -114,7 +115,7 @@ def get_entries():
     user_id = request.args.get('user_id', type=int)
     project_id = request.args.get('project_id', type=int)
     
-    query = TimeEntry.query.filter(TimeEntry.end_utc.isnot(None))
+    query = TimeEntry.query.filter(TimeEntry.end_time.isnot(None))
     
     # Filter by user (if admin or own entries)
     if user_id and current_user.is_admin:
@@ -126,7 +127,7 @@ def get_entries():
     if project_id:
         query = query.filter(TimeEntry.project_id == project_id)
     
-    entries = query.order_by(TimeEntry.start_utc.desc()).paginate(
+    entries = query.order_by(TimeEntry.start_time.desc()).paginate(
         page=page,
         per_page=per_page,
         error_out=False

@@ -73,7 +73,7 @@ SECRET_KEY=your-secure-random-string-here
 ADMIN_USERNAMES=admin,manager
 
 # Optional
-TZ=Europe/Brussels
+TZ=Europe/Rome
 CURRENCY=EUR
 ROUNDING_MINUTES=1
 SINGLE_ACTIVE_TIMER=true

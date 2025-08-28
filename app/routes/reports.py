@@ -15,14 +15,14 @@ def reports():
     """Main reports page"""
     # Aggregate totals (scope by user unless admin)
     totals_query = db.session.query(db.func.sum(TimeEntry.duration_seconds)).filter(
-        TimeEntry.end_utc.isnot(None)
+        TimeEntry.end_time.isnot(None)
     )
     billable_query = db.session.query(db.func.sum(TimeEntry.duration_seconds)).filter(
-        TimeEntry.end_utc.isnot(None),
+        TimeEntry.end_time.isnot(None),
         TimeEntry.billable == True
     )
 
-    entries_query = TimeEntry.query.filter(TimeEntry.end_utc.isnot(None))
+    entries_query = TimeEntry.query.filter(TimeEntry.end_time.isnot(None))
 
     if not current_user.is_admin:
         totals_query = totals_query.filter(TimeEntry.user_id == current_user.id)
@@ -39,7 +39,7 @@ def reports():
         'total_users': User.query.filter_by(is_active=True).count(),
     }
 
-    recent_entries = entries_query.order_by(TimeEntry.start_utc.desc()).limit(10).all()
+    recent_entries = entries_query.order_by(TimeEntry.start_time.desc()).limit(10).all()
 
     return render_template('reports/index.html', summary=summary, recent_entries=recent_entries)
 
@@ -71,9 +71,9 @@ def project_report():
     
     # Get time entries
     query = TimeEntry.query.filter(
-        TimeEntry.end_utc.isnot(None),
-        TimeEntry.start_utc >= start_dt,
-        TimeEntry.start_utc <= end_dt
+        TimeEntry.end_time.isnot(None),
+        TimeEntry.start_time >= start_dt,
+        TimeEntry.start_time <= end_dt
     )
     
     if project_id:
@@ -82,7 +82,7 @@ def project_report():
     if user_id:
         query = query.filter(TimeEntry.user_id == user_id)
     
-    entries = query.order_by(TimeEntry.start_utc.desc()).all()
+    entries = query.order_by(TimeEntry.start_time.desc()).all()
 
     # Aggregate by project for template expectations
     projects_map = {}
@@ -179,9 +179,9 @@ def user_report():
     
     # Get time entries
     query = TimeEntry.query.filter(
-        TimeEntry.end_utc.isnot(None),
-        TimeEntry.start_utc >= start_dt,
-        TimeEntry.start_utc <= end_dt
+        TimeEntry.end_time.isnot(None),
+        TimeEntry.start_time >= start_dt,
+        TimeEntry.start_time <= end_dt
     )
     
     if user_id:
@@ -190,7 +190,7 @@ def user_report():
     if project_id:
         query = query.filter(TimeEntry.project_id == project_id)
     
-    entries = query.order_by(TimeEntry.start_utc.desc()).all()
+    entries = query.order_by(TimeEntry.start_time.desc()).all()
 
     # Calculate totals
     total_hours = sum(entry.duration_hours for entry in entries)
@@ -259,9 +259,9 @@ def export_csv():
     
     # Get time entries
     query = TimeEntry.query.filter(
-        TimeEntry.end_utc.isnot(None),
-        TimeEntry.start_utc >= start_dt,
-        TimeEntry.start_utc <= end_dt
+        TimeEntry.end_time.isnot(None),
+        TimeEntry.start_time >= start_dt,
+        TimeEntry.start_time <= end_dt
     )
     
     if user_id:
@@ -270,7 +270,7 @@ def export_csv():
     if project_id:
         query = query.filter(TimeEntry.project_id == project_id)
     
-    entries = query.order_by(TimeEntry.start_utc.desc()).all()
+    entries = query.order_by(TimeEntry.start_time.desc()).all()
     
     # Get settings for delimiter
     settings = Settings.get_settings()
@@ -294,8 +294,8 @@ def export_csv():
             entry.user.username,
             entry.project.name,
             entry.project.client,
-            entry.start_utc.isoformat(),
-            entry.end_utc.isoformat() if entry.end_utc else '',
+            entry.start_time.isoformat(),
+            entry.end_time.isoformat() if entry.end_time else '',
             entry.duration_hours,
             entry.duration_formatted,
             entry.notes or '',

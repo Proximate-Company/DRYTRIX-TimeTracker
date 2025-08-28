@@ -8,7 +8,7 @@ class Settings(db.Model):
     __tablename__ = 'settings'
     
     id = db.Column(db.Integer, primary_key=True)
-    timezone = db.Column(db.String(50), default='Europe/Brussels', nullable=False)
+    timezone = db.Column(db.String(50), default='Europe/Rome', nullable=False)
     currency = db.Column(db.String(3), default='EUR', nullable=False)
     rounding_minutes = db.Column(db.Integer, default=1, nullable=False)
     single_active_timer = db.Column(db.Boolean, default=True, nullable=False)

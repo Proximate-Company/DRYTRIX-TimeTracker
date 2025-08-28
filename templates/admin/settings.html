@@ -28,7 +28,127 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label" for="timezone">Timezone</label>
-                                <input type="text" class="form-control" id="timezone" name="timezone" value="{{ settings.timezone if settings else 'Europe/Brussels' }}" placeholder="e.g. Europe/Brussels">
+
+                                <select class="form-select" id="timezone" name="timezone">
+                                    <optgroup label="UTC">
+                                        <option value="UTC" {% if settings and settings.timezone == 'UTC' %}selected{% endif %}>UTC (UTC+0)</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="Europe">
+                                        <option value="Europe/London" {% if settings and settings.timezone == 'Europe/London' %}selected{% endif %}>Europe/London (UTC+0/+1)</option>
+                                        <option value="Europe/Paris" {% if settings and settings.timezone == 'Europe/Paris' %}selected{% endif %}>Europe/Paris (UTC+1/+2)</option>
+                                        <option value="Europe/Berlin" {% if settings and settings.timezone == 'Europe/Berlin' %}selected{% endif %}>Europe/Berlin (UTC+1/+2)</option>
+                                        <option value="Europe/Rome" {% if (settings and settings.timezone == 'Europe/Rome') or not settings %}selected{% endif %}>Europe/Rome (UTC+1/+2)</option>
+                                        <option value="Europe/Madrid" {% if settings and settings.timezone == 'Europe/Madrid' %}selected{% endif %}>Europe/Madrid (UTC+1/+2)</option>
+                                        <option value="Europe/Amsterdam" {% if settings and settings.timezone == 'Europe/Amsterdam' %}selected{% endif %}>Europe/Amsterdam (UTC+1/+2)</option>
+                                        <option value="Europe/Brussels" {% if settings and settings.timezone == 'Europe/Brussels' %}selected{% endif %}>Europe/Brussels (UTC+1/+2)</option>
+                                        <option value="Europe/Vienna" {% if settings and settings.timezone == 'Europe/Vienna' %}selected{% endif %}>Europe/Vienna (UTC+1/+2)</option>
+                                        <option value="Europe/Zurich" {% if settings and settings.timezone == 'Europe/Zurich' %}selected{% endif %}>Europe/Zurich (UTC+1/+2)</option>
+                                        <option value="Europe/Prague" {% if settings and settings.timezone == 'Europe/Prague' %}selected{% endif %}>Europe/Prague (UTC+1/+2)</option>
+                                        <option value="Europe/Warsaw" {% if settings and settings.timezone == 'Europe/Warsaw' %}selected{% endif %}>Europe/Warsaw (UTC+1/+2)</option>
+                                        <option value="Europe/Budapest" {% if settings and settings.timezone == 'Europe/Budapest' %}selected{% endif %}>Europe/Budapest (UTC+1/+2)</option>
+                                        <option value="Europe/Stockholm" {% if settings and settings.timezone == 'Europe/Stockholm' %}selected{% endif %}>Europe/Stockholm (UTC+1/+2)</option>
+                                        <option value="Europe/Oslo" {% if settings and settings.timezone == 'Europe/Oslo' %}selected{% endif %}>Europe/Oslo (UTC+1/+2)</option>
+                                        <option value="Europe/Copenhagen" {% if settings and settings.timezone == 'Europe/Copenhagen' %}selected{% endif %}>Europe/Copenhagen (UTC+1/+2)</option>
+                                        <option value="Europe/Helsinki" {% if settings and settings.timezone == 'Europe/Helsinki' %}selected{% endif %}>Europe/Helsinki (UTC+2/+3)</option>
+                                        <option value="Europe/Athens" {% if settings and settings.timezone == 'Europe/Athens' %}selected{% endif %}>Europe/Athens (UTC+2/+3)</option>
+                                        <option value="Europe/Istanbul" {% if settings and settings.timezone == 'Europe/Istanbul' %}selected{% endif %}>Europe/Istanbul (UTC+3)</option>
+                                        <option value="Europe/Moscow" {% if settings and settings.timezone == 'Europe/Moscow' %}selected{% endif %}>Europe/Moscow (UTC+3)</option>
+                                        <option value="Europe/Kiev" {% if settings and settings.timezone == 'Europe/Kiev' %}selected{% endif %}>Europe/Kiev (UTC+2/+3)</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="North America">
+                                        <option value="America/New_York" {% if settings and settings.timezone == 'America/New_York' %}selected{% endif %}>America/New_York (UTC-5/-4)</option>
+                                        <option value="America/Chicago" {% if settings and settings.timezone == 'America/Chicago' %}selected{% endif %}>America/Chicago (UTC-6/-5)</option>
+                                        <option value="America/Denver" {% if settings and settings.timezone == 'America/Denver' %}selected{% endif %}>America/Denver (UTC-7/-6)</option>
+                                        <option value="America/Los_Angeles" {% if settings and settings.timezone == 'America/Los_Angeles' %}selected{% endif %}>America/Los_Angeles (UTC-8/-7)</option>
+                                        <option value="America/Toronto" {% if settings and settings.timezone == 'America/Toronto' %}selected{% endif %}>America/Toronto (UTC-5/-4)</option>
+                                        <option value="America/Vancouver" {% if settings and settings.timezone == 'America/Vancouver' %}selected{% endif %}>America/Vancouver (UTC-8/-7)</option>
+                                        <option value="America/Mexico_City" {% if settings and settings.timezone == 'America/Mexico_City' %}selected{% endif %}>America/Mexico_City (UTC-6/-5)</option>
+                                        <option value="America/Phoenix" {% if settings and settings.timezone == 'America/Phoenix' %}selected{% endif %}>America/Phoenix (UTC-7)</option>
+                                        <option value="America/Anchorage" {% if settings and settings.timezone == 'America/Anchorage' %}selected{% endif %}>America/Anchorage (UTC-9/-8)</option>
+                                        <option value="America/Honolulu" {% if settings and settings.timezone == 'America/Honolulu' %}selected{% endif %}>America/Honolulu (UTC-10)</option>
+                                        <option value="America/Sao_Paulo" {% if settings and settings.timezone == 'America/Sao_Paulo' %}selected{% endif %}>America/Sao_Paulo (UTC-3/-2)</option>
+                                        <option value="America/Buenos_Aires" {% if settings and settings.timezone == 'America/Buenos_Aires' %}selected{% endif %}>America/Buenos_Aires (UTC-3)</option>
+                                        <option value="America/Santiago" {% if settings and settings.timezone == 'America/Santiago' %}selected{% endif %}>America/Santiago (UTC-3/-4)</option>
+                                        <option value="America/Lima" {% if settings and settings.timezone == 'America/Lima' %}selected{% endif %}>America/Lima (UTC-5)</option>
+                                        <option value="America/Bogota" {% if settings and settings.timezone == 'America/Bogota' %}selected{% endif %}>America/Bogota (UTC-5)</option>
+                                        <option value="America/Caracas" {% if settings and settings.timezone == 'America/Caracas' %}selected{% endif %}>America/Caracas (UTC-4)</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="Asia">
+                                        <option value="Asia/Tokyo" {% if settings and settings.timezone == 'Asia/Tokyo' %}selected{% endif %}>Asia/Tokyo (UTC+9)</option>
+                                        <option value="Asia/Shanghai" {% if settings and settings.timezone == 'Asia/Shanghai' %}selected{% endif %}>Asia/Shanghai (UTC+8)</option>
+                                        <option value="Asia/Seoul" {% if settings and settings.timezone == 'Asia/Seoul' %}selected{% endif %}>Asia/Seoul (UTC+9)</option>
+                                        <option value="Asia/Hong_Kong" {% if settings and settings.timezone == 'Asia/Hong_Kong' %}selected{% endif %}>Asia/Hong_Kong (UTC+8)</option>
+                                        <option value="Asia/Singapore" {% if settings and settings.timezone == 'Asia/Singapore' %}selected{% endif %}>Asia/Singapore (UTC+8)</option>
+                                        <option value="Asia/Bangkok" {% if settings and settings.timezone == 'Asia/Bangkok' %}selected{% endif %}>Asia/Bangkok (UTC+7)</option>
+                                        <option value="Asia/Ho_Chi_Minh" {% if settings and settings.timezone == 'Asia/Ho_Chi_Minh' %}selected{% endif %}>Asia/Ho_Chi_Minh (UTC+7)</option>
+                                        <option value="Asia/Jakarta" {% if settings and settings.timezone == 'Asia/Jakarta' %}selected{% endif %}>Asia/Jakarta (UTC+7)</option>
+                                        <option value="Asia/Manila" {% if settings and settings.timezone == 'Asia/Manila' %}selected{% endif %}>Asia/Manila (UTC+8)</option>
+                                        <option value="Asia/Kolkata" {% if settings and settings.timezone == 'Asia/Kolkata' %}selected{% endif %}>Asia/Kolkata (UTC+5:30)</option>
+                                        <option value="Asia/Dhaka" {% if settings and settings.timezone == 'Asia/Dhaka' %}selected{% endif %}>Asia/Dhaka (UTC+6)</option>
+                                        <option value="Asia/Kathmandu" {% if settings and settings.timezone == 'Asia/Kathmandu' %}selected{% endif %}>Asia/Kathmandu (UTC+5:45)</option>
+                                        <option value="Asia/Tashkent" {% if settings and settings.timezone == 'Asia/Tashkent' %}selected{% endif %}>Asia/Tashkent (UTC+5)</option>
+                                        <option value="Asia/Dubai" {% if settings and settings.timezone == 'Asia/Dubai' %}selected{% endif %}>Asia/Dubai (UTC+4)</option>
+                                        <option value="Asia/Tehran" {% if settings and settings.timezone == 'Asia/Tehran' %}selected{% endif %}>Asia/Tehran (UTC+3:30/+4:30)</option>
+                                        <option value="Asia/Jerusalem" {% if settings and settings.timezone == 'Asia/Jerusalem' %}selected{% endif %}>Asia/Jerusalem (UTC+2/+3)</option>
+                                        <option value="Asia/Riyadh" {% if settings and settings.timezone == 'Asia/Riyadh' %}selected{% endif %}>Asia/Riyadh (UTC+3)</option>
+                                        <option value="Asia/Baghdad" {% if settings and settings.timezone == 'Asia/Baghdad' %}selected{% endif %}>Asia/Baghdad (UTC+3)</option>
+                                        <option value="Asia/Kabul" {% if settings and settings.timezone == 'Asia/Kabul' %}selected{% endif %}>Asia/Kabul (UTC+4:30)</option>
+                                        <option value="Asia/Almaty" {% if settings and settings.timezone == 'Asia/Almaty' %}selected{% endif %}>Asia/Almaty (UTC+6)</option>
+                                        <option value="Asia/Novosibirsk" {% if settings and settings.timezone == 'Asia/Novosibirsk' %}selected{% endif %}>Asia/Novosibirsk (UTC+7)</option>
+                                        <option value="Asia/Vladivostok" {% if settings and settings.timezone == 'Asia/Vladivostok' %}selected{% endif %}>Asia/Vladivostok (UTC+10)</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="Australia & Pacific">
+                                        <option value="Australia/Sydney" {% if settings and settings.timezone == 'Australia/Sydney' %}selected{% endif %}>Australia/Sydney (UTC+10/+11)</option>
+                                        <option value="Australia/Melbourne" {% if settings and settings.timezone == 'Australia/Melbourne' %}selected{% endif %}>Australia/Melbourne (UTC+10/+11)</option>
+                                        <option value="Australia/Brisbane" {% if settings and settings.timezone == 'Australia/Brisbane' %}selected{% endif %}>Australia/Brisbane (UTC+10)</option>
+                                        <option value="Australia/Perth" {% if settings and settings.timezone == 'Australia/Perth' %}selected{% endif %}>Australia/Perth (UTC+8)</option>
+                                        <option value="Australia/Adelaide" {% if settings and settings.timezone == 'Australia/Adelaide' %}selected{% endif %}>Australia/Adelaide (UTC+9:30/+10:30)</option>
+                                        <option value="Australia/Darwin" {% if settings and settings.timezone == 'Australia/Darwin' %}selected{% endif %}>Australia/Darwin (UTC+9:30)</option>
+                                        <option value="Pacific/Auckland" {% if settings and settings.timezone == 'Pacific/Auckland' %}selected{% endif %}>Pacific/Auckland (UTC+12/+13)</option>
+                                        <option value="Pacific/Fiji" {% if settings and settings.timezone == 'Pacific/Fiji' %}selected{% endif %}>Pacific/Fiji (UTC+12)</option>
+                                        <option value="Pacific/Guam" {% if settings and settings.timezone == 'Pacific/Guam' %}selected{% endif %}>Pacific/Guam (UTC+10)</option>
+                                        <option value="Pacific/Honolulu" {% if settings and settings.timezone == 'Pacific/Honolulu' %}selected{% endif %}>Pacific/Honolulu (UTC-10)</option>
+                                        <option value="Pacific/Tahiti" {% if settings and settings.timezone == 'Pacific/Tahiti' %}selected{% endif %}>Pacific/Tahiti (UTC-10)</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="Africa">
+                                        <option value="Africa/Cairo" {% if settings and settings.timezone == 'Africa/Cairo' %}selected{% endif %}>Africa/Cairo (UTC+2)</option>
+                                        <option value="Africa/Johannesburg" {% if settings and settings.timezone == 'Africa/Johannesburg' %}selected{% endif %}>Africa/Johannesburg (UTC+2)</option>
+                                        <option value="Africa/Lagos" {% if settings and settings.timezone == 'Africa/Lagos' %}selected{% endif %}>Africa/Lagos (UTC+1)</option>
+                                        <option value="Africa/Nairobi" {% if settings and settings.timezone == 'Africa/Nairobi' %}selected{% endif %}>Africa/Nairobi (UTC+3)</option>
+                                        <option value="Africa/Casablanca" {% if settings and settings.timezone == 'Africa/Casablanca' %}selected{% endif %}>Africa/Casablanca (UTC+0/+1)</option>
+                                        <option value="Africa/Algiers" {% if settings and settings.timezone == 'Africa/Algiers' %}selected{% endif %}>Africa/Algiers (UTC+1)</option>
+                                        <option value="Africa/Tunis" {% if settings and settings.timezone == 'Africa/Tunis' %}selected{% endif %}>Africa/Tunis (UTC+1)</option>
+                                        <option value="Africa/Dar_es_Salaam" {% if settings and settings.timezone == 'Africa/Dar_es_Salaam' %}selected{% endif %}>Africa/Dar_es_Salaam (UTC+3)</option>
+                                        <option value="Africa/Addis_Ababa" {% if settings and settings.timezone == 'Africa/Addis_Ababa' %}selected{% endif %}>Africa/Addis_Ababa (UTC+3)</option>
+                                        <option value="Africa/Khartoum" {% if settings and settings.timezone == 'Africa/Khartoum' %}selected{% endif %}>Africa/Khartoum (UTC+2)</option>
+                                        <option value="Africa/Luanda" {% if settings and settings.timezone == 'Africa/Luanda' %}selected{% endif %}>Africa/Luanda (UTC+1)</option>
+                                        <option value="Africa/Kinshasa" {% if settings and settings.timezone == 'Africa/Kinshasa' %}selected{% endif %}>Africa/Kinshasa (UTC+1)</option>
+                                        <option value="Africa/Harare" {% if settings and settings.timezone == 'Africa/Harare' %}selected{% endif %}>Africa/Harare (UTC+2)</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="Atlantic & Indian Ocean">
+                                        <option value="Atlantic/Reykjavik" {% if settings and settings.timezone == 'Atlantic/Reykjavik' %}selected{% endif %}>Atlantic/Reykjavik (UTC+0)</option>
+                                        <option value="Atlantic/Azores" {% if settings and settings.timezone == 'Atlantic/Azores' %}selected{% endif %}>Atlantic/Azores (UTC-1/+0)</option>
+                                        <option value="Atlantic/Canary" {% if settings and settings.timezone == 'Atlantic/Canary' %}selected{% endif %}>Atlantic/Canary (UTC+0/+1)</option>
+                                        <option value="Atlantic/Cape_Verde" {% if settings and settings.timezone == 'Atlantic/Cape_Verde' %}selected{% endif %}>Atlantic/Cape_Verde (UTC-1)</option>
+                                        <option value="Indian/Mauritius" {% if settings and settings.timezone == 'Indian/Mauritius' %}selected{% endif %}>Indian/Mauritius (UTC+4)</option>
+                                        <option value="Indian/Reunion" {% if settings and settings.timezone == 'Indian/Reunion' %}selected{% endif %}>Indian/Reunion (UTC+4)</option>
+                                        <option value="Indian/Maldives" {% if settings and settings.timezone == 'Indian/Maldives' %}selected{% endif %}>Indian/Maldives (UTC+5)</option>
+                                        <option value="Indian/Chagos" {% if settings and settings.timezone == 'Indian/Chagos' %}selected{% endif %}>Indian/Chagos (UTC+6)</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="Arctic & Antarctic">
+                                        <option value="Arctic/Longyearbyen" {% if settings and settings.timezone == 'Arctic/Longyearbyen' %}selected{% endif %}>Arctic/Longyearbyen (UTC+1/+2)</option>
+                                        <option value="Antarctica/McMurdo" {% if settings and settings.timezone == 'Antarctica/McMurdo' %}selected{% endif %}>Antarctica/McMurdo (UTC+12/+13)</option>
+                                        <option value="Antarctica/Palmer" {% if settings and settings.timezone == 'Antarctica/Palmer' %}selected{% endif %}>Antarctica/Palmer (UTC-3)</option>
+                                    </optgroup>
+                                </select>
+                                <small class="form-text text-muted">Select your local timezone for proper time display. Times shown include DST adjustments.</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" for="currency">Currency</label>
@@ -80,6 +200,39 @@
                                     <i class="fas fa-save"></i> Save Settings
                                 </button>
                             </div>
+                            
+                            <div class="col-12 mt-3">
+                                <div class="alert alert-info">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <i class="fas fa-clock me-2"></i>
+                                            <strong>Current Time:</strong> 
+                                            <span id="current-time-display" class="h5 mb-0 ms-2">Loading...</span>
+                                        </div>
+                                        <div class="col-md-4 text-md-end">
+                                            <small class="text-muted">
+                                                in <strong>{{ settings.timezone if settings else 'Europe/Rome' }}</strong> timezone
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    This time updates every second and shows the current time in your selected timezone
+                                                </small>
+                                            </div>
+                                            <div class="col-md-6 text-md-end">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-globe me-1"></i>
+                                                    Current offset: <span id="timezone-offset">--</span>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -103,6 +256,62 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timezoneSelect = document.getElementById('timezone');
+    const currentTimeDisplay = document.getElementById('current-time-display');
+    
+    function updateCurrentTime() {
+        const now = new Date();
+        const timezone = timezoneSelect.value;
+        
+        if (!timezone) {
+            currentTimeDisplay.textContent = 'No timezone selected';
+            document.getElementById('timezone-offset').textContent = '--';
+            return;
+        }
+        
+        try {
+            // Format time in the selected timezone
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: timezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            
+            const localTime = formatter.format(now);
+            currentTimeDisplay.textContent = localTime;
+            
+            // Calculate and display timezone offset
+            const utcTime = new Date(now.toLocaleString("en-US", {timeZone: "UTC"}));
+            const localTimeObj = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
+            const offset = (localTimeObj - utcTime) / (1000 * 60 * 60);
+            
+            const offsetText = offset >= 0 ? `UTC+${offset.toFixed(1)}` : `UTC${offset.toFixed(1)}`;
+            document.getElementById('timezone-offset').textContent = offsetText;
+            
+        } catch (e) {
+            currentTimeDisplay.textContent = 'Invalid timezone';
+            document.getElementById('timezone-offset').textContent = '--';
+        }
+    }
+    
+    // Update time when timezone changes
+    timezoneSelect.addEventListener('change', updateCurrentTime);
+    
+    // Update time every second
+    setInterval(updateCurrentTime, 1000);
+    
+    // Initial update with a small delay to ensure DOM is ready
+    setTimeout(updateCurrentTime, 100);
+});
+</script>
 {% endblock %}
 
 

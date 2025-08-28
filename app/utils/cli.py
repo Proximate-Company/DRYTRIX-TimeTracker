@@ -86,7 +86,7 @@ def register_cli_commands(app):
         
         cutoff_date = datetime.utcnow() - timedelta(days=days)
         old_entries = TimeEntry.query.filter(
-            TimeEntry.end_utc < cutoff_date
+            TimeEntry.end_time < cutoff_date
         ).all()
         
         if not old_entries:
@@ -111,8 +111,8 @@ def register_cli_commands(app):
         total_projects = Project.query.count()
         active_projects = Project.query.filter_by(status='active').count()
         total_entries = TimeEntry.query.count()
-        completed_entries = TimeEntry.query.filter(TimeEntry.end_utc.isnot(None)).count()
-        active_timers = TimeEntry.query.filter_by(end_utc=None).count()
+        completed_entries = TimeEntry.query.filter(TimeEntry.end_time.isnot(None)).count()
+        active_timers = TimeEntry.query.filter_by(end_time=None).count()
         
         click.echo("Database Statistics:")
         click.echo(f"  Users: {total_users} (active: {active_users})")
@@ -123,7 +123,7 @@ def register_cli_commands(app):
         total_hours = db.session.query(
             db.func.sum(TimeEntry.duration_seconds)
         ).filter(
-            TimeEntry.end_utc.isnot(None)
+            TimeEntry.end_time.isnot(None)
         ).scalar() or 0
         
         total_hours = round(total_hours / 3600, 2)

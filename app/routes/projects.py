@@ -111,9 +111,9 @@ def view_project(project_id):
     # Get time entries for this project
     page = request.args.get('page', 1, type=int)
     entries_pagination = project.time_entries.filter(
-        TimeEntry.end_utc.isnot(None)
+        TimeEntry.end_time.isnot(None)
     ).order_by(
-        TimeEntry.start_utc.desc()
+        TimeEntry.start_time.desc()
     ).paginate(
         page=page,
         per_page=50,
