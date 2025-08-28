@@ -172,7 +172,7 @@ DATABASE_URL=postgresql://user:password@host:port/database
 
 ### Optional for All Images
 ```bash
-TZ=Europe/Brussels
+TZ=Europe/Rome
 CURRENCY=EUR
 ROUNDING_MINUTES=1
 SINGLE_ACTIVE_TIMER=true

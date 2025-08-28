@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile.simple
     container_name: timetracker-simple
     environment:
-      - TZ=${TZ:-Europe/Brussels}
+      - TZ=${TZ:-Europe/Rome}
       - CURRENCY=${CURRENCY:-EUR}
       - ROUNDING_MINUTES=${ROUNDING_MINUTES:-1}
       - SINGLE_ACTIVE_TIMER=${SINGLE_ACTIVE_TIMER:-true}

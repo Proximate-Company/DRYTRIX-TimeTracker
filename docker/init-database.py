@@ -8,6 +8,7 @@ and initializes it if needed.
 import os
 import sys
 import time
+import traceback
 from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
@@ -54,6 +55,7 @@ def check_database_initialization(engine):
             
     except Exception as e:
         print(f"Error checking database initialization: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
         return False
 
 def initialize_database(engine):
@@ -63,20 +65,35 @@ def initialize_database(engine):
     try:
         # Set environment variables for Flask
         os.environ['FLASK_APP'] = 'app'
+        os.environ['FLASK_ENV'] = 'production'
+        
+        print("Importing Flask app...")
         
         # Import Flask app and initialize database
         from app import create_app, db
         from app.models import User, Project, TimeEntry, Settings
         
+        print("Creating Flask app...")
         app = create_app()
         
+        print("Setting up app context...")
         with app.app_context():
+            print("Creating all tables...")
             # Create all tables
             db.create_all()
             
+            print("Verifying tables were created...")
+            # Verify tables were created
+            inspector = inspect(engine)
+            existing_tables = inspector.get_table_names()
+            print(f"Tables after creation: {existing_tables}")
+            
             # Create default admin user if it doesn't exist
             admin_username = os.getenv('ADMIN_USERNAMES', 'admin').split(',')[0]
+            print(f"Checking for admin user: {admin_username}")
+            
             if not User.query.filter_by(username=admin_username).first():
+                print("Creating admin user...")
                 admin_user = User(
                     username=admin_username,
                     role='admin'
@@ -85,16 +102,24 @@ def initialize_database(engine):
                 db.session.add(admin_user)
                 db.session.commit()
                 print(f"Created default admin user: {admin_username}")
+            else:
+                print(f"Admin user {admin_username} already exists")
             
             # Create default settings if they don't exist
+            print("Checking for default settings...")
             if not Settings.query.first():
+                print("Creating default settings...")
                 settings = Settings()
                 db.session.add(settings)
                 db.session.commit()
                 print("Created default settings")
+            else:
+                print("Default settings already exist")
             
             # Create default project if it doesn't exist
+            print("Checking for default project...")
             if not Project.query.first():
+                print("Creating default project...")
                 project = Project(
                     name='General',
                     client='Default Client',
@@ -105,12 +130,15 @@ def initialize_database(engine):
                 db.session.add(project)
                 db.session.commit()
                 print("Created default project")
+            else:
+                print("Default project already exists")
             
             print("Database initialized successfully")
             return True
             
     except Exception as e:
         print(f"Error initializing database: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
         return False
 
 def main():
@@ -121,6 +149,8 @@ def main():
         print("No PostgreSQL database configured, skipping initialization")
         return
     
+    print(f"Database URL: {url}")
+    
     # Wait for database to be ready
     engine = wait_for_database(url)
     
@@ -129,6 +159,12 @@ def main():
         # Initialize database
         if initialize_database(engine):
             print("Database initialization completed successfully")
+            # Verify initialization worked
+            if check_database_initialization(engine):
+                print("Database verification successful")
+            else:
+                print("Database verification failed - tables still missing")
+                sys.exit(1)
         else:
             print("Database initialization failed")
             sys.exit(1)

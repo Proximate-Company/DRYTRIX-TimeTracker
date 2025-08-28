@@ -412,10 +412,10 @@ function loadRecentEntries() {
                             ${entry.notes ? `<small class="text-muted d-block">${entry.notes}</small>` : ''}
                             <small class="text-muted">
                                 <i class="fas fa-calendar me-1"></i>
-                                ${new Date(entry.start_utc).toLocaleDateString()} 
+                                ${new Date(entry.start_time).toLocaleDateString()} 
                                 <i class="fas fa-clock ms-2 me-1"></i>
-                                ${new Date(entry.start_utc).toLocaleTimeString()} - 
-                                ${entry.end_utc ? new Date(entry.end_utc).toLocaleTimeString() : 'Running'}
+                                ${new Date(entry.start_time).toLocaleTimeString()} - 
+                                ${entry.end_time ? new Date(entry.end_time).toLocaleTimeString() : 'Running'}
                             </small>
                         </div>
                     </div>
@@ -519,16 +519,16 @@ function editEntry(entryId) {
         .then(data => {
             document.getElementById('editEntryId').value = entryId;
             document.getElementById('editProjectSelect').value = data.project_id;
-            document.getElementById('editStartTime').value = data.start_utc.slice(0, 16);
-            document.getElementById('editEndTime').value = data.end_utc ? data.end_utc.slice(0, 16) : '';
+            document.getElementById('editStartTime').value = data.start_time.slice(0, 16);
+            document.getElementById('editEndTime').value = data.end_time ? data.end_time.slice(0, 16) : '';
             document.getElementById('editNotes').value = data.notes || '';
             document.getElementById('editTags').value = data.tags || '';
             document.getElementById('editBillable').checked = data.billable;
             
             // Calculate and display duration
-            if (data.end_utc) {
-                const start = new Date(data.start_utc);
-                const end = new Date(data.end_utc);
+            if (data.end_time) {
+                const start = new Date(data.start_time);
+                const end = new Date(data.end_time);
                 const duration = Math.floor((end - start) / 1000);
                 const hours = Math.floor(duration / 3600);
                 const minutes = Math.floor((duration % 3600) / 60);

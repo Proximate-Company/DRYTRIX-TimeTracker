@@ -93,12 +93,12 @@ def search():
     # Search in time entries
     entries = TimeEntry.query.filter(
         TimeEntry.user_id == current_user.id,
-        TimeEntry.end_utc.isnot(None),
+        TimeEntry.end_time.isnot(None),
         db.or_(
             TimeEntry.notes.contains(query),
             TimeEntry.tags.contains(query)
         )
-    ).order_by(TimeEntry.start_utc.desc()).paginate(
+    ).order_by(TimeEntry.start_time.desc()).paginate(
         page=page,
         per_page=20,
         error_out=False

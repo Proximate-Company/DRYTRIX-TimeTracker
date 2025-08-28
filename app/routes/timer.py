@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app import db, socketio
 from app.models import User, Project, TimeEntry, Settings
+from app.utils.timezone import parse_local_datetime
 from datetime import datetime
 import json
 
@@ -36,10 +37,11 @@ def start_timer():
             return redirect(url_for('main.dashboard'))
     
     # Create new timer
+    from app.models.time_entry import local_now
     new_timer = TimeEntry(
         user_id=current_user.id,
         project_id=project_id,
-        start_utc=datetime.utcnow(),
+        start_time=local_now(),
         source='auto'
     )
     
@@ -51,7 +53,7 @@ def start_timer():
         'user_id': current_user.id,
         'timer_id': new_timer.id,
         'project_name': project.name,
-        'start_time': new_timer.start_utc.isoformat()
+        'start_time': new_timer.start_time.isoformat()
     })
     
     flash(f'Timer started for {project.name}', 'success')
@@ -97,7 +99,7 @@ def timer_status():
         'timer': {
             'id': active_timer.id,
             'project_name': active_timer.project.name,
-            'start_time': active_timer.start_utc.isoformat(),
+            'start_time': active_timer.start_time.isoformat(),
             'current_duration': active_timer.current_duration_seconds,
             'duration_formatted': active_timer.duration_formatted
         }
@@ -176,16 +178,16 @@ def manual_entry():
             flash('Invalid project selected', 'error')
             return render_template('timer/manual_entry.html', projects=active_projects)
         
-        # Parse datetime
+        # Parse datetime with timezone awareness
         try:
-            start_utc = datetime.strptime(f'{start_date} {start_time}', '%Y-%m-%d %H:%M')
-            end_utc = datetime.strptime(f'{end_date} {end_time}', '%Y-%m-%d %H:%M')
+            start_time_parsed = parse_local_datetime(start_date, start_time)
+            end_time_parsed = parse_local_datetime(end_date, end_time)
         except ValueError:
             flash('Invalid date/time format', 'error')
             return render_template('timer/manual_entry.html', projects=active_projects)
         
         # Validate time range
-        if end_utc <= start_utc:
+        if end_time_parsed <= start_time_parsed:
             flash('End time must be after start time', 'error')
             return render_template('timer/manual_entry.html', projects=active_projects)
         
@@ -193,8 +195,8 @@ def manual_entry():
         entry = TimeEntry(
             user_id=current_user.id,
             project_id=project_id,
-            start_utc=start_utc,
-            end_utc=end_utc,
+            start_time=start_time_parsed,
+            end_time=end_time_parsed,
             notes=notes,
             tags=tags,
             source='manual',

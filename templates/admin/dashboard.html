@@ -136,12 +136,12 @@
                                             {{ entry.project.name }}
                                         </a>
                                     </td>
-                                    <td>{{ entry.start_utc.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ entry.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
                                     <td>
                                         <strong>{{ entry.duration_formatted }}</strong>
                                     </td>
                                     <td>
-                                        {% if entry.end_utc %}
+                                        {% if entry.end_time %}
                                         <span class="badge bg-success">Completed</span>
                                         {% else %}
                                         <span class="badge bg-warning">Running</span>

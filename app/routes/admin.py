@@ -28,12 +28,12 @@ def admin_dashboard():
     active_users = User.query.filter_by(is_active=True).count()
     total_projects = Project.query.count()
     active_projects = Project.query.filter_by(status='active').count()
-    total_entries = TimeEntry.query.filter(TimeEntry.end_utc.isnot(None)).count()
-    active_timers = TimeEntry.query.filter_by(end_utc=None).count()
+    total_entries = TimeEntry.query.filter(TimeEntry.end_time.isnot(None)).count()
+    active_timers = TimeEntry.query.filter_by(end_time=None).count()
     
     # Get recent activity
     recent_entries = TimeEntry.query.filter(
-        TimeEntry.end_utc.isnot(None)
+        TimeEntry.end_time.isnot(None)
     ).order_by(
         TimeEntry.created_at.desc()
     ).limit(10).all()
@@ -163,8 +163,17 @@ def settings():
     settings_obj = Settings.get_settings()
     
     if request.method == 'POST':
+        # Validate timezone
+        timezone = request.form.get('timezone', 'Europe/Rome')
+        try:
+            import pytz
+            pytz.timezone(timezone)  # This will raise an exception if timezone is invalid
+        except pytz.exceptions.UnknownTimeZoneError:
+            flash(f'Invalid timezone: {timezone}', 'error')
+            return render_template('admin/settings.html', settings=settings_obj)
+        
         # Update settings
-        settings_obj.timezone = request.form.get('timezone', 'Europe/Brussels')
+        settings_obj.timezone = timezone
         settings_obj.currency = request.form.get('currency', 'EUR')
         settings_obj.rounding_minutes = int(request.form.get('rounding_minutes', 1))
         settings_obj.single_active_timer = request.form.get('single_active_timer') == 'on'
@@ -199,7 +208,7 @@ def system_info():
     total_users = User.query.count()
     total_projects = Project.query.count()
     total_entries = TimeEntry.query.count()
-    active_timers = TimeEntry.query.filter_by(end_utc=None).count()
+    active_timers = TimeEntry.query.filter_by(end_time=None).count()
     
     # Get database size
     db_size_bytes = 0

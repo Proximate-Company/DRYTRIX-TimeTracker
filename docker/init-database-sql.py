@@ -1,0 +1,286 @@
+#!/usr/bin/env python3
+"""
+Database initialization script for TimeTracker using raw SQL
+This script creates tables and initial data without depending on Flask models
+"""
+
+import os
+import sys
+import time
+from sqlalchemy import create_engine, text, inspect
+
+def wait_for_database(url, max_attempts=30, delay=2):
+    """Wait for database to be ready"""
+    print(f"Waiting for database to be ready...")
+    
+    for attempt in range(max_attempts):
+        try:
+            engine = create_engine(url, pool_pre_ping=True)
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            print("Database connection established successfully")
+            return engine
+        except Exception as e:
+            print(f"Waiting for database... (attempt {attempt+1}/{max_attempts}): {e}")
+            if attempt < max_attempts - 1:
+                time.sleep(delay)
+            else:
+                print("Database not ready after waiting, exiting...")
+                sys.exit(1)
+    
+    return None
+
+def create_tables_sql(engine):
+    """Create tables using raw SQL"""
+    print("Creating tables using SQL...")
+    
+    # SQL statements to create tables
+    create_tables_sql = """
+    -- Create users table
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(80) UNIQUE NOT NULL,
+        role VARCHAR(20) DEFAULT 'user' NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        last_login TIMESTAMP,
+        is_active BOOLEAN DEFAULT true NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    );
+
+    -- Create projects table
+    CREATE TABLE IF NOT EXISTS projects (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        client VARCHAR(200) NOT NULL,
+        description TEXT,
+        billable BOOLEAN DEFAULT true NOT NULL,
+        hourly_rate NUMERIC(9, 2),
+        billing_ref VARCHAR(100),
+        status VARCHAR(20) DEFAULT 'active' NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create time_entries table
+    CREATE TABLE IF NOT EXISTS time_entries (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        start_time TIMESTAMP NOT NULL,
+        end_time TIMESTAMP,
+        duration_seconds INTEGER,
+        notes TEXT,
+        tags VARCHAR(500),
+        source VARCHAR(20) DEFAULT 'manual' NOT NULL,
+        billable BOOLEAN DEFAULT true NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create settings table
+    CREATE TABLE IF NOT EXISTS settings (
+        id SERIAL PRIMARY KEY,
+        timezone VARCHAR(50) DEFAULT 'Europe/Rome' NOT NULL,
+        currency VARCHAR(3) DEFAULT 'EUR' NOT NULL,
+        rounding_minutes INTEGER DEFAULT 1 NOT NULL,
+        single_active_timer BOOLEAN DEFAULT true NOT NULL,
+        allow_self_register BOOLEAN DEFAULT true NOT NULL,
+        idle_timeout_minutes INTEGER DEFAULT 30 NOT NULL,
+        backup_retention_days INTEGER DEFAULT 30 NOT NULL,
+        backup_time VARCHAR(5) DEFAULT '02:00' NOT NULL,
+        export_delimiter VARCHAR(1) DEFAULT ',' NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    );
+    """
+    
+    try:
+        with engine.connect() as conn:
+            # Execute the SQL statements
+            conn.execute(text(create_tables_sql))
+            conn.commit()
+        
+        print("✓ Tables created successfully")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Error creating tables: {e}")
+        return False
+
+def create_indexes(engine):
+    """Create indexes for better performance"""
+    print("Creating indexes...")
+    
+    indexes_sql = """
+    CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id);
+    CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries(project_id);
+    CREATE INDEX IF NOT EXISTS idx_time_entries_start_time ON time_entries(start_time);
+    """
+    
+    try:
+        with engine.connect() as conn:
+            conn.execute(text(indexes_sql))
+            conn.commit()
+        
+        print("✓ Indexes created successfully")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Error creating indexes: {e}")
+        return False
+
+def create_triggers(engine):
+    """Create triggers for automatic timestamp updates"""
+    print("Creating triggers...")
+    
+    # Execute each statement separately to avoid semicolon splitting issues
+    try:
+        with engine.connect() as conn:
+            # Create function
+            conn.execute(text("""
+                CREATE OR REPLACE FUNCTION update_updated_at_column()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    NEW.updated_at = CURRENT_TIMESTAMP;
+                    RETURN NEW;
+                END;
+                $$ language 'plpgsql';
+            """))
+            
+            # Create triggers
+            conn.execute(text("""
+                DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+                CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            """))
+            
+            conn.execute(text("""
+                DROP TRIGGER IF EXISTS update_projects_updated_at ON projects;
+                CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            """))
+            
+            conn.execute(text("""
+                DROP TRIGGER IF EXISTS update_time_entries_updated_at ON time_entries;
+                CREATE TRIGGER update_time_entries_updated_at BEFORE UPDATE ON time_entries FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            """))
+            
+            conn.execute(text("""
+                DROP TRIGGER IF EXISTS update_settings_updated_at ON settings;
+                CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            """))
+            
+            conn.commit()
+        
+        print("✓ Triggers created successfully")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Error creating triggers: {e}")
+        return False
+
+def insert_initial_data(engine):
+    """Insert initial data"""
+    print("Inserting initial data...")
+    
+    # Get admin username from environment
+    admin_username = os.getenv('ADMIN_USERNAMES', 'admin').split(',')[0]
+    
+    insert_sql = f"""
+    -- Insert default admin user
+    INSERT INTO users (username, role, is_active) 
+    VALUES ('{admin_username}', 'admin', true)
+    ON CONFLICT (username) DO NOTHING;
+
+    -- Insert default project
+    INSERT INTO projects (name, client, description, billable, status) 
+    VALUES ('General', 'Default Client', 'Default project for general tasks', true, 'active')
+    ON CONFLICT DO NOTHING;
+
+    -- Insert default settings
+    INSERT INTO settings (timezone, currency, rounding_minutes, single_active_timer, allow_self_register, idle_timeout_minutes, backup_retention_days, backup_time, export_delimiter) 
+    VALUES ('Europe/Rome', 'EUR', 1, true, true, 30, 30, '02:00', ',')
+    ON CONFLICT (id) DO NOTHING;
+    """
+    
+    try:
+        with engine.connect() as conn:
+            conn.execute(text(insert_sql))
+            conn.commit()
+        
+        print("✓ Initial data inserted successfully")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Error inserting initial data: {e}")
+        return False
+
+def verify_tables(engine):
+    """Verify that all required tables exist"""
+    print("Verifying tables...")
+    
+    try:
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+        required_tables = ['users', 'projects', 'time_entries', 'settings']
+        
+        missing_tables = [table for table in required_tables if table not in existing_tables]
+        
+        if missing_tables:
+            print(f"✗ Missing tables: {missing_tables}")
+            return False
+        else:
+            print("✓ All required tables exist")
+            return True
+            
+    except Exception as e:
+        print(f"✗ Error verifying tables: {e}")
+        return False
+
+def main():
+    """Main function"""
+    url = os.getenv("DATABASE_URL", "")
+    
+    if not url.startswith("postgresql"):
+        print("No PostgreSQL database configured, skipping initialization")
+        return
+    
+    print(f"Database URL: {url}")
+    
+    # Wait for database to be ready
+    engine = wait_for_database(url)
+    
+    # Check if database is initialized
+    if verify_tables(engine):
+        print("Database already initialized, no action needed")
+        return
+    
+    print("Database not initialized, starting initialization...")
+    
+    # Create tables
+    if not create_tables_sql(engine):
+        print("Failed to create tables")
+        sys.exit(1)
+    
+    # Create indexes
+    if not create_indexes(engine):
+        print("Failed to create indexes")
+        sys.exit(1)
+    
+    # Create triggers
+    if not create_triggers(engine):
+        print("Failed to create triggers")
+        sys.exit(1)
+    
+    # Insert initial data
+    if not insert_initial_data(engine):
+        print("Failed to insert initial data")
+        sys.exit(1)
+    
+    # Verify everything was created
+    if verify_tables(engine):
+        print("✓ Database initialization completed successfully")
+    else:
+        print("✗ Database initialization failed - tables still missing")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

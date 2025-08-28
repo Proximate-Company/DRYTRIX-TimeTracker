@@ -61,7 +61,7 @@
                                     {{ active_timer.duration_formatted }}
                                 </div>
                                 <small class="text-muted">
-                                    Started at {{ active_timer.start_utc.strftime('%H:%M') }}
+                                    Started at {{ active_timer.start_time.strftime('%H:%M') }}
                                 </small>
                             </div>
                         </div>
@@ -254,8 +254,8 @@
                                 </td>
                                 <td>
                                     <div class="d-flex flex-column">
-                                        <span class="fw-semibold">{{ entry.start_utc.strftime('%b %d') }}</span>
-                                        <small class="text-muted">{{ entry.start_utc.strftime('%H:%M') }}</small>
+                                        <span class="fw-semibold">{{ entry.start_time.strftime('%b %d') }}</span>
+                                        <small class="text-muted">{{ entry.start_time.strftime('%H:%M') }}</small>
                                     </div>
                                 </td>
                                 <td>
