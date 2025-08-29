@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#3b82f6">
     <title>{% block title %}{{ app_name }}{% endblock %}</title>
     
     <!-- Favicon -->
@@ -15,6 +19,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
     <style>
         :root {
             --primary-color: #3b82f6;
@@ -45,6 +50,8 @@
         
         html, body {
             height: 100%;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
         
         body {
@@ -56,14 +63,17 @@
             display: flex;
             flex-direction: column;
             font-size: 0.95rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         main {
             flex: 1 0 auto;
             display: block;
+            padding-bottom: 2rem;
         }
         
-        /* Navbar Styling */
+        /* Mobile-First Navigation */
         .navbar {
             background: white !important;
             backdrop-filter: blur(10px);
@@ -72,6 +82,7 @@
             padding: 0.75rem 0;
             z-index: 1030;
             position: relative;
+            min-height: var(--mobile-nav-height);
         }
         
         .navbar-brand {
@@ -99,11 +110,14 @@
         .navbar-nav .nav-link {
             color: var(--text-secondary) !important;
             font-weight: 500;
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1rem;
             border-radius: var(--border-radius-sm);
             transition: var(--transition);
             position: relative;
             margin: 0 0.25rem;
+            min-height: var(--mobile-touch-target);
+            display: flex;
+            align-items: center;
         }
         
         .navbar-nav .nav-link:hover {
@@ -134,11 +148,68 @@
             padding: 0.75rem 1.5rem;
             transition: var(--transition);
             color: var(--text-secondary);
+            min-height: var(--mobile-touch-target);
+            display: flex;
+            align-items: center;
         }
         
         .dropdown-item:hover {
             background: var(--light-color);
             color: var(--primary-color);
+        }
+        
+        /* Mobile Navigation Toggle */
+        .navbar-toggler {
+            border: none;
+            padding: 0.5rem;
+            min-height: var(--mobile-touch-target);
+            min-width: var(--mobile-touch-target);
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Mobile Navigation Menu */
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                background: white;
+                border-top: 1px solid var(--border-color);
+                margin-top: 0.5rem;
+                padding: 1rem 0;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 1rem 1.5rem;
+                margin: 0.25rem 0;
+                border-radius: var(--border-radius-sm);
+                font-size: 1.1rem;
+            }
+            
+            .navbar-nav .nav-link i {
+                width: 24px;
+                text-align: center;
+                margin-right: 0.75rem;
+            }
+            
+            .dropdown-menu {
+                position: static !important;
+                float: none;
+                width: 100%;
+                margin: 0;
+                border: none;
+                box-shadow: none;
+                background: var(--light-color);
+                border-radius: var(--border-radius-sm);
+                margin-top: 0.5rem;
+            }
+            
+            .dropdown-item {
+                padding: 0.75rem 2rem;
+                border-radius: var(--border-radius-sm);
+                margin: 0.25rem 0.5rem;
+            }
         }
         
         /* Card Styling */
@@ -198,15 +269,27 @@
             padding: 1.5rem;
         }
         
-        /* Button Styling */
+        /* Button Styling - Mobile Optimized */
         .btn {
             border-radius: var(--border-radius-sm);
             font-weight: 500;
-            padding: 0.625rem 1.25rem;
+            padding: 0.75rem 1.5rem;
             transition: var(--transition);
             border: none;
             position: relative;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            min-height: var(--mobile-touch-target);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
         }
         
         .btn-primary {
@@ -266,6 +349,21 @@
             color: var(--text-primary);
         }
         
+        /* Mobile Button Sizes */
+        @media (max-width: 768px) {
+            .btn {
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+                min-height: 48px;
+            }
+            
+            .btn-sm {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9rem;
+                min-height: 40px;
+            }
+        }
+        
         /* Timer Display */
         .timer-display {
             font-family: 'Inter', monospace;
@@ -300,7 +398,7 @@
             margin-bottom: 0.5rem;
         }
         
-        /* Table Styling */
+        /* Table Styling - Mobile Responsive */
         .table {
             border-radius: var(--border-radius-sm);
             overflow: hidden;
@@ -334,6 +432,69 @@
             background: var(--light-color);
         }
         
+        /* Mobile Table Responsiveness */
+        @media (max-width: 768px) {
+            .table-responsive {
+                border: none;
+            }
+            
+            .table {
+                display: block;
+                width: 100%;
+            }
+            
+            .table thead {
+                display: none;
+            }
+            
+            .table tbody {
+                display: block;
+                width: 100%;
+            }
+            
+            .table tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius-sm);
+                background: white;
+                box-shadow: var(--card-shadow);
+            }
+            
+            .table td {
+                display: block;
+                text-align: left;
+                padding: 0.75rem 1rem;
+                border: none;
+                border-bottom: 1px solid var(--border-color);
+                position: relative;
+            }
+            
+            .table td:last-child {
+                border-bottom: none;
+            }
+            
+            .table td:before {
+                content: attr(data-label) ": ";
+                font-weight: 600;
+                color: var(--text-primary);
+                display: block;
+                margin-bottom: 0.25rem;
+                font-size: 0.875rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            .table td.actions-cell {
+                text-align: center;
+                padding: 1rem;
+            }
+            
+            .table td.actions-cell:before {
+                display: none;
+            }
+        }
+        
         /* Badge Styling */
         .badge {
             font-size: 0.75rem;
@@ -342,14 +503,15 @@
             border-radius: var(--border-radius-sm);
         }
         
-        /* Form Styling */
+        /* Form Styling - Mobile Optimized */
         .form-control, .form-select {
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius-sm);
-            padding: 0.625rem 0.875rem;
-            font-size: 0.9rem;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
             transition: var(--transition);
             background: white;
+            min-height: var(--mobile-touch-target);
         }
         
         .form-control:focus, .form-select:focus {
@@ -361,8 +523,21 @@
         .form-label {
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+        
+        /* Mobile Form Improvements */
+        @media (max-width: 768px) {
+            .form-control, .form-select {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 1rem 1.25rem;
+            }
+            
+            .form-label {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
         }
         
         /* Alert Styling */
@@ -399,7 +574,7 @@
             color: #92400e;
         }
         
-        /* Modal Styling */
+        /* Modal Styling - Mobile Optimized */
         .modal-content {
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
@@ -418,6 +593,22 @@
         .modal-footer {
             border-top: 1px solid var(--border-color);
             padding: 1.5rem;
+        }
+        
+        /* Mobile Modal Improvements */
+        @media (max-width: 576px) {
+            .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+            
+            .modal-content {
+                border-radius: var(--border-radius);
+            }
+            
+            .modal-header, .modal-body, .modal-footer {
+                padding: 1rem;
+            }
         }
         
         /* Footer */
@@ -465,7 +656,7 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Responsive Design */
+        /* Enhanced Mobile Responsiveness */
         @media (max-width: 768px) {
             .timer-display {
                 font-size: 1.5rem;
@@ -479,8 +670,82 @@
                 padding: 1.25rem;
             }
             
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .row {
+                margin-left: -0.5rem;
+                margin-right: -0.5rem;
+            }
+            
+            .col, .col-1, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            
+            /* Mobile-specific spacing */
+            .mb-4 { margin-bottom: 1.5rem !important; }
+            .mb-3 { margin-bottom: 1rem !important; }
+            .mb-2 { margin-bottom: 0.75rem !important; }
+            
+            .py-4 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+            .py-3 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+            
+            /* Mobile navigation improvements */
+            .navbar-nav .nav-link {
+                border-radius: var(--border-radius-sm);
+                margin: 0.25rem 0;
+            }
+            
+            /* Mobile card improvements */
+            .card {
+                margin-bottom: 1rem;
+            }
+            
+            /* Mobile button group improvements */
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn-group .btn {
+                border-radius: var(--border-radius-sm) !important;
+                margin-bottom: 0.5rem;
+            }
+            
+            .btn-group .btn:last-child {
+                margin-bottom: 0;
+            }
+        }
+        
+        /* Small Mobile Devices */
+        @media (max-width: 480px) {
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
             .btn {
-                padding: 0.5rem 1rem;
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .btn:last-child {
+                margin-bottom: 0;
+            }
+            
+            .d-flex.justify-content-between {
+                flex-direction: column;
+            }
+            
+            .d-flex.justify-content-between .btn {
+                margin-bottom: 0.5rem;
             }
         }
         
@@ -539,6 +804,16 @@
         h4 { font-size: 1.25rem; }
         h5 { font-size: 1.125rem; }
         h6 { font-size: 1rem; }
+        
+        /* Mobile Typography */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.75rem; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.25rem; }
+            h4 { font-size: 1.125rem; }
+            h5 { font-size: 1rem; }
+            h6 { font-size: 0.95rem; }
+        }
         
         .text-muted {
             color: var(--text-muted) !important;
@@ -627,6 +902,117 @@
         
         .px-4 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
         .px-3 { padding-left: 1rem !important; padding-right: 1rem !important; }
+        
+        /* Mobile-specific improvements */
+        .mobile-stack {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .mobile-stack .btn {
+            margin-bottom: 0.5rem;
+        }
+        
+        .mobile-stack .btn:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Touch-friendly improvements */
+        .touch-target {
+            min-height: var(--mobile-touch-target);
+            min-width: var(--mobile-touch-target);
+        }
+        
+        /* Mobile navigation improvements */
+        .mobile-nav-item {
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius-sm);
+            margin: 0.25rem 0;
+            transition: var(--transition);
+        }
+        
+        .mobile-nav-item:hover {
+            background: var(--light-color);
+        }
+        
+        .mobile-nav-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* Mobile form improvements */
+        .mobile-form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .mobile-form-group .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .mobile-form-group .form-control,
+        .mobile-form-group .form-select {
+            width: 100%;
+        }
+        
+        /* Mobile card improvements */
+        .mobile-card {
+            margin-bottom: 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .mobile-card .card-body {
+            padding: 1.25rem;
+        }
+        
+        /* Mobile button improvements */
+        .mobile-btn {
+            width: 100%;
+            margin-bottom: 0.75rem;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            min-height: 48px;
+        }
+        
+        .mobile-btn:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Mobile table improvements */
+        .mobile-table-row {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 1rem;
+            padding: 1rem;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .mobile-table-row .row {
+            margin: 0;
+        }
+        
+        .mobile-table-row .col {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .mobile-table-row .col:last-child {
+            border-bottom: none;
+        }
+        
+        .mobile-table-row .col:before {
+            content: attr(data-label) ": ";
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -640,7 +1026,7 @@
                 <span class="text-dark fw-bold">Time Tracker</span>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
@@ -678,7 +1064,7 @@
                 
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                                 <i class="fas fa-user text-primary"></i>
                             </div>
@@ -708,7 +1094,7 @@
                 {% for category, message in messages %}
                     <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show fade-in" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
             {% endif %}
@@ -743,6 +1129,7 @@
     <!-- Socket.IO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='mobile.js') }}"></script>
     <script>
         // Initialize Socket.IO
         const socket = io();
@@ -813,6 +1200,62 @@
                 card.style.animationDelay = `${index * 0.1}s`;
                 card.classList.add('fade-in');
             });
+            
+            // Mobile-specific improvements
+            if (window.innerWidth <= 768) {
+                // Add mobile-specific classes
+                document.body.classList.add('mobile-view');
+                
+                // Improve touch targets
+                const buttons = document.querySelectorAll('.btn');
+                buttons.forEach(btn => {
+                    btn.classList.add('touch-target');
+                });
+                
+                // Improve form inputs
+                const inputs = document.querySelectorAll('.form-control, .form-select');
+                inputs.forEach(input => {
+                    input.classList.add('touch-target');
+                });
+            }
+        });
+        
+        // Handle mobile navigation improvements
+        document.addEventListener('DOMContentLoaded', function() {
+            const navbarToggler = document.querySelector('.navbar-toggler');
+            const navbarCollapse = document.querySelector('.navbar-collapse');
+            
+            if (navbarToggler && navbarCollapse) {
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    const isClickInsideNavbar = navbarToggler.contains(event.target) || navbarCollapse.contains(event.target);
+                    
+                    if (!isClickInsideNavbar && navbarCollapse.classList.contains('show')) {
+                        const bsCollapse = new bootstrap.Collapse(navbarCollapse);
+                        bsCollapse.hide();
+                    }
+                });
+                
+                // Close mobile menu when clicking on a nav link
+                const navLinks = navbarCollapse.querySelectorAll('.nav-link');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth <= 991.98) {
+                            const bsCollapse = new bootstrap.Collapse(navbarCollapse);
+                            bsCollapse.hide();
+                        }
+                    });
+                });
+            }
+        });
+        
+        // Handle mobile viewport changes
+        window.addEventListener('resize', function() {
+            if (window.innerWidth <= 768) {
+                document.body.classList.add('mobile-view');
+            } else {
+                document.body.classList.remove('mobile-view');
+            }
         });
     </script>
     

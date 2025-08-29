@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-8 col-md-10">
             <div class="card">
                 <div class="card-header d-flex align-items-center">
                     <i class="fas fa-plus me-2 text-primary"></i>
@@ -26,8 +26,8 @@
                             </select>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold">
                                         <i class="fas fa-play me-1"></i>Start *
@@ -42,7 +42,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold">
                                         <i class="fas fa-stop me-1"></i>End *
@@ -66,8 +66,8 @@
                             <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="What did you work on?">{{ request.form.get('notes','') }}</textarea>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-8">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-8">
                                 <div class="mb-4">
                                     <label for="tags" class="form-label fw-semibold">
                                         <i class="fas fa-tags me-1"></i>Tags
@@ -76,8 +76,8 @@
                                     <div class="form-text">Separate tags with commas</div>
                                 </div>
                             </div>
-                            <div class="col-md-4 d-flex align-items-center">
-                                <div class="form-check form-switch mt-4">
+                            <div class="col-12 col-md-4 d-flex align-items-center">
+                                <div class="form-check form-switch mt-4 w-100">
                                     <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if request.form.get('billable') %}checked{% else %}checked{% endif %}>
                                     <label class="form-check-label fw-semibold" for="billable">
                                         <i class="fas fa-dollar-sign me-1"></i>Billable
@@ -86,8 +86,8 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                        <div class="d-flex justify-content-between flex-column flex-md-row">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary mb-2 mb-md-0">
                                 <i class="fas fa-arrow-left me-1"></i>Back
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -100,6 +100,55 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates to today
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toTimeString().slice(0, 5);
+    
+    if (!document.getElementById('start_date').value) {
+        document.getElementById('start_date').value = today;
+    }
+    if (!document.getElementById('end_date').value) {
+        document.getElementById('end_date').value = today;
+    }
+    if (!document.getElementById('start_time').value) {
+        document.getElementById('start_time').value = now;
+    }
+    if (!document.getElementById('end_time').value) {
+        document.getElementById('end_time').value = now;
+    }
+    
+    // Mobile-specific improvements
+    if (window.innerWidth <= 768) {
+        // Add mobile-specific classes
+        const form = document.querySelector('form');
+        form.classList.add('mobile-form');
+        
+        // Improve touch targets
+        const inputs = document.querySelectorAll('.form-control, .form-select');
+        inputs.forEach(input => {
+            input.classList.add('touch-target');
+        });
+        
+        // Improve buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(btn => {
+            btn.classList.add('touch-target');
+        });
+    }
+    
+    // Handle mobile viewport changes
+    window.addEventListener('resize', function() {
+        if (window.innerWidth <= 768) {
+            document.body.classList.add('mobile-view');
+        } else {
+            document.body.classList.remove('mobile-view');
+        }
+    });
+});
+</script>
 {% endblock %}
 
 
