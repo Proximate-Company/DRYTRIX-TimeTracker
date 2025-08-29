@@ -5,7 +5,7 @@ Time Tracker Application Entry Point
 
 import os
 from app import create_app, db
-from app.models import User, Project, TimeEntry, Settings
+from app.models import User, Project, TimeEntry, Task, Settings
 
 app = create_app()
 
@@ -17,6 +17,7 @@ def make_shell_context():
         'User': User,
         'Project': Project,
         'TimeEntry': TimeEntry,
+        'Task': Task,
         'Settings': Settings
     }
 

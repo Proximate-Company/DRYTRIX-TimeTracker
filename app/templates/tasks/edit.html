@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Task - Time Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-edit"></i> Edit Task: {{ task.name }}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Task Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ task.name }}" required>
+                                    <div class="form-text">Give your task a clear, descriptive name</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <select class="form-select" id="priority" name="priority">
+                                        <option value="low" {% if task.priority == 'low' %}selected{% endif %}>Low</option>
+                                        <option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Medium</option>
+                                        <option value="high" {% if task.priority == 'high' %}selected{% endif %}>High</option>
+                                        <option value="urgent" {% if task.priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="project_id" class="form-label">Project *</label>
+                            <select class="form-select" id="project_id" name="project_id" required>
+                                <option value="">Select a project</option>
+                                {% for project in projects %}
+                                <option value="{{ project.id }}" {% if task.project_id == project.id %}selected{% endif %}>
+                                    {{ project.name }} ({{ project.client }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" 
+                                      placeholder="Describe what needs to be done...">{{ task.description or '' }}</textarea>
+                            <div class="form-text">Provide details about the task requirements and deliverables</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="estimated_hours" class="form-label">Estimated Hours</label>
+                                    <input type="number" class="form-control" id="estimated_hours" name="estimated_hours" 
+                                           value="{{ task.estimated_hours or '' }}" 
+                                           step="0.5" min="0" placeholder="e.g., 8.5">
+                                    <div class="form-text">How long do you think this task will take?</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="due_date" class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="due_date" name="due_date" 
+                                           value="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}">
+                                    <div class="form-text">When should this task be completed?</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="assigned_to" class="form-label">Assign To</label>
+                            <select class="form-select" id="assigned_to" name="assigned_to">
+                                <option value="">Unassigned</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if task.assigned_to == user.id %}selected{% endif %}>
+                                    {{ user.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Who will be responsible for this task?</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Priority color coding
+    const prioritySelect = document.getElementById('priority');
+    const updatePriorityStyle = () => {
+        const priority = prioritySelect.value;
+        prioritySelect.className = 'form-select priority-' + priority;
+    };
+    
+    prioritySelect.addEventListener('change', updatePriorityStyle);
+    updatePriorityStyle();
+});
+</script>
+
+<style>
+.priority-low {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.priority-medium {
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
+.priority-high {
+    border-color: #fd7e14;
+    color: #fd7e14;
+}
+
+.priority-urgent {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+</style>
+{% endblock %}

@@ -93,6 +93,7 @@ def create_app(config=None):
     from app.routes.admin import admin_bp
     from app.routes.api import api_bp
     from app.routes.analytics import analytics_bp
+    from app.routes.tasks import tasks_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -102,6 +103,7 @@ def create_app(config=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(tasks_bp)
     
     # Register error handlers
     from app.utils.error_handlers import register_error_handlers
@@ -123,10 +125,13 @@ def create_app(config=None):
     def initialize_database():
         try:
             # Import models to ensure they are registered
-            from app.models import User, Project, TimeEntry, Settings
+            from app.models import User, Project, TimeEntry, Task, Settings
             
             # Create database tables
             db.create_all()
+            
+            # Check and migrate Task Management tables if needed
+            migrate_task_management_tables()
             
             # Create default admin user if it doesn't exist
             admin_username = app.config.get('ADMIN_USERNAMES', ['admin'])[0]
@@ -181,19 +186,60 @@ def setup_logging(app):
         handlers=handlers
     )
     
-    # Suppress Werkzeug logs in production
+        # Suppress Werkzeug logs in production
     if not app.debug:
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+def migrate_task_management_tables():
+    """Check and migrate Task Management tables if they don't exist"""
+    try:
+        from sqlalchemy import inspect, text
+        
+        # Check if tasks table exists
+        inspector = inspect(db.engine)
+        existing_tables = inspector.get_table_names()
+        
+        if 'tasks' not in existing_tables:
+            print("Task Management: Creating tasks table...")
+            # Create the tasks table
+            db.create_all()
+            print("✓ Tasks table created successfully")
+        else:
+            print("Task Management: Tasks table already exists")
+        
+        # Check if task_id column exists in time_entries table
+        if 'time_entries' in existing_tables:
+            time_entries_columns = [col['name'] for col in inspector.get_columns('time_entries')]
+            if 'task_id' not in time_entries_columns:
+                print("Task Management: Adding task_id column to time_entries table...")
+                try:
+                    # Add task_id column to time_entries table
+                    db.engine.execute(text("ALTER TABLE time_entries ADD COLUMN task_id INTEGER REFERENCES tasks(id)"))
+                    print("✓ task_id column added to time_entries table")
+                except Exception as e:
+                    print(f"⚠ Warning: Could not add task_id column: {e}")
+                    print("  You may need to manually add this column or recreate the database")
+            else:
+                print("Task Management: task_id column already exists in time_entries table")
+        
+        print("Task Management migration check completed")
+        
+    except Exception as e:
+        print(f"⚠ Warning: Task Management migration check failed: {e}")
+        print("  The application will continue, but Task Management features may not work properly")
 
 def init_database(app):
     """Initialize database tables and create default admin user"""
     with app.app_context():
         try:
             # Import models to ensure they are registered
-            from app.models import User, Project, TimeEntry, Settings
+            from app.models import User, Project, TimeEntry, Task, Settings
             
             # Create database tables
             db.create_all()
+            
+            # Check and migrate Task Management tables if needed
+            migrate_task_management_tables()
             
             # Create default admin user if it doesn't exist
             admin_username = app.config.get('ADMIN_USERNAMES', ['admin'])[0]

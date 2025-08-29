@@ -51,6 +51,15 @@ A robust, self-hosted time tracking application designed for teams and freelance
 - **Project Status**: Active, completed, and archived projects
 - **Time Rounding**: Configurable time rounding for billing
 
+### ✅ Task Management
+- **Project Breakdown**: Break projects into manageable tasks
+- **Status Tracking**: Monitor task progress (To Do, In Progress, Review, Done)
+- **Priority Management**: Set and track task priorities (Low, Medium, High, Urgent)
+- **Time Estimation**: Estimate and track actual time for tasks
+- **Task Assignment**: Assign tasks to team members
+- **Due Date Tracking**: Set deadlines with overdue notifications
+- **Automatic Migration**: Database tables are automatically created on first startup
+
 ### 🚀 Technical Features
 - **Responsive Design**: Works on desktop, tablet, and mobile
 - **HTMX Integration**: Dynamic interactions without JavaScript complexity
@@ -110,6 +119,7 @@ The **simple container** is an all-in-one solution that includes both the TimeTr
 **Features:**
 - ✅ **All-in-one**: Flask app + PostgreSQL in single container
 - ✅ **Auto-initialization**: Database automatically created and configured
+- ✅ **Automatic migration**: Task Management tables created automatically
 - ✅ **Persistent storage**: Data survives container restarts
 - ✅ **Production ready**: Optimized for deployment
 - ✅ **Timezone support**: Full timezone management with 100+ options
@@ -138,6 +148,8 @@ docker run -d \
 **Environment Variables:**
 - `FORCE_REINIT`: Set to `true` to reinitialize database schema (default: `false`)
 - `TZ`: Timezone (default: `Europe/Rome`)
+
+**Note:** Task Management tables are automatically created on first startup if they don't exist.
 
 #### 2. Public Container (Development/Testing)
 

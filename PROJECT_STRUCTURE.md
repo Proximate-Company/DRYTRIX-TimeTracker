@@ -55,9 +55,9 @@ TimeTracker/
 ## 🏗️ Core Components
 
 ### Application (`app/`)
-- **Models**: Database models for users, projects, time entries, and settings
-- **Routes**: API endpoints and web routes
-- **Templates**: Jinja2 HTML templates
+- **Models**: Database models for users, projects, time entries, tasks, and settings
+- **Routes**: API endpoints and web routes including task management
+- **Templates**: Jinja2 HTML templates including task management views
 - **Utils**: Utility functions including timezone management
 - **Config**: Application configuration
 
@@ -96,8 +96,24 @@ TimeTracker/
 
 - **README.md**: Main project documentation and quick start guide
 - **PROJECT_STRUCTURE.md**: This file - project structure overview
+- **TASK_MANAGEMENT_README.md**: Detailed Task Management feature documentation
 - **CONTRIBUTING.md**: How to contribute to the project
 - **CODE_OF_CONDUCT.md**: Community behavior guidelines
+
+## ✅ Task Management Feature
+
+The Task Management feature is fully integrated into the application with automatic database migration:
+
+### Automatic Migration
+- **No manual setup required**: Database tables are created automatically on first startup
+- **Integrated migration**: Migration logic is built into the application initialization
+- **Fallback support**: Manual migration script available if needed
+
+### Components Added
+- **Models**: `Task` model with full relationship support
+- **Routes**: Complete CRUD operations for task management
+- **Templates**: Responsive task management interface
+- **Integration**: Tasks linked to projects and time tracking
 - **GITHUB_WORKFLOW_IMAGES.md**: Docker image build workflow
 - **DOCKER_PUBLIC_SETUP.md**: Public container setup guide
 - **REQUIREMENTS.md**: Detailed system requirements

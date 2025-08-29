@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Create Task - Time Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-plus"></i> Create New Task
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Task Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ request.form.get('name', '') }}" required>
+                                    <div class="form-text">Give your task a clear, descriptive name</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <select class="form-select" id="priority" name="priority">
+                                        <option value="low" {% if request.form.get('priority') == 'low' %}selected{% endif %}>Low</option>
+                                        <option value="medium" {% if request.form.get('priority') == 'medium' or not request.form.get('priority') %}selected{% endif %}>Medium</option>
+                                        <option value="high" {% if request.form.get('priority') == 'high' %}selected{% endif %}>High</option>
+                                        <option value="urgent" {% if request.form.get('priority') == 'urgent' %}selected{% endif %}>Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="project_id" class="form-label">Project *</label>
+                            <select class="form-select" id="project_id" name="project_id" required>
+                                <option value="">Select a project</option>
+                                {% for project in projects %}
+                                <option value="{{ project.id }}" {% if request.form.get('project_id')|int == project.id or request.args.get('project_id')|int == project.id %}selected{% endif %}>
+                                    {{ project.name }} ({{ project.client }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" 
+                                      placeholder="Describe what needs to be done...">{{ request.form.get('description', '') }}</textarea>
+                            <div class="form-text">Provide details about the task requirements and deliverables</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="estimated_hours" class="form-label">Estimated Hours</label>
+                                    <input type="number" class="form-control" id="estimated_hours" name="estimated_hours" 
+                                           value="{{ request.form.get('estimated_hours', '') }}" 
+                                           step="0.5" min="0" placeholder="e.g., 8.5">
+                                    <div class="form-text">How long do you think this task will take?</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="due_date" class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="due_date" name="due_date" 
+                                           value="{{ request.form.get('due_date', '') }}">
+                                    <div class="form-text">When should this task be completed?</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="assigned_to" class="form-label">Assign To</label>
+                            <select class="form-select" id="assigned_to" name="assigned_to">
+                                <option value="">Unassigned</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if request.form.get('assigned_to')|int == user.id %}selected{% endif %}>
+                                    {{ user.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Who will be responsible for this task?</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default due date to 1 week from today
+    const dueDateInput = document.getElementById('due_date');
+    if (!dueDateInput.value) {
+        const today = new Date();
+        const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+        dueDateInput.value = nextWeek.toISOString().split('T')[0];
+    }
+    
+    // Priority color coding
+    const prioritySelect = document.getElementById('priority');
+    const updatePriorityStyle = () => {
+        const priority = prioritySelect.value;
+        prioritySelect.className = 'form-select priority-' + priority;
+    };
+    
+    prioritySelect.addEventListener('change', updatePriorityStyle);
+    updatePriorityStyle();
+});
+</script>
+
+<style>
+.priority-low {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.priority-medium {
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
+.priority-high {
+    border-color: #fd7e14;
+    color: #fd7e14;
+}
+
+.priority-urgent {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+</style>
+{% endblock %}
