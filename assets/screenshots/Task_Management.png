@@ -1,0 +1,53 @@
+This is a placeholder for the enhanced task management screenshot.
+
+The screenshot should show:
+
+1. **Modern Header Section**
+   - Card-based header with task icon and description
+   - Clean, professional appearance
+
+2. **Quick Stats Section**
+   - Cards showing task counts by status (To Do, In Progress, Review, Done)
+   - Color-coded status indicators
+   - Modern card design with hover effects
+
+3. **Enhanced Filter Section**
+   - Search input with icon
+   - Dropdown filters for status, priority, project, assignee
+   - Apply Filters and Clear buttons
+   - Professional form layout
+
+4. **Task Cards Grid**
+   - Responsive grid layout of task cards
+   - Each card showing:
+     - Task name and description
+     - Priority badge with color coding
+     - Status badge
+     - Project information
+     - Due date with overdue indicators
+     - Assigned user
+     - Estimated vs actual hours
+     - Quick action buttons
+   - Hover effects and smooth transitions
+   - Priority-based left border colors
+
+5. **Mobile-Responsive Design**
+   - Cards that stack properly on mobile
+   - Touch-friendly buttons and interactions
+   - Optimized spacing for all screen sizes
+
+6. **Modern UI Elements**
+   - Bootstrap 5 styling
+   - Custom CSS variables for consistent theming
+   - Smooth animations and transitions
+   - Professional color scheme
+   - Icon integration (Font Awesome)
+
+The overall appearance should be:
+- Clean and modern
+- Professional and business-like
+- Easy to read and navigate
+- Visually appealing with good contrast
+- Consistent with the application's design system
+
+This screenshot will replace the existing Tasks.png to showcase the new enhanced interface.

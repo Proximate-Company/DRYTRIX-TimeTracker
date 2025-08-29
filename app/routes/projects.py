@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app import db
-from app.models import Project, TimeEntry
+from app.models import Project, TimeEntry, Task
 from datetime import datetime
 from decimal import Decimal
 
@@ -120,6 +120,9 @@ def view_project(project_id):
         error_out=False
     )
     
+    # Get tasks for this project
+    tasks = project.tasks.order_by(Task.priority.desc(), Task.due_date.asc(), Task.created_at.asc()).all()
+    
     # Get user totals
     user_totals = project.get_user_totals()
     
@@ -127,6 +130,7 @@ def view_project(project_id):
                          project=project, 
                          entries=entries_pagination.items,
                          pagination=entries_pagination,
+                         tasks=tasks,
                          user_totals=user_totals)
 
 @projects_bp.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])

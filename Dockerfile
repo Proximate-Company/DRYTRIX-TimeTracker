@@ -28,21 +28,11 @@ COPY . .
 # Create data and logs directories with proper permissions
 RUN mkdir -p /data /app/logs && chmod 755 /data && chmod 755 /app/logs
 
-# Create startup script directly in Dockerfile
-RUN echo '#!/bin/bash' > /app/start.sh && \
-    echo 'set -e' >> /app/start.sh && \
-    echo 'cd /app' >> /app/start.sh && \
-    echo 'export FLASK_APP=app' >> /app/start.sh && \
-    echo 'echo "=== Starting TimeTracker ==="' >> /app/start.sh && \
-    echo 'echo "Testing startup script..."' >> /app/start.sh && \
-    echo 'ls -la /app/docker/' >> /app/start.sh && \
-    echo 'echo "Starting database initialization..."' >> /app/start.sh && \
-    echo 'python /app/docker/init-database-sql.py' >> /app/start.sh && \
-    echo 'echo "Starting application..."' >> /app/start.sh && \
-    echo 'exec gunicorn --bind 0.0.0.0:8080 --worker-class eventlet --workers 1 --timeout 120 "app:create_app()"' >> /app/start.sh
+# Copy the fixed startup script
+COPY docker/start-fixed.sh /app/start.sh
 
 # Make startup scripts executable
-RUN chmod +x /app/start.sh /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/test-db.py
+RUN chmod +x /app/start.sh /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/test-db.py /app/docker/start-fixed.sh
 
 # Create non-root user
 RUN useradd -m -u 1000 timetracker && \
