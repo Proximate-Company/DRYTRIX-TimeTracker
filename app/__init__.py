@@ -92,6 +92,7 @@ def create_app(config=None):
     from app.routes.reports import reports_bp
     from app.routes.admin import admin_bp
     from app.routes.api import api_bp
+    from app.routes.analytics import analytics_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -100,6 +101,7 @@ def create_app(config=None):
     app.register_blueprint(reports_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(analytics_bp)
     
     # Register error handlers
     from app.utils.error_handlers import register_error_handlers
