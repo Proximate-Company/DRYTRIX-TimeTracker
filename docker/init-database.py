@@ -34,7 +34,7 @@ def wait_for_database(url, max_attempts=30, delay=2):
     return None
 
 def check_database_initialization(engine):
-    """Check if database is initialized by looking for required tables"""
+    """Check if database is initialized by looking for required tables and correct schema"""
     print("Checking if database is initialized...")
     
     try:
@@ -50,13 +50,77 @@ def check_database_initialization(engine):
             print(f"Database not fully initialized. Missing tables: {missing_tables}")
             return False
         else:
-            print("Database is already initialized with all required tables")
+            print("✓ All required tables exist")
+            
+            # Check if tables have the correct schema
+            print("Checking table schemas...")
+            
+            # Check if time_entries has task_id column
+            if 'time_entries' in existing_tables:
+                time_entries_columns = [col['name'] for col in inspector.get_columns('time_entries')]
+                print(f"Debug: time_entries columns found: {time_entries_columns}")
+                if 'task_id' not in time_entries_columns:
+                    print(f"✗ time_entries table missing task_id column. Available columns: {time_entries_columns}")
+                    return False
+                else:
+                    print("✓ time_entries table has correct schema")
+            
+            # Check if tasks table exists
+            if 'tasks' not in existing_tables:
+                print("✗ tasks table missing")
+                return False
+            else:
+                print("✓ tasks table exists")
+            
+            print("✓ Database is already initialized with all required tables and correct schema")
             return True
             
     except Exception as e:
         print(f"Error checking database initialization: {e}")
         print(f"Traceback: {traceback.format_exc()}")
         return False
+
+def check_table_schema(engine, table_name, required_columns):
+    """Check if a table has the required columns"""
+    try:
+        inspector = inspect(engine)
+        if table_name not in inspector.get_table_names():
+            return False
+        
+        existing_columns = [col['name'] for col in inspector.get_columns(table_name)]
+        missing_columns = [col for col in required_columns if col not in existing_columns]
+        
+        if missing_columns:
+            print(f"Table {table_name} missing columns: {missing_columns}")
+            return False
+        
+        return True
+    except Exception as e:
+        print(f"Error checking schema for {table_name}: {e}")
+        return False
+
+def ensure_correct_schema(engine):
+    """Ensure all tables have the correct schema"""
+    print("Checking table schemas...")
+    
+    # Define required columns for each table
+    required_columns = {
+        'time_entries': ['id', 'user_id', 'project_id', 'task_id', 'start_time', 'end_time', 
+                        'duration_seconds', 'notes', 'tags', 'source', 'billable', 'created_at', 'updated_at'],
+        'tasks': ['id', 'project_id', 'name', 'description', 'status', 'priority', 'assigned_to', 
+                 'created_by', 'due_date', 'estimated_hours', 'actual_hours', 'created_at', 'updated_at']
+    }
+    
+    needs_recreation = False
+    
+    for table_name, columns in required_columns.items():
+        if not check_table_schema(engine, table_name, columns):
+            print(f"Table {table_name} needs recreation")
+            needs_recreation = True
+    
+    return needs_recreation
+
+
 
 def initialize_database(engine):
     """Initialize database using Flask CLI command"""
@@ -78,6 +142,12 @@ def initialize_database(engine):
         
         print("Setting up app context...")
         with app.app_context():
+            # Check if we need to recreate tables due to schema mismatch
+            if ensure_correct_schema(engine):
+                print("Schema mismatch detected, dropping and recreating tables...")
+                db.drop_all()
+                print("All tables dropped")
+            
             print("Creating all tables...")
             # Create all tables
             db.create_all()
@@ -155,10 +225,13 @@ def main():
     engine = wait_for_database(url)
     
     # Check if database is initialized
+    print("=== Starting database initialization check ===")
     if not check_database_initialization(engine):
+        print("=== Database not initialized, starting initialization ===")
         # Initialize database
         if initialize_database(engine):
             print("Database initialization completed successfully")
+            
             # Verify initialization worked
             if check_database_initialization(engine):
                 print("Database verification successful")
@@ -169,7 +242,26 @@ def main():
             print("Database initialization failed")
             sys.exit(1)
     else:
-        print("Database already initialized, no action needed")
+        print("=== Database already initialized, checking if reinitialization is needed ===")
+        
+        # Even if database is initialized, double-check schema and reinitialize if needed
+        print("Double-checking schema for existing database...")
+        if ensure_correct_schema(engine):
+            print("Schema mismatch detected in existing database, reinitializing...")
+            if initialize_database(engine):
+                print("Database reinitialization completed successfully")
+                
+                # Verify reinitialization worked
+                if check_database_initialization(engine):
+                    print("Database verification successful after reinitialization")
+                else:
+                    print("Database verification failed after reinitialization")
+                    sys.exit(1)
+            else:
+                print("Database reinitialization failed")
+                sys.exit(1)
+        else:
+            print("Schema is correct, no reinitialization needed")
 
 if __name__ == "__main__":
     main()

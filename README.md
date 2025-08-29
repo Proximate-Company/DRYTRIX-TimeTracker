@@ -6,7 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Platform](https://img.shields.io/badge/Platform-Raspberry%20Pi-red.svg)](https://www.raspberrypi.org/)
 
-A robust, self-hosted time tracking application designed for teams and freelancers who need reliable time management without cloud dependencies. Built with Flask and optimized for Raspberry Pi deployment, TimeTracker provides persistent timers, comprehensive reporting, and a modern web interface.
+A robust, self-hosted time tracking application designed for teams and freelancers who need reliable time management without cloud dependencies. Built with Flask and optimized for Raspberry Pi deployment, TimeTracker provides persistent timers, comprehensive reporting, and a modern web interface with enhanced task management capabilities.
 
 ## 🎯 What Problem Does It Solve?
 
@@ -17,12 +17,14 @@ A robust, self-hosted time tracking application designed for teams and freelance
 - **Complex Setup**: Simple Docker deployment on Raspberry Pi or any Linux system
 - **Limited Reporting**: Built-in comprehensive reports and CSV exports
 - **Team Management**: User roles, project organization, and billing support
+- **Task Organization**: Break down projects into manageable tasks with modern UI/UX
 
 **Perfect for:**
 - Freelancers tracking billable hours
 - Small teams managing project time
 - Consultants needing client billing reports
-- Anyone wanting self-hosted time tracking
+- Project managers organizing work into tasks
+- Anyone wanting self-hosted time tracking with task management
 
 ## ✨ Features
 
@@ -51,22 +53,30 @@ A robust, self-hosted time tracking application designed for teams and freelance
 - **Project Status**: Active, completed, and archived projects
 - **Time Rounding**: Configurable time rounding for billing
 
-### ✅ Task Management
-- **Project Breakdown**: Break projects into manageable tasks
-- **Status Tracking**: Monitor task progress (To Do, In Progress, Review, Done)
-- **Priority Management**: Set and track task priorities (Low, Medium, High, Urgent)
-- **Time Estimation**: Estimate and track actual time for tasks
-- **Task Assignment**: Assign tasks to team members
-- **Due Date Tracking**: Set deadlines with overdue notifications
+### ✅ Enhanced Task Management
+- **Modern UI/UX Design**: Beautiful, responsive card-based layout with hover effects
+- **Project Breakdown**: Break projects into manageable tasks with visual hierarchy
+- **Status Tracking**: Monitor task progress (To Do, In Progress, Review, Done, Cancelled)
+- **Priority Management**: Set and track task priorities (Low, Medium, High, Urgent) with color-coded badges
+- **Time Estimation**: Estimate and track actual time for tasks with progress bars
+- **Task Assignment**: Assign tasks to team members with user avatars
+- **Due Date Tracking**: Set deadlines with overdue notifications and visual indicators
+- **Quick Actions**: One-click status updates and task management
+- **Advanced Filtering**: Search, filter by status/priority/project/assignee
+- **Task Timeline**: Visual timeline showing task creation, assignment, and completion events
+- **Mobile-First Design**: Responsive design that works perfectly on all devices
+- **Interactive Elements**: Hover effects, smooth transitions, and modern animations
+- **Quick Stats**: Overview cards showing task counts by status
 - **Automatic Migration**: Database tables are automatically created on first startup
 
 ### 🚀 Technical Features
-- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Responsive Design**: Works on desktop, tablet, and mobile with modern UI components
 - **HTMX Integration**: Dynamic interactions without JavaScript complexity
 - **PostgreSQL Database**: Robust database with automatic initialization
 - **Docker Ready**: Easy deployment and scaling
 - **RESTful API**: Programmatic access to time data
 - **Timezone Management**: Comprehensive timezone support with 100+ options
+- **Modern CSS**: Bootstrap 5 with custom styling and CSS variables
 
 ## 🖼️ Screenshots
 
@@ -75,6 +85,14 @@ A robust, self-hosted time tracking application designed for teams and freelance
 - Clean, intuitive interface showing active timers and recent activity
 - Quick access to start/stop timers and manual time entry
 - Real-time timer status and project selection
+
+### Enhanced Task Management
+![Task Management](assets/screenshots/Task_Management.png)
+- Modern card-based layout with priority-based color coding
+- Quick stats overview showing task distribution by status
+- Advanced filtering and search capabilities
+- Responsive design optimized for all devices
+- Interactive elements with hover effects and smooth transitions
 
 ### Project Management
 ![Projects](assets/screenshots/Projects.png)
@@ -123,6 +141,7 @@ The **simple container** is an all-in-one solution that includes both the TimeTr
 - ✅ **Persistent storage**: Data survives container restarts
 - ✅ **Production ready**: Optimized for deployment
 - ✅ **Timezone support**: Full timezone management with 100+ options
+- ✅ **Enhanced UI**: Modern task management interface with responsive design
 
 **Run with docker-compose:**
 ```bash
@@ -225,6 +244,7 @@ docker-compose -f docker-compose.simple.yml up -d
 - ✅ **Persistent storage** - Data survives restarts
 - ✅ **Simple setup** - One command deployment
 - ✅ **Timezone support** - 100+ timezone options with automatic DST handling
+- ✅ **Enhanced task management** - Modern UI with responsive design
 
 **Default credentials:**
 - **Username**: `admin`
@@ -234,7 +254,7 @@ docker-compose -f docker-compose.simple.yml up -d
 The container automatically:
 1. Creates a PostgreSQL database named `timetracker`
 2. Creates a user `timetracker` with full permissions
-3. Initializes all tables with proper schema
+3. Initializes all tables with proper schema including task management
 4. Inserts default admin user and project
 5. Sets up triggers for automatic timestamp updates
 
@@ -327,6 +347,16 @@ The container automatically:
 4. **Add notes** to describe what you're working on
 5. **Timer runs continuously** even if you close the browser
 
+### Managing Tasks
+
+1. **Navigate to "Tasks"** in the main menu
+2. **Create new tasks** with the enhanced form interface
+3. **Set priorities and due dates** with visual indicators
+4. **Assign tasks** to team members
+5. **Track progress** with status updates and time logging
+6. **Use advanced filtering** to find specific tasks
+7. **View task details** with comprehensive information and timeline
+
 ### Manual Time Entry
 
 1. **Go to "Manual Entry"** in the main menu
@@ -362,10 +392,11 @@ The container automatically:
 
 - **Backend**: Flask with SQLAlchemy ORM
 - **Database**: PostgreSQL with automatic initialization
-- **Frontend**: Server-rendered templates with HTMX
+- **Frontend**: Server-rendered templates with modern CSS and responsive design
 - **Real-time**: WebSocket for live timer updates
 - **Containerization**: Docker with docker-compose
 - **Timezone**: Full timezone support with pytz
+- **UI Framework**: Bootstrap 5 with custom CSS variables and animations
 
 ### Project Structure
 
@@ -374,7 +405,7 @@ TimeTracker/
 ├── app/                    # Flask application
 │   ├── models/            # Database models
 │   ├── routes/            # Route handlers
-│   ├── templates/         # Jinja2 templates
+│   ├── templates/         # Jinja2 templates with enhanced task management
 │   ├── utils/             # Utility functions
 │   └── config.py          # Configuration settings
 ├── docker/                # Docker configuration
@@ -393,6 +424,7 @@ TimeTracker/
 - **Users**: Username-based authentication with role-based access
 - **Projects**: Client projects with billing information and client management
 - **Time Entries**: Manual and automatic time tracking with notes, tags, and billing support
+- **Tasks**: Project breakdown with status, priority, assignment, and time tracking
 - **Settings**: System configuration including timezone preferences
 
 #### Database Schema
@@ -406,7 +438,10 @@ The simple container automatically creates and initializes a PostgreSQL database
 - `id`, `name`, `client`, `description`, `billable`, `hourly_rate`, `billing_ref`, `status`, `created_at`, `updated_at`
 
 **Time Entries Table:**
-- `id`, `user_id`, `project_id`, `start_utc`, `end_utc`, `duration_seconds`, `notes`, `tags`, `source`, `billable`, `created_at`, `updated_at`
+- `id`, `user_id`, `project_id`, `task_id`, `start_utc`, `end_utc`, `duration_seconds`, `notes`, `tags`, `source`, `billable`, `created_at`, `updated_at`
+
+**Tasks Table:**
+- `id`, `project_id`, `name`, `description`, `status`, `priority`, `assigned_to`, `created_by`, `due_date`, `estimated_hours`, `actual_hours`, `started_at`, `completed_at`, `created_at`, `updated_at`
 
 **Settings Table:**
 - `id`, `timezone`, `currency`, `rounding_minutes`, `single_active_timer`, `allow_self_register`, `idle_timeout_minutes`, `backup_retention_days`, `backup_time`, `export_delimiter`, `created_at`, `updated_at`
@@ -416,8 +451,9 @@ The simple container automatically creates and initializes a PostgreSQL database
 - **Timer Persistence**: Active timers survive server restarts
 - **Billing Support**: Hourly rates, billable flags, and cost calculations
 - **Export Capabilities**: CSV export for reports and data backup
-- **Responsive Design**: Works on desktop and mobile devices
+- **Responsive Design**: Works on desktop and mobile devices with modern UI
 - **Timezone Support**: Full timezone awareness with automatic DST handling
+- **Task Management**: Comprehensive task organization with modern interface
 
 ## 🛠️ Development
 
@@ -468,6 +504,7 @@ python -m pytest tests/test_timer.py
 - **Type Hints**: Python type annotations where appropriate
 - **Documentation**: Docstrings for all public functions
 - **Testing**: Comprehensive test coverage
+- **UI/UX**: Modern design principles with accessibility considerations
 
 ## 🔒 Security Considerations
 
@@ -526,6 +563,7 @@ The GPL v3 license ensures that:
 - **Docker issues**: Verify Docker and Docker Compose installation
 - **Network access**: Check firewall settings and port configuration
 - **Timezone issues**: Verify timezone settings in admin panel
+- **Task management**: Ensure database schema is properly initialized
 
 ## 🚀 Roadmap
 
@@ -537,6 +575,8 @@ The GPL v3 license ensures that:
 - [ ] **Team Collaboration**: Shared projects and time approval workflows
 - [ ] **Integration**: Zapier, Slack, and other platform connections
 - [ ] **Multi-language**: Internationalization support
+- [ ] **Task Templates**: Predefined task structures for common workflows
+- [ ] **Advanced Notifications**: Email and push notifications for task updates
 
 ### Recent Updates
 
@@ -544,12 +584,14 @@ The GPL v3 license ensures that:
 - **v1.1.0**: Added comprehensive reporting and export capabilities
 - **v1.2.0**: Enhanced project management and billing support
 - **v1.3.0**: Added comprehensive timezone support with 100+ options
+- **v1.4.0**: Enhanced task management with modern UI/UX design and responsive layout
 
 ## 🙏 Acknowledgments
 
 - **Flask Community**: For the excellent web framework
 - **SQLAlchemy Team**: For robust database ORM
 - **Docker Community**: For containerization tools
+- **Bootstrap Team**: For the responsive CSS framework
 - **Contributors**: Everyone who has helped improve TimeTracker
 
 ---

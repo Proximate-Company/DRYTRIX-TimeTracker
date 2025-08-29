@@ -66,6 +66,7 @@ def create_tables_sql(engine):
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        task_id INTEGER,
         start_time TIMESTAMP NOT NULL,
         end_time TIMESTAMP,
         duration_seconds INTEGER,
