@@ -78,6 +78,40 @@ def create_tables_sql(engine):
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    -- Create invoices table
+    CREATE TABLE IF NOT EXISTS invoices (
+        id SERIAL PRIMARY KEY,
+        invoice_number VARCHAR(50) UNIQUE NOT NULL,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        client_name VARCHAR(200) NOT NULL,
+        client_email VARCHAR(200),
+        client_address TEXT,
+        issue_date DATE NOT NULL,
+        due_date DATE NOT NULL,
+        status VARCHAR(20) DEFAULT 'draft' NOT NULL,
+        subtotal NUMERIC(10, 2) NOT NULL DEFAULT 0,
+        tax_rate NUMERIC(5, 2) NOT NULL DEFAULT 0,
+        tax_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
+        total_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
+        notes TEXT,
+        terms TEXT,
+        created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create invoice_items table
+    CREATE TABLE IF NOT EXISTS invoice_items (
+        id SERIAL PRIMARY KEY,
+        invoice_id INTEGER REFERENCES invoices(id) ON DELETE CASCADE,
+        description VARCHAR(500) NOT NULL,
+        quantity NUMERIC(10, 2) NOT NULL DEFAULT 1,
+        unit_price NUMERIC(10, 2) NOT NULL,
+        total_amount NUMERIC(10, 2) NOT NULL,
+        time_entry_ids VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- Create settings table
     CREATE TABLE IF NOT EXISTS settings (
         id SERIAL PRIMARY KEY,
@@ -90,6 +124,23 @@ def create_tables_sql(engine):
         backup_retention_days INTEGER DEFAULT 30 NOT NULL,
         backup_time VARCHAR(5) DEFAULT '02:00' NOT NULL,
         export_delimiter VARCHAR(1) DEFAULT ',' NOT NULL,
+        
+        -- Company branding for invoices
+        company_name VARCHAR(200) DEFAULT 'Your Company Name' NOT NULL,
+        company_address TEXT DEFAULT 'Your Company Address' NOT NULL,
+        company_email VARCHAR(200) DEFAULT 'info@yourcompany.com' NOT NULL,
+        company_phone VARCHAR(50) DEFAULT '+1 (555) 123-4567' NOT NULL,
+        company_website VARCHAR(200) DEFAULT 'www.yourcompany.com' NOT NULL,
+        company_logo_filename VARCHAR(255) DEFAULT '' NOT NULL,
+        company_tax_id VARCHAR(100) DEFAULT '' NOT NULL,
+        company_bank_info TEXT DEFAULT '' NOT NULL,
+        
+        -- Invoice defaults
+        invoice_prefix VARCHAR(10) DEFAULT 'INV' NOT NULL,
+        invoice_start_number INTEGER DEFAULT 1000 NOT NULL,
+        invoice_terms TEXT DEFAULT 'Payment is due within 30 days of invoice date.' NOT NULL,
+        invoice_notes TEXT DEFAULT 'Thank you for your business!' NOT NULL,
+        
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
     );
@@ -197,8 +248,8 @@ def insert_initial_data(engine):
     ON CONFLICT DO NOTHING;
 
     -- Insert default settings
-    INSERT INTO settings (timezone, currency, rounding_minutes, single_active_timer, allow_self_register, idle_timeout_minutes, backup_retention_days, backup_time, export_delimiter) 
-    VALUES ('Europe/Rome', 'EUR', 1, true, true, 30, 30, '02:00', ',')
+    INSERT INTO settings (timezone, currency, rounding_minutes, single_active_timer, allow_self_register, idle_timeout_minutes, backup_retention_days, backup_time, export_delimiter, company_name, company_address, company_email, company_phone, company_website, company_logo_filename, company_tax_id, company_bank_info, invoice_prefix, invoice_start_number, invoice_terms, invoice_notes) 
+    VALUES ('Europe/Rome', 'EUR', 1, true, true, 30, 30, '02:00', ',', 'Your Company Name', 'Your Company Address', 'info@yourcompany.com', '+1 (555) 123-4567', 'www.yourcompany.com', '', '', '', 'INV', 1000, 'Payment is due within 30 days of invoice date.', 'Thank you for your business!')
     ON CONFLICT (id) DO NOTHING;
     """
     
@@ -221,7 +272,7 @@ def verify_tables(engine):
     try:
         inspector = inspect(engine)
         existing_tables = inspector.get_table_names()
-        required_tables = ['users', 'projects', 'time_entries', 'settings']
+        required_tables = ['users', 'projects', 'time_entries', 'settings', 'invoices', 'invoice_items']
         
         missing_tables = [table for table in required_tables if table not in existing_tables]
         

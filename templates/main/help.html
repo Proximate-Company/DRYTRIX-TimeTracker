@@ -30,7 +30,11 @@
 
         <div class="col-lg-9">
             <div class="text-center mb-4">
+                {% if settings and settings.has_logo() %}
+                <img src="{{ settings.get_logo_url() }}" alt="Company Logo" class="mb-3" width="48" height="48">
+                {% else %}
                 <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-3" width="48" height="48">
+                {% endif %}
                 <h1 class="h2 mb-2">Help & Documentation</h1>
                 <p class="text-muted">TimeTracker by <strong>DryTrix</strong></p>
             </div>

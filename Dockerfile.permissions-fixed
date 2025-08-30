@@ -1,0 +1,79 @@
+FROM python:3.11-slim-bullseye
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=app
+ENV FLASK_ENV=production
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    tzdata \
+    # WeasyPrint dependencies (Debian Bullseye package names)
+    libgdk-pixbuf2.0-0 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libpangocairo-1.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    # Additional fonts and rendering support
+    fonts-liberation \
+    fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set work directory
+WORKDIR /app
+
+# Set default timezone
+ENV TZ=Europe/Rome
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy project
+COPY . .
+
+# Create all necessary directories with proper permissions BEFORE creating user
+RUN mkdir -p /data /app/logs && \
+    mkdir -p /app/app/static/uploads/logos && \
+    mkdir -p /app/static/uploads/logos && \
+    mkdir -p /app/app/static/uploads/temp && \
+    mkdir -p /app/static/uploads/temp
+
+# Set proper permissions on directories
+RUN chmod -R 755 /data && \
+    chmod -R 755 /app/logs && \
+    chmod -R 755 /app/app/static/uploads && \
+    chmod -R 755 /app/static/uploads
+
+# Copy the startup script and ensure it's executable
+COPY docker/start-new.sh /app/start.sh
+
+# Make startup scripts executable
+RUN chmod +x /app/start.sh /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/test-db.py /app/docker/test-routing.py
+
+# Create non-root user with specific UID/GID
+RUN groupadd -g 1000 timetracker && \
+    useradd -m -u 1000 -g 1000 timetracker
+
+# Change ownership of ALL application files and directories to timetracker user
+RUN chown -R timetracker:timetracker /app /data /app/logs
+
+# Verify startup script exists and is accessible
+RUN ls -la /app/start.sh && \
+    head -1 /app/start.sh
+
+# Switch to non-root user
+USER timetracker
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/_health || exit 1
+
+# Run the application
+CMD ["/app/start.sh"]

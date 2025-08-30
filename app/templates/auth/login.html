@@ -8,7 +8,11 @@
         <div class="card">
             <div class="card-body text-center">
                 <div class="mb-4">
-                    <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-3" width="64" height="64">
+                    {% if settings and settings.has_logo() %}
+            <img src="{{ settings.get_logo_url() }}" alt="Company Logo" class="mb-3" width="64" height="64">
+            {% else %}
+            <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-3" width="64" height="64">
+            {% endif %}
                     <h2 class="card-title mb-2">Welcome to TimeTracker</h2>
                     <p class="text-muted mb-0">Powered by <strong>DryTrix</strong></p>
                 </div>

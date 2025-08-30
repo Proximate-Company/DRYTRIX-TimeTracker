@@ -31,3 +31,10 @@ def register_template_filters(app):
         if utc_dt is None:
             return ""
         return format_local_datetime(utc_dt, '%m/%d %H:%M')
+    
+    @app.template_filter('nl2br')
+    def nl2br_filter(text):
+        """Convert newlines to HTML line breaks"""
+        if text is None:
+            return ""
+        return text.replace('\n', '<br>')

@@ -6,24 +6,28 @@
 <!-- Toast Container -->
 <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
 
-<!-- Welcome Section -->
-<div class="row mb-4">
+<!-- Enhanced Welcome Section -->
+<div class="row section-spacing">
     <div class="col-12">
-        <div class="card mobile-card">
+        <div class="card mobile-card hover-lift">
             <div class="card-body py-4">
                 <div class="row align-items-center">
                     <div class="col-lg-8 col-md-7 mb-3 mb-md-0">
-                        <div class="d-flex align-items-center mb-2">
-                            <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="me-2" width="24" height="24">
+                        <div class="d-flex align-items-center mb-3">
+                            {% if settings and settings.has_logo() %}
+                <img src="{{ settings.get_logo_url() }}" alt="Company Logo" class="me-3" width="32" height="32">
+                {% else %}
+                <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="me-3" width="32" height="32">
+                {% endif %}
                             <h2 class="mb-0">Welcome back, {{ current_user.username }}!</h2>
                         </div>
-                        <p class="text-muted mb-0">Track your productivity and manage your time effectively with <strong>DryTrix</strong> TimeTracker</p>
+                        <p class="text-muted mb-0 fs-5">Track your productivity and manage your time effectively with <strong>DryTrix</strong> TimeTracker</p>
                     </div>
                     <div class="col-lg-4 col-md-5 text-center text-md-end">
                         <div class="d-flex justify-content-center justify-content-md-end">
                             <div class="text-center">
-                                <div class="h2 text-primary mb-1">{{ today_hours|round(1) }}</div>
-                                <small class="text-muted">Hours Today</small>
+                                <div class="h1 text-primary mb-2 fw-bold">{{ today_hours|round(1) }}</div>
+                                <small class="text-muted fs-6">Hours Today</small>
                             </div>
                         </div>
                     </div>
@@ -33,50 +37,50 @@
     </div>
 </div>
 
-<!-- Timer Section -->
-<div class="row mb-4">
+<!-- Enhanced Timer Section -->
+<div class="row section-spacing">
     <div class="col-12">
-        <div class="card mobile-card">
+        <div class="card mobile-card hover-lift">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-clock me-2 text-primary"></i>Timer Status
+                <h5 class="mb-0 d-flex align-items-center">
+                    <i class="fas fa-clock me-3 text-primary"></i>Timer Status
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row align-items-center">
-                    <div class="col-lg-8 col-md-7 mb-3 mb-md-0">
+                    <div class="col-lg-8 col-md-7 mb-4 mb-md-0">
                         {% if active_timer %}
                         <div class="d-flex align-items-center flex-column flex-md-row">
-                            <div class="me-0 me-md-4 mb-3 mb-md-0">
-                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <div class="me-0 me-md-4 mb-4 mb-md-0">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
                                     <i class="fas fa-play text-success fa-2x"></i>
                                 </div>
                             </div>
                             <div class="text-center text-md-start">
-                                <h5 class="mb-1 text-success">Timer Running</h5>
-                                <p class="mb-2 text-muted">
-                                    <i class="fas fa-project-diagram me-1"></i>{{ active_timer.project.name }}
+                                <h4 class="mb-2 text-success fw-bold">Timer Running</h4>
+                                <p class="mb-3 text-muted fs-6">
+                                    <i class="fas fa-project-diagram me-2"></i>{{ active_timer.project.name }}
                                 </p>
-                                <div class="timer-display" id="timer-display">
+                                <div class="timer-display mb-2" id="timer-display">
                                     {{ active_timer.duration_formatted }}
                                 </div>
-                                <small class="text-muted">
+                                <small class="text-muted fs-6">
                                     Started at {{ active_timer.start_time.strftime('%H:%M') }}
                                 </small>
                             </div>
                         </div>
                         {% else %}
                         <div class="d-flex align-items-center flex-column flex-md-row">
-                            <div class="me-0 me-md-4 mb-3 mb-md-0">
-                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <div class="me-0 me-md-4 mb-4 mb-md-0">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
                                     <i class="fas fa-stop text-muted fa-2x"></i>
                                 </div>
                             </div>
                             <div class="text-center text-md-start">
-                                <h5 class="mb-1 text-muted">No Active Timer</h5>
-                                <p class="mb-0 text-muted">Ready to start tracking your time?</p>
-                                <div class="mt-2">
-                                    <span class="badge bg-light text-dark">Idle</span>
+                                <h4 class="mb-2 text-muted fw-bold">No Active Timer</h4>
+                                <p class="mb-3 text-muted fs-6">Ready to start tracking your time?</p>
+                                <div class="mt-3">
+                                    <span class="badge bg-light text-dark fs-6">Idle</span>
                                 </div>
                             </div>
                         </div>
@@ -85,12 +89,12 @@
                     <div class="col-lg-4 col-md-5 text-center">
                         {% if active_timer %}
                         <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline w-100">
-                            <button type="submit" class="btn btn-danger px-4 w-100 w-md-auto touch-target">
+                            <button type="submit" class="btn btn-danger px-4 w-100 w-md-auto touch-target fw-bold">
                                 <i class="fas fa-stop me-2"></i>Stop Timer
                             </button>
                         </form>
                         {% else %}
-                        <button type="button" class="btn btn-success px-4 w-100 w-md-auto touch-target" data-bs-toggle="modal" data-bs-target="#startTimerModal">
+                        <button type="button" class="btn btn-success px-4 w-100 w-md-auto touch-target fw-bold" data-bs-toggle="modal" data-bs-target="#startTimerModal">
                             <i class="fas fa-play me-2"></i>Start Timer
                         </button>
                         {% endif %}
@@ -101,45 +105,45 @@
     </div>
 </div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
+<!-- Enhanced Statistics Cards -->
+<div class="row section-spacing">
     <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card h-100 mobile-card">
+        <div class="card h-100 mobile-card hover-lift">
             <div class="card-body text-center py-4">
-                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 72px; height: 72px;">
                     <i class="fas fa-calendar-day text-primary fa-2x"></i>
                 </div>
-                <h3 class="h2 text-primary mb-2">{{ "%.1f"|format(today_hours) }}</h3>
-                <p class="mb-2 fw-semibold">Hours Today</p>
-                <small class="text-muted">
+                <h3 class="h1 text-primary mb-2 fw-bold">{{ "%.1f"|format(today_hours) }}</h3>
+                <p class="mb-2 fw-semibold fs-5">Hours Today</p>
+                <small class="text-muted fs-6">
                     {% if today_hours > 0 %}Active day{% else %}No activity yet{% endif %}
                 </small>
             </div>
         </div>
     </div>
     <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card h-100 mobile-card">
+        <div class="card h-100 mobile-card hover-lift">
             <div class="card-body text-center py-4">
-                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 72px; height: 72px;">
                     <i class="fas fa-calendar-week text-success fa-2x"></i>
                 </div>
-                <h3 class="h2 text-success mb-2">{{ "%.1f"|format(week_hours) }}</h3>
-                <p class="mb-2 fw-semibold">Hours This Week</p>
-                <small class="text-muted">
+                <h3 class="h1 text-success mb-2 fw-bold">{{ "%.1f"|format(week_hours) }}</h3>
+                <p class="mb-2 fw-semibold fs-5">Hours This Week</p>
+                <small class="text-muted fs-6">
                     {% if week_hours > 0 %}Good progress{% else %}Start tracking{% endif %}
                 </small>
             </div>
         </div>
     </div>
     <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card h-100 mobile-card">
+        <div class="card h-100 mobile-card hover-lift">
             <div class="card-body text-center py-4">
-                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 72px; height: 72px;">
                     <i class="fas fa-calendar-alt text-info fa-2x"></i>
                 </div>
-                <h3 class="h2 text-info mb-2">{{ "%.1f"|format(month_hours) }}</h3>
-                <p class="mb-2 fw-semibold">Hours This Month</p>
-                <small class="text-muted">
+                <h3 class="h1 text-info mb-2 fw-bold">{{ "%.1f"|format(month_hours) }}</h3>
+                <p class="mb-2 fw-semibold fs-5">Hours This Month</p>
+                <small class="text-muted fs-6">
                     {% if month_hours > 0 %}Consistent work{% else %}New month{% endif %}
                 </small>
             </div>
@@ -147,58 +151,58 @@
     </div>
 </div>
 
-<!-- Quick Actions -->
-<div class="row mb-4">
+<!-- Enhanced Quick Actions -->
+<div class="row section-spacing">
     <div class="col-12">
-        <div class="card mobile-card">
+        <div class="card mobile-card hover-lift">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+                <h5 class="mb-0 d-flex align-items-center">
+                    <i class="fas fa-bolt me-3 text-warning"></i>Quick Actions
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row g-3">
+                <div class="row g-4">
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('timer.manual_entry') }}" class="card h-100 text-decoration-none mobile-card">
+                        <a href="{{ url_for('timer.manual_entry') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
                             <div class="card-body text-center py-4">
-                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
                                     <i class="fas fa-plus text-primary fa-lg"></i>
                                 </div>
-                                <h6 class="fw-semibold mb-1">Log Time</h6>
-                                <small class="text-muted">Manual entry</small>
+                                <h6 class="fw-semibold mb-2 fs-5">Log Time</h6>
+                                <small class="text-muted fs-6">Manual entry</small>
                             </div>
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('projects.list_projects') }}" class="card h-100 text-decoration-none mobile-card">
+                        <a href="{{ url_for('projects.list_projects') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
                             <div class="card-body text-center py-4">
-                                <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+                                <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
                                     <i class="fas fa-project-diagram text-secondary fa-lg"></i>
                                 </div>
-                                <h6 class="fw-semibold mb-1">Projects</h6>
-                                <small class="text-muted">Manage projects</small>
+                                <h6 class="fw-semibold mb-2 fs-5">Projects</h6>
+                                <small class="text-muted fs-6">Manage projects</small>
                             </div>
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('reports.reports') }}" class="card h-100 text-decoration-none mobile-card">
+                        <a href="{{ url_for('reports.reports') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
                             <div class="card-body text-center py-4">
-                                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+                                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
                                     <i class="fas fa-chart-bar text-info fa-lg"></i>
                                 </div>
-                                <h6 class="fw-semibold mb-1">Reports</h6>
-                                <small class="text-muted">View analytics</small>
+                                <h6 class="fw-semibold mb-2 fs-5">Reports</h6>
+                                <small class="text-muted fs-6">View analytics</small>
                             </div>
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('main.search') }}" class="card h-100 text-decoration-none mobile-card">
+                        <a href="{{ url_for('main.search') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
                             <div class="card-body text-center py-4">
-                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
                                     <i class="fas fa-search text-warning fa-lg"></i>
                                 </div>
-                                <h6 class="fw-semibold mb-1">Search</h6>
-                                <small class="text-muted">Find entries</small>
+                                <h6 class="fw-semibold mb-2 fs-5">Search</h6>
+                                <small class="text-muted fs-6">Find entries</small>
                             </div>
                         </a>
                     </div>
@@ -208,16 +212,16 @@
     </div>
 </div>
 
-<!-- Recent Entries -->
+<!-- Enhanced Recent Entries -->
 <div class="row">
     <div class="col-12">
-        <div class="card mobile-card">
+        <div class="card mobile-card hover-lift">
             <div class="card-header d-flex justify-content-between align-items-center flex-column flex-md-row">
-                <h5 class="mb-0 mb-3 mb-md-0">
-                    <i class="fas fa-history me-2 text-primary"></i>Recent Entries
+                <h5 class="mb-0 mb-3 mb-md-0 d-flex align-items-center">
+                    <i class="fas fa-history me-3 text-primary"></i>Recent Entries
                 </h5>
                 <a href="{{ url_for('reports.reports') }}" class="btn btn-sm btn-outline-primary touch-target">
-                    <i class="fas fa-external-link-alt me-1"></i>View All
+                    <i class="fas fa-external-link-alt me-2"></i>View All
                 </a>
             </div>
             <div class="card-body p-0">
@@ -235,27 +239,27 @@
                         </thead>
                         <tbody>
                             {% for entry in recent_entries %}
-                            <tr>
+                            <tr class="hover-lift">
                                 <td class="ps-4" data-label="Project">
                                     <div class="d-flex align-items-center">
                                         <div class="me-3">
-                                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                                                 <i class="fas fa-project-diagram text-primary"></i>
                                             </div>
                                         </div>
                                         <div>
-                                            <strong class="d-block">{{ entry.project.name }}</strong>
-                                            <small class="text-muted">{{ entry.project.client }}</small>
+                                            <strong class="d-block fs-6">{{ entry.project.name }}</strong>
+                                            <small class="text-muted fs-6">{{ entry.project.client }}</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td data-label="Duration">
-                                    <span class="badge bg-primary">{{ entry.duration_formatted }}</span>
+                                    <span class="badge bg-primary fs-6">{{ entry.duration_formatted }}</span>
                                 </td>
                                 <td data-label="Date">
                                     <div class="d-flex flex-column">
-                                        <span class="fw-semibold">{{ entry.start_time.strftime('%b %d') }}</span>
-                                        <small class="text-muted">{{ entry.start_time.strftime('%H:%M') }}</small>
+                                        <span class="fw-semibold fs-6">{{ entry.start_time.strftime('%b %d') }}</span>
+                                        <small class="text-muted fs-6">{{ entry.start_time.strftime('%H:%M') }}</small>
                                     </div>
                                 </td>
                                 <td data-label="Notes">
@@ -264,23 +268,23 @@
                                         {{ entry.notes[:50] }}{% if entry.notes|length > 50 %}...{% endif %}
                                     </div>
                                     {% else %}
-                                    <span class="text-muted fst-italic">No notes</span>
+                                    <span class="text-muted fst-italic fs-6">No notes</span>
                                     {% endif %}
                                 </td>
-                                                                    <td class="text-end pe-4 actions-cell" data-label="Actions">
-                                        <div class="btn-group d-flex d-md-inline-flex mobile-stack" role="group">
-                                            <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
-                                               class="btn btn-sm btn-outline-secondary touch-target" title="Edit entry">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                            <button type="button" class="btn btn-sm btn-outline-danger touch-target" title="Delete entry" 
-                                                    onclick="showDeleteEntryModal('{{ entry.id }}', '{{ entry.project.name }}', '{{ entry.duration_formatted }}')">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                            {% endif %}
-                                        </div>
-                                    </td>
+                                <td class="text-end pe-4 actions-cell" data-label="Actions">
+                                    <div class="btn-group d-flex d-md-inline-flex mobile-stack" role="group">
+                                        <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
+                                           class="btn btn-sm btn-outline-secondary touch-target" title="Edit entry">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if current_user.is_admin or entry.user_id == current_user.id %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger touch-target" title="Delete entry" 
+                                                onclick="showDeleteEntryModal('{{ entry.id }}', '{{ entry.project.name }}', '{{ entry.duration_formatted }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -292,8 +296,8 @@
                         <i class="fas fa-clock fa-3x text-muted opacity-50"></i>
                     </div>
                     <h5 class="text-muted mb-3">No recent entries</h5>
-                    <p class="text-muted mb-4">Start tracking your time to see entries here</p>
-                    <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-primary touch-target">
+                    <p class="text-muted mb-4 fs-6">Start tracking your time to see entries here</p>
+                    <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-primary touch-target fw-bold">
                         <i class="fas fa-plus me-2"></i>Log Your First Entry
                     </a>
                 </div>
@@ -303,21 +307,21 @@
     </div>
 </div>
 
-<!-- Start Timer Modal -->
+<!-- Enhanced Start Timer Modal -->
 <div class="modal fade" id="startTimerModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-play me-2 text-success"></i>Start Timer
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="fas fa-play me-3 text-success"></i>Start Timer
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('timer.start_timer') }}">
                 <div class="modal-body">
                     <div class="mb-4">
-                        <label for="project_id" class="form-label fw-semibold">
-                            <i class="fas fa-project-diagram me-1"></i>Select Project
+                        <label for="project_id" class="form-label fw-semibold d-flex align-items-center">
+                            <i class="fas fa-project-diagram me-2"></i>Select Project
                         </label>
                         <select class="form-select form-select-lg" id="project_id" name="project_id" required>
                             <option value="">Choose a project...</option>
@@ -329,8 +333,8 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="timer_notes" class="form-label fw-semibold">
-                            <i class="fas fa-sticky-note me-1"></i>Notes (Optional)
+                        <label for="timer_notes" class="form-label fw-semibold d-flex align-items-center">
+                            <i class="fas fa-sticky-note me-2"></i>Notes (Optional)
                         </label>
                         <textarea class="form-control" id="timer_notes" name="notes" rows="3" 
                                   placeholder="What are you working on?"></textarea>
@@ -338,9 +342,9 @@
                 </div>
                 <div class="modal-footer d-flex flex-column flex-md-row">
                     <button type="button" class="btn btn-secondary mb-2 mb-md-0 me-md-2" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
+                        <i class="fas fa-times me-2"></i>Cancel
                     </button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-success fw-bold">
                         <i class="fas fa-play me-2"></i>Start Timer
                     </button>
                 </div>
@@ -349,13 +353,13 @@
     </div>
 </div>
 
-<!-- Delete Time Entry Modal -->
+<!-- Enhanced Delete Time Entry Modal -->
 <div class="modal fade" id="deleteEntryModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-trash me-2 text-danger"></i>Delete Time Entry
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="fas fa-trash me-3 text-danger"></i>Delete Time Entry
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -364,15 +368,15 @@
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <strong>Warning:</strong> This action cannot be undone.
                 </div>
-                <p>Are you sure you want to delete the time entry for <strong id="deleteEntryProjectName"></strong>?</p>
-                <p class="text-muted mb-0">Duration: <strong id="deleteEntryDuration"></strong></p>
+                <p class="mb-2">Are you sure you want to delete the time entry for <strong id="deleteEntryProjectName"></strong>?</p>
+                <p class="text-muted mb-0 fs-6">Duration: <strong id="deleteEntryDuration"></strong></p>
             </div>
             <div class="modal-footer d-flex flex-column flex-md-row">
                 <button type="button" class="btn btn-secondary mb-2 mb-md-0 me-md-2" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancel
+                    <i class="fas fa-times me-2"></i>Cancel
                 </button>
                 <form method="POST" id="deleteEntryForm" class="d-inline">
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-danger fw-bold">
                         <i class="fas fa-trash me-2"></i>Delete Entry
                     </button>
                 </form>
@@ -387,7 +391,7 @@
     let timerInterval;
     
     {% if active_timer %}
-    // Start timer update
+    // Enhanced timer update
     function updateTimer() {
         fetch('/api/timer/status')
             .then(response => response.json())
@@ -428,7 +432,7 @@
     });
     {% endif %}
     
-    // Handle start timer form submission
+    // Enhanced start timer form submission
     document.querySelector('#startTimerModal form').addEventListener('submit', function(e) {
         const projectId = document.getElementById('project_id').value;
         if (!projectId) {
@@ -443,42 +447,7 @@
         submitBtn.disabled = true;
     });
     
-    // Add hover effects to quick action buttons
-    document.addEventListener('DOMContentLoaded', function() {
-        const quickActionBtns = document.querySelectorAll('.btn-outline-primary, .btn-outline-secondary, .btn-outline-info, .btn-outline-warning');
-        quickActionBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-4px) scale(1.02)';
-            });
-            btn.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1)';
-            });
-        });
-        
-        // Mobile-specific improvements
-        if (window.innerWidth <= 768) {
-            // Improve mobile table responsiveness
-            const tableRows = document.querySelectorAll('tbody tr');
-            tableRows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                cells.forEach((cell, index) => {
-                    if (index === 0) {
-                        cell.setAttribute('data-label', 'Project');
-                    } else if (index === 1) {
-                        cell.setAttribute('data-label', 'Duration');
-                    } else if (index === 2) {
-                        cell.setAttribute('data-label', 'Date');
-                    } else if (index === 3) {
-                        cell.setAttribute('data-label', 'Notes');
-                    } else if (index === 4) {
-                        cell.setAttribute('data-label', 'Actions');
-                    }
-                });
-            });
-        }
-    });
-    
-    // Function to show delete time entry modal
+    // Enhanced function to show delete time entry modal
     function showDeleteEntryModal(entryId, projectName, duration) {
         document.getElementById('deleteEntryProjectName').textContent = projectName;
         document.getElementById('deleteEntryDuration').textContent = duration;
@@ -486,7 +455,7 @@
         new bootstrap.Modal(document.getElementById('deleteEntryModal')).show();
     }
     
-    // Add loading state to delete entry form
+    // Enhanced loading state to delete entry form
     document.addEventListener('DOMContentLoaded', function() {
         const deleteForm = document.getElementById('deleteEntryForm');
         if (deleteForm) {
@@ -494,30 +463,6 @@
                 const submitBtn = this.querySelector('button[type="submit"]');
                 submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
                 submitBtn.disabled = true;
-            });
-        }
-    });
-    
-    // Handle mobile viewport changes
-    window.addEventListener('resize', function() {
-        if (window.innerWidth <= 768) {
-            // Re-apply mobile table improvements
-            const tableRows = document.querySelectorAll('tbody tr');
-            tableRows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                cells.forEach((cell, index) => {
-                    if (index === 0) {
-                        cell.setAttribute('data-label', 'Project');
-                    } else if (index === 1) {
-                        cell.setAttribute('data-label', 'Duration');
-                    } else if (index === 2) {
-                        cell.setAttribute('data-label', 'Date');
-                    } else if (index === 3) {
-                        cell.setAttribute('data-label', 'Notes');
-                    } else if (index === 4) {
-                        cell.setAttribute('data-label', 'Actions');
-                    }
-                });
             });
         }
     });
