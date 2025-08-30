@@ -67,8 +67,8 @@ def check_database_initialization(engine):
             
             # Check if tasks table exists
             if 'tasks' not in existing_tables:
-                print("✗ tasks table missing")
-                return False
+                print("⚠ tasks table missing - will be created by SQL script")
+                # Don't return False here, let the SQL script handle it
             else:
                 print("✓ tasks table exists")
             
@@ -106,9 +106,8 @@ def ensure_correct_schema(engine):
     # Define required columns for each table
     required_columns = {
         'time_entries': ['id', 'user_id', 'project_id', 'task_id', 'start_time', 'end_time', 
-                        'duration_seconds', 'notes', 'tags', 'source', 'billable', 'created_at', 'updated_at'],
-        'tasks': ['id', 'project_id', 'name', 'description', 'status', 'priority', 'assigned_to', 
-                 'created_by', 'due_date', 'estimated_hours', 'actual_hours', 'created_at', 'updated_at']
+                        'duration_seconds', 'notes', 'tags', 'source', 'billable', 'created_at', 'updated_at']
+        # Note: tasks table is created by SQL script, not checked here
     }
     
     needs_recreation = False

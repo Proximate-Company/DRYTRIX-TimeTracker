@@ -44,18 +44,18 @@ RUN mkdir -p /app/app/static/uploads/logos /app/static/uploads/logos && \
     chmod -R 755 /app/static/uploads
 
 # Copy the startup script and ensure it's executable
-COPY docker/start-new.sh /app/start.sh
+COPY docker/start-fixed.py /app/start.py
 
 # Make startup scripts executable
-RUN chmod +x /app/start.sh /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/test-db.py /app/docker/test-routing.py
+RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/test-db.py /app/docker/test-routing.py
 
 # Create non-root user
 RUN useradd -m -u 1000 timetracker && \
     chown -R timetracker:timetracker /app /data /app/logs /app/app/static/uploads /app/static/uploads
 
 # Verify startup script exists and is accessible
-RUN ls -la /app/start.sh && \
-    head -1 /app/start.sh
+RUN ls -la /app/start.py && \
+    head -1 /app/start.py
 
 USER timetracker
 
@@ -67,4 +67,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/_health || exit 1
 
 # Run the application
-CMD ["/app/start.sh"]
+CMD ["python", "/app/start.py"]

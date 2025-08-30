@@ -112,6 +112,25 @@ def create_tables_sql(engine):
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    -- Create tasks table
+    CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+        name VARCHAR(200) NOT NULL,
+        description TEXT,
+        status VARCHAR(20) DEFAULT 'pending' NOT NULL,
+        priority VARCHAR(20) DEFAULT 'medium' NOT NULL,
+        assigned_to INTEGER REFERENCES users(id),
+        created_by INTEGER REFERENCES users(id) NOT NULL,
+        due_date DATE,
+        estimated_hours NUMERIC(5,2),
+        actual_hours NUMERIC(5,2),
+        started_at TIMESTAMP,
+        completed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    );
+
     -- Create settings table
     CREATE TABLE IF NOT EXISTS settings (
         id SERIAL PRIMARY KEY,
@@ -220,6 +239,11 @@ def create_triggers(engine):
                 CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
             """))
             
+            conn.execute(text("""
+                DROP TRIGGER IF EXISTS update_tasks_updated_at ON tasks;
+                CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            """))
+            
             conn.commit()
         
         print("✓ Triggers created successfully")
@@ -272,7 +296,7 @@ def verify_tables(engine):
     try:
         inspector = inspect(engine)
         existing_tables = inspector.get_table_names()
-        required_tables = ['users', 'projects', 'time_entries', 'settings', 'invoices', 'invoice_items']
+        required_tables = ['users', 'projects', 'time_entries', 'tasks', 'settings', 'invoices', 'invoice_items']
         
         missing_tables = [table for table in required_tables if table not in existing_tables]
         

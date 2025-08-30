@@ -19,20 +19,20 @@ def main():
     print("Waiting for database to be ready...")
     time.sleep(5)  # Simple wait
     
-    print("Running database initialization...")
-    try:
-        subprocess.run([sys.executable, '/app/docker/init-database.py'], check=True)
-        print("Database initialization completed")
-    except subprocess.CalledProcessError as e:
-        print(f"Database initialization failed: {e}")
-        sys.exit(1)
-    
-    print("Running SQL database initialization (for invoice tables)...")
+    print("Running SQL database initialization (for basic tables)...")
     try:
         subprocess.run([sys.executable, '/app/docker/init-database-sql.py'], check=True)
         print("SQL database initialization completed")
     except subprocess.CalledProcessError as e:
         print(f"SQL database initialization failed: {e}")
+        sys.exit(1)
+    
+    print("Running main database initialization...")
+    try:
+        subprocess.run([sys.executable, '/app/docker/init-database.py'], check=True)
+        print("Database initialization completed")
+    except subprocess.CalledProcessError as e:
+        print(f"Database initialization failed: {e}")
         sys.exit(1)
     
     print("Starting application...")
