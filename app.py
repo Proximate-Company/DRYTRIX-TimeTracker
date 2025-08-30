@@ -5,7 +5,7 @@ Time Tracker Application Entry Point
 
 import os
 from app import create_app, db
-from app.models import User, Project, TimeEntry, Settings
+from app.models import User, Project, TimeEntry, Task, Settings, Invoice, InvoiceItem
 
 app = create_app()
 
@@ -17,13 +17,16 @@ def make_shell_context():
         'User': User,
         'Project': Project,
         'TimeEntry': TimeEntry,
-        'Settings': Settings
+        'Task': Task,
+        'Settings': Settings,
+        'Invoice': Invoice,
+        'InvoiceItem': InvoiceItem
     }
 
 @app.cli.command()
 def init_db():
     """Initialize the database with tables and default data"""
-    from app.models import Settings
+    from app.models import Settings, User
     
     # Create all tables
     db.create_all()

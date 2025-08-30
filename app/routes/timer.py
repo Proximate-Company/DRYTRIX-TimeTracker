@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db, socketio
-from app.models import User, Project, TimeEntry, Settings
+from app.models import User, Project, TimeEntry, Task, Settings
 from app.utils.timezone import parse_local_datetime
 from datetime import datetime
 import json
@@ -57,6 +57,61 @@ def start_timer():
     })
     
     flash(f'Timer started for {project.name}', 'success')
+    return redirect(url_for('main.dashboard'))
+
+@timer_bp.route('/timer/start/<int:project_id>')
+@login_required
+def start_timer_for_project(project_id):
+    """Start a timer for a specific project (GET route for direct links)"""
+    task_id = request.args.get('task_id', type=int)
+    
+    # Check if project exists and is active
+    project = Project.query.filter_by(id=project_id, status='active').first()
+    if not project:
+        flash('Invalid project selected', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    # Check if user already has an active timer
+    active_timer = current_user.active_timer
+    if active_timer:
+        # If single active timer is enabled, stop the current one
+        settings = Settings.get_settings()
+        if settings.single_active_timer:
+            active_timer.stop_timer()
+            flash('Previous timer stopped', 'info')
+        else:
+            flash('You already have an active timer', 'error')
+            return redirect(url_for('main.dashboard'))
+    
+    # Create new timer
+    from app.models.time_entry import local_now
+    new_timer = TimeEntry(
+        user_id=current_user.id,
+        project_id=project_id,
+        task_id=task_id,
+        start_time=local_now(),
+        source='auto'
+    )
+    
+    db.session.add(new_timer)
+    db.session.commit()
+    
+    # Emit WebSocket event for real-time updates
+    socketio.emit('timer_started', {
+        'user_id': current_user.id,
+        'timer_id': new_timer.id,
+        'project_name': project.name,
+        'task_id': task_id,
+        'start_time': new_timer.start_time.isoformat()
+    })
+    
+    if task_id:
+        task = Task.query.get(task_id)
+        task_name = task.name if task else "Unknown Task"
+        flash(f'Timer started for {project.name} - {task_name}', 'success')
+    else:
+        flash(f'Timer started for {project.name}', 'success')
+    
     return redirect(url_for('main.dashboard'))
 
 @timer_bp.route('/timer/stop', methods=['POST'])
@@ -157,8 +212,14 @@ def manual_entry():
     """Create a manual time entry"""
     # Get active projects for dropdown (used for both GET and error re-renders on POST)
     active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    
+    # Get project_id and task_id from query parameters for pre-filling
+    project_id = request.args.get('project_id', type=int)
+    task_id = request.args.get('task_id', type=int)
+    
     if request.method == 'POST':
         project_id = request.form.get('project_id', type=int)
+        task_id = request.form.get('task_id', type=int)
         start_date = request.form.get('start_date')
         start_time = request.form.get('start_time')
         end_date = request.form.get('end_date')
@@ -170,13 +231,23 @@ def manual_entry():
         # Validate required fields
         if not all([project_id, start_date, start_time, end_date, end_time]):
             flash('All fields are required', 'error')
-            return render_template('timer/manual_entry.html', projects=active_projects)
+            return render_template('timer/manual_entry.html', projects=active_projects, 
+                                selected_project_id=project_id, selected_task_id=task_id)
         
         # Check if project exists and is active
         project = Project.query.filter_by(id=project_id, status='active').first()
         if not project:
             flash('Invalid project selected', 'error')
-            return render_template('timer/manual_entry.html', projects=active_projects)
+            return render_template('timer/manual_entry.html', projects=active_projects,
+                                selected_project_id=project_id, selected_task_id=task_id)
+        
+        # Validate task if provided
+        if task_id:
+            task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+            if not task:
+                flash('Invalid task selected', 'error')
+                return render_template('timer/manual_entry.html', projects=active_projects,
+                                    selected_project_id=project_id, selected_task_id=task_id)
         
         # Parse datetime with timezone awareness
         try:
@@ -184,17 +255,20 @@ def manual_entry():
             end_time_parsed = parse_local_datetime(end_date, end_time)
         except ValueError:
             flash('Invalid date/time format', 'error')
-            return render_template('timer/manual_entry.html', projects=active_projects)
+            return render_template('timer/manual_entry.html', projects=active_projects,
+                                selected_project_id=project_id, selected_task_id=task_id)
         
         # Validate time range
         if end_time_parsed <= start_time_parsed:
             flash('End time must be after start time', 'error')
-            return render_template('timer/manual_entry.html', projects=active_projects)
+            return render_template('timer/manual_entry.html', projects=active_projects,
+                                selected_project_id=project_id, selected_task_id=task_id)
         
         # Create manual entry
         entry = TimeEntry(
             user_id=current_user.id,
             project_id=project_id,
+            task_id=task_id,
             start_time=start_time_parsed,
             end_time=end_time_parsed,
             notes=notes,
@@ -206,7 +280,32 @@ def manual_entry():
         db.session.add(entry)
         db.session.commit()
         
-        flash(f'Manual entry created for {project.name}', 'success')
+        if task_id:
+            task = Task.query.get(task_id)
+            task_name = task.name if task else "Unknown Task"
+            flash(f'Manual entry created for {project.name} - {task_name}', 'success')
+        else:
+            flash(f'Manual entry created for {project.name}', 'success')
+        
         return redirect(url_for('main.dashboard'))
     
-    return render_template('timer/manual_entry.html', projects=active_projects)
+    return render_template('timer/manual_entry.html', projects=active_projects, 
+                         selected_project_id=project_id, selected_task_id=task_id)
+
+@timer_bp.route('/timer/manual/<int:project_id>')
+@login_required
+def manual_entry_for_project(project_id):
+    """Create a manual time entry for a specific project"""
+    task_id = request.args.get('task_id', type=int)
+    
+    # Check if project exists and is active
+    project = Project.query.filter_by(id=project_id, status='active').first()
+    if not project:
+        flash('Invalid project selected', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    # Get active projects for dropdown
+    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    
+    return render_template('timer/manual_entry.html', projects=active_projects, 
+                         selected_project_id=project_id, selected_task_id=task_id)

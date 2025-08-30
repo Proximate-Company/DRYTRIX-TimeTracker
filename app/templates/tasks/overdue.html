@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Overdue Tasks - Time Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Overdue Tasks</h1>
+        <div>
+            <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Tasks
+            </a>
+        </div>
+    </div>
+
+    <!-- Overdue Summary -->
+    <div class="alert alert-warning" role="alert">
+        <h5 class="alert-heading">
+            <i class="fas fa-exclamation-triangle"></i> Overdue Tasks Detected
+        </h5>
+        <p class="mb-0">
+            There are <strong>{{ tasks|length }}</strong> overdue tasks that require immediate attention. 
+            Please review and update these tasks to prevent further delays.
+        </p>
+    </div>
+
+    <!-- Overdue Tasks List -->
+    {% if tasks %}
+    <div class="row">
+        {% for task in tasks %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card h-100 task-card {{ task.priority_class }} border-danger">
+                <div class="card-header d-flex justify-content-between align-items-center bg-danger text-white">
+                    <span class="badge bg-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Overdue
+                    </span>
+                    <span class="badge priority-badge priority-{{ task.priority }}">
+                        {{ task.priority_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="text-decoration-none">
+                            {{ task.name }}
+                        </a>
+                    </h5>
+                    {% if task.description %}
+                    <p class="card-text text-muted">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
+                    {% endif %}
+                    
+                    <div class="task-meta">
+                        <small class="text-muted">
+                            <i class="fas fa-project-diagram"></i> {{ task.project.name }}
+                        </small>
+                        <br><small class="text-muted">
+                            <i class="fas fa-user"></i> 
+                            {% if task.assigned_user %}
+                                {{ task.assigned_user.username }}
+                            {% else %}
+                                Unassigned
+                            {% endif %}
+                        </small>
+                        <br><small class="text-danger fw-bold">
+                            <i class="fas fa-calendar"></i> Due: {{ task.due_date.strftime('%Y-%m-%d') }}
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                        </small>
+                        {% if task.estimated_hours %}
+                        <br><small class="text-muted">
+                            <i class="fas fa-clock"></i> Est: {{ task.estimated_hours }}h
+                        </small>
+                        {% endif %}
+                        {% if task.total_hours > 0 %}
+                        <br><small class="text-muted">
+                            <i class="fas fa-stopwatch"></i> Actual: {{ task.total_hours }}h
+                        </small>
+                        {% endif %}
+                    </div>
+                    
+                    {% if task.estimated_hours and task.total_hours > 0 %}
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ task.progress_percentage }}%"
+                             aria-valuenow="{{ task.progress_percentage }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <small class="text-muted">{{ task.progress_percentage }}% complete</small>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        {% if current_user.is_admin or task.created_by == current_user.id %}
+                        <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('timer.start_timer', project_id=task.project.id, task_id=task.id) }}" 
+                           class="btn btn-outline-success">
+                            <i class="fas fa-play"></i> Timer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-tools"></i> Bulk Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Update Due Dates</h6>
+                    <p class="text-muted small">Extend due dates for multiple tasks at once</p>
+                    <button type="button" class="btn btn-outline-warning" onclick="extendDueDates()">
+                        <i class="fas fa-calendar-plus"></i> Extend Due Dates
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <h6>Priority Management</h6>
+                    <p class="text-muted small">Adjust priorities for overdue tasks</p>
+                    <button type="button" class="btn btn-outline-info" onclick="adjustPriorities()">
+                        <i class="fas fa-arrow-up"></i> Adjust Priorities
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+        <h3 class="text-success">No Overdue Tasks!</h3>
+        <p class="text-muted">Great job! All tasks are currently on schedule.</p>
+        <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-primary">
+            <i class="fas fa-list"></i> View All Tasks
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function extendDueDates() {
+    const newDate = prompt('Enter new due date (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+    if (newDate) {
+        if (confirm(`Are you sure you want to extend the due date to ${newDate} for all overdue tasks?`)) {
+            // This would need to be implemented with a bulk update endpoint
+            alert('Bulk due date update feature coming soon!');
+        }
+    }
+}
+
+function adjustPriorities() {
+    const newPriority = prompt('Enter new priority (low/medium/high/urgent):', 'high');
+    if (newPriority && ['low', 'medium', 'high', 'urgent'].includes(newPriority.toLowerCase())) {
+        if (confirm(`Are you sure you want to set priority to ${newPriority} for all overdue tasks?`)) {
+            // This would need to be implemented with a bulk update endpoint
+            alert('Bulk priority update feature coming soon!');
+        }
+    } else if (newPriority) {
+        alert('Invalid priority. Please use: low, medium, high, or urgent');
+    }
+}
+</script>
+
+<style>
+.task-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.priority-badge {
+    font-size: 0.75rem;
+}
+
+.priority-low {
+    background-color: #28a745 !important;
+}
+
+.priority-medium {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.priority-high {
+    background-color: #fd7e14 !important;
+}
+
+.priority-urgent {
+    background-color: #dc3545 !important;
+}
+
+.task-meta small {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background-color: #007bff;
+}
+
+.btn-group .btn {
+    flex: 1;
+}
+
+.border-danger {
+    border-width: 2px !important;
+}
+</style>
+{% endblock %}

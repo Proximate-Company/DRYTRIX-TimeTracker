@@ -1,0 +1,60 @@
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=app
+ENV FLASK_ENV=production
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set work directory
+WORKDIR /app
+
+# Set default timezone
+ENV TZ=Europe/Rome
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy project
+COPY . .
+
+# Create data and logs directories with proper permissions
+RUN mkdir -p /data /app/logs && chmod 755 /data && chmod 755 /app/logs
+
+# Copy and fix the startup script
+COPY docker/start-simple.sh /app/start.sh
+
+# Ensure proper line endings and make executable
+RUN sed -i 's/\r$//' /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Make other scripts executable
+RUN chmod +x /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/test-db.py
+
+# Create non-root user
+RUN useradd -m -u 1000 timetracker && \
+    chown -R timetracker:timetracker /app /data /app/logs
+
+# Verify startup script exists and is accessible
+RUN ls -la /app/start.sh && \
+    head -1 /app/start.sh && \
+    cat /app/start.sh
+
+USER timetracker
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/_health || exit 1
+
+# Run the application
+CMD ["/app/start.sh"]

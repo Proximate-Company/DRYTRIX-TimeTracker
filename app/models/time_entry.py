@@ -18,6 +18,7 @@ class TimeEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, index=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True, index=True)
     start_time = db.Column(db.DateTime, nullable=False, index=True)
     end_time = db.Column(db.DateTime, nullable=True, index=True)
     duration_seconds = db.Column(db.Integer, nullable=True)
@@ -28,9 +29,14 @@ class TimeEntry(db.Model):
     created_at = db.Column(db.DateTime, default=local_now, nullable=False)
     updated_at = db.Column(db.DateTime, default=local_now, onupdate=local_now, nullable=False)
     
-    def __init__(self, user_id, project_id, start_time, end_time=None, notes=None, tags=None, source='manual', billable=True):
+    # Relationships
+    # user and project relationships are defined via backref in their respective models
+    # task relationship is defined via backref in Task model
+    
+    def __init__(self, user_id, project_id, start_time, end_time=None, task_id=None, notes=None, tags=None, source='manual', billable=True):
         self.user_id = user_id
         self.project_id = project_id
+        self.task_id = task_id
         self.start_time = start_time
         self.end_time = end_time
         self.notes = notes.strip() if notes else None
@@ -155,6 +161,7 @@ class TimeEntry(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'project_id': self.project_id,
+            'task_id': self.task_id,
             'start_time': self.start_time.isoformat() if self.start_time else None,
             'end_time': self.end_time.isoformat() if self.end_time else None,
             'duration_seconds': self.duration_seconds,
@@ -169,7 +176,8 @@ class TimeEntry(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'user': self.user.username if self.user else None,
-            'project': self.project.name if self.project else None
+            'project': self.project.name if self.project else None,
+            'task': self.task.name if self.task else None
         }
     
     @classmethod

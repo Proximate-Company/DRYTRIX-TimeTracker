@@ -6,13 +6,13 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-column flex-md-row">
+                <h1 class="h3 mb-0 mb-3 mb-md-0">
                     <i class="fas fa-project-diagram text-primary"></i> Projects
                 </h1>
                 {% if current_user.is_admin %}
                 <div>
-                    <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary">
+                    <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary touch-target">
                         <i class="fas fa-plus"></i> New Project
                     </a>
                 </div>
@@ -24,41 +24,41 @@
     <!-- Filters -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
+            <div class="card mobile-card">
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-filter me-2 text-primary"></i>Filters
                     </h6>
                 </div>
                 <div class="card-body">
-                    <form method="GET" class="row g-3">
-                        <div class="col-md-4">
+                    <form method="GET" class="row g-3 mobile-form">
+                        <div class="col-12 col-md-4 mobile-form-group">
                             <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status" name="status">
+                            <select class="form-select touch-target" id="status" name="status">
                                 <option value="">All Statuses</option>
                                 <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
                                 <option value="archived" {% if request.args.get('status') == 'archived' %}selected{% endif %}>Archived</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4 mobile-form-group">
                             <label for="client" class="form-label">Client</label>
-                            <select class="form-select" id="client" name="client">
+                            <select class="form-select touch-target" id="client" name="client">
                                 <option value="">All Clients</option>
                                 {% for client in clients %}
                                 <option value="{{ client }}" {% if request.args.get('client') == client %}selected{% endif %}>{{ client }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4 mobile-form-group">
                             <label for="search" class="form-label">Search</label>
-                            <input type="text" class="form-control" id="search" name="search" 
+                            <input type="text" class="form-control touch-target" id="search" name="search" 
                                    value="{{ request.args.get('search', '') }}" placeholder="Project name or description">
                         </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">
+                        <div class="col-12 d-flex flex-column flex-md-row gap-2 mobile-stack">
+                            <button type="submit" class="btn btn-primary mobile-btn">
                                 <i class="fas fa-search me-1"></i>Filter
                             </button>
-                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary">
+                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary mobile-btn">
                                 <i class="fas fa-times me-1"></i>Clear
                             </a>
                         </div>
@@ -71,7 +71,7 @@
     <!-- Projects List -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card mobile-card">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-list"></i> Projects ({{ projects|length }})
@@ -95,7 +95,7 @@
                             <tbody>
                                 {% for project in projects %}
                                 <tr>
-                                    <td>
+                                    <td data-label="Project">
                                         <div>
                                             <strong>{{ project.name }}</strong>
                                             {% if project.description %}
@@ -103,65 +103,44 @@
                                             {% endif %}
                                         </div>
                                     </td>
-                                    <td>
-                                        {% if project.client %}
-                                        <a href="{{ url_for('projects.view_client', client_name=project.client) }}" class="text-decoration-none">
-                                            {{ project.client }}
-                                        </a>
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
+                                    <td data-label="Client">
+                                        <span class="badge bg-secondary">{{ project.client }}</span>
                                     </td>
-                                    <td>
+                                    <td data-label="Status">
                                         {% if project.status == 'active' %}
                                         <span class="badge bg-success">Active</span>
                                         {% else %}
                                         <span class="badge bg-secondary">Archived</span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        <strong>{{ "%.1f"|format(project.total_hours) }}h</strong>
+                                    <td data-label="Total Hours">
+                                        <strong>{{ "%.1f"|format(project.total_hours or 0) }}</strong>
                                     </td>
-                                    <td>
-                                        {% if project.billable %}
-                                        <span class="text-success">{{ "%.1f"|format(project.total_billable_hours) }}h</span>
+                                    <td data-label="Billable Hours">
+                                        <span class="text-success">{{ "%.1f"|format(project.billable_hours or 0) }}</span>
+                                    </td>
+                                    <td data-label="Rate">
+                                        {% if project.hourly_rate %}
+                                        <span class="text-primary">${{ "%.2f"|format(project.hourly_rate) }}</span>
                                         {% else %}
                                         <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {% if project.billable and project.hourly_rate %}
-                                        <span class="text-success">{{ currency }} {{ "%.2f"|format(project.hourly_rate) }}</span>
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
+                                    <td class="actions-cell" data-label="Actions">
+                                        <div class="btn-group d-flex d-md-inline-flex mobile-stack" role="group">
                                             <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-outline-primary" title="View">
+                                               class="btn btn-sm btn-outline-primary touch-target" title="View project">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             {% if current_user.is_admin %}
                                             <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-outline-secondary" title="Edit">
+                                               class="btn btn-sm btn-outline-secondary touch-target" title="Edit project">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                                                                         {% if project.status == 'active' %}
-                                             <button type="button" class="btn btn-sm btn-outline-warning" title="Archive" 
-                                                     onclick="showArchiveModal('{{ project.id }}', '{{ project.name }}')">
-                                                 <i class="fas fa-archive"></i>
-                                             </button>
-                                             {% else %}
-                                             <button type="button" class="btn btn-sm btn-outline-success" title="Unarchive" 
-                                                     onclick="showUnarchiveModal('{{ project.id }}', '{{ project.name }}')">
-                                                 <i class="fas fa-box-open"></i>
-                                             </button>
-                                             {% endif %}
-                                             <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" 
-                                                     onclick="showDeleteModal('{{ project.id }}', '{{ project.name }}')">
-                                                 <i class="fas fa-trash"></i>
-                                             </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger touch-target" title="Delete project"
+                                                    onclick="showDeleteProjectModal('{{ project.id }}', '{{ project.name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                             {% endif %}
                                         </div>
                                     </td>
@@ -172,84 +151,19 @@
                     </div>
                     {% else %}
                     <div class="text-center py-5">
-                        <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No Projects Found</h4>
-                        <p class="text-muted">
-                            {% if request.args.get('status') or request.args.get('client') or request.args.get('search') %}
-                            Try adjusting your filters or 
-                            <a href="{{ url_for('projects.list_projects') }}">view all projects</a>.
-                            {% else %}
-                            {% if current_user.is_admin %}
-                            Get started by creating your first project.
-                            {% else %}
-                            No projects have been created yet.
-                            {% endif %}
-                            {% endif %}
-                        </p>
-                        {% if current_user.is_admin and not (request.args.get('status') or request.args.get('client') or request.args.get('search')) %}
-                        <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Create First Project
+                        <div class="mb-4">
+                            <i class="fas fa-project-diagram fa-3x text-muted opacity-50"></i>
+                        </div>
+                        <h5 class="text-muted mb-3">No projects found</h5>
+                        <p class="text-muted mb-4">Create your first project to get started</p>
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary touch-target">
+                            <i class="fas fa-plus me-2"></i>Create Project
                         </a>
                         {% endif %}
                     </div>
                     {% endif %}
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Archive Project Modal -->
-<div class="modal fade" id="archiveProjectModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-archive me-2 text-warning"></i>Archive Project
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to archive the project <strong id="archiveProjectName"></strong>?</p>
-                <p class="text-muted mb-0">Archived projects will be hidden from the main project list but can be restored later.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancel
-                </button>
-                <form method="POST" id="archiveProjectForm" class="d-inline">
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-archive me-2"></i>Archive Project
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Unarchive Project Modal -->
-<div class="modal fade" id="unarchiveProjectModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-box-open me-2 text-success"></i>Restore Project
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to restore the project <strong id="unarchiveProjectName"></strong>?</p>
-                <p class="text-muted mb-0">This will make the project active again and visible in the main project list.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancel
-                </button>
-                <form method="POST" id="unarchiveProjectForm" class="d-inline">
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-box-open me-2"></i>Restore Project
-                    </button>
-                </form>
             </div>
         </div>
     </div>
@@ -263,22 +177,22 @@
                 <h5 class="modal-title">
                     <i class="fas fa-trash me-2 text-danger"></i>Delete Project
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-danger">
+                <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <strong>Warning:</strong> This action cannot be undone.
                 </div>
-                <p>Are you sure you want to permanently delete the project <strong id="deleteProjectName"></strong>?</p>
-                <p class="text-muted mb-0">This will also delete all associated time entries and cannot be recovered.</p>
+                <p>Are you sure you want to delete the project <strong id="deleteProjectName"></strong>?</p>
+                <p class="text-muted mb-0">All associated time entries will also be deleted.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <div class="modal-footer d-flex flex-column flex-md-row">
+                <button type="button" class="btn btn-secondary mb-2 mb-md-0 me-md-2 touch-target" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>Cancel
                 </button>
                 <form method="POST" id="deleteProjectForm" class="d-inline">
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-danger touch-target">
                         <i class="fas fa-trash me-2"></i>Delete Project
                     </button>
                 </form>
@@ -288,49 +202,90 @@
 </div>
 
 <script>
-// Function to show archive project modal
-function showArchiveModal(projectId, projectName) {
-    document.getElementById('archiveProjectName').textContent = projectName;
-    document.getElementById('archiveProjectForm').action = "{{ url_for('projects.archive_project', project_id=0) }}".replace('0', projectId);
-    new bootstrap.Modal(document.getElementById('archiveProjectModal')).show();
-}
-
-// Function to show unarchive project modal
-function showUnarchiveModal(projectId, projectName) {
-    document.getElementById('unarchiveProjectName').textContent = projectName;
-    document.getElementById('unarchiveProjectForm').action = "{{ url_for('projects.unarchive_project', project_id=0) }}".replace('0', projectId);
-    new bootstrap.Modal(document.getElementById('unarchiveProjectModal')).show();
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile-specific improvements
+    if (window.innerWidth <= 768) {
+        // Improve mobile table responsiveness
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach((cell, index) => {
+                if (index === 0) {
+                    cell.setAttribute('data-label', 'Project');
+                } else if (index === 1) {
+                    cell.setAttribute('data-label', 'Client');
+                } else if (index === 2) {
+                    cell.setAttribute('data-label', 'Status');
+                } else if (index === 3) {
+                    cell.setAttribute('data-label', 'Total Hours');
+                } else if (index === 4) {
+                    cell.setAttribute('data-label', 'Billable Hours');
+                } else if (index === 5) {
+                    cell.setAttribute('data-label', 'Rate');
+                } else if (index === 6) {
+                    cell.setAttribute('data-label', 'Actions');
+                }
+            });
+        });
+        
+        // Improve touch targets
+        const inputs = document.querySelectorAll('.form-control, .form-select');
+        inputs.forEach(input => {
+            input.classList.add('touch-target');
+        });
+        
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(btn => {
+            btn.classList.add('touch-target');
+        });
+    }
+    
+    // Handle mobile viewport changes
+    window.addEventListener('resize', function() {
+        if (window.innerWidth <= 768) {
+            // Re-apply mobile table improvements
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                cells.forEach((cell, index) => {
+                    if (index === 0) {
+                        cell.setAttribute('data-label', 'Project');
+                    } else if (index === 1) {
+                        cell.setAttribute('data-label', 'Client');
+                    } else if (index === 2) {
+                        cell.setAttribute('data-label', 'Status');
+                    } else if (index === 3) {
+                        cell.setAttribute('data-label', 'Total Hours');
+                    } else if (index === 4) {
+                        cell.setAttribute('data-label', 'Billable Hours');
+                    } else if (index === 5) {
+                        cell.setAttribute('data-label', 'Rate');
+                    } else if (index === 6) {
+                        cell.setAttribute('data-label', 'Actions');
+                    }
+                });
+            });
+        }
+    });
+});
 
 // Function to show delete project modal
-function showDeleteModal(projectId, projectName) {
+function showDeleteProjectModal(projectId, projectName) {
     document.getElementById('deleteProjectName').textContent = projectName;
     document.getElementById('deleteProjectForm').action = "{{ url_for('projects.delete_project', project_id=0) }}".replace('0', projectId);
     new bootstrap.Modal(document.getElementById('deleteProjectModal')).show();
 }
 
-// Add loading states to form submissions
+// Add loading state to delete project form
 document.addEventListener('DOMContentLoaded', function() {
-    // Archive form
-    document.getElementById('archiveProjectForm').addEventListener('submit', function(e) {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Archiving...';
-        submitBtn.disabled = true;
-    });
-    
-    // Unarchive form
-    document.getElementById('unarchiveProjectForm').addEventListener('submit', function(e) {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Restoring...';
-        submitBtn.disabled = true;
-    });
-    
-    // Delete form
-    document.getElementById('deleteProjectForm').addEventListener('submit', function(e) {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
-        submitBtn.disabled = true;
-    });
+    const deleteForm = document.getElementById('deleteProjectForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
+            submitBtn.disabled = true;
+        });
+    }
 });
 </script>
 {% endblock %}

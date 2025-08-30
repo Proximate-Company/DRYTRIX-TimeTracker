@@ -20,6 +20,7 @@ class Project(db.Model):
     
     # Relationships
     time_entries = db.relationship('TimeEntry', backref='project', lazy='dynamic', cascade='all, delete-orphan')
+    tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     
     def __init__(self, name, client, description=None, billable=True, hourly_rate=None, billing_ref=None):
         self.name = name.strip()

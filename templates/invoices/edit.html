@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Invoice {{ invoice.invoice_number }} - TimeTracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-edit text-primary"></i>
+                    Edit Invoice {{ invoice.invoice_number }}
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+
+            <form method="POST">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- Invoice Details -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Invoice Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="client_name" class="form-label">Client Name *</label>
+                                            <input type="text" class="form-control" id="client_name" name="client_name" 
+                                                   value="{{ invoice.client_name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="client_email" class="form-label">Client Email</label>
+                                            <input type="email" class="form-control" id="client_email" name="client_email" 
+                                                   value="{{ invoice.client_email or '' }}" placeholder="client@example.com">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="client_address" class="form-label">Client Address</label>
+                                    <textarea class="form-control" id="client_address" name="client_address" 
+                                              rows="3" placeholder="Client billing address">{{ invoice.client_address or '' }}</textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="due_date" class="form-label">Due Date *</label>
+                                            <input type="date" class="form-control" id="due_date" name="due_date" 
+                                                   value="{{ invoice.due_date.strftime('%Y-%m-%d') }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="tax_rate" class="form-label">Tax Rate (%)</label>
+                                            <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
+                                                   value="{{ "%.2f"|format(invoice.tax_rate) }}" min="0" max="100" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" 
+                                              rows="3" placeholder="Additional notes for the client">{{ invoice.notes or '' }}</textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="terms" class="form-label">Terms & Conditions</label>
+                                    <textarea class="form-control" id="terms" name="terms" 
+                                              rows="3" placeholder="Payment terms and conditions">{{ invoice.terms or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoice Items -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Invoice Items</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addItemRow()">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="itemsTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 40%">Description *</th>
+                                                <th style="width: 20%">Quantity (Hours) *</th>
+                                                <th style="width: 20%">Unit Price *</th>
+                                                <th style="width: 20%">Total</th>
+                                                <th style="width: 10%">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemsTableBody">
+                                            {% for item in invoice.items %}
+                                            <tr class="item-row">
+                                                <td>
+                                                    <input type="hidden" name="item_id[]" value="{{ item.id }}">
+                                                    <input type="text" class="form-control" name="description[]" 
+                                                           value="{{ item.description }}" required>
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control quantity-input" 
+                                                           name="quantity[]" value="{{ "%.2f"|format(item.quantity) }}" 
+                                                           min="0" step="0.01" required onchange="calculateRowTotal(this)">
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control price-input" 
+                                                           name="unit_price[]" value="{{ "%.2f"|format(item.unit_price) }}" 
+                                                           min="0" step="0.01" required onchange="calculateRowTotal(this)">
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control row-total" 
+                                                           value="{{ "%.2f"|format(item.total_amount) }} {{ currency }}" readonly>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeItemRow(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <td colspan="2" class="text-end"><strong>Subtotal:</strong></td>
+                                                <td colspan="2">
+                                                    <input type="text" class="form-control" id="subtotal" 
+                                                           value="{{ "%.2f"|format(invoice.subtotal) }} {{ currency }}" readonly>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2" class="text-end">
+                                                    <strong>Tax ({{ "%.2f"|format(invoice.tax_rate) }}%):</strong>
+                                                </td>
+                                                <td colspan="2">
+                                                    <input type="text" class="form-control" id="taxAmount" 
+                                                           value="{{ "%.2f"|format(invoice.tax_amount) }} {{ currency }}" readonly>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr class="table-primary">
+                                                <td colspan="2" class="text-end"><strong>Total Amount:</strong></td>
+                                                <td colspan="2">
+                                                    <input type="text" class="form-control" id="totalAmount" 
+                                                           value="{{ "%.2f"|format(invoice.total_amount) }} {{ currency }}" readonly>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- Project Information -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Project Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <strong>Project:</strong><br>
+                                    <span class="text-muted">{{ invoice.project.name }}</span>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Client:</strong><br>
+                                    <span class="text-muted">{{ invoice.project.client }}</span>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Hourly Rate:</strong><br>
+                                    <span class="text-muted">
+                                        {% if invoice.project.hourly_rate %}
+                                            {{ "%.2f"|format(invoice.project.hourly_rate) }} {{ currency }}
+                                        {% else %}
+                                            Not set
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Billing Reference:</strong><br>
+                                    <span class="text-muted">{{ invoice.project.billing_ref or 'None' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <a href="{{ url_for('invoices.generate_from_time', invoice_id=invoice.id) }}" 
+                                       class="btn btn-primary w-100">
+                                        <i class="fas fa-clock"></i> Generate from Time Entries
+                                    </a>
+                                </div>
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-outline-secondary w-100" onclick="useProjectRate()">
+                                        <i class="fas fa-dollar-sign"></i> Use Project Hourly Rate
+                                    </button>
+                                </div>
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-outline-info w-100" onclick="calculateTotals()">
+                                        <i class="fas fa-calculator"></i> Recalculate Totals
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Totals Summary -->
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Totals Summary</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Subtotal:</strong></div>
+                                    <div class="col-6 text-end" id="summarySubtotal">
+                                        {{ "%.2f"|format(invoice.subtotal) }} {{ currency }}
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Tax:</strong></div>
+                                    <div class="col-6 text-end" id="summaryTax">
+                                        {{ "%.2f"|format(invoice.tax_amount) }} {{ currency }}
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-6"><strong>Total:</strong></div>
+                                    <div class="col-6 text-end" id="summaryTotal">
+                                        {{ "%.2f"|format(invoice.total_amount) }} {{ currency }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Update Invoice
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let itemCounter = {{ invoice.items.count() }};
+
+function addItemRow() {
+    itemCounter++;
+    const newRow = `
+        <tr class="item-row">
+            <td>
+                <input type="hidden" name="item_id[]" value="">
+                <input type="text" class="form-control" name="description[]" placeholder="Item description" required>
+            </td>
+            <td>
+                <input type="number" class="form-control quantity-input" name="quantity[]" 
+                       value="1.00" min="0" step="0.01" required onchange="calculateRowTotal(this)">
+            </td>
+            <td>
+                <input type="number" class="form-control price-input" name="unit_price[]" 
+                       value="0.00" min="0" step="0.01" required onchange="calculateRowTotal(this)">
+            </td>
+            <td>
+                <input type="text" class="form-control row-total" value="0.00 {{ currency }}" readonly>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeItemRow(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+    $('#itemsTableBody').append(newRow);
+}
+
+function removeItemRow(button) {
+    if ($('.item-row').length > 1) {
+        $(button).closest('tr').remove();
+        calculateTotals();
+    } else {
+        alert('At least one item is required.');
+    }
+}
+
+function calculateRowTotal(input) {
+    const row = $(input).closest('tr');
+    const quantity = parseFloat(row.find('.quantity-input').val()) || 0;
+    const price = parseFloat(row.find('.price-input').val()) || 0;
+    const total = quantity * price;
+    
+    row.find('.row-total').val(total.toFixed(2) + ' {{ currency }}');
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let subtotal = 0;
+    
+    $('.item-row').each(function() {
+        const quantity = parseFloat($(this).find('.quantity-input').val()) || 0;
+        const price = parseFloat($(this).find('.price-input').val()) || 0;
+        subtotal += quantity * price;
+    });
+    
+    const taxRate = parseFloat($('#tax_rate').val()) || 0;
+    const taxAmount = subtotal * (taxRate / 100);
+    const total = subtotal + taxAmount;
+    
+    // Update summary fields
+    $('#subtotal').val(subtotal.toFixed(2) + ' {{ currency }}');
+    $('#taxAmount').val(taxAmount.toFixed(2) + ' {{ currency }}');
+    $('#totalAmount').val(total.toFixed(2) + ' {{ currency }}');
+    
+    // Update summary display
+    $('#summarySubtotal').text(subtotal.toFixed(2) + ' {{ currency }}');
+    $('#summaryTax').text(taxAmount.toFixed(2) + ' {{ currency }}');
+    $('#summaryTotal').text(total.toFixed(2) + ' {{ currency }}');
+}
+
+function useProjectRate() {
+    const projectRate = {{ invoice.project.hourly_rate or 0 }};
+    if (projectRate > 0) {
+        $('.price-input').val(projectRate.toFixed(2));
+        $('.price-input').each(function() {
+            calculateRowTotal(this);
+        });
+    } else {
+        alert('No hourly rate set for this project.');
+    }
+}
+
+// Initialize calculations on page load
+$(document).ready(function() {
+    calculateTotals();
+    
+    // Set minimum due date to today
+    const today = new Date().toISOString().split('T')[0];
+    $('#due_date').attr('min', today);
+});
+</script>
+{% endblock %}
