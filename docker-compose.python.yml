@@ -1,0 +1,50 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: timetracker-app-python
+    environment:
+      - TZ=${TZ:-Europe/Brussels}
+      - CURRENCY=${CURRENCY:-EUR}
+      - ROUNDING_MINUTES=${ROUNDING_MINUTES:-1}
+      - SINGLE_ACTIVE_TIMER=${SINGLE_ACTIVE_TIMER:-true}
+      - ALLOW_SELF_REGISTER=${ALLOW_SELF_REGISTER:-true}
+      - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
+      - ADMIN_USERNAMES=${ADMIN_USERNAMES:-admin}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
+      - DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
+      - LOG_FILE=/app/logs/timetracker.log
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_data:/data
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: timetracker-db-python
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-timetracker}
+      - POSTGRES_USER=${POSTGRES_USER:-timetracker}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-timetracker}
+      - TZ=${TZ:-Europe/Brussels}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  app_data:
+    driver: local
+  db_data:
+    driver: local

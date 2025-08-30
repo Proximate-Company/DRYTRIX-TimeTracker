@@ -1,11 +1,17 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, Project, TimeEntry, Settings
 from datetime import datetime
 from sqlalchemy import text
+import os
+from werkzeug.utils import secure_filename
+import uuid
 
 admin_bp = Blueprint('admin', __name__)
+
+# Allowed file extensions for logos
+ALLOWED_LOGO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
 
 def admin_required(f):
     """Decorator to require admin access"""
@@ -17,6 +23,17 @@ def admin_required(f):
             return redirect(url_for('main.dashboard'))
         return f(*args, **kwargs)
     return decorated_function
+
+def allowed_logo_file(filename):
+    """Check if the uploaded file has an allowed extension"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_LOGO_EXTENSIONS
+
+def get_upload_folder():
+    """Get the upload folder path for logos"""
+    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'logos')
+    os.makedirs(upload_folder, exist_ok=True)
+    return upload_folder
 
 @admin_bp.route('/admin')
 @login_required
@@ -106,25 +123,31 @@ def create_user():
 @login_required
 @admin_required
 def edit_user(user_id):
-    """Edit user details"""
+    """Edit an existing user"""
     user = User.query.get_or_404(user_id)
     
     if request.method == 'POST':
+        username = request.form.get('username', '').strip().lower()
         role = request.form.get('role', 'user')
         is_active = request.form.get('is_active') == 'on'
         
-        # Don't allow deactivating the last admin
-        if not is_active and user.is_admin:
-            admin_count = User.query.filter_by(role='admin', is_active=True).count()
-            if admin_count <= 1:
-                flash('Cannot deactivate the last administrator', 'error')
-                return render_template('admin/user_form.html', user=user)
+        if not username:
+            flash('Username is required', 'error')
+            return render_template('admin/user_form.html', user=user)
         
+        # Check if username is already taken by another user
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user and existing_user.id != user.id:
+            flash('Username already exists', 'error')
+            return render_template('admin/user_form.html', user=user)
+        
+        # Update user
+        user.username = username
         user.role = role
         user.is_active = is_active
         db.session.commit()
         
-        flash(f'User "{user.username}" updated successfully', 'success')
+        flash(f'User "{username}" updated successfully', 'success')
         return redirect(url_for('admin.list_users'))
     
     return render_template('admin/user_form.html', user=user)
@@ -172,7 +195,7 @@ def settings():
             flash(f'Invalid timezone: {timezone}', 'error')
             return render_template('admin/settings.html', settings=settings_obj)
         
-        # Update settings
+        # Update basic settings
         settings_obj.timezone = timezone
         settings_obj.currency = request.form.get('currency', 'EUR')
         settings_obj.rounding_minutes = int(request.form.get('rounding_minutes', 1))
@@ -183,11 +206,96 @@ def settings():
         settings_obj.backup_time = request.form.get('backup_time', '02:00')
         settings_obj.export_delimiter = request.form.get('export_delimiter', ',')
         
+        # Update company branding settings
+        settings_obj.company_name = request.form.get('company_name', 'Your Company Name')
+        settings_obj.company_address = request.form.get('company_address', 'Your Company Address')
+        settings_obj.company_email = request.form.get('company_email', 'info@yourcompany.com')
+        settings_obj.company_phone = request.form.get('company_phone', '+1 (555) 123-4567')
+        settings_obj.company_website = request.form.get('company_website', 'www.yourcompany.com')
+        settings_obj.company_tax_id = request.form.get('company_tax_id', '')
+        settings_obj.company_bank_info = request.form.get('company_bank_info', '')
+        
+        # Update invoice defaults
+        settings_obj.invoice_prefix = request.form.get('invoice_prefix', 'INV')
+        settings_obj.invoice_start_number = int(request.form.get('invoice_start_number', 1000))
+        settings_obj.invoice_terms = request.form.get('invoice_terms', 'Payment is due within 30 days of invoice date.')
+        settings_obj.invoice_notes = request.form.get('invoice_notes', 'Thank you for your business!')
+        
         db.session.commit()
         flash('Settings updated successfully', 'success')
         return redirect(url_for('admin.settings'))
     
     return render_template('admin/settings.html', settings=settings_obj)
+
+@admin_bp.route('/admin/upload-logo', methods=['POST'])
+@login_required
+@admin_required
+def upload_logo():
+    """Upload company logo"""
+    if 'logo' not in request.files:
+        flash('No logo file selected', 'error')
+        return redirect(url_for('admin.settings'))
+    
+    file = request.files['logo']
+    if file.filename == '':
+        flash('No logo file selected', 'error')
+        return redirect(url_for('admin.settings'))
+    
+    if file and allowed_logo_file(file.filename):
+        # Generate unique filename
+        file_extension = file.filename.rsplit('.', 1)[1].lower()
+        unique_filename = f"company_logo_{uuid.uuid4().hex[:8]}.{file_extension}"
+        
+        # Save file
+        upload_folder = get_upload_folder()
+        file_path = os.path.join(upload_folder, unique_filename)
+        file.save(file_path)
+        
+        # Update settings
+        settings_obj = Settings.get_settings()
+        
+        # Remove old logo if it exists
+        if settings_obj.company_logo_filename:
+            old_logo_path = os.path.join(upload_folder, settings_obj.company_logo_filename)
+            if os.path.exists(old_logo_path):
+                try:
+                    os.remove(old_logo_path)
+                except OSError:
+                    pass  # Ignore errors when removing old file
+        
+        settings_obj.company_logo_filename = unique_filename
+        db.session.commit()
+        
+        flash('Company logo uploaded successfully', 'success')
+    else:
+        flash('Invalid file type. Allowed types: PNG, JPG, JPEG, GIF, SVG, WEBP', 'error')
+    
+    return redirect(url_for('admin.settings'))
+
+@admin_bp.route('/admin/remove-logo', methods=['POST'])
+@login_required
+@admin_required
+def remove_logo():
+    """Remove company logo"""
+    settings_obj = Settings.get_settings()
+    
+    if settings_obj.company_logo_filename:
+        # Remove file from filesystem
+        logo_path = settings_obj.get_logo_path()
+        if logo_path and os.path.exists(logo_path):
+            try:
+                os.remove(logo_path)
+            except OSError:
+                pass  # Ignore errors when removing file
+        
+        # Clear filename from database
+        settings_obj.company_logo_filename = ''
+        db.session.commit()
+        flash('Company logo removed successfully', 'success')
+    else:
+        flash('No logo to remove', 'info')
+    
+    return redirect(url_for('admin.settings'))
 
 @admin_bp.route('/admin/backup')
 @login_required
