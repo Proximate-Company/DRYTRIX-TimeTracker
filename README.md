@@ -2,6 +2,103 @@
 
 A comprehensive web-based time tracking application built with Flask, featuring project management, time tracking, invoicing, and analytics.
 
+## 📸 Screenshots
+
+<div align="center">
+  <img src="assets/screenshots/Dashboard.png" alt="Dashboard" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/Projects.png" alt="Projects" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/Tasks.png" alt="Tasks" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/Reports.png" alt="Reports" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/Task_Management.png" alt="Task Management" width="300" style="margin: 10px;">
+</div>
+
+## 🌐 Platform Support
+
+**Web Application (Primary)**
+- **Desktop**: Windows, macOS, Linux with modern web browsers
+- **Mobile**: Responsive design optimized for Android and iOS devices
+- **Tablets**: Full touch-friendly interface for iPad and Android tablets
+
+**Access Methods**
+- **Web Browser**: Chrome, Firefox, Safari, Edge (latest versions)
+- **Mobile Web**: Progressive Web App (PWA) capabilities
+- **API Access**: RESTful API for third-party integrations
+- **CLI Tools**: Command-line interface for administration and automation
+
+**Note**: This is a web-based application that runs in any modern browser. While not native mobile apps, the responsive design provides an excellent mobile experience across all devices.
+
+## 📊 Reporting Features
+
+### Comprehensive Analytics Dashboard
+- **Real-time Statistics**: Live updates of current time tracking status
+- **Time Period Analysis**: Daily, weekly, and monthly hour summaries
+- **Project Performance**: Time breakdown by project with client information
+- **User Productivity**: Individual and team performance metrics
+- **Billable vs Non-billable**: Separate tracking for invoicing purposes
+
+### Detailed Reports
+- **Project Reports**: Time analysis by project with user breakdowns
+- **User Reports**: Individual performance metrics and project allocation
+- **Summary Reports**: Key performance indicators and trends
+- **Custom Date Ranges**: Flexible reporting periods for analysis
+- **Export Capabilities**: CSV export with customizable delimiters
+
+### Visual Analytics
+- **Progress Bars**: Visual representation of time allocation
+- **Statistics Cards**: Key metrics displayed prominently
+- **Trend Analysis**: Historical data visualization
+- **Mobile-Optimized Charts**: Responsive charts for all screen sizes
+
+## ⚡ Automatic Time Tracking
+
+### Smart Timer Features
+- **Idle Detection**: Automatic pause after configurable idle timeout (default: 30 minutes)
+- **Single Active Timer**: Option to allow only one active timer per user
+- **Auto-source Tracking**: Distinguishes between manual and automatic time entries
+- **Real-time Updates**: WebSocket-powered live timer updates
+
+### Timer Management
+- **Start/Stop Controls**: Simple one-click timer management
+- **Project Association**: Automatic project linking for time entries
+- **Task Categorization**: Optional task-level time tracking
+- **Notes and Tags**: Rich metadata for time entries
+- **Duration Calculation**: Automatic time calculation and formatting
+
+### Configuration Options
+- **Idle Timeout**: Customizable idle detection (5-120 minutes)
+- **Timer Behavior**: Single vs. multiple active timers
+- **Rounding Rules**: Configurable time rounding (1-minute increments)
+- **Timezone Support**: Full timezone awareness and conversion
+
+## 📁 Data Standards & Import/Export
+
+### Export Formats
+- **CSV Export**: Standard comma-separated values with configurable delimiters
+- **Data Fields**: Complete time entry information including:
+  - User, Project, Client, Task details
+  - Start/End times in ISO format
+  - Duration in hours and formatted display
+  - Notes, Tags, Source, Billable status
+  - Creation and modification timestamps
+
+### Data Structure
+- **Standardized Fields**: Consistent data format across all exports
+- **ISO 8601 Timestamps**: Standard datetime format for compatibility
+- **Configurable Delimiters**: Support for different regional CSV standards
+- **UTF-8 Encoding**: Full international character support
+
+### Import Capabilities
+- **Database Schema**: PostgreSQL and SQLite support
+- **Migration Scripts**: Automated database schema updates
+- **Backup/Restore**: Database backup and restoration tools
+- **CLI Management**: Command-line database operations
+
+### API Integration
+- **RESTful Endpoints**: Standard HTTP API for external access
+- **JSON Format**: Modern data exchange format
+- **Authentication**: Secure API access with user authentication
+- **Real-time Updates**: WebSocket support for live data synchronization
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -61,6 +158,9 @@ Multiple Docker configurations are available in `docker-configs/`:
 - **Analytics**: Comprehensive reporting and time analysis
 - **User Management**: Multi-user support with role-based access
 - **Mobile Responsive**: Works on all devices
+- **CLI Tools**: Command-line interface for administration
+- **API Access**: RESTful API for integrations
+- **Real-time Updates**: WebSocket-powered live updates
 
 ## 📚 Documentation
 
