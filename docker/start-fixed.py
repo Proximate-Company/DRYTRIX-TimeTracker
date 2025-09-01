@@ -126,17 +126,12 @@ def main():
         print("Database is not available, exiting...")
         sys.exit(1)
     
-    # Step 1: Run SQL database initialization first (creates basic tables including tasks)
-    if not run_script('/app/docker/init-database-sql.py', 'SQL database initialization'):
-        print("SQL database initialization failed, exiting...")
+    # Run enhanced database initialization and migration (strict schema verification and auto-fix)
+    if not run_script('/app/docker/init-database-enhanced.py', 'Enhanced database initialization and migration'):
+        print("Enhanced database initialization failed, exiting...")
         sys.exit(1)
     
-    # Step 2: Run main database initialization (handles Flask-specific setup)
-    if not run_script('/app/docker/init-database.py', 'main database initialization'):
-        print("Main database initialization failed, exiting...")
-        sys.exit(1)
-    
-    print("✓ All database initialization completed successfully")
+    print("✓ Database initialization and migration completed successfully")
     
     print("Starting application...")
     # Start gunicorn with access logs

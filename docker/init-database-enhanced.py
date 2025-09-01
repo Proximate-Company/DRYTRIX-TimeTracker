@@ -35,6 +35,24 @@ def wait_for_database(url, max_attempts=30, delay=2):
 def get_required_schema():
     """Define the complete required database schema"""
     return {
+        'clients': {
+            'columns': [
+                'id SERIAL PRIMARY KEY',
+                'name VARCHAR(200) UNIQUE NOT NULL',
+                'description TEXT',
+                'contact_person VARCHAR(200)',
+                'email VARCHAR(200)',
+                'phone VARCHAR(50)',
+                'address TEXT',
+                'default_hourly_rate NUMERIC(9, 2)',
+                'status VARCHAR(20) DEFAULT \'active\' NOT NULL',
+                'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL',
+                'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL'
+            ],
+            'indexes': [
+                'CREATE INDEX IF NOT EXISTS idx_clients_name ON clients(name)'
+            ]
+        },
         'users': {
             'columns': [
                 'id SERIAL PRIMARY KEY',
@@ -54,7 +72,7 @@ def get_required_schema():
             'columns': [
                 'id SERIAL PRIMARY KEY',
                 'name VARCHAR(200) NOT NULL',
-                'client VARCHAR(200) NOT NULL',
+                'client_id INTEGER',
                 'description TEXT',
                 'billable BOOLEAN DEFAULT true NOT NULL',
                 'hourly_rate NUMERIC(9, 2)',
@@ -64,7 +82,7 @@ def get_required_schema():
                 'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
             ],
             'indexes': [
-                'CREATE INDEX IF NOT EXISTS idx_projects_client ON projects(client)',
+                'CREATE INDEX IF NOT EXISTS idx_projects_client_id ON projects(client_id)',
                 'CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)'
             ]
         },
@@ -289,7 +307,7 @@ def create_triggers(engine):
             """))
             
             # Create triggers for all tables that have updated_at
-            tables_with_updated_at = ['users', 'projects', 'time_entries', 'settings', 'tasks', 'invoices']
+            tables_with_updated_at = ['users', 'projects', 'time_entries', 'settings', 'tasks', 'invoices', 'clients']
             
             for table in tables_with_updated_at:
                 try:
@@ -327,10 +345,23 @@ def insert_initial_data(engine):
                 ON CONFLICT (username) DO NOTHING;
             """))
             
-            # Insert default project
+            # Ensure default client exists
             conn.execute(text("""
-                INSERT INTO projects (name, client, description, billable, status) 
-                VALUES ('General', 'Default Client', 'Default project for general tasks', true, 'active')
+                INSERT INTO clients (name, status)
+                VALUES ('Default Client', 'active')
+                ON CONFLICT (name) DO NOTHING;
+            """))
+
+            # Insert default project (link to default client if possible)
+            conn.execute(text("""
+                INSERT INTO projects (name, client_id, description, billable, status)
+                VALUES (
+                    'General',
+                    (SELECT id FROM clients WHERE name = 'Default Client'),
+                    'Default project for general tasks',
+                    true,
+                    'active'
+                )
                 ON CONFLICT DO NOTHING;
             """))
             
@@ -415,7 +446,7 @@ def main():
     
     # Get required schema
     required_schema = get_required_schema()
-    
+
     # Create/update tables
     print("\n--- Creating/updating tables ---")
     for table_name, table_schema in required_schema.items():
@@ -431,6 +462,39 @@ def main():
     # Create triggers
     print("\n--- Creating triggers ---")
     create_triggers(engine)
+
+    # Run legacy migrations (projects.client -> projects.client_id)
+    print("\n--- Running legacy migrations ---")
+    try:
+        inspector = inspect(engine)
+        project_columns = [c['name'] for c in inspector.get_columns('projects')] if 'projects' in inspector.get_table_names() else []
+        if 'client' in project_columns and 'client_id' in project_columns:
+            with engine.connect() as conn:
+                conn.execute(text("""
+                    INSERT INTO clients (name, status)
+                    SELECT DISTINCT client, 'active' FROM projects
+                    WHERE client IS NOT NULL AND client <> ''
+                    ON CONFLICT (name) DO NOTHING
+                """))
+                conn.execute(text("""
+                    UPDATE projects p
+                    SET client_id = c.id
+                    FROM clients c
+                    WHERE p.client_id IS NULL AND p.client = c.name
+                """))
+                # Create index and FK best-effort
+                try:
+                    conn.execute(text("CREATE INDEX IF NOT EXISTS idx_projects_client_id ON projects(client_id)"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(text("ALTER TABLE projects ADD CONSTRAINT fk_projects_client_id FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE"))
+                except Exception:
+                    pass
+                conn.commit()
+            print("✓ Migrated legacy projects.client to client_id")
+    except Exception as e:
+        print(f"⚠ Legacy migration failed (non-fatal): {e}")
     
     # Insert initial data
     print("\n--- Inserting initial data ---")

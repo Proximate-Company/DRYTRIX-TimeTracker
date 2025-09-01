@@ -22,13 +22,41 @@ class Project(db.Model):
     time_entries = db.relationship('TimeEntry', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     
-    def __init__(self, name, client_id, description=None, billable=True, hourly_rate=None, billing_ref=None):
+    def __init__(self, name, client_id=None, description=None, billable=True, hourly_rate=None, billing_ref=None, client=None):
+        """Create a Project.
+
+        Backward-compatible initializer that accepts either client_id or client name.
+        If client name is provided and client_id is not, the corresponding Client
+        record will be found or created on the fly and client_id will be set.
+        """
+        from .client import Client  # local import to avoid circular dependencies
+
         self.name = name.strip()
-        self.client_id = client_id
         self.description = description.strip() if description else None
         self.billable = billable
         self.hourly_rate = Decimal(str(hourly_rate)) if hourly_rate else None
         self.billing_ref = billing_ref.strip() if billing_ref else None
+
+        resolved_client_id = client_id
+        if resolved_client_id is None and client:
+            # Find or create client by name
+            client_name = client.strip()
+            existing = Client.query.filter_by(name=client_name).first()
+            if existing:
+                resolved_client_id = existing.id
+            else:
+                new_client = Client(name=client_name)
+                db.session.add(new_client)
+                # Flush to obtain id without committing the whole transaction
+                try:
+                    db.session.flush()
+                    resolved_client_id = new_client.id
+                except Exception:
+                    # If flush fails, fallback to committing
+                    db.session.commit()
+                    resolved_client_id = new_client.id
+
+        self.client_id = resolved_client_id
     
     def __repr__(self):
         return f'<Project {self.name} ({self.client_obj.name if self.client_obj else "Unknown Client"})>'
