@@ -146,7 +146,6 @@ TimeTracker/
 │   ├── templates/         # HTML templates
 │   └── utils/             # Utility functions
 ├── docs/                  # Documentation and README files
-├── docker-configs/        # Docker configurations and Dockerfiles
 ├── docker/                # Docker-related scripts and utilities
 │   ├── config/            # Configuration files (Caddyfile, supervisord)
 │   ├── fixes/             # Database and permission fix scripts
@@ -157,18 +156,33 @@ TimeTracker/
 ├── tests/                  # Application test suite
 ├── templates/              # Additional templates
 ├── assets/                 # Project assets and screenshots
-└── logs/                   # Application logs
+├── logs/                   # Application logs
+├── docker-compose.yml      # Local development setup
+├── docker-compose.remote.yml      # Production deployment
+├── docker-compose.remote-dev.yml  # Development deployment
+└── Dockerfile              # Application container definition
 ```
 
 ## 🐳 Docker Support
 
-Multiple Docker configurations are available in `docker-configs/`:
+Multiple Docker configurations are available for different deployment scenarios:
 
-- **Standard**: `docker-compose.yml` - Full application with all features
-- **Simple**: `docker-compose.simple.yml` - Minimal setup
-- **Python**: `docker-compose.python.yml` - Python-only environment
-- **WeasyPrint**: `docker-compose.weasyprint.yml` - With PDF generation
-- **Fixed**: `docker-compose.fixed.yml` - Resolved permission issues
+### Local Development
+- **`docker-compose.yml`** - Standard local development setup with all features
+  - Builds from local source code
+  - Includes optional Caddy reverse proxy for TLS
+  - Suitable for development and testing
+
+### Remote Deployment
+- **`docker-compose.remote.yml`** - Production deployment using GitHub Container Registry
+  - Uses pre-built `ghcr.io/drytrix/timetracker:latest` image
+  - Secure cookie settings enabled
+  - Optimized for production environments
+
+- **`docker-compose.remote-dev.yml`** - Development deployment using GitHub Container Registry
+  - Uses pre-built `ghcr.io/drytrix/timetracker:development` image
+  - Secure cookie settings enabled
+  - Suitable for testing pre-release versions
 
 ### Enhanced Database Startup
 
@@ -179,6 +193,81 @@ The application now includes an enhanced database startup procedure that automat
 - Provides comprehensive error reporting
 
 See [Enhanced Database Startup Documentation](docs/ENHANCED_DATABASE_STARTUP.md) for detailed information.
+
+### Docker Compose Usage
+
+#### Quick Start with Local Development
+```bash
+# Clone the repository
+git clone https://github.com/drytrix/TimeTracker.git
+cd TimeTracker
+
+# Copy environment file and configure
+cp env.example .env
+# Edit .env with your settings
+
+# Start the application
+docker-compose up -d
+
+# Access the application at http://localhost:8080
+```
+
+#### Production Deployment with Remote Images
+```bash
+# Use production-ready images from GitHub Container Registry
+docker-compose -f docker-compose.remote.yml up -d
+
+# Or use development version for testing
+docker-compose -f docker-compose.remote-dev.yml up -d
+```
+
+#### Development with TLS Support
+```bash
+# Start with Caddy reverse proxy for HTTPS
+docker-compose --profile tls up -d
+
+# Access via HTTPS at https://localhost
+```
+
+#### Environment Configuration
+All docker-compose files support the following environment variables (set in `.env` file):
+
+- **`TZ`** - Timezone (default: Europe/Brussels)
+- **`CURRENCY`** - Currency symbol (default: EUR)
+- **`ROUNDING_MINUTES`** - Time rounding in minutes (default: 1)
+- **`SINGLE_ACTIVE_TIMER`** - Allow only one active timer per user (default: true)
+- **`ALLOW_SELF_REGISTER`** - Allow user self-registration (default: true)
+- **`IDLE_TIMEOUT_MINUTES`** - Auto-pause timer after idle time (default: 30)
+- **`ADMIN_USERNAMES`** - Comma-separated list of admin usernames (default: admin)
+- **`SECRET_KEY`** - Flask secret key (change this in production!)
+- **`SESSION_COOKIE_SECURE`** - Secure session cookies (default: false for local, true for remote)
+- **`REMEMBER_COOKIE_SECURE`** - Secure remember cookies (default: false for local, true for remote)
+
+#### Database Configuration
+- **`POSTGRES_DB`** - Database name (default: timetracker)
+- **`POSTGRES_USER`** - Database user (default: timetracker)
+- **`POSTGRES_PASSWORD`** - Database password (default: timetracker)
+
+#### Useful Commands
+```bash
+# View logs
+docker-compose logs -f app
+
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (⚠️ deletes all data)
+docker-compose down -v
+
+# Rebuild and restart
+docker-compose up -d --build
+
+# Check service status
+docker-compose ps
+
+# Access database directly
+docker-compose exec db psql -U timetracker -d timetracker
+```
 
 ### Version Management
 
@@ -216,8 +305,14 @@ Detailed documentation is available in the `docs/` directory:
 
 ### Docker Deployment
 ```bash
-# Use the appropriate docker-compose file
-docker-compose -f docker-configs/docker-compose.yml up -d
+# Local development
+docker-compose up -d
+
+# Production with remote images
+docker-compose -f docker-compose.remote.yml up -d
+
+# Development with remote images
+docker-compose -f docker-compose.remote-dev.yml up -d
 ```
 
 ### Manual Deployment
