@@ -144,15 +144,15 @@ jobs:
             -t $IMAGE_ID:$VERSION \
             .
           
-          # Tag with additional labels based on version source
-          if [[ "${{ steps.version.outputs.version_source }}" == "release" ]] || [[ "${{ steps.version.outputs.version_source }}" == "git_tag" ]]; then
-            # For releases and tags, also create a 'latest' tag
+          # Determine publish tags
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            # Release: publish version and latest
             docker tag $IMAGE_ID:$VERSION $IMAGE_ID:latest
-            echo "Tagged as latest (release/tag)"
-          elif [[ "${{ steps.version.outputs.version_source }}" == "branch_build" ]] && [[ "${{ steps.version.outputs.branch_name }}" == "main" ]]; then
-            # For main branch builds, create a 'main' tag
-            docker tag $IMAGE_ID:$VERSION $IMAGE_ID:main
-            echo "Tagged as main (main branch build)"
+            echo "Release build: will push tags [$VERSION, latest]"
+          else
+            # Non-release: publish development
+            docker tag $IMAGE_ID:$VERSION $IMAGE_ID:development
+            echo "Non-release build: will push tag [development]"
           fi
 
       - name: Push Docker image
@@ -165,16 +165,13 @@ jobs:
           echo "Image ID: $IMAGE_ID"
           echo "Version: $VERSION"
           
-          # Push the versioned tag
-          docker push $IMAGE_ID:$VERSION
-          
-          # Push additional tags if they exist
-          if [[ "${{ steps.version.outputs.version_source }}" == "release" ]] || [[ "${{ steps.version.outputs.version_source }}" == "git_tag" ]]; then
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            # Push version and latest
+            docker push $IMAGE_ID:$VERSION
             docker push $IMAGE_ID:latest
-            echo "Pushed latest tag"
-          elif [[ "${{ steps.version.outputs.version_source }}" == "branch_build" ]] && [[ "${{ steps.version.outputs.branch_name }}" == "main" ]]; then
-            docker push $IMAGE_ID:main
-            echo "Pushed main tag"
+          else
+            # Push only development
+            docker push $IMAGE_ID:development
           fi
 
       - name: Generate build summary

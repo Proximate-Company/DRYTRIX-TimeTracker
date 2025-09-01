@@ -1,9 +1,9 @@
 services:
   app:
-    image: ghcr.io/${GITHUB_REPOSITORY:-drytrix/timetracker}:latest
-    container_name: timetracker-app
+    image: ghcr.io/drytrix/timetracker:development
+    container_name: timetracker-app-remote-dev
     environment:
-      - TZ=${TZ:-Europe/Rome}
+      - TZ=${TZ:-Europe/Brussels}
       - CURRENCY=${CURRENCY:-EUR}
       - ROUNDING_MINUTES=${ROUNDING_MINUTES:-1}
       - SINGLE_ACTIVE_TIMER=${SINGLE_ACTIVE_TIMER:-true}
@@ -13,13 +13,16 @@ services:
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
       - DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
       - LOG_FILE=/app/logs/timetracker.log
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-true}
+      - REMEMBER_COOKIE_SECURE=${REMEMBER_COOKIE_SECURE:-true}
     ports:
       - "8080:8080"
     volumes:
-      - app_data:/data
+      - app_data_remote_dev:/data
       - ./logs:/app/logs
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
@@ -30,44 +33,26 @@ services:
 
   db:
     image: postgres:16-alpine
-    container_name: timetracker-db
+    container_name: timetracker-db-remote-dev
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-timetracker}
       - POSTGRES_USER=${POSTGRES_USER:-timetracker}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-timetracker}
-      - TZ=${TZ:-Europe/Rome}
+      - TZ=${TZ:-Europe/Brussels}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data_remote_dev:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     restart: unless-stopped
-
-  # Optional reverse proxy for TLS on LAN
-  proxy:
-    image: caddy:2-alpine
-    container_name: timetracker-proxy
-    volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - app
-    restart: unless-stopped
-    profiles:
-      - tls
 
 volumes:
-  app_data:
+  app_data_remote_dev:
     driver: local
-  db_data:
+  db_data_remote_dev:
     driver: local
-  caddy_data:
-    driver: local
-  caddy_config:
-    driver: local
+
+

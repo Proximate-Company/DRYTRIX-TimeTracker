@@ -1,9 +1,7 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile.python
-    container_name: timetracker-app-python
+    image: ghcr.io/drytrix/timetracker:latest
+    container_name: timetracker-app-remote
     environment:
       - TZ=${TZ:-Europe/Brussels}
       - CURRENCY=${CURRENCY:-EUR}
@@ -15,26 +13,34 @@ services:
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
       - DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
       - LOG_FILE=/app/logs/timetracker.log
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-true}
+      - REMEMBER_COOKIE_SECURE=${REMEMBER_COOKIE_SECURE:-true}
     ports:
       - "8080:8080"
     volumes:
-      - app_data:/data
+      - app_data_remote:/data
       - ./logs:/app/logs
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:16-alpine
-    container_name: timetracker-db-python
+    container_name: timetracker-db-remote
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-timetracker}
       - POSTGRES_USER=${POSTGRES_USER:-timetracker}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-timetracker}
       - TZ=${TZ:-Europe/Brussels}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data_remote:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -44,7 +50,9 @@ services:
     restart: unless-stopped
 
 volumes:
-  app_data:
+  app_data_remote:
     driver: local
-  db_data:
+  db_data_remote:
     driver: local
+
+
