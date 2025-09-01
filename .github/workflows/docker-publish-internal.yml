@@ -59,6 +59,11 @@ jobs:
           
           echo "--- Creating combined Dockerfile ---"
           cp Dockerfile.simple Dockerfile.final
+          # Ensure port 8080 is exposed in the final Dockerfile
+          if ! grep -q "^EXPOSE 8080" Dockerfile.final; then
+            echo "\n# Ensure required port is exposed" >> Dockerfile.final
+            echo "EXPOSE 8080" >> Dockerfile.final
+          fi
           echo "Combined Dockerfile created successfully"
 
       - name: Build and push Docker image
@@ -81,15 +86,17 @@ jobs:
           echo "Version: $VERSION"
 
           # Build the Docker image
-          docker build -f Dockerfile.final -t $IMAGE_ID:$VERSION .
+          docker build -f Dockerfile.final \
+            --label "org.opencontainers.image.exposedPorts=8080" \
+            -t $IMAGE_ID:$VERSION .
 
           # Always push versioned tag on releases/tags
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
             docker push $IMAGE_ID:$VERSION
             
-            # If this is a release, also push as latest
-            if [ "${{ github.event_name }}" == "release" ]; then
+            # If this is a release or tag push, also push as latest
+            if [ "${{ github.event_name }}" == "release" ] || [[ "${GITHUB_REF}" == refs/tags/* ]]; then
               docker tag $IMAGE_ID:$VERSION $IMAGE_ID:latest
               docker push $IMAGE_ID:latest
             fi
