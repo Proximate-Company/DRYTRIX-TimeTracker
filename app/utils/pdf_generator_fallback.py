@@ -9,10 +9,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
 from reportlab.pdfgen import canvas
 from app.models import Settings
+from flask import current_app
 
 class InvoicePDFGeneratorFallback:
     """Generate PDF invoices with company branding using ReportLab"""
@@ -145,13 +146,17 @@ class InvoicePDFGeneratorFallback:
         # Invoice information (right side)
         invoice_info = []
         
-        # Add logo if available (top right)
+        # Add logo if available (top right) using Image flowable
         if self.settings.has_logo():
             logo_path = self.settings.get_logo_path()
             if logo_path and os.path.exists(logo_path):
-                # Add a placeholder for the logo - in ReportLab we'd need to use canvas.drawImage
-                # For now, we'll add a note that logo is included
-                invoice_info.append(Paragraph("[Company Logo]", self.styles['NormalText']))
+                try:
+                    img = Image(logo_path, width=4*cm, height=2*cm, kind='proportional')
+                    invoice_info.append(img)
+                    invoice_info.append(Spacer(1, 6))
+                except Exception:
+                    # Fallback to text if image fails
+                    invoice_info.append(Paragraph("[Company Logo]", self.styles['NormalText']))
         
         invoice_info.append(Paragraph("INVOICE", self.styles['InvoiceTitle']))
         invoice_info.append(Paragraph(f"Invoice #: {self.invoice.invoice_number}", self.styles['NormalText']))
@@ -161,7 +166,7 @@ class InvoicePDFGeneratorFallback:
         
         # Create a table to layout company info and invoice info side by side
         header_data = [[company_info, invoice_info]]
-        header_table = Table(header_data, colWidths=[7*cm, 7*cm])
+        header_table = Table(header_data, colWidths=[9*cm, 6*cm])
         header_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
@@ -225,19 +230,19 @@ class InvoicePDFGeneratorFallback:
         data.append(['', '', 'Total Amount:', f"{self.invoice.total_amount:.2f} {self.settings.currency}"])
         
         # Create table
-        table = Table(data, colWidths=[8*cm, 3*cm, 3*cm, 3*cm])
+        table = Table(data, colWidths=[9*cm, 3*cm, 3*cm, 3*cm])
         table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('ALIGN', (0, 1), (0, -1), 'LEFT'),  # Description column left-aligned
-            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),  # Numbers right-aligned
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8fafc')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#475569')),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 12),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, -3), (-1, -1), colors.lightgrey),
+            ('BACKGROUND', (0, -3), (-1, -1), colors.HexColor('#eef2ff')),
             ('FONTNAME', (0, -3), (-1, -1), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+            ('BOX', (0, 0), (-1, -1), 0.8, colors.HexColor('#e2e8f0'))
         ]))
         
         story.append(table)

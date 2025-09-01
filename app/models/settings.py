@@ -35,6 +35,9 @@ class Settings(db.Model):
     invoice_terms = db.Column(db.Text, default='Payment is due within 30 days of invoice date.', nullable=False)
     invoice_notes = db.Column(db.Text, default='Thank you for your business!', nullable=False)
     
+    # Privacy and analytics settings
+    allow_analytics = db.Column(db.Boolean, default=True, nullable=False)  # Controls system info sharing with license server
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
@@ -124,6 +127,7 @@ class Settings(db.Model):
             'invoice_start_number': self.invoice_start_number,
             'invoice_terms': self.invoice_terms,
             'invoice_notes': self.invoice_notes,
+            'allow_analytics': self.allow_analytics,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

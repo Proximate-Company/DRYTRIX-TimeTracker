@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
 from app import db
-from app.models import Project, TimeEntry, Task
+from app.models import Project, TimeEntry, Task, Client
 from datetime import datetime
 from decimal import Decimal
+from app.utils.db import safe_commit
 
 projects_bp = Blueprint('projects', __name__)
 
@@ -23,7 +24,7 @@ def list_projects():
         query = query.filter_by(status='archived')
     
     if client_name:
-        query = query.filter(Project.client == client_name)
+        query = query.join(Client).filter(Client.name == client_name)
     
     if search:
         like = f"%{search}%"
@@ -40,9 +41,9 @@ def list_projects():
         error_out=False
     )
     
-    # Distinct clients for filter dropdown
-    clients = db.session.query(Project.client).distinct().order_by(Project.client).all()
-    client_list = [c[0] for c in clients]
+    # Get clients for filter dropdown
+    clients = Client.get_active_clients()
+    client_list = [c.name for c in clients]
     
     return render_template(
         'projects/list.html',
@@ -56,38 +57,74 @@ def list_projects():
 def create_project():
     """Create a new project"""
     if not current_user.is_admin:
+        try:
+            current_app.logger.warning("Non-admin user attempted to create project: user=%s", current_user.username)
+        except Exception:
+            pass
         flash('Only administrators can create projects', 'error')
         return redirect(url_for('projects.list_projects'))
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
-        client = request.form.get('client', '').strip()
+        client_id = request.form.get('client_id', '').strip()
         description = request.form.get('description', '').strip()
         billable = request.form.get('billable') == 'on'
         hourly_rate = request.form.get('hourly_rate', '').strip()
         billing_ref = request.form.get('billing_ref', '').strip()
+        try:
+            current_app.logger.info(
+                "POST /projects/create user=%s name=%s client_id=%s billable=%s",
+                current_user.username,
+                name or '<empty>',
+                client_id or '<empty>',
+                billable,
+            )
+        except Exception:
+            pass
         
         # Validate required fields
-        if not name or not client:
+        if not name or not client_id:
             flash('Project name and client are required', 'error')
-            return render_template('projects/create.html')
+            try:
+                current_app.logger.warning("Validation failed: missing required fields for project creation")
+            except Exception:
+                pass
+            return render_template('projects/create.html', clients=Client.get_active_clients())
+        
+        # Get client and validate
+        client = Client.query.get(client_id)
+        if not client:
+            flash('Selected client not found', 'error')
+            try:
+                current_app.logger.warning("Validation failed: client not found (id=%s)", client_id)
+            except Exception:
+                pass
+            return render_template('projects/create.html', clients=Client.get_active_clients())
         
         # Validate hourly rate
         try:
             hourly_rate = Decimal(hourly_rate) if hourly_rate else None
         except ValueError:
             flash('Invalid hourly rate format', 'error')
-            return render_template('projects/create.html')
+            try:
+                current_app.logger.warning("Validation failed: invalid hourly rate '%s'", hourly_rate)
+            except Exception:
+                pass
+            return render_template('projects/create.html', clients=Client.get_active_clients())
         
         # Check if project name already exists
         if Project.query.filter_by(name=name).first():
             flash('A project with this name already exists', 'error')
-            return render_template('projects/create.html')
+            try:
+                current_app.logger.warning("Validation failed: duplicate project name '%s'", name)
+            except Exception:
+                pass
+            return render_template('projects/create.html', clients=Client.get_active_clients())
         
         # Create project
         project = Project(
             name=name,
-            client=client,
+            client_id=client_id,
             description=description,
             billable=billable,
             hourly_rate=hourly_rate,
@@ -95,12 +132,14 @@ def create_project():
         )
         
         db.session.add(project)
-        db.session.commit()
+        if not safe_commit('create_project', {'name': name, 'client_id': client_id}):
+            flash('Could not create project due to a database error. Please check server logs.', 'error')
+            return render_template('projects/create.html', clients=Client.get_active_clients())
         
         flash(f'Project "{name}" created successfully', 'success')
         return redirect(url_for('projects.view_project', project_id=project.id))
     
-    return render_template('projects/create.html')
+    return render_template('projects/create.html', clients=Client.get_active_clients())
 
 @projects_bp.route('/projects/<int:project_id>')
 @login_required
@@ -145,45 +184,53 @@ def edit_project(project_id):
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
-        client = request.form.get('client', '').strip()
+        client_id = request.form.get('client_id', '').strip()
         description = request.form.get('description', '').strip()
         billable = request.form.get('billable') == 'on'
         hourly_rate = request.form.get('hourly_rate', '').strip()
         billing_ref = request.form.get('billing_ref', '').strip()
         
         # Validate required fields
-        if not name or not client:
+        if not name or not client_id:
             flash('Project name and client are required', 'error')
-            return render_template('projects/edit.html', project=project)
+            return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
+        
+        # Get client and validate
+        client = Client.query.get(client_id)
+        if not client:
+            flash('Selected client not found', 'error')
+            return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
         
         # Validate hourly rate
         try:
             hourly_rate = Decimal(hourly_rate) if hourly_rate else None
         except ValueError:
             flash('Invalid hourly rate format', 'error')
-            return render_template('projects/edit.html', project=project)
+            return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
         
         # Check if project name already exists (excluding current project)
         existing = Project.query.filter_by(name=name).first()
         if existing and existing.id != project.id:
             flash('A project with this name already exists', 'error')
-            return render_template('projects/edit.html', project=project)
+            return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
         
         # Update project
         project.name = name
-        project.client = client
+        project.client_id = client_id
         project.description = description
         project.billable = billable
         project.hourly_rate = hourly_rate
         project.billing_ref = billing_ref
         project.updated_at = datetime.utcnow()
         
-        db.session.commit()
+        if not safe_commit('edit_project', {'project_id': project.id}):
+            flash('Could not update project due to a database error. Please check server logs.', 'error')
+            return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
         
         flash(f'Project "{name}" updated successfully', 'success')
         return redirect(url_for('projects.view_project', project_id=project.id))
     
-    return render_template('projects/edit.html', project=project)
+    return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
 
 @projects_bp.route('/projects/<int:project_id>/archive', methods=['POST'])
 @login_required
@@ -238,34 +285,11 @@ def delete_project(project_id):
     
     project_name = project.name
     db.session.delete(project)
-    db.session.commit()
+    if not safe_commit('delete_project', {'project_id': project.id}):
+        flash('Could not delete project due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('projects.view_project', project_id=project.id))
     
     flash(f'Project "{project_name}" deleted successfully', 'success')
     return redirect(url_for('projects.list_projects'))
 
-@projects_bp.route('/clients')
-@login_required
-def list_clients():
-    """List all clients"""
-    clients = db.session.query(Project.client).distinct().order_by(Project.client).all()
-    client_list = [client[0] for client in clients]
-    
-    return render_template('projects/clients.html', clients=client_list)
 
-@projects_bp.route('/clients/<client_name>')
-@login_required
-def view_client(client_name):
-    """View projects for a specific client"""
-    projects = Project.query.filter_by(client=client_name).order_by(Project.name).all()
-    
-    # Calculate totals for this client
-    total_hours = sum(project.total_hours for project in projects)
-    total_billable_hours = sum(project.total_billable_hours for project in projects)
-    total_cost = sum(project.estimated_cost for project in projects)
-    
-    return render_template('projects/client_view.html',
-                         client_name=client_name,
-                         projects=projects,
-                         total_hours=total_hours,
-                         total_billable_hours=total_billable_hours,
-                         total_cost=total_cost)

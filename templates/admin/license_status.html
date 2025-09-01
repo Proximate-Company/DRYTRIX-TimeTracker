@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}License Server Status - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-key"></i> License Server Status</h1>
+                <div>
+                    <a href="{{ url_for('admin.license_test') }}" class="btn btn-info">
+                        <i class="fas fa-vial"></i> Test Connection
+                    </a>
+                    <a href="{{ url_for('admin.license_restart') }}" class="btn btn-warning">
+                        <i class="fas fa-redo"></i> Restart Client
+                    </a>
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-info-circle"></i> Client Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>App Identifier:</strong></td>
+                                    <td><span class="badge bg-primary">{{ status.app_identifier }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>App Version:</strong></td>
+                                    <td><span class="badge bg-secondary">{{ status.app_version }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Instance ID:</strong></td>
+                                    <td><code>{{ status.instance_id or 'Not registered' }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Registration Status:</strong></td>
+                                    <td>
+                                        {% if status.is_registered %}
+                                            <span class="badge bg-success">Registered</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Not Registered</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-heartbeat"></i> Connection Status
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Client Running:</strong></td>
+                                    <td>
+                                        {% if status.is_running %}
+                                            <span class="badge bg-success">Running</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Stopped</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Server Health:</strong></td>
+                                    <td>
+                                        {% if status.server_healthy %}
+                                            <span class="badge bg-success">Healthy</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Not Responding</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Offline Data:</strong></td>
+                                    <td>
+                                        {% if status.offline_data_count > 0 %}
+                                            <span class="badge bg-warning">{{ status.offline_data_count }} pending</span>
+                                        {% else %}
+                                            <span class="badge bg-success">None</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-cogs"></i> Configuration
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle"></i> About This Implementation</h6>
+                                <p class="mb-0">
+                                    This TimeTracker application communicates with a license server for monitoring and analytics purposes only. 
+                                    <strong>No license is required</strong> to use the application. The license server is used to:
+                                </p>
+                                <ul class="mb-0 mt-2">
+                                    <li>Track application usage and features</li>
+                                    <li>Monitor system health and performance</li>
+                                    <li>Collect analytics data for improvement</li>
+                                    <li>Provide support and troubleshooting information</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Server Configuration</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Server URL:</strong> <code>http://host.docker.internal:8081</code></li>
+                                        <li><strong>API Key:</strong> <code>no-license-required</code></li>
+                                        <li><strong>Heartbeat Interval:</strong> 3600 seconds (1 hour)</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Features</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success"></i> Automatic instance registration</li>
+                                        <li><i class="fas fa-check text-success"></i> Periodic heartbeats</li>
+                                        <li><i class="fas fa-check text-success"></i> Usage data collection</li>
+                                        <li><i class="fas fa-check text-success"></i> Offline data storage</li>
+                                        <li><i class="fas fa-check text-success"></i> Graceful error handling</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h6>Privacy & Analytics Settings</h6>
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-shield-alt me-2"></i>
+                                        <strong>Analytics Setting:</strong> 
+                                        {% if settings and settings.allow_analytics %}
+                                            <span class="badge bg-success">Enabled</span>
+                                            <small class="text-muted ms-2">System information is being shared with the license server</small>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Disabled</span>
+                                            <small class="text-muted ms-2">System information sharing is disabled</small>
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            This setting can be changed in <a href="{{ url_for('admin.settings') }}">System Settings</a>. 
+                                            <strong>License validation continues to work regardless of this setting.</strong>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -59,7 +59,7 @@
                             <div class="text-center text-md-start">
                                 <h4 class="mb-2 text-success fw-bold">Timer Running</h4>
                                 <p class="mb-3 text-muted fs-6">
-                                    <i class="fas fa-project-diagram me-2"></i>{{ active_timer.project.name }}
+                                    <i class="fas fa-project-diagram me-2"></i>{{ active_timer.project.name }}{% if active_timer.task %} <span class="text-muted">•</span> <i class="fas fa-tasks ms-2 me-1"></i>{{ active_timer.task.name }}{% endif %}
                                 </p>
                                 <div class="timer-display mb-2" id="timer-display">
                                     {{ active_timer.duration_formatted }}
@@ -78,8 +78,8 @@
                             </div>
                             <div class="text-center text-md-start">
                                 <h4 class="mb-2 text-muted fw-bold">No Active Timer</h4>
-                                <p class="mb-3 text-muted fs-6">Ready to start tracking your time?</p>
-                                <div class="mt-3">
+                                <p class="text-muted mb-1 fs-6">Choose a project or one of its tasks to start tracking.</p>
+                                <div class="mt-2">
                                     <span class="badge bg-light text-dark fs-6">Idle</span>
                                 </div>
                             </div>
@@ -332,6 +332,15 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="mb-4">
+                        <label for="task_id" class="form-label fw-semibold d-flex align-items-center">
+                            <i class="fas fa-tasks me-2"></i>Select Task (Optional)
+                        </label>
+                        <select class="form-select" id="task_id" name="task_id" disabled>
+                            <option value="">Choose a task...</option>
+                        </select>
+                        <small class="text-muted">Tasks list updates after choosing a project. Leave empty to log at project level.</small>
+                    </div>
                     <div class="mb-3">
                         <label for="timer_notes" class="form-label fw-semibold d-flex align-items-center">
                             <i class="fas fa-sticky-note me-2"></i>Notes (Optional)
@@ -432,20 +441,50 @@
     });
     {% endif %}
     
-    // Enhanced start timer form submission
-    document.querySelector('#startTimerModal form').addEventListener('submit', function(e) {
-        const projectId = document.getElementById('project_id').value;
-        if (!projectId) {
-            e.preventDefault();
-            showToast('Please select a project', 'warning');
-            return false;
-        }
-        
-        // Show loading state
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Starting...';
-        submitBtn.disabled = true;
-    });
+    // Populate tasks when project changes
+    const projectSelect = document.getElementById('project_id');
+    const taskSelect = document.getElementById('task_id');
+    if (projectSelect && taskSelect) {
+        projectSelect.addEventListener('change', async function() {
+            const pid = this.value;
+            taskSelect.innerHTML = '<option value="">Choose a task...</option>';
+            taskSelect.disabled = true;
+            if (!pid) return;
+            try {
+                const resp = await fetch(`/api/tasks?project_id=${encodeURIComponent(pid)}`);
+                const data = await resp.json();
+                if (Array.isArray(data.tasks)) {
+                    for (const t of data.tasks) {
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        taskSelect.appendChild(opt);
+                    }
+                    taskSelect.disabled = data.tasks.length === 0;
+                }
+            } catch (e) {
+                console.warn('Failed to load tasks', e);
+            }
+        });
+    }
+
+    // Validate start timer submission
+    const startForm = document.querySelector('#startTimerModal form');
+    if (startForm) {
+        startForm.addEventListener('submit', function(e) {
+            const pid = projectSelect.value;
+            if (!pid) {
+                e.preventDefault();
+                showToast('Please select a project', 'warning');
+                return false;
+            }
+            const btn = this.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.innerHTML = '<div class="loading-spinner me-2"></div>Starting...';
+                btn.disabled = true;
+            }
+        });
+    }
     
     // Enhanced function to show delete time entry modal
     function showDeleteEntryModal(entryId, projectName, duration) {

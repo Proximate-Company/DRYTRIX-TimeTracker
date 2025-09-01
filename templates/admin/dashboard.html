@@ -17,6 +17,9 @@
                     <a href="{{ url_for('admin.backup') }}" class="btn btn-outline-warning">
                         <i class="fas fa-download"></i> Backup
                     </a>
+                    <a href="{{ url_for('admin.license_status') }}" class="btn btn-outline-info">
+                        <i class="fas fa-key"></i> License Status
+                    </a>
                 </div>
             </div>
         </div>
@@ -215,6 +218,10 @@
                             <span class="badge bg-warning">No Backup</span>
                             {% endif %}
                         </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>License Server</span>
+                            <a href="{{ url_for('admin.license_status') }}" class="badge bg-info text-decoration-none">View Status</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -235,6 +242,9 @@
                         </a>
                         <a href="{{ url_for('admin.system_info') }}" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-info-circle"></i> System Info
+                        </a>
+                        <a href="{{ url_for('admin.license_status') }}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-key"></i> License Status
                         </a>
                     </div>
                 </div>

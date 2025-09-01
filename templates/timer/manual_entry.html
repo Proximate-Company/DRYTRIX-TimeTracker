@@ -26,6 +26,17 @@
                             </select>
                         </div>
 
+                        <div class="mb-4">
+                            <label for="task_id" class="form-label fw-semibold">
+                                <i class="fas fa-tasks me-1"></i>Task (optional)
+                            </label>
+                            {% set preselected_task_id = request.form.get('task_id') or request.args.get('task_id') %}
+                            <select class="form-select" id="task_id" name="task_id" data-selected-task-id="{{ preselected_task_id or '' }}" disabled>
+                                <option value="">No task</option>
+                            </select>
+                            <div class="form-text">Tasks will be loaded for the selected project.</div>
+                        </div>
+
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <div class="mb-4">
@@ -146,6 +157,57 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             document.body.classList.remove('mobile-view');
         }
+    });
+
+    // Dynamic task loading based on project selection
+    const projectSelect = document.getElementById('project_id');
+    const taskSelect = document.getElementById('task_id');
+
+    async function loadTasksForProject(projectId) {
+        if (!projectId) {
+            taskSelect.innerHTML = '<option value="">No task</option>';
+            taskSelect.disabled = true;
+            return;
+        }
+        try {
+            const resp = await fetch(`/api/tasks?project_id=${projectId}`);
+            if (!resp.ok) throw new Error('Failed to load tasks');
+            const data = await resp.json();
+            const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+            taskSelect.innerHTML = '<option value="">No task</option>';
+            tasks.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = String(t.id);
+                opt.textContent = t.name;
+                taskSelect.appendChild(opt);
+            });
+            // Preselect if provided
+            const preId = taskSelect.getAttribute('data-selected-task-id');
+            if (preId) {
+                const found = Array.from(taskSelect.options).some(o => o.value === preId);
+                if (found) taskSelect.value = preId;
+                // Clear after first use
+                taskSelect.setAttribute('data-selected-task-id', '');
+            }
+            taskSelect.disabled = false;
+        } catch (e) {
+            // On error, keep disabled
+            taskSelect.innerHTML = '<option value="">No task</option>';
+            taskSelect.disabled = true;
+        }
+    }
+
+    // Initial load if project is already selected (from query/form)
+    if (projectSelect && projectSelect.value) {
+        loadTasksForProject(projectSelect.value);
+    }
+
+    // Reload tasks when project changes
+    projectSelect.addEventListener('change', function() {
+        // Clear any previous selection
+        taskSelect.value = '';
+        taskSelect.setAttribute('data-selected-task-id', '');
+        loadTasksForProject(this.value);
     });
 });
 </script>

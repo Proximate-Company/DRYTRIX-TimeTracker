@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db, socketio
 from app.models import User, Project, TimeEntry, Task, Settings
 from app.utils.timezone import parse_local_datetime
 from datetime import datetime
 import json
+from app.utils.db import safe_commit
 
 timer_bp = Blueprint('timer', __name__)
 
@@ -13,16 +14,31 @@ timer_bp = Blueprint('timer', __name__)
 def start_timer():
     """Start a new timer for the current user"""
     project_id = request.form.get('project_id', type=int)
+    task_id = request.form.get('task_id', type=int)
+    notes = request.form.get('notes', '').strip()
+    current_app.logger.info("POST /timer/start user=%s project_id=%s task_id=%s", current_user.username, project_id, task_id)
     
     if not project_id:
         flash('Project is required', 'error')
+        current_app.logger.warning("Start timer failed: missing project_id")
         return redirect(url_for('main.dashboard'))
     
     # Check if project exists and is active
     project = Project.query.filter_by(id=project_id, status='active').first()
     if not project:
         flash('Invalid project selected', 'error')
+        current_app.logger.warning("Start timer failed: invalid or inactive project_id=%s", project_id)
         return redirect(url_for('main.dashboard'))
+    
+    # If a task is provided, validate it belongs to the project
+    if task_id:
+        task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+        if not task:
+            flash('Selected task is invalid for the chosen project', 'error')
+            current_app.logger.warning("Start timer failed: task_id=%s does not belong to project_id=%s", task_id, project_id)
+            return redirect(url_for('main.dashboard'))
+    else:
+        task = None
     
     # Check if user already has an active timer
     active_timer = current_user.active_timer
@@ -30,10 +46,15 @@ def start_timer():
         # If single active timer is enabled, stop the current one
         settings = Settings.get_settings()
         if settings.single_active_timer:
-            active_timer.stop_timer()
-            flash('Previous timer stopped', 'info')
+            try:
+                active_timer.stop_timer()
+                flash('Previous timer stopped', 'info')
+                current_app.logger.info("Stopped previous active timer id=%s for user=%s", active_timer.id, current_user.username)
+            except Exception as e:
+                current_app.logger.exception("Error stopping previous timer: %s", e)
         else:
             flash('You already have an active timer', 'error')
+            current_app.logger.info("Start timer blocked: user already has active timer and SINGLE_ACTIVE_TIMER disabled")
             return redirect(url_for('main.dashboard'))
     
     # Create new timer
@@ -41,22 +62,37 @@ def start_timer():
     new_timer = TimeEntry(
         user_id=current_user.id,
         project_id=project_id,
+        task_id=task.id if task else None,
         start_time=local_now(),
+        notes=notes if notes else None,
         source='auto'
     )
     
     db.session.add(new_timer)
-    db.session.commit()
+    if not safe_commit('start_timer', {'user_id': current_user.id, 'project_id': project_id, 'task_id': task_id}):
+        flash('Could not start timer due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('main.dashboard'))
+    current_app.logger.info("Started new timer id=%s for user=%s project_id=%s task_id=%s", new_timer.id, current_user.username, project_id, task_id)
     
     # Emit WebSocket event for real-time updates
-    socketio.emit('timer_started', {
-        'user_id': current_user.id,
-        'timer_id': new_timer.id,
-        'project_name': project.name,
-        'start_time': new_timer.start_time.isoformat()
-    })
+    try:
+        payload = {
+            'user_id': current_user.id,
+            'timer_id': new_timer.id,
+            'project_name': project.name,
+            'start_time': new_timer.start_time.isoformat()
+        }
+        if task:
+            payload['task_id'] = task.id
+            payload['task_name'] = task.name
+        socketio.emit('timer_started', payload)
+    except Exception as e:
+        current_app.logger.warning("Socket emit failed for timer_started: %s", e)
     
-    flash(f'Timer started for {project.name}', 'success')
+    if task:
+        flash(f'Timer started for {project.name} - {task.name}', 'success')
+    else:
+        flash(f'Timer started for {project.name}', 'success')
     return redirect(url_for('main.dashboard'))
 
 @timer_bp.route('/timer/start/<int:project_id>')
@@ -64,11 +100,13 @@ def start_timer():
 def start_timer_for_project(project_id):
     """Start a timer for a specific project (GET route for direct links)"""
     task_id = request.args.get('task_id', type=int)
+    current_app.logger.info("GET /timer/start/%s user=%s task_id=%s", project_id, current_user.username, task_id)
     
     # Check if project exists and is active
     project = Project.query.filter_by(id=project_id, status='active').first()
     if not project:
         flash('Invalid project selected', 'error')
+        current_app.logger.warning("Start timer (GET) failed: invalid or inactive project_id=%s", project_id)
         return redirect(url_for('main.dashboard'))
     
     # Check if user already has an active timer
@@ -77,10 +115,15 @@ def start_timer_for_project(project_id):
         # If single active timer is enabled, stop the current one
         settings = Settings.get_settings()
         if settings.single_active_timer:
-            active_timer.stop_timer()
-            flash('Previous timer stopped', 'info')
+            try:
+                active_timer.stop_timer()
+                flash('Previous timer stopped', 'info')
+                current_app.logger.info("Stopped previous active timer id=%s for user=%s", active_timer.id, current_user.username)
+            except Exception as e:
+                current_app.logger.exception("Error stopping previous timer: %s", e)
         else:
             flash('You already have an active timer', 'error')
+            current_app.logger.info("Start timer (GET) blocked: user already has active timer and SINGLE_ACTIVE_TIMER disabled")
             return redirect(url_for('main.dashboard'))
     
     # Create new timer
@@ -94,16 +137,22 @@ def start_timer_for_project(project_id):
     )
     
     db.session.add(new_timer)
-    db.session.commit()
+    if not safe_commit('start_timer_for_project', {'user_id': current_user.id, 'project_id': project_id, 'task_id': task_id}):
+        flash('Could not start timer due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('main.dashboard'))
+    current_app.logger.info("Started new timer id=%s for user=%s project_id=%s task_id=%s", new_timer.id, current_user.username, project_id, task_id)
     
     # Emit WebSocket event for real-time updates
-    socketio.emit('timer_started', {
-        'user_id': current_user.id,
-        'timer_id': new_timer.id,
-        'project_name': project.name,
-        'task_id': task_id,
-        'start_time': new_timer.start_time.isoformat()
-    })
+    try:
+        socketio.emit('timer_started', {
+            'user_id': current_user.id,
+            'timer_id': new_timer.id,
+            'project_name': project.name,
+            'task_id': task_id,
+            'start_time': new_timer.start_time.isoformat()
+        })
+    except Exception as e:
+        current_app.logger.warning("Socket emit failed for timer_started (GET): %s", e)
     
     if task_id:
         task = Task.query.get(task_id)
@@ -119,20 +168,28 @@ def start_timer_for_project(project_id):
 def stop_timer():
     """Stop the current user's active timer"""
     active_timer = current_user.active_timer
+    current_app.logger.info("POST /timer/stop user=%s active_timer=%s", current_user.username, bool(active_timer))
     
     if not active_timer:
         flash('No active timer to stop', 'error')
         return redirect(url_for('main.dashboard'))
     
     # Stop the timer
-    active_timer.stop_timer()
+    try:
+        active_timer.stop_timer()
+        current_app.logger.info("Stopped timer id=%s for user=%s", active_timer.id, current_user.username)
+    except Exception as e:
+        current_app.logger.exception("Error stopping timer: %s", e)
     
     # Emit WebSocket event for real-time updates
-    socketio.emit('timer_stopped', {
-        'user_id': current_user.id,
-        'timer_id': active_timer.id,
-        'duration': active_timer.duration_formatted
-    })
+    try:
+        socketio.emit('timer_stopped', {
+            'user_id': current_user.id,
+            'timer_id': active_timer.id,
+            'duration': active_timer.duration_formatted
+        })
+    except Exception as e:
+        current_app.logger.warning("Socket emit failed for timer_stopped: %s", e)
     
     flash(f'Timer stopped. Duration: {active_timer.duration_formatted}', 'success')
     return redirect(url_for('main.dashboard'))
@@ -177,7 +234,9 @@ def edit_timer(timer_id):
         timer.tags = request.form.get('tags', '').strip()
         timer.billable = request.form.get('billable') == 'on'
         
-        db.session.commit()
+        if not safe_commit('edit_timer', {'timer_id': timer.id}):
+            flash('Could not update timer due to a database error. Please check server logs.', 'error')
+            return redirect(url_for('main.dashboard'))
         flash('Timer updated successfully', 'success')
         return redirect(url_for('main.dashboard'))
     
@@ -201,7 +260,9 @@ def delete_timer(timer_id):
     
     project_name = timer.project.name
     db.session.delete(timer)
-    db.session.commit()
+    if not safe_commit('delete_timer', {'timer_id': timer.id}):
+        flash('Could not delete timer due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('main.dashboard'))
     
     flash(f'Timer for {project_name} deleted successfully', 'success')
     return redirect(url_for('main.dashboard'))
@@ -278,7 +339,10 @@ def manual_entry():
         )
         
         db.session.add(entry)
-        db.session.commit()
+        if not safe_commit('manual_entry', {'user_id': current_user.id, 'project_id': project_id, 'task_id': task_id}):
+            flash('Could not create manual entry due to a database error. Please check server logs.', 'error')
+            return render_template('timer/manual_entry.html', projects=active_projects, 
+                                selected_project_id=project_id, selected_task_id=task_id)
         
         if task_id:
             task = Task.query.get(task_id)

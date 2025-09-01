@@ -36,7 +36,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('projects.create_project') }}">
+                    <form method="POST" action="{{ url_for('projects.create_project') }}" novalidate>
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">
@@ -46,8 +46,22 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="client" class="form-label">Client *</label>
-                                    <input type="text" class="form-control" id="client" name="client" required value="{{ request.form.get('client','') }}">
+                                    <label for="client_id" class="form-label">Client *</label>
+                                    <select class="form-control" id="client_id" name="client_id" required>
+                                        <option value="">Select a client...</option>
+                                        {% for client in clients %}
+                                        <option value="{{ client.id }}" 
+                                                {% if request.form.get('client_id') == client.id|string %}selected{% endif %}
+                                                data-default-rate="{{ client.default_hourly_rate or '' }}">
+                                            {{ client.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">
+                                        <a href="{{ url_for('clients.create_client') }}" class="text-decoration-none">
+                                            <i class="fas fa-plus"></i> Create new client
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -94,6 +108,22 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clientSelect = document.getElementById('client_id');
+    const hourlyRateInput = document.getElementById('hourly_rate');
+    
+    clientSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const defaultRate = selectedOption.getAttribute('data-default-rate');
+        
+        if (defaultRate && !hourlyRateInput.value) {
+            hourlyRateInput.value = defaultRate;
+        }
+    });
+});
+</script>
 {% endblock %}
 
 

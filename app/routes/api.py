@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from app import db, socketio
-from app.models import User, Project, TimeEntry, Settings
+from app.models import User, Project, TimeEntry, Settings, Task
 from datetime import datetime, timedelta
 import json
 
@@ -30,6 +30,37 @@ def timer_status():
             'duration_formatted': active_timer.duration_formatted
         }
     })
+
+@api_bp.route('/api/tasks')
+@login_required
+def list_tasks_for_project():
+    """List tasks for a given project (optionally filter by status)."""
+    project_id = request.args.get('project_id', type=int)
+    status = request.args.get('status')
+    if not project_id:
+        return jsonify({'error': 'project_id is required'}), 400
+    
+    # Validate project exists and is active
+    project = Project.query.filter_by(id=project_id, status='active').first()
+    if not project:
+        return jsonify({'error': 'Invalid project'}), 400
+    
+    query = Task.query.filter_by(project_id=project_id)
+    if status:
+        query = query.filter_by(status=status)
+    else:
+        # Default to tasks not done/cancelled
+        query = query.filter(Task.status.in_(['todo', 'in_progress', 'review']))
+    
+    tasks = query.order_by(Task.priority.desc(), Task.name.asc()).all()
+    return jsonify({'tasks': [
+        {
+            'id': t.id,
+            'name': t.name,
+            'status': t.status,
+            'priority': t.priority
+        } for t in tasks
+    ]})
 
 @api_bp.route('/api/timer/start', methods=['POST'])
 @login_required

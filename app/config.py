@@ -27,6 +27,12 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(
         seconds=int(os.getenv('PERMANENT_SESSION_LIFETIME', 86400))
     )
+
+    # Flask-Login remember cookie settings
+    REMEMBER_COOKIE_DURATION = timedelta(days=int(os.getenv('REMEMBER_COOKIE_DAYS', 365)))
+    REMEMBER_COOKIE_SECURE = os.getenv('REMEMBER_COOKIE_SECURE', 'false').lower() == 'true'
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
     
     # Application settings
     TZ = os.getenv('TZ', 'Europe/Rome')
@@ -62,6 +68,14 @@ class Config:
         'X-XSS-Protection': '1; mode=block',
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
     }
+    
+    # License server settings (no license required)
+    # All settings are hardcoded since clients cannot change license server configuration
+    LICENSE_SERVER_ENABLED = True  # Always enabled by default
+    LICENSE_SERVER_API_KEY = "no-license-required"  # Hardcoded placeholder
+    LICENSE_SERVER_APP_ID = "timetracker"  # Hardcoded app identifier
+    LICENSE_SERVER_APP_VERSION = "1.0.0"  # Hardcoded app version
+    LICENSE_SERVER_HEARTBEAT_INTERVAL = 3600  # Hardcoded heartbeat interval (1 hour)
 
 class DevelopmentConfig(Config):
     """Development configuration"""
@@ -90,5 +104,4 @@ config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': Config
 }

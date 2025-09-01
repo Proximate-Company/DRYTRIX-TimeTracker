@@ -433,101 +433,93 @@
 </style>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
-$(document).ready(function() {
-    // Initialize time entry selection
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize selection summary
     updateSelectionSummary();
-    
-    // Add hover effects to time entry rows
-    $('.time-entry-row').hover(
-        function() {
-            $(this).addClass('table-active');
-        },
-        function() {
-            $(this).removeClass('table-active');
-        }
-    );
-    
-    // Handle checkbox changes
-    $('.time-entry-checkbox').on('change', function() {
-        updateSelectionSummary();
-        updateRowSelection($(this));
+
+    // Hover effects
+    document.querySelectorAll('.time-entry-row').forEach(row => {
+        row.addEventListener('mouseenter', () => row.classList.add('table-active'));
+        row.addEventListener('mouseleave', () => row.classList.remove('table-active'));
     });
-    
+
+    // Checkbox change handlers
+    document.querySelectorAll('.time-entry-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+            updateRowSelection(this);
+            updateSelectionSummary();
+        });
+    });
+
     // Form validation
-    $('#timeEntriesForm').on('submit', function(e) {
-        const selectedCount = $('.time-entry-checkbox:checked').length;
-        if (selectedCount === 0) {
-            e.preventDefault();
-            showAlert('Please select at least one time entry to generate invoice items.', 'warning');
-            return false;
-        }
-    });
+    const form = document.getElementById('timeEntriesForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const selectedCount = document.querySelectorAll('.time-entry-checkbox:checked').length;
+            if (selectedCount === 0) {
+                e.preventDefault();
+                showAlert('Please select at least one time entry to generate invoice items.', 'warning');
+            }
+        });
+    }
 });
 
 function toggleAllEntries() {
-    const selectAll = $('#selectAll');
-    const checkboxes = $('.time-entry-checkbox');
-    
-    if (selectAll.is(':checked')) {
-        checkboxes.prop('checked', true);
-        $('.time-entry-row').addClass('selected');
-    } else {
-        checkboxes.prop('checked', false);
-        $('.time-entry-row').removeClass('selected');
-    }
-    
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.time-entry-checkbox');
+    const rows = document.querySelectorAll('.time-entry-row');
+    const checked = !!selectAll.checked;
+
+    checkboxes.forEach(cb => { cb.checked = checked; });
+    rows.forEach(row => { row.classList.toggle('selected', checked); });
     updateSelectionSummary();
 }
 
 function updateRowSelection(checkbox) {
     const row = checkbox.closest('.time-entry-row');
-    if (checkbox.is(':checked')) {
-        row.addClass('selected');
-    } else {
-        row.removeClass('selected');
+    if (row) {
+        row.classList.toggle('selected', checkbox.checked);
     }
 }
 
 function updateSelectionSummary() {
-    const selectedCheckboxes = $('.time-entry-checkbox:checked');
+    const selectedCheckboxes = document.querySelectorAll('.time-entry-checkbox:checked');
     const selectedCount = selectedCheckboxes.length;
     let totalHours = 0;
-    
-    selectedCheckboxes.each(function() {
-        totalHours += parseFloat($(this).data('duration') || 0);
+    selectedCheckboxes.forEach(cb => {
+        totalHours += parseFloat(cb.getAttribute('data-duration') || '0');
     });
-    
-    $('#selectedCount').text(selectedCount);
-    $('#totalHours').text(totalHours.toFixed(2));
-    $('#selectedCountText').text(selectedCount);
-    $('#totalHoursText').text(totalHours.toFixed(2));
-    
-    // Enable/disable generate button
-    if (selectedCount > 0) {
-        $('#generateBtn').prop('disabled', false);
-    } else {
-        $('#generateBtn').prop('disabled', true);
-    }
+
+    const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    setText('selectedCount', selectedCount);
+    setText('totalHours', totalHours.toFixed(2));
+    setText('selectedCountText', selectedCount);
+    setText('totalHoursText', totalHours.toFixed(2));
+
+    const generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) generateBtn.disabled = selectedCount === 0;
 }
 
 function selectRecentEntries() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    $('.time-entry-checkbox').each(function() {
-        const row = $(this).closest('.time-entry-row');
-        const dateText = row.find('.date-value').text();
-        const date = new Date(dateText + ' ' + new Date().getFullYear());
-        
-        if (date >= sevenDaysAgo) {
-            $(this).prop('checked', true);
-            row.addClass('selected');
+    const currentYear = new Date().getFullYear();
+
+    document.querySelectorAll('.time-entry-checkbox').forEach(cb => {
+        const row = cb.closest('.time-entry-row');
+        const dateTextEl = row.querySelector('.date-value');
+        const dateText = dateTextEl ? dateTextEl.textContent : '';
+        const date = new Date(`${dateText} ${currentYear}`);
+        if (!isNaN(date.getTime()) && date >= sevenDaysAgo) {
+            cb.checked = true;
+            row.classList.add('selected');
         }
     });
-    
-    $('#selectAll').prop('checked', false);
+
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) selectAll.checked = false;
     updateSelectionSummary();
 }
 
@@ -535,58 +527,58 @@ function selectThisMonth() {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
-    $('.time-entry-checkbox').each(function() {
-        const row = $(this).closest('.time-entry-row');
-        const dateText = row.find('.date-value').text();
-        const date = new Date(dateText + ' ' + currentYear);
-        
-        if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-            $(this).prop('checked', true);
-            row.addClass('selected');
+
+    document.querySelectorAll('.time-entry-checkbox').forEach(cb => {
+        const row = cb.closest('.time-entry-row');
+        const dateText = row.querySelector('.date-value')?.textContent || '';
+        const date = new Date(`${dateText} ${currentYear}`);
+        if (!isNaN(date.getTime()) && date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+            cb.checked = true;
+            row.classList.add('selected');
         }
     });
-    
-    $('#selectAll').prop('checked', false);
+
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) selectAll.checked = false;
     updateSelectionSummary();
 }
 
 function selectHighValueEntries() {
-    // Select entries with longer duration (more than 2 hours)
-    $('.time-entry-checkbox').each(function() {
-        const duration = parseFloat($(this).data('duration') || 0);
-        
+    document.querySelectorAll('.time-entry-checkbox').forEach(cb => {
+        const duration = parseFloat(cb.getAttribute('data-duration') || '0');
         if (duration > 2) {
-            $(this).prop('checked', true);
-            $(this).closest('.time-entry-row').addClass('selected');
+            cb.checked = true;
+            const row = cb.closest('.time-entry-row');
+            if (row) row.classList.add('selected');
         }
     });
-    
-    $('#selectAll').prop('checked', false);
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) selectAll.checked = false;
     updateSelectionSummary();
 }
 
 function clearSelection() {
-    $('.time-entry-checkbox').prop('checked', false);
-    $('.time-entry-row').removeClass('selected');
-    $('#selectAll').prop('checked', false);
+    document.querySelectorAll('.time-entry-checkbox').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.time-entry-row').forEach(row => row.classList.remove('selected'));
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) selectAll.checked = false;
     updateSelectionSummary();
 }
 
 function showAlert(message, type) {
-    const alertHtml = `
+    const container = document.querySelector('.container-fluid');
+    if (!container) return;
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    $('.container-fluid').prepend(alertHtml);
-    
-    // Auto-dismiss after 5 seconds
+        </div>`;
+    container.prepend(wrapper.firstElementChild);
     setTimeout(() => {
-        $('.alert').fadeOut();
+        const alert = container.querySelector('.alert');
+        if (alert) alert.remove();
     }, 5000);
 }
 </script>

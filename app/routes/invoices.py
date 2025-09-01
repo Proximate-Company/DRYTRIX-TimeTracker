@@ -7,6 +7,7 @@ from decimal import Decimal
 import io
 import csv
 import json
+from app.utils.db import safe_commit
 
 invoices_bp = Blueprint('invoices', __name__)
 
@@ -92,7 +93,9 @@ def create_invoice():
         )
         
         db.session.add(invoice)
-        db.session.commit()
+        if not safe_commit('create_invoice', {'invoice_number': invoice_number, 'project_id': project_id}):
+            flash('Could not create invoice due to a database error. Please check server logs.', 'error')
+            return render_template('invoices/create.html')
         
         flash(f'Invoice {invoice_number} created successfully', 'success')
         return redirect(url_for('invoices.edit_invoice', invoice_id=invoice.id))
@@ -172,7 +175,9 @@ def edit_invoice(invoice_id):
         
         # Calculate totals
         invoice.calculate_totals()
-        db.session.commit()
+        if not safe_commit('edit_invoice', {'invoice_id': invoice.id}):
+            flash('Could not update invoice due to a database error. Please check server logs.', 'error')
+            return render_template('invoices/edit.html', invoice=invoice, projects=Project.query.filter_by(status='active').order_by(Project.name).all())
         
         flash('Invoice updated successfully', 'success')
         return redirect(url_for('invoices.view_invoice', invoice_id=invoice.id))
@@ -196,7 +201,8 @@ def update_invoice_status(invoice_id):
         return jsonify({'error': 'Invalid status'}), 400
     
     invoice.status = new_status
-    db.session.commit()
+    if not safe_commit('update_invoice_status', {'invoice_id': invoice.id, 'status': new_status}):
+        return jsonify({'error': 'Database error while updating status'}), 500
     
     return jsonify({'success': True, 'status': new_status})
 
@@ -213,7 +219,9 @@ def delete_invoice(invoice_id):
     
     invoice_number = invoice.invoice_number
     db.session.delete(invoice)
-    db.session.commit()
+    if not safe_commit('delete_invoice', {'invoice_id': invoice.id}):
+        flash('Could not delete invoice due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('invoices.list_invoices'))
     
     flash(f'Invoice {invoice_number} deleted successfully', 'success')
     return redirect(url_for('invoices.list_invoices'))
@@ -281,7 +289,9 @@ def generate_from_time(invoice_id):
         
         # Calculate totals
         invoice.calculate_totals()
-        db.session.commit()
+        if not safe_commit('generate_from_time', {'invoice_id': invoice.id}):
+            flash('Could not generate items due to a database error. Please check server logs.', 'error')
+            return redirect(url_for('invoices.edit_invoice', invoice_id=invoice.id))
         
         flash('Invoice items generated from time entries successfully', 'success')
         return redirect(url_for('invoices.edit_invoice', invoice_id=invoice.id))
@@ -387,9 +397,10 @@ def export_invoice_pdf(invoice_id):
     
     try:
         from app.utils.pdf_generator import InvoicePDFGenerator
+        settings = Settings.get_settings()
         
         # Generate PDF
-        pdf_generator = InvoicePDFGenerator(invoice)
+        pdf_generator = InvoicePDFGenerator(invoice, settings=settings)
         pdf_bytes = pdf_generator.generate_pdf()
         
         filename = f'invoice_{invoice.invoice_number}.pdf'
@@ -408,11 +419,12 @@ def export_invoice_pdf(invoice_id):
         # Try fallback PDF generator
         try:
             from app.utils.pdf_generator_fallback import InvoicePDFGeneratorFallback
+            settings = Settings.get_settings()
             
             flash('WeasyPrint failed, using fallback PDF generator. PDF quality may be reduced.', 'warning')
             
             # Generate PDF using fallback
-            pdf_generator = InvoicePDFGeneratorFallback(invoice)
+            pdf_generator = InvoicePDFGeneratorFallback(invoice, settings=settings)
             pdf_bytes = pdf_generator.generate_pdf()
             
             filename = f'invoice_{invoice.invoice_number}.pdf'
@@ -457,7 +469,9 @@ def duplicate_invoice(invoice_id):
     )
     
     db.session.add(new_invoice)
-    db.session.commit()
+    if not safe_commit('duplicate_invoice_create', {'source_invoice_id': original_invoice.id, 'new_invoice_number': new_invoice_number}):
+        flash('Could not duplicate invoice due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('invoices.list_invoices'))
     
     # Duplicate items
     for original_item in original_invoice.items:
@@ -471,7 +485,9 @@ def duplicate_invoice(invoice_id):
     
     # Calculate totals
     new_invoice.calculate_totals()
-    db.session.commit()
+    if not safe_commit('duplicate_invoice_finalize', {'invoice_id': new_invoice.id}):
+        flash('Could not finalize duplicated invoice due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('invoices.list_invoices'))
     
     flash(f'Invoice {new_invoice_number} created as duplicate', 'success')
     return redirect(url_for('invoices.edit_invoice', invoice_id=new_invoice.id))

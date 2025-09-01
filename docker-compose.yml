@@ -13,6 +13,9 @@ services:
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
       - DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
       - LOG_FILE=/app/logs/timetracker.log
+      # Ensure cookies work over HTTP (disable Secure for local/dev or non-TLS proxies)
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-false}
+      - REMEMBER_COOKIE_SECURE=${REMEMBER_COOKIE_SECURE:-false}
     ports:
       - "8080:8080"
     volumes:

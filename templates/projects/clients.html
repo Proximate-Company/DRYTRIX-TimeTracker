@@ -25,10 +25,19 @@
                     <div class="row row-cols-1 row-cols-md-3 g-3">
                         {% for client in clients %}
                         <div class="col">
-                            <a class="text-decoration-none" href="{{ url_for('projects.view_client', client_name=client) }}">
+                            <a class="text-decoration-none" href="{{ url_for('clients.view_client', client_id=client.id) }}">
                                 <div class="card h-100">
                                     <div class="card-body">
-                                        <h5 class="card-title mb-0"><i class="fas fa-briefcase me-2 text-primary"></i>{{ client }}</h5>
+                                        <h5 class="card-title mb-0"><i class="fas fa-briefcase me-2 text-primary"></i>{{ client.name }}</h5>
+                                        {% if client.description %}
+                                        <p class="card-text text-muted small mt-2">{{ client.description[:50] }}{% if client.description|length > 50 %}...{% endif %}</p>
+                                        {% endif %}
+                                        <div class="mt-2">
+                                            <span class="badge bg-primary">{{ client.total_projects }} projects</span>
+                                            {% if client.default_hourly_rate %}
+                                            <span class="badge bg-success ms-1">{{ "%.2f"|format(client.default_hourly_rate) }} {{ currency }}/hr</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </a>

@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db, login_manager
+from app import db
 
 class User(UserMixin, db.Model):
     """User model for username-based authentication"""
@@ -76,8 +76,3 @@ class User(UserMixin, db.Model):
             'is_active': self.is_active,
             'total_hours': self.total_hours
         }
-
-@login_manager.user_loader
-def load_user(user_id):
-    """Load user for Flask-Login"""
-    return User.query.get(int(user_id))

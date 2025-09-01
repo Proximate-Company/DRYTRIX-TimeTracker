@@ -19,6 +19,7 @@ python-dotenv==1.0.0
 pytz==2023.3
 python-dateutil==2.8.2
 Werkzeug==3.0.1
+requests==2.31.0
 
 # PDF Generation
 WeasyPrint==60.2

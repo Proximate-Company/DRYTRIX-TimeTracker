@@ -1,71 +1,89 @@
 #!/usr/bin/env python3
 """
-Simple database test script to debug connection and table creation issues
+Simple database connection test script
 """
 
 import os
 import sys
-from sqlalchemy import create_engine, text, inspect
+import psycopg2
 
-def test_database():
-    """Test database connection and basic operations"""
-    url = os.getenv("DATABASE_URL", "")
+def test_database_connection():
+    """Test basic database connection"""
+    print("=== Testing Database Connection ===")
     
-    if not url.startswith("postgresql"):
-        print("No PostgreSQL database configured")
-        return False
+    # Get database URL from environment
+    db_url = os.getenv('DATABASE_URL', 'postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker')
     
-    print(f"Testing database URL: {url}")
+    # Parse the URL to get connection details
+    if db_url.startswith('postgresql+psycopg2://'):
+        db_url = db_url.replace('postgresql+psycopg2://', '')
+    
+    # Extract host, port, database, user, password
+    if '@' in db_url:
+        auth_part, rest = db_url.split('@', 1)
+        user, password = auth_part.split(':', 1)
+        if ':' in rest:
+            host_port, database = rest.rsplit('/', 1)
+            if ':' in host_port:
+                host, port = host_port.split(':', 1)
+            else:
+                host, port = host_port, '5432'
+        else:
+            host, port, database = rest, '5432', 'timetracker'
+    else:
+        host, port, database, user, password = 'db', '5432', 'timetracker', 'timetracker', 'timetracker'
+    
+    print(f"Connection details:")
+    print(f"  Host: {host}")
+    print(f"  Port: {port}")
+    print(f"  Database: {database}")
+    print(f"  User: {user}")
+    print(f"  Password: {'*' * len(password)}")
     
     try:
-        # Test connection
-        print("Testing database connection...")
-        engine = create_engine(url, pool_pre_ping=True)
+        print(f"\nAttempting connection...")
+        conn = psycopg2.connect(
+            host=host,
+            port=port,
+            database=database,
+            user=user,
+            password=password,
+            connect_timeout=10
+        )
         
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT 1"))
-            print("✓ Database connection successful")
+        print("✓ Database connection successful!")
         
-        # Test table inspection
-        print("Testing table inspection...")
-        inspector = inspect(engine)
-        tables = inspector.get_table_names()
-        print(f"✓ Found {len(tables)} tables: {tables}")
+        # Test a simple query
+        cursor = conn.cursor()
+        cursor.execute("SELECT version()")
+        version = cursor.fetchone()
+        print(f"✓ Database version: {version[0]}")
         
-        # Test creating a simple table
-        print("Testing table creation...")
-        with engine.connect() as conn:
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS test_table (
-                    id SERIAL PRIMARY KEY,
-                    name VARCHAR(100)
-                )
-            """))
-            conn.commit()
-            print("✓ Test table created successfully")
+        # Check if tables exist
+        cursor.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            ORDER BY table_name
+        """)
+        tables = cursor.fetchall()
         
-        # Verify table was created
-        tables_after = inspector.get_table_names()
-        if 'test_table' in tables_after:
-            print("✓ Test table verification successful")
+        if tables:
+            print(f"✓ Found {len(tables)} tables:")
+            for table in tables:
+                print(f"  - {table[0]}")
         else:
-            print("✗ Test table verification failed")
-            return False
+            print("⚠ No tables found in database")
         
-        # Clean up test table
-        with engine.connect() as conn:
-            conn.execute(text("DROP TABLE test_table"))
-            conn.commit()
-            print("✓ Test table cleaned up")
-        
+        cursor.close()
+        conn.close()
+        print("✓ Connection closed successfully")
         return True
         
     except Exception as e:
-        print(f"✗ Database test failed: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"✗ Database connection failed: {e}")
         return False
 
-if __name__ == "__main__":
-    success = test_database()
+if __name__ == '__main__':
+    success = test_database_connection()
     sys.exit(0 if success else 1)

@@ -21,7 +21,7 @@
                     Enter your username to start tracking time
                 </p>
                 
-                <form method="POST">
+                <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="on" novalidate>
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <div class="input-group">
@@ -38,7 +38,7 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100">
+                    <button type="submit" class="btn btn-primary w-100" data-original-text="Continue">
                         <i class="fas fa-sign-in-alt me-2"></i>Continue
                     </button>
                 </form>
@@ -73,22 +73,38 @@
 {% block extra_js %}
 <script>
     // Auto-focus on username field
-    document.getElementById('username').focus();
+    try { document.getElementById('username').focus(); } catch(e) {}
     
-    // Handle form submission
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const username = document.getElementById('username').value.trim();
-        if (!username) {
-            e.preventDefault();
-            alert('Please enter a username');
-            return false;
-        }
-        
-        // Show loading state
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing in...';
-        submitBtn.disabled = true;
-    });
+    // Handle form submission with minimal logging and safe guard
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const usernameEl = document.getElementById('username');
+            const username = (usernameEl && usernameEl.value ? usernameEl.value : '').trim();
+            if (!username) {
+                e.preventDefault();
+                alert('Please enter a username');
+                return false;
+            }
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.setAttribute('data-original-text', originalText);
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing in...';
+                submitBtn.disabled = true;
+                // Fallback: re-enable after 8s in case of network/proxy issues
+                setTimeout(() => {
+                    if (submitBtn.disabled) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = submitBtn.getAttribute('data-original-text') || 'Continue';
+                        console.warn('Login submission appears stalled. Button re-enabled.');
+                    }
+                }, 8000);
+            }
+            // Log to console for troubleshooting
+            console.log('Submitting login form to', this.getAttribute('action') || window.location.pathname);
+        });
+    }
 </script>
 {% endblock %}

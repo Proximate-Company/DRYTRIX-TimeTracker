@@ -55,10 +55,10 @@
                                    value="{{ request.args.get('search', '') }}" placeholder="Project name or description">
                         </div>
                         <div class="col-12 d-flex flex-column flex-md-row gap-2 mobile-stack">
-                            <button type="submit" class="btn btn-primary mobile-btn">
+                            <button type="submit" class="btn btn-primary mobile-btn flex-fill">
                                 <i class="fas fa-search me-1"></i>Filter
                             </button>
-                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary mobile-btn">
+                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary mobile-btn flex-fill">
                                 <i class="fas fa-times me-1"></i>Clear
                             </a>
                         </div>
@@ -86,8 +86,7 @@
                                     <th>Project</th>
                                     <th>Client</th>
                                     <th>Status</th>
-                                    <th>Total Hours</th>
-                                    <th>Billable Hours</th>
+                                    <th>Hours</th>
                                     <th>Rate</th>
                                     <th>Actions</th>
                                 </tr>
@@ -97,47 +96,55 @@
                                 <tr>
                                     <td data-label="Project">
                                         <div>
-                                            <strong>{{ project.name }}</strong>
+                                            <a href="{{ url_for('projects.view_project', project_id=project.id) }}" class="text-decoration-none">
+                                                <strong>{{ project.name }}</strong>
+                                            </a>
                                             {% if project.description %}
                                             <br><small class="text-muted">{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</small>
                                             {% endif %}
                                         </div>
                                     </td>
                                     <td data-label="Client">
-                                        <span class="badge bg-secondary">{{ project.client }}</span>
+                                        <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info-subtle">{{ project.client }}</span>
                                     </td>
                                     <td data-label="Status">
                                         {% if project.status == 'active' %}
-                                        <span class="badge bg-success">Active</span>
+                                        <span class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle">Active</span>
                                         {% else %}
-                                        <span class="badge bg-secondary">Archived</span>
+                                        <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Archived</span>
                                         {% endif %}
                                     </td>
-                                    <td data-label="Total Hours">
-                                        <strong>{{ "%.1f"|format(project.total_hours or 0) }}</strong>
+                                    <td data-label="Hours" class="align-middle" style="min-width:180px;">
+                                        {% set total_h = (project.total_hours or 0) %}
+                                        {% set billable_h = (project.billable_hours or 0) %}
+                                        {% set pct = (billable_h / total_h * 100) if total_h > 0 else 0 %}
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong>{{ "%.1f"|format(total_h) }} h</strong>
+                                            <small class="text-success">{{ "%.1f"|format(billable_h) }} h billable</small>
+                                        </div>
+                                        <div class="progress bg-light rounded-pill" style="height:6px;">
+                                            <div class="progress-bar bg-success rounded-pill" role="progressbar" data-pct="{{ pct|round(0, 'floor') }}" aria-valuenow="{{ pct|round(0, 'floor') }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
                                     </td>
-                                    <td data-label="Billable Hours">
-                                        <span class="text-success">{{ "%.1f"|format(project.billable_hours or 0) }}</span>
-                                    </td>
-                                    <td data-label="Rate">
+                                    <td data-label="Rate" class="text-end">
                                         {% if project.hourly_rate %}
-                                        <span class="text-primary">${{ "%.2f"|format(project.hourly_rate) }}</span>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">${{ "%.2f"|format(project.hourly_rate) }}/h</span>
                                         {% else %}
                                         <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
                                     <td class="actions-cell" data-label="Actions">
-                                        <div class="btn-group d-flex d-md-inline-flex mobile-stack" role="group">
+                                        <div class="btn-group btn-group-sm" role="group">
                                             <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-outline-primary touch-target" title="View project">
+                                               class="btn btn-sm btn-action btn-action--view touch-target" title="View project">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             {% if current_user.is_admin %}
                                             <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-outline-secondary touch-target" title="Edit project">
+                                               class="btn btn-sm btn-action btn-action--edit touch-target" title="Edit project">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger touch-target" title="Delete project"
+                                            <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="Delete project"
                                                     onclick="showDeleteProjectModal('{{ project.id }}', '{{ project.name }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -217,11 +224,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (index === 2) {
                     cell.setAttribute('data-label', 'Status');
                 } else if (index === 3) {
-                    cell.setAttribute('data-label', 'Total Hours');
+                    cell.setAttribute('data-label', 'Hours');
                 } else if (index === 4) {
-                    cell.setAttribute('data-label', 'Billable Hours');
-                } else if (index === 5) {
                     cell.setAttribute('data-label', 'Rate');
+                } else if (index === 5) {
+                    cell.setAttribute('data-label', 'Actions');
                 } else if (index === 6) {
                     cell.setAttribute('data-label', 'Actions');
                 }
@@ -255,11 +262,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (index === 2) {
                         cell.setAttribute('data-label', 'Status');
                     } else if (index === 3) {
-                        cell.setAttribute('data-label', 'Total Hours');
+                        cell.setAttribute('data-label', 'Hours');
                     } else if (index === 4) {
-                        cell.setAttribute('data-label', 'Billable Hours');
-                    } else if (index === 5) {
                         cell.setAttribute('data-label', 'Rate');
+                    } else if (index === 5) {
+                        cell.setAttribute('data-label', 'Actions');
                     } else if (index === 6) {
                         cell.setAttribute('data-label', 'Actions');
                     }

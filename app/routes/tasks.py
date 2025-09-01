@@ -4,6 +4,7 @@ from app import db
 from app.models import Task, Project, User, TimeEntry
 from datetime import datetime, date
 from decimal import Decimal
+from app.utils.db import safe_commit
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -127,7 +128,9 @@ def create_task():
         )
         
         db.session.add(task)
-        db.session.commit()
+        if not safe_commit('create_task', {'project_id': project_id, 'name': name}):
+            flash('Could not create task due to a database error. Please check server logs.', 'error')
+            return render_template('tasks/create.html')
         
         flash(f'Task "{name}" created successfully', 'success')
         return redirect(url_for('tasks.view_task', task_id=task.id))
@@ -203,7 +206,9 @@ def edit_task(task_id):
         task.assigned_to = assigned_to
         task.updated_at = datetime.utcnow()
         
-        db.session.commit()
+        if not safe_commit('edit_task', {'task_id': task.id}):
+            flash('Could not update task due to a database error. Please check server logs.', 'error')
+            return render_template('tasks/edit.html', task=task)
         
         flash(f'Task "{name}" updated successfully', 'success')
         return redirect(url_for('tasks.view_task', task_id=task.id))
@@ -243,7 +248,9 @@ def update_task_status(task_id):
         else:
             task.status = new_status
             task.updated_at = datetime.utcnow()
-            db.session.commit()
+            if not safe_commit('update_task_status', {'task_id': task.id, 'status': new_status}):
+                flash('Could not update status due to a database error. Please check server logs.', 'error')
+                return redirect(url_for('tasks.view_task', task_id=task.id))
         
         flash(f'Task status updated to {task.status_display}', 'success')
     except ValueError as e:
@@ -315,7 +322,9 @@ def delete_task(task_id):
     
     task_name = task.name
     db.session.delete(task)
-    db.session.commit()
+    if not safe_commit('delete_task', {'task_id': task.id}):
+        flash('Could not delete task due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('tasks.view_task', task_id=task.id))
     
     flash(f'Task "{task_name}" deleted successfully', 'success')
     return redirect(url_for('tasks.list_tasks'))
@@ -392,7 +401,8 @@ def api_update_status(task_id):
         else:
             task.status = new_status
             task.updated_at = datetime.utcnow()
-            db.session.commit()
+            if not safe_commit('api_update_task_status', {'task_id': task.id, 'status': new_status}):
+                return jsonify({'error': 'Database error while updating status'}), 500
         
         return jsonify({'success': True, 'task': task.to_dict()})
     except ValueError as e:

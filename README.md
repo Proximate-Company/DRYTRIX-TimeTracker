@@ -70,6 +70,27 @@ A comprehensive web-based time tracking application built with Flask, featuring 
 - **Rounding Rules**: Configurable time rounding (1-minute increments)
 - **Timezone Support**: Full timezone awareness and conversion
 
+## 🏢 Client Management System
+
+### Comprehensive Client Management
+- **Client Organization**: Create and manage client organizations with detailed information
+- **Contact Management**: Store contact person, email, phone, and address details
+- **Default Rate Setting**: Set standard hourly rates per client for automatic project population
+- **Status Management**: Active/inactive client status with archiving capabilities
+- **Project Relationships**: Clear view of all projects associated with each client
+
+### Enhanced Project Creation
+- **Client Selection**: Dropdown selection instead of manual typing to prevent errors
+- **Automatic Rate Population**: Client default rates automatically fill project hourly rates
+- **Error Prevention**: Eliminates typos and duplicate client names
+- **Quick Setup**: Faster project creation with pre-filled client information
+
+### Client Analytics
+- **Project Statistics**: Total and active project counts per client
+- **Time Tracking**: Total hours worked across all client projects
+- **Cost Estimation**: Estimated total cost based on billable hours and rates
+- **Performance Metrics**: Client-specific productivity and billing insights
+
 ## 📁 Data Standards & Import/Export
 
 ### Export Formats
@@ -148,6 +169,26 @@ Multiple Docker configurations are available in `docker-configs/`:
 - **Python**: `docker-compose.python.yml` - Python-only environment
 - **WeasyPrint**: `docker-compose.weasyprint.yml` - With PDF generation
 - **Fixed**: `docker-compose.fixed.yml` - Resolved permission issues
+
+### Enhanced Database Startup
+
+The application now includes an enhanced database startup procedure that automatically:
+- Creates all required tables with proper schema
+- Handles migrations and schema updates
+- Verifies database integrity before starting
+- Provides comprehensive error reporting
+
+See [Enhanced Database Startup Documentation](docs/ENHANCED_DATABASE_STARTUP.md) for detailed information.
+
+### Version Management
+
+A comprehensive version management system provides flexible versioning:
+- **GitHub Releases** - Automatic versioning when creating releases
+- **Git Tags** - Manual version tagging for releases
+- **Build Numbers** - Automatic versioning for branch builds
+- **Local Tools** - Command-line version management scripts
+
+See [Version Management Documentation](docs/VERSION_MANAGEMENT.md) for detailed information.
 
 ## 🔧 Features
 

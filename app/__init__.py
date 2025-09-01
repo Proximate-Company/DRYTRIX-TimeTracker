@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import timedelta
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -9,6 +9,7 @@ from flask_socketio import SocketIO
 from dotenv import load_dotenv
 import re
 from jinja2 import ChoiceLoader, FileSystemLoader
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +23,10 @@ socketio = SocketIO()
 def create_app(config=None):
     """Application factory pattern"""
     app = Flask(__name__)
+    
+    # Make app aware of reverse proxy (scheme/host) for correct URL generation & cookies
+    # Trust a single proxy by default; adjust via env if needed
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     
     # Configuration
     app.config.from_object('app.config.Config')
@@ -76,6 +81,38 @@ def create_app(config=None):
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
     
+    # Register user loader
+    @login_manager.user_loader
+    def load_user(user_id):
+        """Load user for Flask-Login"""
+        from app.models import User
+        return User.query.get(int(user_id))
+
+    # Request logging for /login to trace POSTs reaching the app
+    @app.before_request
+    def log_login_requests():
+        try:
+            if request.path == '/login':
+                app.logger.info("%s %s from %s UA=%s", request.method, request.path, request.headers.get('X-Forwarded-For') or request.remote_addr, request.headers.get('User-Agent'))
+        except Exception:
+            pass
+
+    # Log all write operations and their outcomes
+    @app.after_request
+    def log_write_requests(response):
+        try:
+            if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
+                app.logger.info(
+                    "%s %s -> %s from %s",
+                    request.method,
+                    request.path,
+                    response.status_code,
+                    request.headers.get('X-Forwarded-For') or request.remote_addr,
+                )
+        except Exception:
+            pass
+        return response
+    
     # Configure session
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(
         seconds=int(os.getenv('PERMANENT_SESSION_LIFETIME', 86400))
@@ -95,6 +132,7 @@ def create_app(config=None):
     from app.routes.analytics import analytics_bp
     from app.routes.tasks import tasks_bp
     from app.routes.invoices import invoices_bp
+    from app.routes.clients import clients_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -106,6 +144,41 @@ def create_app(config=None):
     app.register_blueprint(analytics_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(invoices_bp)
+    app.register_blueprint(clients_bp)
+    
+    # Initialize phone home function if enabled
+    if app.config.get('LICENSE_SERVER_ENABLED', True):
+        try:
+            from app.utils.license_server import init_license_client, start_license_client, get_license_client
+            
+            # Check if client is already running
+            existing_client = get_license_client()
+            if existing_client and existing_client.running:
+                app.logger.info("Phone home function already running, skipping initialization")
+            else:
+                license_client = init_license_client(
+                    app_identifier=app.config.get('LICENSE_SERVER_APP_ID', 'timetracker'),
+                    app_version=app.config.get('LICENSE_SERVER_APP_VERSION', '1.0.0')
+                )
+                if start_license_client():
+                    app.logger.info("Phone home function started successfully")
+                else:
+                    app.logger.warning("Failed to start phone home function")
+        except Exception as e:
+            app.logger.warning(f"Could not initialize phone home function: {e}")
+    
+    # Register cleanup function for graceful shutdown
+    @app.teardown_appcontext
+    def cleanup_license_client(exception=None):
+        """Cleanup phone home function on app context teardown"""
+        try:
+            from app.utils.license_server import get_license_client, stop_license_client
+            client = get_license_client()
+            if client and client.running:
+                app.logger.info("Stopping phone home function during app teardown")
+                stop_license_client()
+        except Exception as e:
+            app.logger.warning(f"Error during license client cleanup: {e}")
     
     # Register error handlers
     from app.utils.error_handlers import register_error_handlers
@@ -160,35 +233,49 @@ def create_app(config=None):
 def setup_logging(app):
     """Setup application logging"""
     log_level = os.getenv('LOG_LEVEL', 'INFO')
-    log_file = os.getenv('LOG_FILE')
+    # Default to a file in the project logs directory if not provided
+    default_log_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs', 'timetracker.log'))
+    log_file = os.getenv('LOG_FILE', default_log_path)
     
     # Prepare handlers
     handlers = [logging.StreamHandler()]
     
-    # Add file handler if log_file is specified
-    if log_file:
-        try:
-            # Ensure log directory exists
-            log_dir = os.path.dirname(log_file)
-            if log_dir and not os.path.exists(log_dir):
-                os.makedirs(log_dir, exist_ok=True)
-            
-            # Test if we can write to the log file
-            file_handler = logging.FileHandler(log_file)
-            handlers.append(file_handler)
-        except (PermissionError, OSError) as e:
-            print(f"Warning: Could not create log file '{log_file}': {e}")
-            print("Logging to console only")
-            # Don't add file handler, just use console logging
+    # Add file handler (default or specified)
+    try:
+        # Ensure log directory exists
+        log_dir = os.path.dirname(log_file)
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+
+        # Create file handler
+        file_handler = logging.FileHandler(log_file)
+        handlers.append(file_handler)
+    except (PermissionError, OSError) as e:
+        print(f"Warning: Could not create log file '{log_file}': {e}")
+        print("Logging to console only")
+        # Don't add file handler, just use console logging
     
-    # Configure logging
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]',
-        handlers=handlers
-    )
-    
-        # Suppress Werkzeug logs in production
+    # Configure Flask app logger directly (works well under gunicorn)
+    for handler in handlers:
+        handler.setLevel(getattr(logging, log_level.upper()))
+        handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+
+    # Clear existing handlers to avoid duplicate logs
+    app.logger.handlers.clear()
+    app.logger.propagate = False
+    app.logger.setLevel(getattr(logging, log_level.upper()))
+    for handler in handlers:
+        app.logger.addHandler(handler)
+
+    # Also configure root logger so modules using logging.getLogger() are captured
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, log_level.upper()))
+    # Avoid duplicating handlers if already attached
+    root_logger.handlers = []
+    for handler in handlers:
+        root_logger.addHandler(handler)
+
+    # Suppress noisy logs in production
     if not app.debug:
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
 

@@ -50,9 +50,9 @@
                                 
                                 <dt class="col-sm-4">Client:</dt>
                                 <dd class="col-sm-8">
-                                    {% if project.client %}
-                                    <a href="{{ url_for('projects.view_client', client_name=project.client) }}">
-                                        {{ project.client }}
+                                    {% if project.client_obj %}
+                                    <a href="{{ url_for('clients.view_client', client_id=project.client_id) }}">
+                                        {{ project.client_obj.name }}
                                     </a>
                                     {% else %}
                                     <span class="text-muted">-</span>

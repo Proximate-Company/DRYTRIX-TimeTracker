@@ -4,10 +4,12 @@ Uses WeasyPrint to generate professional PDF invoices
 """
 
 import os
+import html as html_lib
 from datetime import datetime
 from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 from app.models import Settings
+from flask import current_app
 
 class InvoicePDFGenerator:
     """Generate PDF invoices with company branding"""
@@ -24,14 +26,15 @@ class InvoicePDFGenerator:
         # Configure fonts
         font_config = FontConfiguration()
         
-        # Create PDF
-        html_doc = HTML(string=html_content)
-        css_doc = CSS(string=css_content, font_config=font_config)
-        
-        pdf_bytes = html_doc.write_pdf(
-            stylesheets=[css_doc],
-            font_config=font_config
-        )
+        # Create PDF (avoid passing unexpected args to PDF class)
+        base_url = None
+        try:
+            base_url = current_app.root_path
+        except Exception:
+            base_url = None
+        html_doc = HTML(string=html_content, base_url=base_url)
+        css_doc = CSS(string=css_content)
+        pdf_bytes = html_doc.write_pdf(stylesheets=[css_doc])
         
         return pdf_bytes
     
@@ -43,75 +46,114 @@ class InvoicePDFGenerator:
         <head>
             <meta charset="UTF-8">
             <title>Invoice {self.invoice.invoice_number}</title>
+            <style>
+            :root {{
+                --primary: #2563eb;
+                --primary-600: #1d4ed8;
+                --text: #0f172a;
+                --muted: #475569;
+                --border: #e2e8f0;
+                --bg: #ffffff;
+                --bg-alt: #f8fafc;
+            }}
+            * {{ box-sizing: border-box; }}
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                color: var(--text);
+                margin: 0;
+                padding: 0;
+                background: var(--bg);
+                font-size: 12pt;
+            }}
+            .wrapper {{
+                padding: 24px 28px;
+            }}
+            .invoice-header {{
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                border-bottom: 2px solid var(--border);
+                padding-bottom: 16px;
+                margin-bottom: 18px;
+            }}
+            .brand {{ display: flex; gap: 16px; align-items: center; }}
+            .company-logo {{ max-width: 140px; max-height: 70px; display: block; }}
+            .company-name {{ font-size: 22pt; font-weight: 700; margin: 0; color: var(--primary); }}
+            .company-meta span {{ display: block; color: var(--muted); font-size: 10pt; }}
+            .invoice-meta {{ text-align: right; }}
+            .invoice-title {{ font-size: 26pt; font-weight: 800; color: var(--primary); margin: 0 0 8px 0; }}
+            .meta-grid {{ display: grid; grid-template-columns: auto auto; gap: 4px 16px; font-size: 10.5pt; }}
+            .label {{ color: var(--muted); font-weight: 600; }}
+            .value {{ color: var(--text); font-weight: 600; }}
+
+            .two-col {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }}
+            .card {{ background: var(--bg-alt); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }}
+            .section-title {{ font-size: 12pt; font-weight: 700; color: var(--primary-600); margin: 0 0 8px 0; }}
+            .small {{ color: var(--muted); font-size: 10pt; }}
+
+            table {{ width: 100%; border-collapse: collapse; margin-top: 4px; }}
+            thead th {{ background: var(--bg-alt); color: var(--muted); font-weight: 700; border: 1px solid var(--border); padding: 10px; font-size: 10.5pt; text-align: left; }}
+            tbody td {{ border: 1px solid var(--border); padding: 10px; font-size: 10.5pt; }}
+            tfoot td {{ border: 1px solid var(--border); padding: 10px; font-weight: 700; }}
+            .num {{ text-align: right; }}
+            .desc {{ width: 50%; }}
+
+            .totals {{ margin-top: 6px; }}
+            .note {{ margin-top: 10px; }}
+            .footer {{ border-top: 1px solid var(--border); margin-top: 18px; padding-top: 10px; color: var(--muted); font-size: 10pt; }}
+            </style>
         </head>
         <body>
-            <div class="invoice-container">
+            <div class="wrapper">
                 <!-- Header -->
-                <div class="header">
-                    <div class="company-info">
+                <div class="invoice-header">
+                    <div class="brand">
                         {self._get_company_logo_html()}
-                        <div class="company-details">
-                            <h1 class="company-name">{self.settings.company_name}</h1>
-                            <div class="company-address">{self.settings.company_address|nl2br}</div>
-                            <div class="company-contact">
-                                <span>Email: {self.settings.company_email}</span>
-                                <span>Phone: {self.settings.company_phone}</span>
-                                <span>Website: {self.settings.company_website}</span>
+                        <div>
+                            <h1 class="company-name">{self._escape(self.settings.company_name)}</h1>
+                            <div class="company-meta small">
+                                <span>{self._nl2br(self.settings.company_address)}</span>
+                                <span>Email: {self._escape(self.settings.company_email)}  ·  Phone: {self._escape(self.settings.company_phone)}</span>
+                                <span>Website: {self._escape(self.settings.company_website)}</span>
+                                {self._get_company_tax_info()}
                             </div>
-                            {self._get_company_tax_info()}
                         </div>
                     </div>
-                    <div class="invoice-info">
-                        <h2 class="invoice-title">INVOICE</h2>
-                        <div class="invoice-details">
-                            <div class="detail-row">
-                                <span class="label">Invoice #:</span>
-                                <span class="value">{self.invoice.invoice_number}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Issue Date:</span>
-                                <span class="value">{self.invoice.issue_date.strftime('%B %d, %Y')}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Due Date:</span>
-                                <span class="value">{self.invoice.due_date.strftime('%B %d, %Y')}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="label">Status:</span>
-                                <span class="value status-{self.invoice.status}">{self.invoice.status.title()}</span>
-                            </div>
+                    <div class="invoice-meta">
+                        <div class="invoice-title">INVOICE</div>
+                        <div class="meta-grid">
+                            <div class="label">Invoice #</div><div class="value">{self.invoice.invoice_number}</div>
+                            <div class="label">Issue Date</div><div class="value">{self.invoice.issue_date.strftime('%b %d, %Y')}</div>
+                            <div class="label">Due Date</div><div class="value">{self.invoice.due_date.strftime('%b %d, %Y')}</div>
+                            <div class="label">Status</div><div class="value">{self.invoice.status.title()}</div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Client Information -->
-                <div class="client-section">
-                    <h3>Bill To:</h3>
-                    <div class="client-info">
-                        <div class="client-name">{self.invoice.client_name}</div>
+                <div class="two-col">
+                    <div class="card">
+                        <div class="section-title">Bill To</div>
+                        <div><strong>{self._escape(self.invoice.client_name)}</strong></div>
                         {self._get_client_email_html()}
                         {self._get_client_address_html()}
                     </div>
-                </div>
-                
-                <!-- Project Information -->
-                <div class="project-section">
-                    <h3>Project:</h3>
-                    <div class="project-info">
-                        <strong>{self.invoice.project.name}</strong>
+                    <div class="card">
+                        <div class="section-title">Project</div>
+                        <div><strong>{self._escape(self.invoice.project.name)}</strong></div>
                         {self._get_project_description_html()}
                     </div>
                 </div>
                 
                 <!-- Invoice Items -->
-                <div class="items-section">
-                    <table class="invoice-table">
+                <div>
+                    <table>
                         <thead>
                             <tr>
-                                <th class="description">Description</th>
-                                <th class="quantity">Quantity (Hours)</th>
-                                <th class="unit-price">Unit Price</th>
-                                <th class="total">Total Amount</th>
+                                <th class="desc">Description</th>
+                                <th class="num">Quantity (Hours)</th>
+                                <th class="num">Unit Price</th>
+                                <th class="num">Total Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -128,13 +170,8 @@ class InvoicePDFGenerator:
                 
                 <!-- Footer -->
                 <div class="footer">
-                    <div class="payment-info">
-                        {self._get_payment_info_html()}
-                    </div>
-                    <div class="terms">
-                        <h4>Terms & Conditions:</h4>
-                        <p>{self.settings.invoice_terms}</p>
-                    </div>
+                    {self._get_payment_info_html()}
+                    <div><strong>Terms & Conditions:</strong> {self._escape(self.settings.invoice_terms)}</div>
                 </div>
             </div>
         </body>
@@ -142,12 +179,22 @@ class InvoicePDFGenerator:
         """
         return html
     
+    def _escape(self, value):
+        return html_lib.escape(value) if value else ''
+    
+    def _nl2br(self, value):
+        if not value:
+            return ''
+        return self._escape(value).replace('\n', '<br>')
+    
     def _get_company_logo_html(self):
         """Generate HTML for company logo if available"""
         if self.settings.has_logo():
             logo_path = self.settings.get_logo_path()
             if logo_path and os.path.exists(logo_path):
-                return f'<img src="{logo_path}" alt="Company Logo" class="company-logo">'
+                # Use file:// scheme so WeasyPrint can load local files
+                file_url = f'file://{logo_path}'
+                return f'<img src="{file_url}" alt="Company Logo" class="company-logo">'
         return ''
     
     def _get_company_tax_info(self):
@@ -180,13 +227,13 @@ class InvoicePDFGenerator:
         for item in self.invoice.items:
             row = f"""
             <tr>
-                <td class="description">
-                    {item.description}
+                <td>
+                    {self._escape(item.description)}
                     {self._get_time_entry_info_html(item)}
                 </td>
-                <td class="quantity text-center">{item.quantity:.2f}</td>
-                <td class="unit-price text-right">{item.unit_price:.2f} {self.settings.currency}</td>
-                <td class="total text-right">{item.total_amount:.2f} {self.settings.currency}</td>
+                <td class="num">{item.quantity:.2f}</td>
+                <td class="num">{item.unit_price:.2f} {self.settings.currency}</td>
+                <td class="num">{item.total_amount:.2f} {self.settings.currency}</td>
             </tr>
             """
             rows.append(row)
@@ -205,28 +252,26 @@ class InvoicePDFGenerator:
         
         # Subtotal
         rows.append(f"""
-        <tr class="subtotal">
-            <td colspan="3" class="text-right"><strong>Subtotal:</strong></td>
-            <td class="text-right"><strong>{self.invoice.subtotal:.2f} {self.settings.currency}</strong></td>
+        <tr>
+            <td colspan="3" class="num">Subtotal:</td>
+            <td class="num">{self.invoice.subtotal:.2f} {self.settings.currency}</td>
         </tr>
         """)
         
         # Tax if applicable
         if self.invoice.tax_rate > 0:
             rows.append(f"""
-            <tr class="tax">
-                <td colspan="3" class="text-right">
-                    <strong>Tax ({self.invoice.tax_rate:.2f}%):</strong>
-                </td>
-                <td class="text-right"><strong>{self.invoice.tax_amount:.2f} {self.settings.currency}</strong></td>
+            <tr>
+                <td colspan="3" class="num">Tax ({self.invoice.tax_rate:.2f}%):</td>
+                <td class="num">{self.invoice.tax_amount:.2f} {self.settings.currency}</td>
             </tr>
             """)
         
         # Total
         rows.append(f"""
-        <tr class="total">
-            <td colspan="3" class="text-right"><strong>Total Amount:</strong></td>
-            <td class="text-right"><strong>{self.invoice.total_amount:.2f} {self.settings.currency}</strong></td>
+        <tr>
+            <td colspan="3" class="num">Total Amount:</td>
+            <td class="num">{self.invoice.total_amount:.2f} {self.settings.currency}</td>
         </tr>
         """)
         

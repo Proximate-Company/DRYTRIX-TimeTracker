@@ -9,6 +9,11 @@ on:
   release:
     types: [ published ]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Custom version tag (e.g., v1.2.3, build-123)'
+        required: false
+        default: ''
 
 env:
   REGISTRY: ghcr.io
@@ -30,6 +35,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for better versioning
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -41,6 +48,57 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine version
+        id: version
+        run: |
+          # Priority order for version determination:
+          # 1. Manual workflow dispatch input
+          # 2. GitHub release tag
+          # 3. Git tag
+          # 4. Branch name with build number
+          # 5. Fallback to commit SHA
+          
+          if [[ "${{ github.event.inputs.version }}" != "" ]]; then
+            # Manual workflow dispatch with custom version
+            VERSION="${{ github.event.inputs.version }}"
+            VERSION_SOURCE="manual"
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
+            # GitHub release - use release tag name
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION_SOURCE="release"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # Git tag - use tag name
+            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION_SOURCE="git_tag"
+          elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
+            # Branch - use branch name with build number
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            BUILD_NUMBER=${{ github.run_number }}
+            VERSION="${BRANCH_NAME}-build-${BUILD_NUMBER}"
+            VERSION_SOURCE="branch_build"
+          else
+            # Fallback to commit SHA
+            VERSION="commit-${GITHUB_SHA::8}"
+            VERSION_SOURCE="commit_sha"
+          fi
+          
+          # Clean version string (replace invalid characters)
+          VERSION=$(echo "$VERSION" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          
+          # Set outputs
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_source=$VERSION_SOURCE" >> $GITHUB_OUTPUT
+          echo "branch_name=${BRANCH_NAME:-}" >> $GITHUB_OUTPUT
+          echo "build_number=${BUILD_NUMBER:-}" >> $GITHUB_OUTPUT
+          
+          echo "=== Version Information ==="
+          echo "Version: $VERSION"
+          echo "Source: $VERSION_SOURCE"
+          echo "Branch: ${BRANCH_NAME:-N/A}"
+          echo "Build Number: ${BUILD_NUMBER:-N/A}"
+          echo "Commit SHA: ${GITHUB_SHA::8}"
+          echo "=========================="
 
       - name: Check files and create combined Dockerfile
         run: |
@@ -61,36 +119,112 @@ jobs:
           cp Dockerfile Dockerfile.final
           echo "Combined Dockerfile created successfully"
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         run: |
           IMAGE_ID=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          VERSION="${{ steps.version.outputs.version }}"
           
-          # Extract version from ref
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
-            VERSION=${GITHUB_REF#refs/heads/}
-          else
-            VERSION=unknown
-          fi
-
-          # Replace any slashes with dashes (for feature branches etc.)
-          VERSION=${VERSION//\//-}
-
+          echo "Building Docker image..."
           echo "Image ID: $IMAGE_ID"
           echo "Version: $VERSION"
-
-          # Build the Docker image
-          docker build -f Dockerfile.final -t $IMAGE_ID:$VERSION .
-
-          # Always push versioned tag on releases/tags
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
-            docker push $IMAGE_ID:$VERSION
-            
-            # If this is a release, also push as latest
-            if [ "${{ github.event_name }}" == "release" ]; then
-              docker tag $IMAGE_ID:$VERSION $IMAGE_ID:latest
-              docker push $IMAGE_ID:latest
-            fi
+          
+          # Build the Docker image with version label
+          docker build \
+            -f Dockerfile.final \
+            --label "org.opencontainers.image.version=$VERSION" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            --label "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}" \
+            -t $IMAGE_ID:$VERSION \
+            .
+          
+          # Tag with additional labels based on version source
+          if [[ "${{ steps.version.outputs.version_source }}" == "release" ]] || [[ "${{ steps.version.outputs.version_source }}" == "git_tag" ]]; then
+            # For releases and tags, also create a 'latest' tag
+            docker tag $IMAGE_ID:$VERSION $IMAGE_ID:latest
+            echo "Tagged as latest (release/tag)"
+          elif [[ "${{ steps.version.outputs.version_source }}" == "branch_build" ]] && [[ "${{ steps.version.outputs.branch_name }}" == "main" ]]; then
+            # For main branch builds, create a 'main' tag
+            docker tag $IMAGE_ID:$VERSION $IMAGE_ID:main
+            echo "Tagged as main (main branch build)"
           fi
+
+      - name: Push Docker image
+        if: github.event_name != 'pull_request'
+        run: |
+          IMAGE_ID=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          echo "Pushing Docker image..."
+          echo "Image ID: $IMAGE_ID"
+          echo "Version: $VERSION"
+          
+          # Push the versioned tag
+          docker push $IMAGE_ID:$VERSION
+          
+          # Push additional tags if they exist
+          if [[ "${{ steps.version.outputs.version_source }}" == "release" ]] || [[ "${{ steps.version.outputs.version_source }}" == "git_tag" ]]; then
+            docker push $IMAGE_ID:latest
+            echo "Pushed latest tag"
+          elif [[ "${{ steps.version.outputs.version_source }}" == "branch_build" ]] && [[ "${{ steps.version.outputs.branch_name }}" == "main" ]]; then
+            docker push $IMAGE_ID:main
+            echo "Pushed main tag"
+          fi
+
+      - name: Generate build summary
+        run: |
+          echo "=== Build Summary ==="
+          echo "Repository: ${{ github.repository }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Version Source: ${{ steps.version.outputs.version_source }}"
+          echo "Branch: ${{ steps.version.outputs.branch_name }}"
+          echo "Build Number: ${{ steps.version.outputs.build_number }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          echo "===================="
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            
+            const botComment = comments.find(comment => comment.user.type === 'Bot' && comment.body.includes('Docker build completed'));
+            
+            const commentBody = `## 🐳 Docker Build Completed
+            
+            **Build Information:**
+            - **Version:** \`${{ steps.version.outputs.version }}\`
+            - **Source:** ${{ steps.version.outputs.version_source }}
+            - **Branch:** ${{ steps.version.outputs.branch_name }}
+            - **Build Number:** ${{ steps.version.outputs.build_number }}
+            - **Commit:** \`${{ github.sha }}\`
+            
+            **Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}\`
+            
+            > This is a preview build. The image will be pushed when merged to main.
+            
+            ---
+            *This comment was automatically generated by the Docker build workflow.*`;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                comment_id: botComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody,
+              });
+            }

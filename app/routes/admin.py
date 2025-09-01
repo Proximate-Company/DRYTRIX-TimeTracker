@@ -7,6 +7,7 @@ from sqlalchemy import text
 import os
 from werkzeug.utils import secure_filename
 import uuid
+from app.utils.db import safe_commit
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -112,7 +113,9 @@ def create_user():
         # Create user
         user = User(username=username, role=role)
         db.session.add(user)
-        db.session.commit()
+        if not safe_commit('admin_create_user', {'username': username}):
+            flash('Could not create user due to a database error. Please check server logs.', 'error')
+            return render_template('admin/user_form.html', user=None)
         
         flash(f'User "{username}" created successfully', 'success')
         return redirect(url_for('admin.list_users'))
@@ -145,7 +148,9 @@ def edit_user(user_id):
         user.username = username
         user.role = role
         user.is_active = is_active
-        db.session.commit()
+        if not safe_commit('admin_edit_user', {'user_id': user.id}):
+            flash('Could not update user due to a database error. Please check server logs.', 'error')
+            return render_template('admin/user_form.html', user=user)
         
         flash(f'User "{username}" updated successfully', 'success')
         return redirect(url_for('admin.list_users'))
@@ -173,7 +178,9 @@ def delete_user(user_id):
     
     username = user.username
     db.session.delete(user)
-    db.session.commit()
+    if not safe_commit('admin_delete_user', {'user_id': user.id}):
+        flash('Could not delete user due to a database error. Please check server logs.', 'error')
+        return redirect(url_for('admin.list_users'))
     
     flash(f'User "{username}" deleted successfully', 'success')
     return redirect(url_for('admin.list_users'))
@@ -221,7 +228,12 @@ def settings():
         settings_obj.invoice_terms = request.form.get('invoice_terms', 'Payment is due within 30 days of invoice date.')
         settings_obj.invoice_notes = request.form.get('invoice_notes', 'Thank you for your business!')
         
-        db.session.commit()
+        # Update privacy and analytics settings
+        settings_obj.allow_analytics = request.form.get('allow_analytics') == 'on'
+        
+        if not safe_commit('admin_update_settings'):
+            flash('Could not update settings due to a database error. Please check server logs.', 'error')
+            return render_template('admin/settings.html', settings=settings_obj)
         flash('Settings updated successfully', 'success')
         return redirect(url_for('admin.settings'))
     
@@ -264,7 +276,9 @@ def upload_logo():
                     pass  # Ignore errors when removing old file
         
         settings_obj.company_logo_filename = unique_filename
-        db.session.commit()
+        if not safe_commit('admin_upload_logo'):
+            flash('Could not save logo due to a database error. Please check server logs.', 'error')
+            return redirect(url_for('admin.settings'))
         
         flash('Company logo uploaded successfully', 'success')
     else:
@@ -290,7 +304,9 @@ def remove_logo():
         
         # Clear filename from database
         settings_obj.company_logo_filename = ''
-        db.session.commit()
+        if not safe_commit('admin_remove_logo'):
+            flash('Could not remove logo due to a database error. Please check server logs.', 'error')
+            return redirect(url_for('admin.settings'))
         flash('Company logo removed successfully', 'success')
     else:
         flash('No logo to remove', 'info')
@@ -343,3 +359,65 @@ def system_info():
                          total_entries=total_entries,
                          active_timers=active_timers,
                          db_size_mb=db_size_mb)
+
+@admin_bp.route('/license-status')
+@login_required
+@admin_required
+def license_status():
+    """Show license server client status"""
+    try:
+        from app.utils.license_server import get_license_client
+        client = get_license_client()
+        if client:
+            status = client.get_status()
+            settings = Settings.get_settings()
+            return render_template('admin/license_status.html', status=status, settings=settings)
+        else:
+            flash('License server client not initialized', 'warning')
+            return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        flash(f'Error getting license status: {e}', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/license-test')
+@login_required
+@admin_required
+def license_test():
+    """Test license server communication"""
+    try:
+        from app.utils.license_server import get_license_client, send_usage_event
+        client = get_license_client()
+        if client:
+            # Test server health
+            server_healthy = client.check_server_health()
+            
+            # Test usage event
+            usage_sent = send_usage_event("admin_test", {"admin": current_user.username})
+            
+            flash(f'Server Health: {"✓ Healthy" if server_healthy else "✗ Not Responding"}, Usage Event: {"✓ Sent" if usage_sent else "✗ Failed"}', 'info')
+        else:
+            flash('License server client not initialized', 'warning')
+    except Exception as e:
+        flash(f'Error testing license server: {e}', 'error')
+    
+    return redirect(url_for('admin.license_status'))
+
+@admin_bp.route('/license-restart')
+@login_required
+@admin_required
+def license_restart():
+    """Restart the license server client"""
+    try:
+        from app.utils.license_server import get_license_client, start_license_client
+        client = get_license_client()
+        if client:
+            if start_license_client():
+                flash('License server client restarted successfully', 'success')
+            else:
+                flash('Failed to restart license server client', 'error')
+        else:
+            flash('License server client not initialized', 'warning')
+    except Exception as e:
+        flash(f'Error restarting license server client: {e}', 'error')
+    
+    return redirect(url_for('admin.license_status'))

@@ -477,40 +477,47 @@
 </style>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 let currentStep = 1;
 const totalSteps = 4;
 
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Auto-fill client name when project is selected
-    $('#project_id').change(function() {
-        const selectedOption = $(this).find('option:selected');
-        const clientName = selectedOption.data('client');
-        const hourlyRate = selectedOption.data('hourly-rate');
-        
+    const projectSelect = document.getElementById('project_id');
+    projectSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const clientName = selectedOption ? selectedOption.getAttribute('data-client') : '';
+        const hourlyRate = selectedOption ? parseFloat(selectedOption.getAttribute('data-hourly-rate') || '0') : 0;
+
+        const clientNameInput = document.getElementById('client_name');
+        const projectInfo = document.getElementById('project-info');
+        const noProjectInfo = document.getElementById('no-project-info');
+        const projectClient = document.getElementById('project-client');
+        const projectRate = document.getElementById('project-rate');
+        const projectBillable = document.getElementById('project-billable');
+
         if (clientName) {
-            $('#client_name').val(clientName);
-            
-            // Show project info
-            $('#project-info').removeClass('d-none');
-            $('#no-project-info').addClass('d-none');
-            
-            $('#project-client').text(clientName);
-            $('#project-rate').text('{{ settings.currency or "EUR" }}' + parseFloat(hourlyRate).toFixed(2));
-            $('#project-billable').text(parseFloat(hourlyRate) > 0 ? 'Yes' : 'No');
+            clientNameInput.value = clientName;
+            projectInfo.classList.remove('d-none');
+            noProjectInfo.classList.add('d-none');
+            projectClient.textContent = clientName;
+            projectRate.textContent = '{{ settings.currency or "EUR" }}' + hourlyRate.toFixed(2);
+            projectBillable.textContent = hourlyRate > 0 ? 'Yes' : 'No';
         } else {
-            $('#project-info').addClass('d-none');
-            $('#no-project-info').removeClass('d-none');
+            projectInfo.classList.add('d-none');
+            noProjectInfo.classList.remove('d-none');
         }
     });
-    
+
     // Set minimum due date to today
+    const dueDate = document.getElementById('due_date');
     const today = new Date().toISOString().split('T')[0];
-    $('#due_date').attr('min', today);
-    
+    dueDate.setAttribute('min', today);
+
     // Form validation
-    $('#invoiceForm').on('submit', function(e) {
+    const invoiceForm = document.getElementById('invoiceForm');
+    invoiceForm.addEventListener('submit', function(e) {
         if (!validateForm()) {
             e.preventDefault();
             showAlert('Please fill in all required fields and complete all steps.', 'warning');
@@ -523,6 +530,9 @@ function nextStep() {
         if (currentStep < totalSteps) {
             hideStep(currentStep);
             currentStep++;
+            if (currentStep === 4) {
+                updateReview();
+            }
             showStep(currentStep);
             updateProgress();
             updateStepIndicators();
@@ -541,34 +551,47 @@ function previousStep() {
 }
 
 function showStep(step) {
-    $(`#step${step}`).show().addClass('active');
+    const card = document.getElementById(`step${step}`);
+    if (card) {
+        card.style.display = '';
+        card.classList.add('active');
+    }
 }
 
 function hideStep(step) {
-    $(`#step${step}`).hide().removeClass('active');
+    const card = document.getElementById(`step${step}`);
+    if (card) {
+        card.style.display = 'none';
+        card.classList.remove('active');
+    }
 }
 
 function updateProgress() {
     const progress = (currentStep / totalSteps) * 100;
-    $('#progressBar').css('width', progress + '%');
+    const bar = document.getElementById('progressBar');
+    bar.style.width = progress + '%';
 }
 
 function updateStepIndicators() {
-    $('.step-indicator').removeClass('active');
-    $(`.step-indicator[data-step="${currentStep}"]`).addClass('active');
+    document.querySelectorAll('.step-indicator').forEach(el => el.classList.remove('active'));
+    const active = document.querySelector(`.step-indicator[data-step="${currentStep}"]`);
+    if (active) active.classList.add('active');
 }
 
 function validateCurrentStep() {
     let isValid = true;
-    
+    const projectId = document.getElementById('project_id').value;
+    const dueDate = document.getElementById('due_date').value;
+    const clientName = document.getElementById('client_name').value;
+
     switch(currentStep) {
         case 1:
-            if (!$('#project_id').val() || !$('#due_date').val()) {
+            if (!projectId || !dueDate) {
                 isValid = false;
             }
             break;
         case 2:
-            if (!$('#client_name').val()) {
+            if (!clientName) {
                 isValid = false;
             }
             break;
@@ -576,16 +599,20 @@ function validateCurrentStep() {
             // All fields are optional in step 3
             break;
     }
-    
+
     if (!isValid) {
         showAlert('Please fill in all required fields before proceeding.', 'warning');
     }
-    
+
     return isValid;
 }
 
 function validateForm() {
-    return $('#project_id').val() && $('#due_date').val() && $('#client_name').val();
+    return (
+        document.getElementById('project_id').value &&
+        document.getElementById('due_date').value &&
+        document.getElementById('client_name').value
+    );
 }
 
 function showAlert(message, type) {
@@ -596,32 +623,28 @@ function showAlert(message, type) {
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     `;
-    
-    $('.container-fluid').prepend(alertHtml);
-    
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-        $('.alert').fadeOut();
-    }, 5000);
+    const container = document.querySelector('.container-fluid');
+    if (container) {
+        container.insertAdjacentHTML('afterbegin', alertHtml);
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            const alert = container.querySelector('.alert');
+            if (alert) alert.remove();
+        }, 5000);
+    }
 }
 
 // Update review section when moving to step 4
 function updateReview() {
-    $('#review-project').text($('#project_id option:selected').text() || '-');
-    $('#review-client').text($('#client_name').val() || '-');
-    $('#review-due-date').text($('#due_date').val() || '-');
-    $('#review-tax').text($('#tax_rate').val() ? $('#tax_rate').val() + '%' : '0%');
-    $('#review-notes').text($('#notes').val() || 'None');
-    $('#review-terms').text($('#terms').val() || 'None');
+    const projectSelect = document.getElementById('project_id');
+    const projectText = projectSelect.options[projectSelect.selectedIndex]?.text || '-';
+    document.getElementById('review-project').textContent = projectText;
+    document.getElementById('review-client').textContent = document.getElementById('client_name').value || '-';
+    document.getElementById('review-due-date').textContent = document.getElementById('due_date').value || '-';
+    const tax = document.getElementById('tax_rate').value;
+    document.getElementById('review-tax').textContent = tax ? `${tax}%` : '0%';
+    document.getElementById('review-notes').textContent = document.getElementById('notes').value || 'None';
+    document.getElementById('review-terms').textContent = document.getElementById('terms').value || 'None';
 }
-
-// Override nextStep for step 3 to update review
-const originalNextStep = nextStep;
-nextStep = function() {
-    if (currentStep === 3) {
-        updateReview();
-    }
-    originalNextStep();
-};
 </script>
 {% endblock %}

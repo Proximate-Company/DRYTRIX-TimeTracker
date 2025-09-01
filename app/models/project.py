@@ -9,7 +9,7 @@ class Project(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False, index=True)
-    client = db.Column(db.String(200), nullable=False, index=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False, index=True)
     description = db.Column(db.Text, nullable=True)
     billable = db.Column(db.Boolean, default=True, nullable=False)
     hourly_rate = db.Column(db.Numeric(9, 2), nullable=True)
@@ -22,16 +22,21 @@ class Project(db.Model):
     time_entries = db.relationship('TimeEntry', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     
-    def __init__(self, name, client, description=None, billable=True, hourly_rate=None, billing_ref=None):
+    def __init__(self, name, client_id, description=None, billable=True, hourly_rate=None, billing_ref=None):
         self.name = name.strip()
-        self.client = client.strip()
+        self.client_id = client_id
         self.description = description.strip() if description else None
         self.billable = billable
         self.hourly_rate = Decimal(str(hourly_rate)) if hourly_rate else None
         self.billing_ref = billing_ref.strip() if billing_ref else None
     
     def __repr__(self):
-        return f'<Project {self.name} ({self.client})>'
+        return f'<Project {self.name} ({self.client_obj.name if self.client_obj else "Unknown Client"})>'
+    
+    @property
+    def client(self):
+        """Get client name for backward compatibility"""
+        return self.client_obj.name if self.client_obj else "Unknown Client"
     
     @property
     def is_active(self):

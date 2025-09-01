@@ -10,6 +10,11 @@ ENV FLASK_ENV=production
 RUN apt-get update && apt-get install -y \
     curl \
     tzdata \
+    # Network tools for debugging
+    iproute2 \
+    net-tools \
+    iputils-ping \
+    dnsutils \
     # WeasyPrint dependencies (Debian Bullseye package names)
     libgdk-pixbuf2.0-0 \
     libpango-1.0-0 \
@@ -47,7 +52,7 @@ RUN mkdir -p /app/app/static/uploads/logos /app/static/uploads/logos && \
 COPY docker/start-fixed.py /app/start.py
 
 # Make startup scripts executable
-RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/test-db.py /app/docker/test-routing.py
+RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/init-database-enhanced.py /app/docker/verify-database.py /app/docker/test-db.py /app/docker/test-routing.py
 
 # Create non-root user
 RUN useradd -m -u 1000 timetracker && \

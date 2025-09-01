@@ -1,0 +1,17 @@
+# Docker Compose override for license server configuration
+# Use this file to override license server settings for different environments
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.license-server.yml up
+
+version: '3.8'
+
+services:
+  web:
+    environment:
+      # License server IP is hardcoded in code as 192.168.1.100:8081
+      # Clients cannot change this - it's built into the application
+      # All license server settings are now hardcoded and cannot be overridden
+      
+      # Note: No environment variables needed for license server configuration
+      # The application will automatically connect to the hardcoded IP address

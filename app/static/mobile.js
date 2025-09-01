@@ -177,15 +177,17 @@ class MobileForms {
     handleFormSubmit(event, form) {
         const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) {
+            // Store original text if not already stored
+            if (!submitBtn.getAttribute('data-original-text')) {
+                submitBtn.setAttribute('data-original-text', submitBtn.innerHTML);
+            }
+            
             // Show loading state
             submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Processing...';
             submitBtn.disabled = true;
             
-            // Re-enable after a delay (fallback)
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = submitBtn.getAttribute('data-original-text') || 'Submit';
-            }, 10000);
+            // Allow form to submit normally
+            // The form will be submitted and page will reload, so we don't need to re-enable
         }
     }
     
@@ -415,15 +417,22 @@ class MobileButtons {
     }
     
     handleButtonClick(button) {
-        // Store original text
+        const form = button.closest('form');
+        if (form) {
+            // If inside a form, let the form's submit handler manage UI state
+            if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+                // Invalid: let browser show native messages
+                return;
+            }
+            // Valid form: do not disable or change button here to avoid blocking native submit
+            return;
+        }
+
+        // Not inside a form: apply loading state to indicate action
         const originalText = button.innerHTML;
         button.setAttribute('data-original-text', originalText);
-        
-        // Show loading state
         button.innerHTML = '<div class="loading-spinner me-2"></div>Processing...';
         button.disabled = true;
-        
-        // Re-enable after a delay (fallback)
         setTimeout(() => {
             button.disabled = false;
             button.innerHTML = originalText;
