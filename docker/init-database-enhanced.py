@@ -86,30 +86,6 @@ def get_required_schema():
                 'CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)'
             ]
         },
-        'time_entries': {
-            'columns': [
-                'id SERIAL PRIMARY KEY',
-                'user_id INTEGER REFERENCES users(id) ON DELETE CASCADE',
-                'project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE',
-                'task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL',
-                'start_time TIMESTAMP NOT NULL',
-                'end_time TIMESTAMP',
-                'duration_seconds INTEGER',
-                'notes TEXT',
-                'tags VARCHAR(500)',
-                'source VARCHAR(20) DEFAULT \'manual\' NOT NULL',
-                'billable BOOLEAN DEFAULT true NOT NULL',
-                'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
-                'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
-            ],
-            'indexes': [
-                'CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id)',
-                'CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries(project_id)',
-                'CREATE INDEX IF NOT EXISTS idx_time_entries_task_id ON time_entries(task_id)',
-                'CREATE INDEX IF NOT EXISTS idx_time_entries_start_time ON time_entries(start_time)',
-                'CREATE INDEX IF NOT EXISTS idx_time_entries_billable ON time_entries(billable)'
-            ]
-        },
         'tasks': {
             'columns': [
                 'id SERIAL PRIMARY KEY',
@@ -133,6 +109,30 @@ def get_required_schema():
                 'CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)',
                 'CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to)',
                 'CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)'
+            ]
+        },
+        'time_entries': {
+            'columns': [
+                'id SERIAL PRIMARY KEY',
+                'user_id INTEGER REFERENCES users(id) ON DELETE CASCADE',
+                'project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE',
+                'task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL',
+                'start_time TIMESTAMP NOT NULL',
+                'end_time TIMESTAMP',
+                'duration_seconds INTEGER',
+                'notes TEXT',
+                'tags VARCHAR(500)',
+                'source VARCHAR(20) DEFAULT \'manual\' NOT NULL',
+                'billable BOOLEAN DEFAULT true NOT NULL',
+                'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
+                'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+            ],
+            'indexes': [
+                'CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id)',
+                'CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries(project_id)',
+                'CREATE INDEX IF NOT EXISTS idx_time_entries_task_id ON time_entries(task_id)',
+                'CREATE INDEX IF NOT EXISTS idx_time_entries_start_time ON time_entries(start_time)',
+                'CREATE INDEX IF NOT EXISTS idx_time_entries_billable ON time_entries(billable)'
             ]
         },
         'settings': {
