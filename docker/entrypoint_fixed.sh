@@ -376,8 +376,55 @@ execute_comprehensive_migration() {
     # Fallback to manual migration
     log "Executing manual migration fallback..."
     
+    # Check what tables exist in the database
+    log "Analyzing existing database structure..."
+    if ! python -c "
+import psycopg2
+try:
+    conn_str = '$db_url'.replace('+psycopg2://', '://')
+    conn = psycopg2.connect(conn_str)
+    cursor = conn.cursor()
+    
+    cursor.execute(\"\"\"
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+        ORDER BY table_name
+    \"\"\")
+    existing_tables = [row[0] for row in cursor.fetchall()]
+    
+    cursor.execute(\"\"\"
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_name = 'alembic_version'
+        AND table_schema = 'public'
+    \"\"\)
+    alembic_table = cursor.fetchone()
+    
+    conn.close()
+    
+    print(f'Existing tables: {existing_tables}')
+    print(f'Alembic version table exists: {bool(alembic_table)}')
+    
+    if len(existing_tables) == 0:
+        print('Database is empty - no baseline migration needed')
+        exit(0)
+    elif alembic_table:
+        print('Database already has alembic_version table - no baseline migration needed')
+        exit(0)
+    else:
+        print('Database has existing tables but no alembic_version - baseline migration needed')
+        exit(1)
+except Exception as e:
+    print(f'Error analyzing database: {e}')
+    exit(1)
+"; then
+        log "Database analysis completed"
+    fi
+    
     # Initialize Flask-Migrate if not already done
     if [[ ! -f "/app/migrations/env.py" ]]; then
+        log "Initializing Flask-Migrate..."
         if ! flask db init; then
             log "✗ Flask-Migrate initialization failed"
             log "Error details:"
@@ -387,16 +434,168 @@ execute_comprehensive_migration() {
         log "✓ Flask-Migrate initialized"
     fi
     
+    # Check if we need to create a baseline migration
+    log "Checking if baseline migration is needed..."
+    if python -c "
+import psycopg2
+try:
+    conn_str = '$db_url'.replace('+psycopg2://', '://')
+    conn = psycopg2.connect(conn_str)
+    cursor = conn.cursor()
+    
+    cursor.execute(\"\"\"
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_name = 'alembic_version'
+        AND table_schema = 'public'
+    \"\"\")
+    alembic_table = cursor.fetchone()
+    
+    conn.close()
+    
+    if alembic_table:
+        print('Alembic version table already exists - skipping baseline migration')
+        exit(0)
+    else:
+        print('Alembic version table missing - baseline migration needed')
+        exit(1)
+except Exception as e:
+    print(f'Error checking alembic version: {e}')
+    exit(1)
+"; then
+        log "✓ No baseline migration needed - database already stamped"
+        return 0
+    fi
+    
+    # If we get here, we need a baseline migration
+    # But first, let's check if there are any conflicting tables
+    log "Checking for potential table conflicts..."
+    if ! python -c "
+import psycopg2
+try:
+    conn_str = '$db_url'.replace('+psycopg2://', '://')
+    conn = psycopg2.connect(conn_str)
+    cursor = conn.cursor()
+    
+    # Check for tables that might conflict with our migration
+    cursor.execute(\"\"\"
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+        AND table_name IN ('clients', 'users', 'projects', 'tasks', 'time_entries', 'settings', 'invoices', 'invoice_items')
+        ORDER BY table_name
+    \"\"\")
+    conflicting_tables = [row[0] for row in cursor.fetchall()]
+    
+    conn.close()
+    
+    if conflicting_tables:
+        print(f'Found potentially conflicting tables: {conflicting_tables}')
+        print('These tables might conflict with the migration. Consider backing up data first.')
+        exit(1)
+    else:
+        print('No conflicting tables found - safe to proceed with baseline migration')
+        exit(0)
+except Exception as e:
+    print(f'Error checking for conflicts: {e}')
+    exit(1)
+"; then
+        log "⚠ Potential table conflicts detected - proceeding with caution"
+    fi
+    
     # Create baseline migration
+    log "Creating baseline migration from existing database..."
     if ! flask db migrate -m "Baseline from existing database"; then
         log "✗ Baseline migration creation failed"
         log "Error details:"
         flask db migrate -m "Baseline from existing database" 2>&1 | head -20
-        return 1
+        
+        # Try to understand why the migration failed
+        log "Attempting to understand migration failure..."
+        if ! python -c "
+import psycopg2
+try:
+    conn_str = '$db_url'.replace('+psycopg2://', '://')
+    conn = psycopg2.connect(conn_str)
+    cursor = conn.cursor()
+    
+    cursor.execute(\"\"\"
+        SELECT table_name, column_name, data_type, is_nullable
+        FROM information_schema.columns 
+        WHERE table_schema = 'public'
+        ORDER BY table_name, ordinal_position
+    \"\"\")
+    columns = cursor.fetchall()
+    
+    conn.close()
+    
+    print('Database schema:')
+    current_table = None
+    for table, column, data_type, nullable in columns:
+        if table != current_table:
+            print(f'\\nTable: {table}')
+            current_table = table
+        print(f'  {column}: {data_type} (nullable: {nullable})')
+except Exception as e:
+    print(f'Error getting schema: {e}')
+"; then
+            log "Could not analyze database schema"
+        fi
+        
+        log "✗ Baseline migration creation failed - trying alternative approach..."
+        
+        # Try to stamp the database with the existing migration version
+        log "Attempting to stamp database with existing migration version..."
+        if python -c "
+import psycopg2
+try:
+    conn_str = '$db_url'.replace('+psycopg2://', '://')
+    conn = psycopg2.connect(conn_str)
+    cursor = conn.cursor()
+    
+    # Check if we have any migration files
+    import os
+    migration_dir = '/app/migrations/versions'
+    if os.path.exists(migration_dir):
+        migration_files = [f for f in os.listdir(migration_dir) if f.endswith('.py')]
+        if migration_files:
+            # Get the first migration file (should be 001_initial_schema.py)
+            first_migration = sorted(migration_files)[0]
+            migration_id = first_migration.split('_')[0]
+            print(f'Found migration file: {first_migration} with ID: {migration_id}')
+            
+            # Try to stamp the database with this migration
+            import subprocess
+            result = subprocess.run(['flask', 'db', 'stamp', migration_id], 
+                                  capture_output=True, text=True)
+            if result.returncode == 0:
+                print('Successfully stamped database with existing migration')
+                exit(0)
+            else:
+                print(f'Failed to stamp database: {result.stderr}')
+                exit(1)
+        else:
+            print('No migration files found')
+            exit(1)
+    else:
+        print('Migration directory not found')
+        exit(1)
+except Exception as e:
+    print(f'Error in alternative approach: {e}')
+    exit(1)
+"; then
+            log "✓ Database stamped with existing migration version"
+            return 0
+        else
+            log "✗ Alternative approach also failed"
+            return 1
+        fi
     fi
+    
     log "✓ Baseline migration created"
     
     # Stamp database as current
+    log "Stamping database with current migration version..."
     if ! flask db stamp head; then
         log "✗ Database stamping failed"
         log "Error details:"

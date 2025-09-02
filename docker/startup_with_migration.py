@@ -15,14 +15,26 @@ from datetime import datetime
 import logging
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('/var/log/timetracker_startup.log')
-    ]
-)
+try:
+    # Ensure logs directory exists
+    os.makedirs('/app/logs', exist_ok=True)
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('/app/logs/timetracker_startup.log')
+        ]
+    )
+except Exception as e:
+    # Fallback to console-only logging if file logging fails
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[logging.StreamHandler(sys.stdout)]
+    )
+    print(f"Warning: Could not set up file logging: {e}")
 logger = logging.getLogger(__name__)
 
 def wait_for_database(db_url, max_retries=60, retry_delay=3):
