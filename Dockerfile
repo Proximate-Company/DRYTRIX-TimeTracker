@@ -52,7 +52,7 @@ RUN mkdir -p /app/app/static/uploads/logos /app/static/uploads/logos && \
 COPY docker/start-fixed.py /app/start.py
 
 # Make startup scripts executable
-RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/init-database-enhanced.py /app/docker/verify-database.py /app/docker/test-db.py /app/docker/test-routing.py
+RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/init-database-enhanced.py /app/docker/verify-database.py /app/docker/test-db.py /app/docker/test-routing.py /app/docker/entrypoint.sh /app/docker/entrypoint_fixed.sh /app/docker/startup_with_migration.py /app/docker/test_db_connection.py /app/docker/debug_startup.sh /app/docker/simple_test.sh
 
 # Create non-root user
 RUN useradd -m -u 1000 timetracker && \
@@ -70,6 +70,9 @@ EXPOSE 8080
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/_health || exit 1
+
+# Set the entrypoint
+ENTRYPOINT ["/app/docker/entrypoint_fixed.sh"]
 
 # Run the application
 CMD ["python", "/app/start.py"]

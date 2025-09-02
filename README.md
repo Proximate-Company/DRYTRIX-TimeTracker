@@ -4,12 +4,28 @@ A comprehensive web-based time tracking application built with Flask, featuring 
 
 ## 📸 Screenshots
 
+### Core Application Views
 <div align="center">
   <img src="assets/screenshots/Dashboard.png" alt="Dashboard" width="300" style="margin: 10px;">
   <img src="assets/screenshots/Projects.png" alt="Projects" width="300" style="margin: 10px;">
   <img src="assets/screenshots/Tasks.png" alt="Tasks" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/Clients.png" alt="Clients" width="300" style="margin: 10px;">
+</div>
+
+### Management & Analytics
+<div align="center">
   <img src="assets/screenshots/Reports.png" alt="Reports" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/VisualAnalytics.png" alt="Visual Analytics" width="300" style="margin: 10px;">
   <img src="assets/screenshots/Task_Management.png" alt="Task Management" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/Admin.png" alt="Admin Panel" width="300" style="margin: 10px;">
+</div>
+
+### Data Entry & Creation
+<div align="center">
+  <img src="assets/screenshots/LogTime.png" alt="Log Time" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/New-Task.png" alt="New Task Creation" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/New-Client.png" alt="New Client Creation" width="300" style="margin: 10px;">
+  <img src="assets/screenshots/New-Project.png" alt="New Project Creation" width="300" style="margin: 10px;">
 </div>
 
 ## 🌐 Platform Support
@@ -110,9 +126,9 @@ A comprehensive web-based time tracking application built with Flask, featuring 
 
 ### Import Capabilities
 - **Database Schema**: PostgreSQL and SQLite support
-- **Migration Scripts**: Automated database schema updates
+- **Migration System**: Flask-Migrate with version tracking and rollback support
 - **Backup/Restore**: Database backup and restoration tools
-- **CLI Management**: Command-line database operations
+- **CLI Management**: Command-line database operations with migration commands
 
 ### API Integration
 - **RESTful Endpoints**: Standard HTTP API for external access
@@ -149,9 +165,13 @@ TimeTracker/
 ├── docker/                # Docker-related scripts and utilities
 │   ├── config/            # Configuration files (Caddyfile, supervisord)
 │   ├── fixes/             # Database and permission fix scripts
-│   ├── migrations/        # Database migration scripts
 │   ├── startup/           # Startup and initialization scripts
 │   └── tests/             # Docker environment test scripts
+├── migrations/            # Database migrations with Flask-Migrate
+│   ├── versions/          # Migration version files
+│   ├── env.py             # Migration environment configuration
+│   ├── script.py.mako     # Migration template
+│   └── README.md          # Migration documentation
 ├── scripts/                # Deployment and utility scripts
 ├── tests/                  # Application test suite
 ├── templates/              # Additional templates
@@ -183,6 +203,72 @@ Multiple Docker configurations are available for different deployment scenarios:
   - Uses pre-built `ghcr.io/drytrix/timetracker:development` image
   - Secure cookie settings enabled
   - Suitable for testing pre-release versions
+
+### Database Migration System
+
+The application now uses **Flask-Migrate** for standardized database migrations with:
+
+- **Version Tracking**: Complete history of all database schema changes
+- **Rollback Support**: Ability to revert to previous database versions
+- **Automatic Schema Detection**: Migrations generated from SQLAlchemy models
+- **Cross-Database Support**: Works with both PostgreSQL and SQLite
+- **CLI Commands**: Simple commands for migration management
+
+#### Migration Commands
+```bash
+# Initialize migrations (first time only)
+flask db init
+
+# Create a new migration
+flask db migrate -m "Description of changes"
+
+# Apply pending migrations
+flask db upgrade
+
+# Rollback last migration
+flask db downgrade
+
+# Check migration status
+flask db current
+
+# View migration history
+flask db history
+```
+
+#### Quick Migration Setup
+```bash
+# Use the migration management script
+python migrations/manage_migrations.py
+
+# Or manually initialize
+flask db init
+flask db migrate -m "Initial schema"
+flask db upgrade
+```
+
+#### **Comprehensive Migration for Any Existing Database:**
+```bash
+# For ANY existing database (recommended)
+python migrations/migrate_existing_database.py
+
+# For legacy schema migration
+python migrations/legacy_schema_migration.py
+```
+
+#### **Migration Support:**
+- ✅ **Fresh Installation**: No existing database
+- ✅ **Legacy Databases**: Old custom migration systems
+- ✅ **Mixed Schema**: Some tables exist, some missing
+- ✅ **Production Data**: Existing databases with user data
+- ✅ **Cross-Version**: Databases from different TimeTracker versions
+
+#### **🚀 Automatic Container Migration:**
+- ✅ **Zero Configuration**: Container automatically detects database state
+- ✅ **Smart Strategy Selection**: Chooses best migration approach
+- ✅ **Automatic Startup**: Handles migration during container startup
+- ✅ **Production Ready**: Safe migration with automatic fallbacks
+
+See [Migration Documentation](migrations/README.md), [Complete Migration Guide](migrations/MIGRATION_GUIDE.md), and [Container Startup Configuration](docker/STARTUP_MIGRATION_CONFIG.md) for comprehensive details.
 
 ### Enhanced Database Startup
 
