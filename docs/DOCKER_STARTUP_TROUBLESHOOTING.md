@@ -13,14 +13,17 @@ This error typically occurs due to one of these issues:
 
 ## Solutions
 
-### Solution 1: Use the Fixed Dockerfile (Recommended)
+### Solution 1: Use the Remote Compose (Recommended)
 ```bash
-# Use the fixed Dockerfile that addresses all issues
-docker-compose -f docker-compose.fixed.yml up --build
+# Use the production remote compose with prebuilt image
+docker-compose -f docker-compose.remote.yml up -d
 ```
 
-### Solution 2: Fix the Original Dockerfile
-The original Dockerfile has been updated to use `start-new.sh` instead of `start-fixed.sh`.
+### Solution 2: Rebuild Locally
+The provided `Dockerfile` supports local builds. If you prefer rebuilding:
+```bash
+docker-compose up --build -d
+```
 
 ### Solution 3: Manual Fix
 If you want to fix it manually:
@@ -69,18 +72,18 @@ docker-compose build --no-cache
 ```
 
 ## File Structure
-- `Dockerfile.fixed` - Fixed version addressing all issues
-- `docker-compose.fixed.yml` - Uses the fixed Dockerfile
+- `Dockerfile` - Container build file
+- `docker/start.sh` - Startup wrapper
 - `docker/start-simple.sh` - Simple, reliable startup script
-- `docker/start-new.sh` - Enhanced startup script with schema fixes
+- `docker/start-fixed.sh` - Enhanced startup script with schema fixes
 
 ## Quick Test
 ```bash
-# Test with the fixed version
-docker-compose -f docker-compose.fixed.yml up --build
+# Test remote production image
+docker-compose -f docker-compose.remote.yml up -d
 
-# Or test with the original (after fixes)
-docker-compose up --build
+# Or build locally
+docker-compose up --build -d
 ```
 
 ## Common Issues and Fixes

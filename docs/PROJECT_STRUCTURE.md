@@ -14,9 +14,10 @@ TimeTracker/
 ├── 📁 .github/                # GitHub workflows and configurations
 ├── 📁 logs/                   # Application logs (with .gitkeep)
 ├── 🐳 Dockerfile              # Main Dockerfile
-├── 🐳 Dockerfile.simple       # Simple container Dockerfile
-├── 📄 docker-compose.simple.yml    # Simple container setup
-├── 📄 docker-compose.public.yml    # Public container setup
+├── 🐳 Dockerfile              # Main Dockerfile
+├── 📄 docker-compose.yml          # Local development compose
+├── 📄 docker-compose.remote.yml   # Remote/production compose (ghcr.io)
+├── 📄 docker-compose.remote-dev.yml # Remote dev/testing compose (ghcr.io)
 ├── 📄 requirements.txt         # Python dependencies
 ├── 📄 app.py                  # Application entry point
 ├── 📄 env.example             # Environment variables template
@@ -80,17 +81,20 @@ TimeTracker/
 
 ## 🚀 Deployment Options
 
-### 1. Simple Container (Recommended)
-- **File**: `docker-compose.simple.yml`
-- **Dockerfile**: `Dockerfile.simple`
-- **Features**: All-in-one with PostgreSQL database
+### 1. Local Development
+- **File**: `docker-compose.yml`
+- **Image**: Built from local source
+- **Use case**: Developer workstation
+
+### 2. Remote/Production
+- **File**: `docker-compose.remote.yml`
+- **Image**: `ghcr.io/drytrix/timetracker:latest` (or versioned tag)
 - **Use case**: Production deployment
 
-### 2. Public Container
-- **File**: `docker-compose.public.yml`
-- **Dockerfile**: `Dockerfile`
-- **Features**: External database configuration
-- **Use case**: Development and testing
+### 3. Remote Dev/Testing
+- **File**: `docker-compose.remote-dev.yml`
+- **Image**: `ghcr.io/drytrix/timetracker:development`
+- **Use case**: Pre-release testing
 
 ## 📚 Documentation Files
 
@@ -135,9 +139,9 @@ The Task Management feature is fully integrated into the application with automa
 
 ## 🎯 Getting Started
 
-1. **Choose deployment type**: Simple container (recommended) or public container
+1. **Choose deployment type**: Local dev, remote, or remote-dev
 2. **Follow README.md**: Complete setup instructions
-3. **Use appropriate compose file**: `docker-compose.simple.yml` or `docker-compose.public.yml`
+3. **Use appropriate compose file**: `docker-compose.yml`, `docker-compose.remote.yml`, or `docker-compose.remote-dev.yml`
 4. **Configure timezone**: Access admin settings to set your local timezone
 
 ## 🔍 File Purposes

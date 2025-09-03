@@ -33,8 +33,8 @@ class InvoicePDFGenerator:
         except Exception:
             base_url = None
         html_doc = HTML(string=html_content, base_url=base_url)
-        css_doc = CSS(string=css_content)
-        pdf_bytes = html_doc.write_pdf(stylesheets=[css_doc])
+        css_doc = CSS(string=css_content, font_config=font_config)
+        pdf_bytes = html_doc.write_pdf(stylesheets=[css_doc], font_config=font_config)
         
         return pdf_bytes
     
@@ -92,11 +92,18 @@ class InvoicePDFGenerator:
             .small {{ color: var(--muted); font-size: 10pt; }}
 
             table {{ width: 100%; border-collapse: collapse; margin-top: 4px; }}
+            thead {{ display: table-header-group; }}
+            tfoot {{ display: table-footer-group; }}
             thead th {{ background: var(--bg-alt); color: var(--muted); font-weight: 700; border: 1px solid var(--border); padding: 10px; font-size: 10.5pt; text-align: left; }}
             tbody td {{ border: 1px solid var(--border); padding: 10px; font-size: 10.5pt; }}
             tfoot td {{ border: 1px solid var(--border); padding: 10px; font-weight: 700; }}
             .num {{ text-align: right; }}
             .desc {{ width: 50%; }}
+
+            /* Pagination controls */
+            tr, td, th {{ break-inside: avoid; page-break-inside: avoid; }}
+            .card, .invoice-header, .two-col {{ break-inside: avoid; page-break-inside: avoid; }}
+            h4 {{ break-after: avoid; }}
 
             .totals {{ margin-top: 6px; }}
             .note {{ margin-top: 10px; }}
@@ -232,8 +239,8 @@ class InvoicePDFGenerator:
                     {self._get_time_entry_info_html(item)}
                 </td>
                 <td class="num">{item.quantity:.2f}</td>
-                <td class="num">{item.unit_price:.2f} {self.settings.currency}</td>
-                <td class="num">{item.total_amount:.2f} {self.settings.currency}</td>
+                <td class="num">{self._format_currency(item.unit_price)}</td>
+                <td class="num">{self._format_currency(item.total_amount)}</td>
             </tr>
             """
             rows.append(row)
@@ -254,7 +261,7 @@ class InvoicePDFGenerator:
         rows.append(f"""
         <tr>
             <td colspan="3" class="num">Subtotal:</td>
-            <td class="num">{self.invoice.subtotal:.2f} {self.settings.currency}</td>
+            <td class="num">{self._format_currency(self.invoice.subtotal)}</td>
         </tr>
         """)
         
@@ -263,7 +270,7 @@ class InvoicePDFGenerator:
             rows.append(f"""
             <tr>
                 <td colspan="3" class="num">Tax ({self.invoice.tax_rate:.2f}%):</td>
-                <td class="num">{self.invoice.tax_amount:.2f} {self.settings.currency}</td>
+                <td class="num">{self._format_currency(self.invoice.tax_amount)}</td>
             </tr>
             """)
         
@@ -271,7 +278,7 @@ class InvoicePDFGenerator:
         rows.append(f"""
         <tr>
             <td colspan="3" class="num">Total Amount:</td>
-            <td class="num">{self.invoice.total_amount:.2f} {self.settings.currency}</td>
+            <td class="num">{self._format_currency(self.invoice.total_amount)}</td>
         </tr>
         """)
         
@@ -301,6 +308,13 @@ class InvoicePDFGenerator:
             return f'<div class="additional-info">{"".join(html_parts)}</div>'
         return ''
     
+    def _format_currency(self, value):
+        """Format numeric currency with thousands separators and 2 decimals."""
+        try:
+            return f"{float(value):,.2f} {self.settings.currency}"
+        except Exception:
+            return f"{value} {self.settings.currency}"
+
     def _get_payment_info_html(self):
         """Generate HTML for payment information"""
         if self.settings.company_bank_info:

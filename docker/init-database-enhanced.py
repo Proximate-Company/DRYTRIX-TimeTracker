@@ -174,6 +174,7 @@ def get_required_schema():
             'columns': [
                 'id SERIAL PRIMARY KEY',
                 'invoice_number VARCHAR(50) UNIQUE NOT NULL',
+                'client_id INTEGER NOT NULL',
                 'project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE',
                 'client_name VARCHAR(200) NOT NULL',
                 'client_email VARCHAR(200)',
@@ -193,6 +194,7 @@ def get_required_schema():
             ],
             'indexes': [
                 'CREATE INDEX IF NOT EXISTS idx_invoices_project_id ON invoices(project_id)',
+                'CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id)',
                 'CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status)',
                 'CREATE INDEX IF NOT EXISTS idx_invoices_issue_date ON invoices(issue_date)'
             ]
@@ -338,49 +340,55 @@ def insert_initial_data(engine):
             # Get admin username from environment
             admin_username = os.getenv('ADMIN_USERNAMES', 'admin').split(',')[0]
             
-            # Insert default admin user
+            # Insert default admin user (idempotent via unique username)
             conn.execute(text(f"""
                 INSERT INTO users (username, role, is_active) 
-                VALUES ('{admin_username}', 'admin', true)
-                ON CONFLICT (username) DO NOTHING;
+                SELECT '{admin_username}', 'admin', true
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM users WHERE username = '{admin_username}'
+                );
             """))
             
-            # Ensure default client exists
+            # Ensure default client exists (idempotent via unique name)
             conn.execute(text("""
                 INSERT INTO clients (name, status)
-                VALUES ('Default Client', 'active')
-                ON CONFLICT (name) DO NOTHING;
+                SELECT 'Default Client', 'active'
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM clients WHERE name = 'Default Client'
+                );
             """))
 
-            # Insert default project (link to default client if possible)
+            # Insert default project linked to default client if not present
             conn.execute(text("""
                 INSERT INTO projects (name, client_id, description, billable, status)
-                VALUES (
-                    'General',
-                    (SELECT id FROM clients WHERE name = 'Default Client'),
-                    'Default project for general tasks',
-                    true,
-                    'active'
-                )
-                ON CONFLICT DO NOTHING;
+                SELECT 'General', c.id, 'Default project for general tasks', true, 'active'
+                FROM clients c
+                WHERE c.name = 'Default Client'
+                AND NOT EXISTS (
+                    SELECT 1 FROM projects p WHERE p.name = 'General'
+                );
             """))
-            
-            # Insert default settings
+             
+            # Insert default settings only if none exist (singleton semantics)
             conn.execute(text("""
-                INSERT INTO settings (timezone, currency, rounding_minutes, single_active_timer, 
-                                   allow_self_register, idle_timeout_minutes, backup_retention_days, 
-                                   backup_time, export_delimiter, allow_analytics,
-                                   company_name, company_address, company_email, company_phone, 
-                                   company_website, company_logo_filename, company_tax_id, 
-                                   company_bank_info, invoice_prefix, invoice_start_number, 
-                                   invoice_terms, invoice_notes) 
-                VALUES ('Europe/Rome', 'EUR', 1, true, true, 30, 30, '02:00', ',', true,
-                       'Your Company Name', 'Your Company Address', 'info@yourcompany.com', 
-                       '+1 (555) 123-4567', 'www.yourcompany.com', '', '', '', 'INV', 1000, 
-                       'Payment is due within 30 days of invoice date.', 'Thank you for your business!')
-                ON CONFLICT (id) DO NOTHING;
+                INSERT INTO settings (
+                    timezone, currency, rounding_minutes, single_active_timer, 
+                    allow_self_register, idle_timeout_minutes, backup_retention_days, 
+                    backup_time, export_delimiter, allow_analytics,
+                    company_name, company_address, company_email, company_phone, 
+                    company_website, company_logo_filename, company_tax_id, 
+                    company_bank_info, invoice_prefix, invoice_start_number, 
+                    invoice_terms, invoice_notes
+                ) 
+                SELECT 'Europe/Rome', 'EUR', 1, true, true, 30, 30, '02:00', ',', true,
+                       'Your Company Name', 'Your Company Address', 'info@yourcompany.com',
+                       '+1 (555) 123-4567', 'www.yourcompany.com', '', '', '', 'INV', 1000,
+                       'Payment is due within 30 days of invoice date.', 'Thank you for your business!'
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM settings
+                );
             """))
-            
+             
             conn.commit()
         
         print("✓ Initial data inserted successfully")

@@ -81,8 +81,8 @@ class InvoicePDFGeneratorFallback:
             # Build the story (content)
             story = self._build_story()
             
-            # Build the PDF
-            doc.build(story)
+            # Build the PDF with page numbers
+            doc.build(story, onFirstPage=self._add_page_number, onLaterPages=self._add_page_number)
             
             # Read the generated PDF
             with open(tmp_path, 'rb') as f:
@@ -216,21 +216,21 @@ class InvoicePDFGeneratorFallback:
             row = [
                 item.description,
                 f"{item.quantity:.2f}",
-                f"{item.unit_price:.2f} {self.settings.currency}",
-                f"{item.total_amount:.2f} {self.settings.currency}"
+                self._format_currency(item.unit_price),
+                self._format_currency(item.total_amount)
             ]
             data.append(row)
         
         # Add totals
-        data.append(['', '', 'Subtotal:', f"{self.invoice.subtotal:.2f} {self.settings.currency}"])
+        data.append(['', '', 'Subtotal:', self._format_currency(self.invoice.subtotal)])
         
         if self.invoice.tax_rate > 0:
-            data.append(['', '', f'Tax ({self.invoice.tax_rate:.2f}%):', f"{self.invoice.tax_amount:.2f} {self.settings.currency}"])
+            data.append(['', '', f'Tax ({self.invoice.tax_rate:.2f}%):', self._format_currency(self.invoice.tax_amount)])
         
-        data.append(['', '', 'Total Amount:', f"{self.invoice.total_amount:.2f} {self.settings.currency}"])
+        data.append(['', '', 'Total Amount:', self._format_currency(self.invoice.total_amount)])
         
         # Create table
-        table = Table(data, colWidths=[9*cm, 3*cm, 3*cm, 3*cm])
+        table = Table(data, colWidths=[9*cm, 3*cm, 3*cm, 3*cm], repeatRows=1)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8fafc')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#475569')),
@@ -247,6 +247,26 @@ class InvoicePDFGeneratorFallback:
         
         story.append(table)
         return story
+
+    def _format_currency(self, value):
+        """Format numeric currency with thousands separators and 2 decimals."""
+        try:
+            return f"{float(value):,.2f} {self.settings.currency}"
+        except Exception:
+            return f"{value} {self.settings.currency}"
+
+    def _add_page_number(self, canv, doc):
+        """Add page number at the bottom-right of each page."""
+        page_num = canv.getPageNumber()
+        text = f"Page {page_num}"
+        canv.setFont('Helvetica', 9)
+        try:
+            canv.setFillColor(colors.HexColor('#666666'))
+        except Exception:
+            pass
+        x = doc.leftMargin + doc.width
+        y = doc.bottomMargin - 0.5*cm
+        canv.drawRightString(x, y, text)
     
     def _build_additional_info(self):
         """Build additional information section"""

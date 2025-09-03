@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app import db, socketio
 from app.models import User, Project, TimeEntry, Task, Settings
-from app.utils.timezone import parse_local_datetime
+from app.utils.timezone import parse_local_datetime, utc_to_local
 from datetime import datetime
 import json
 from app.utils.db import safe_commit
@@ -234,13 +234,106 @@ def edit_timer(timer_id):
         timer.tags = request.form.get('tags', '').strip()
         timer.billable = request.form.get('billable') == 'on'
         
+        # Admin users can edit additional fields
+        if current_user.is_admin:
+            # Update project if changed
+            new_project_id = request.form.get('project_id', type=int)
+            if new_project_id and new_project_id != timer.project_id:
+                new_project = Project.query.filter_by(id=new_project_id, status='active').first()
+                if new_project:
+                    timer.project_id = new_project_id
+                else:
+                    flash('Invalid project selected', 'error')
+                    return render_template('timer/edit_timer.html', timer=timer, 
+                                        projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
+                                        tasks=[] if not new_project_id else Task.query.filter_by(project_id=new_project_id).order_by(Task.name).all())
+            
+            # Update task if changed
+            new_task_id = request.form.get('task_id', type=int)
+            if new_task_id != timer.task_id:
+                if new_task_id:
+                    new_task = Task.query.filter_by(id=new_task_id, project_id=timer.project_id).first()
+                    if new_task:
+                        timer.task_id = new_task_id
+                    else:
+                        flash('Invalid task selected for the chosen project', 'error')
+                        return render_template('timer/edit_timer.html', timer=timer, 
+                                            projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
+                                            tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+                else:
+                    timer.task_id = None
+            
+            # Update start and end times if provided
+            start_date = request.form.get('start_date')
+            start_time = request.form.get('start_time')
+            end_date = request.form.get('end_date')
+            end_time = request.form.get('end_time')
+            
+            if start_date and start_time:
+                try:
+                    # Convert parsed UTC-aware to local naive to match model storage
+                    parsed_start_utc = parse_local_datetime(start_date, start_time)
+                    new_start_time = utc_to_local(parsed_start_utc).replace(tzinfo=None)
+                    
+                    # Validate that start time is not in the future
+                    from app.models.time_entry import local_now
+                    current_time = local_now()
+                    if new_start_time > current_time:
+                        flash('Start time cannot be in the future', 'error')
+                        return render_template('timer/edit_timer.html', timer=timer, 
+                                            projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
+                                            tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+                    
+                    timer.start_time = new_start_time
+                except ValueError:
+                    flash('Invalid start date/time format', 'error')
+                    return render_template('timer/edit_timer.html', timer=timer, 
+                                        projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
+                                        tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+            
+            if end_date and end_time:
+                try:
+                    # Convert parsed UTC-aware to local naive to match model storage
+                    parsed_end_utc = parse_local_datetime(end_date, end_time)
+                    new_end_time = utc_to_local(parsed_end_utc).replace(tzinfo=None)
+                    
+                    # Validate that end time is after start time
+                    if new_end_time <= timer.start_time:
+                        flash('End time must be after start time', 'error')
+                        return render_template('timer/edit_timer.html', timer=timer, 
+                                            projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
+                                            tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+                    
+                    timer.end_time = new_end_time
+                    # Recalculate duration
+                    timer.calculate_duration()
+                except ValueError:
+                    flash('Invalid end date/time format', 'error')
+                    return render_template('timer/edit_timer.html', timer=timer, 
+                                        projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
+                                        tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+            
+            # Update source if provided
+            new_source = request.form.get('source')
+            if new_source in ['manual', 'auto']:
+                timer.source = new_source
+        
         if not safe_commit('edit_timer', {'timer_id': timer.id}):
             flash('Could not update timer due to a database error. Please check server logs.', 'error')
             return redirect(url_for('main.dashboard'))
+        
         flash('Timer updated successfully', 'success')
         return redirect(url_for('main.dashboard'))
     
-    return render_template('timer/edit_timer.html', timer=timer)
+    # Get projects and tasks for admin users
+    projects = []
+    tasks = []
+    if current_user.is_admin:
+        projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+        if timer.project_id:
+            tasks = Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all()
+    
+    return render_template('timer/edit_timer.html', timer=timer, projects=projects, tasks=tasks)
 
 @timer_bp.route('/timer/delete/<int:timer_id>', methods=['POST'])
 @login_required

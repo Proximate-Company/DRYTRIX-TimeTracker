@@ -164,7 +164,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="editTimerForm">
+            <form id="editTimerForm" novalidate>
                 <div class="modal-body">
                     <input type="hidden" id="editEntryId" name="entry_id">
                     <div class="row">
@@ -241,7 +241,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" id="editSaveBtn">
                         <i class="fas fa-save me-2"></i>Save Changes
                     </button>
                 </div>
@@ -281,18 +281,20 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 let activeTimer = null;
 let timerInterval = null;
 
 // Load projects for dropdowns
 function loadProjects() {
-    fetch('/api/projects')
+    const promise = fetch('/api/projects', { credentials: 'same-origin' })
         .then(response => response.json())
         .then(data => {
             const projectSelect = document.getElementById('projectSelect');
             const editProjectSelect = document.getElementById('editProjectSelect');
+            
+            if (!projectSelect || !editProjectSelect) return;
             
             // Clear existing options
             projectSelect.innerHTML = '<option value="">Select a project...</option>';
@@ -307,16 +309,19 @@ function loadProjects() {
                     editProjectSelect.add(editOption);
                 }
             });
+            return data.projects;
         })
         .catch(error => {
             console.error('Error loading projects:', error);
             showToast('Error loading projects', 'error');
         });
+    window.projectsLoadedPromise = promise;
+    return promise;
 }
 
 // Check timer status
 function checkTimerStatus() {
-    fetch('/api/timer/status')
+    fetch('/api/timer/status', { credentials: 'same-origin' })
         .then(response => response.json())
         .then(data => {
             if (data.active && data.timer) {
@@ -378,7 +383,7 @@ function startTimerDisplay() {
 
 // Load recent entries
 function loadRecentEntries() {
-    fetch('/api/entries?limit=10')
+    fetch('/api/entries?limit=10', { credentials: 'same-origin' })
         .then(response => response.json())
         .then(data => {
             const container = document.getElementById('recentEntriesList');
@@ -460,6 +465,7 @@ document.getElementById('startTimerForm').addEventListener('submit', function(e)
         headers: {
             'Content-Type': 'application/json',
         },
+        credentials: 'same-origin',
         body: JSON.stringify(data)
     })
     .then(response => response.json())
@@ -490,7 +496,8 @@ document.getElementById('stopTimerBtn').addEventListener('click', function() {
     this.disabled = true;
     
     fetch('/api/timer/stop', {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'same-origin'
     })
     .then(response => response.json())
     .then(data => {
@@ -514,43 +521,54 @@ document.getElementById('stopTimerBtn').addEventListener('click', function() {
 
 // Edit entry
 function editEntry(entryId) {
-    fetch(`/api/entry/${entryId}`)
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('editEntryId').value = entryId;
-            document.getElementById('editProjectSelect').value = data.project_id;
-            document.getElementById('editStartTime').value = data.start_time.slice(0, 16);
-            document.getElementById('editEndTime').value = data.end_time ? data.end_time.slice(0, 16) : '';
+    const ensureProjects = window.projectsLoadedPromise || loadProjects();
+    Promise.resolve(ensureProjects).then(() => {
+        return fetch(`/api/entry/${entryId}`, { credentials: 'same-origin' })
+            .then(response => response.json());
+    })
+    .then(data => {
+        document.getElementById('editEntryId').value = entryId;
+        const editProjectSelect = document.getElementById('editProjectSelect');
+        // Ensure the project option exists; if not, append it
+        if (!Array.from(editProjectSelect.options).some(o => o.value == data.project_id)) {
+            const opt = new Option(data.project_name || `Project ${data.project_id}`, data.project_id);
+            editProjectSelect.add(opt);
+        }
+        editProjectSelect.value = data.project_id;
+            // Convert ISO to local datetime-local value
+            const startIso = data.start_time;
+            const endIso = data.end_time;
+            const toLocalInput = (iso) => {
+                if (!iso) return '';
+                const d = new Date(iso);
+                const pad = (n) => n.toString().padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            };
+            document.getElementById('editStartTime').value = toLocalInput(startIso);
+            document.getElementById('editEndTime').value = toLocalInput(endIso);
             document.getElementById('editNotes').value = data.notes || '';
             document.getElementById('editTags').value = data.tags || '';
             document.getElementById('editBillable').checked = data.billable;
             
             // Calculate and display duration
-            if (data.end_time) {
-                const start = new Date(data.start_time);
-                const end = new Date(data.end_time);
-                const duration = Math.floor((end - start) / 1000);
-                const hours = Math.floor(duration / 3600);
-                const minutes = Math.floor((duration % 3600) / 60);
-                const seconds = duration % 60;
-                document.getElementById('editDurationDisplay').textContent = 
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }
+            updateEditDurationDisplay();
             
             new bootstrap.Modal(document.getElementById('editTimerModal')).show();
-        })
-        .catch(error => {
+    })
+    .catch(error => {
             console.error('Error loading entry:', error);
             showToast('Error loading entry', 'error');
-        });
+    });
 }
 
-// Edit timer form
-document.getElementById('editTimerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
+// Debug: signal that edit form handler is attached
+console.debug('Edit form submit handler attached');
+
+function performEditSave() {
+    const form = document.getElementById('editTimerForm');
+    if (!form) return;
     const entryId = document.getElementById('editEntryId').value;
-    const formData = new FormData(this);
+    const formData = new FormData(form);
     const data = {
         project_id: formData.get('project_id'),
         start_time: formData.get('start_time'),
@@ -559,38 +577,86 @@ document.getElementById('editTimerForm').addEventListener('submit', function(e) 
         tags: formData.get('tags'),
         billable: formData.get('billable') === 'on'
     };
-    
-    // Show loading state
-    const submitBtn = this.querySelector('button[type="submit"]');
-    submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Saving...';
-    submitBtn.disabled = true;
-    
+    console.debug('Submitting data', data);
+
+    // Validate
+    const startVal = data.start_time ? new Date(data.start_time) : null;
+    const endVal = data.end_time ? new Date(data.end_time) : null;
+    if (startVal && endVal && endVal <= startVal) {
+        showToast('End time must be after start time', 'error');
+        return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Saving...';
+        submitBtn.disabled = true;
+    }
+
     fetch(`/api/entry/${entryId}`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify(data)
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+    .then(r => r.json())
+    .then(payload => {
+        console.debug('PUT response', payload);
+        if (payload.success) {
             showToast('Entry updated successfully', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('editTimerModal')).hide();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editTimerModal'));
+            if (modal) modal.hide();
             loadRecentEntries();
         } else {
-            showToast(data.message || 'Error updating entry', 'error');
+            showToast(payload.message || 'Error updating entry', 'error');
         }
     })
-    .catch(error => {
-        console.error('Error updating entry:', error);
+    .catch(err => {
+        console.error('Error updating entry:', err);
         showToast('Error updating entry', 'error');
     })
     .finally(() => {
-        submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
-        submitBtn.disabled = false;
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
+            submitBtn.disabled = false;
+        }
     });
+}
+
+// Edit timer form
+document.getElementById('editTimerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    console.debug('Edit form submit event fired');
+    performEditSave();
 });
+
+// Ensure click on Save triggers submit handler even if native validation blocks it
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('#editSaveBtn');
+    if (!btn) return;
+    e.preventDefault();
+    performEditSave();
+});
+
+// Live update duration when times change in edit modal
+function updateEditDurationDisplay() {
+    const start = document.getElementById('editStartTime').value;
+    const end = document.getElementById('editEndTime').value;
+    const display = document.getElementById('editDurationDisplay');
+    if (!start || !end) {
+        display.textContent = '--:--:--';
+        return;
+    }
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diff = Math.max(0, Math.floor((endDate - startDate) / 1000));
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    const s = diff % 60;
+    display.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+document.getElementById('editStartTime').addEventListener('change', updateEditDurationDisplay);
+document.getElementById('editEndTime').addEventListener('change', updateEditDurationDisplay);
 
 // Delete timer
 document.getElementById('deleteTimerBtn').addEventListener('click', function() {
@@ -616,7 +682,7 @@ function deleteEntry(entryId) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    loadProjects();
+    window.projectsLoadedPromise = loadProjects();
     checkTimerStatus();
     loadRecentEntries();
     
@@ -639,7 +705,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         fetch(`/api/entry/${entryId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'same-origin'
         })
         .then(response => response.json())
         .then(data => {

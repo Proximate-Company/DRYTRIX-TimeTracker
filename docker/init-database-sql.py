@@ -82,6 +82,7 @@ def create_tables_sql(engine):
     CREATE TABLE IF NOT EXISTS invoices (
         id SERIAL PRIMARY KEY,
         invoice_number VARCHAR(50) UNIQUE NOT NULL,
+        client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
         project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
         client_name VARCHAR(200) NOT NULL,
         client_email VARCHAR(200),
@@ -186,6 +187,7 @@ def create_indexes(engine):
     CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id);
     CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries(project_id);
     CREATE INDEX IF NOT EXISTS idx_time_entries_start_time ON time_entries(start_time);
+    CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id);
     """
     
     try:
@@ -261,20 +263,42 @@ def insert_initial_data(engine):
     admin_username = os.getenv('ADMIN_USERNAMES', 'admin').split(',')[0]
     
     insert_sql = f"""
-    -- Insert default admin user
+    -- Insert default admin user idempotently
     INSERT INTO users (username, role, is_active) 
-    VALUES ('{admin_username}', 'admin', true)
-    ON CONFLICT (username) DO NOTHING;
+    SELECT '{admin_username}', 'admin', true
+    WHERE NOT EXISTS (
+        SELECT 1 FROM users WHERE username = '{admin_username}'
+    );
 
-    -- Insert default project
+    -- Ensure default client exists
+    INSERT INTO clients (name, status)
+    SELECT 'Default Client', 'active'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM clients WHERE name = 'Default Client'
+    );
+
+    -- Insert default project idempotently and link to default client
     INSERT INTO projects (name, client, description, billable, status) 
-    VALUES ('General', 'Default Client', 'Default project for general tasks', true, 'active')
-    ON CONFLICT DO NOTHING;
+    SELECT 'General', 'Default Client', 'Default project for general tasks', true, 'active'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM projects WHERE name = 'General'
+    );
 
-    -- Insert default settings
-    INSERT INTO settings (timezone, currency, rounding_minutes, single_active_timer, allow_self_register, idle_timeout_minutes, backup_retention_days, backup_time, export_delimiter, company_name, company_address, company_email, company_phone, company_website, company_logo_filename, company_tax_id, company_bank_info, invoice_prefix, invoice_start_number, invoice_terms, invoice_notes) 
-    VALUES ('Europe/Rome', 'EUR', 1, true, true, 30, 30, '02:00', ',', 'Your Company Name', 'Your Company Address', 'info@yourcompany.com', '+1 (555) 123-4567', 'www.yourcompany.com', '', '', '', 'INV', 1000, 'Payment is due within 30 days of invoice date.', 'Thank you for your business!')
-    ON CONFLICT (id) DO NOTHING;
+    -- Insert default settings only if none exist
+    INSERT INTO settings (
+        timezone, currency, rounding_minutes, single_active_timer, allow_self_register, 
+        idle_timeout_minutes, backup_retention_days, backup_time, export_delimiter, 
+        company_name, company_address, company_email, company_phone, company_website, 
+        company_logo_filename, company_tax_id, company_bank_info, invoice_prefix, 
+        invoice_start_number, invoice_terms, invoice_notes
+    ) 
+    SELECT 'Europe/Rome', 'EUR', 1, true, true, 30, 30, '02:00', ',', 
+           'Your Company Name', 'Your Company Address', 'info@yourcompany.com', 
+           '+1 (555) 123-4567', 'www.yourcompany.com', '', '', '', 'INV', 1000, 
+           'Payment is due within 30 days of invoice date.', 'Thank you for your business!'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM settings
+    );
     """
     
     try:
