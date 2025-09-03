@@ -126,7 +126,7 @@
                                 <option value="">Unassigned</option>
                                 {% for user in users %}
                                 <option value="{{ user.id }}" {% if task.assigned_to == user.id %}selected{% endif %}>
-                                    {{ user.username }}
+                                    {{ user.display_name }}
                                 </option>
                                 {% endfor %}
                             </select>
@@ -188,7 +188,7 @@
                             <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height:24px;">
                                 <i class="fas fa-user text-info fa-xs"></i>
                             </div>
-                            <span>{{ task.assigned_user.username }}</span>
+                            <span>{{ task.assigned_user.display_name }}</span>
                         </div>
                     </div>
                     {% endif %}

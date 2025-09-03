@@ -171,7 +171,7 @@
 							<tbody>
 								{% for entry in recent_entries %}
 								<tr>
-									<td>{{ entry.user.username }}</td>
+									<td>{{ entry.user.display_name }}</td>
 									<td>
 										<a href="{{ url_for('projects.view_project', project_id=entry.project.id) }}">
 											{{ entry.project.name }}

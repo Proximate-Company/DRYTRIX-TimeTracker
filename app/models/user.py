@@ -10,6 +10,7 @@ class User(UserMixin, db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    full_name = db.Column(db.String(200), nullable=True)
     role = db.Column(db.String(20), default='user', nullable=False)  # 'user' or 'admin'
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     last_login = db.Column(db.DateTime, nullable=True)
@@ -50,6 +51,13 @@ class User(UserMixin, db.Model):
             TimeEntry.end_time.isnot(None)
         ).scalar() or 0
         return round(total_seconds / 3600, 2)
+
+    @property
+    def display_name(self):
+        """Preferred display name: full name if available, else username"""
+        if self.full_name and self.full_name.strip():
+            return self.full_name.strip()
+        return self.username
     
     def get_recent_entries(self, limit=10):
         """Get recent time entries for this user"""
@@ -70,6 +78,8 @@ class User(UserMixin, db.Model):
         return {
             'id': self.id,
             'username': self.username,
+            'full_name': self.full_name,
+            'display_name': self.display_name,
             'role': self.role,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None,

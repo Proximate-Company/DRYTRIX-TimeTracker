@@ -178,7 +178,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for entry in task.time_entries.order_by(desc('start_time')).limit(5).all() %}
+                                {% for entry in time_entries[:5] %}
                                 <tr>
                                     <td>{{ entry.start_time.strftime('%b %d, %Y') }}</td>
                                     <td>
@@ -189,7 +189,7 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ entry.notes[:50] if entry.notes else '-' }}</td>
-                                    <td>{{ entry.user.username if entry.user else '-' }}</td>
+                                    <td>{{ entry.user.display_name if entry.user else '-' }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -236,7 +236,7 @@
                             <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">
                                 <i class="fas fa-user text-info fa-xs"></i>
                             </div>
-                            <span>{{ task.assigned_user.username }}</span>
+                            <span>{{ task.assigned_user.display_name }}</span>
                         </div>
                     </div>
                     {% endif %}
@@ -247,7 +247,7 @@
                             <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">
                                 <i class="fas fa-user-plus text-secondary fa-xs"></i>
                             </div>
-                            <span>{{ task.creator.username }}</span>
+                            <span>{{ task.creator.display_name }}</span>
                         </div>
                     </div>
                     

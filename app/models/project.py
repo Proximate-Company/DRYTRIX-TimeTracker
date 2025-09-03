@@ -125,7 +125,9 @@ class Project(db.Model):
         from .user import User
         
         query = db.session.query(
+            User.id,
             User.username,
+            User.full_name,
             db.func.sum(TimeEntry.duration_seconds).label('total_seconds')
         ).join(TimeEntry).filter(
             TimeEntry.project_id == self.id,
@@ -138,14 +140,14 @@ class Project(db.Model):
         if end_date:
             query = query.filter(TimeEntry.start_time <= end_date)
         
-        results = query.group_by(User.username).all()
+        results = query.group_by(User.id, User.username, User.full_name).all()
         
         return [
             {
-                'username': username,
+                'username': (full_name.strip() if full_name and full_name.strip() else username),
                 'total_hours': round(total_seconds / 3600, 2)
             }
-            for username, total_seconds in results
+            for _id, username, full_name, total_seconds in results
         ]
     
     def archive(self):

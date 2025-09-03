@@ -55,7 +55,7 @@
                         <br><small class="text-muted">
                             <i class="fas fa-user"></i> 
                             {% if task.assigned_user %}
-                                {{ task.assigned_user.username }}
+                                {{ task.assigned_user.display_name }}
                             {% else %}
                                 Unassigned
                             {% endif %}
