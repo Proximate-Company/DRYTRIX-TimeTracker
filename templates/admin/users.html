@@ -7,16 +7,20 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
+                <div class="d-flex align-items-start flex-column flex-md-row">
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Admin</a></li>
                             <li class="breadcrumb-item active">Users</li>
                         </ol>
                     </nav>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-users text-primary"></i> User Management
-                    </h1>
+                    <div class="d-flex align-items-center">
+                        <h1 class="h3 mb-0 me-3">
+                            <i class="fas fa-users text-primary"></i>
+                            User Management
+                        </h1>
+                        <span class="badge bg-primary fs-6">{{ users|length }} total</span>
+                    </div>
                 </div>
                 <div>
                     <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
@@ -70,16 +74,26 @@
     <!-- Users List -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list"></i> Users ({{ users|length }})
-                    </h5>
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-list me-2"></i>All Users
+                        </h6>
+                        <div class="d-flex gap-2">
+                            <div class="input-group input-group-sm" style="width: 280px;">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Search users...">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     {% if users %}
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover mb-0" id="usersTable">
                             <thead>
                                 <tr>
                                     <th>Username</th>
@@ -88,7 +102,7 @@
                                     <th>Created</th>
                                     <th>Last Login</th>
                                     <th>Total Hours</th>
-                                    <th>Actions</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -129,14 +143,14 @@
                                     <td>
                                         <strong>{{ "%.1f"|format(user.total_hours) }}h</strong>
                                     </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
+                                    <td class="text-center actions-cell">
+                                        <div class="btn-group btn-group-sm" role="group">
                                             <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
-                                               class="btn btn-sm btn-outline-primary" title="Edit">
+                                               class="btn btn-sm btn-action btn-action--edit" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% if user.id != current_user.id %}
-                                            <button type="button" class="btn btn-sm btn-outline-danger" title="Delete" 
+                                            <button type="button" class="btn btn-sm btn-action btn-action--danger" title="Delete" 
                                                     onclick="showDeleteUserModal('{{ user.id }}', '{{ user.username }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -150,12 +164,14 @@
                     </div>
                     {% else %}
                     <div class="text-center py-5">
-                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No Users Found</h4>
-                        <p class="text-muted">No users have been created yet.</p>
-                        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
-                            <i class="fas fa-user-plus"></i> Create First User
-                        </a>
+                        <div class="empty-state">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No users found</h5>
+                            <p class="text-muted mb-4">Create your first user to get started with administration.</p>
+                            <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i> Create First User
+                            </a>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -204,13 +220,31 @@ function showDeleteUserModal(userId, username) {
     new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
 }
 
-// Add loading state to delete user form
+// Add loading state to delete user form and wire table search
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('deleteUserForm').addEventListener('submit', function(e) {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
-        submitBtn.disabled = true;
-    });
+    const deleteUserForm = document.getElementById('deleteUserForm');
+    if (deleteUserForm) {
+        deleteUserForm.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    const table = document.getElementById('usersTable');
+    if (searchInput && table) {
+        const tbody = table.querySelector('tbody');
+        searchInput.addEventListener('keyup', function() {
+            const query = this.value.toLowerCase();
+            Array.from(tbody.querySelectorAll('tr')).forEach(function(row) {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    }
 });
 </script>
 {% endblock %}
