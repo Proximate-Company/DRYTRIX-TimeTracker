@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Project, TimeEntry, Settings
+from app.models import User, Project, TimeEntry, Settings, Task
 from datetime import datetime, timedelta
 import csv
 import io
@@ -374,3 +374,91 @@ def summary_report():
                          week_hours=week_hours,
                          month_hours=month_hours,
                          project_stats=project_stats[:10])  # Top 10 projects
+
+
+@reports_bp.route('/reports/tasks')
+@login_required
+def task_report():
+    """Report of finished tasks within a project, including hours spent per task"""
+    project_id = request.args.get('project_id', type=int)
+    user_id = request.args.get('user_id', type=int)
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    # Filters data
+    projects = Project.query.order_by(Project.name).all()
+    users = User.query.filter_by(is_active=True).order_by(User.username).all()
+
+    # Default date range: last 30 days
+    if not start_date:
+        start_date = (datetime.utcnow() - timedelta(days=30)).strftime('%Y-%m-%d')
+    if not end_date:
+        end_date = datetime.utcnow().strftime('%Y-%m-%d')
+
+    try:
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1) - timedelta(seconds=1)
+    except ValueError:
+        flash('Invalid date format', 'error')
+        return render_template('reports/task_report.html', projects=projects, users=users)
+
+    # Base tasks query: finished tasks
+    tasks_query = Task.query.filter(Task.status == 'done')
+
+    if project_id:
+        tasks_query = tasks_query.filter(Task.project_id == project_id)
+
+    # Filter by completion window intersects [start_dt, end_dt]
+    tasks_query = tasks_query.filter(Task.completed_at.isnot(None))
+    tasks_query = tasks_query.filter(Task.completed_at >= start_dt, Task.completed_at <= end_dt)
+
+    # Optional: only tasks that have time entries by a specific user
+    if user_id:
+        tasks_query = tasks_query.join(TimeEntry, TimeEntry.task_id == Task.id).filter(TimeEntry.user_id == user_id)
+
+    tasks = tasks_query.order_by(Task.completed_at.desc()).all()
+
+    # Compute hours per task (sum of entry durations; respect user/project filters and date range)
+    task_rows = []
+    total_hours = 0.0
+    for task in tasks:
+        te_query = TimeEntry.query.filter(
+            TimeEntry.task_id == task.id,
+            TimeEntry.end_time.isnot(None),
+            TimeEntry.start_time >= start_dt,
+            TimeEntry.start_time <= end_dt
+        )
+        if project_id:
+            te_query = te_query.filter(TimeEntry.project_id == project_id)
+        if user_id:
+            te_query = te_query.filter(TimeEntry.user_id == user_id)
+
+        entries = te_query.all()
+        hours = sum(e.duration_hours for e in entries)
+        total_hours += hours
+
+        task_rows.append({
+            'task': task,
+            'project': task.project,
+            'assignee': task.assigned_user,
+            'completed_at': task.completed_at,
+            'hours': round(hours, 2),
+            'entries_count': len(entries),
+        })
+
+    summary = {
+        'tasks_count': len(task_rows),
+        'total_hours': round(total_hours, 2),
+    }
+
+    return render_template(
+        'reports/task_report.html',
+        projects=projects,
+        users=users,
+        tasks=task_rows,
+        summary=summary,
+        start_date=start_date,
+        end_date=end_date,
+        selected_project=project_id,
+        selected_user=user_id,
+    )
