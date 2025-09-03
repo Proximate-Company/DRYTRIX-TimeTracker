@@ -77,7 +77,8 @@ main {
     border-radius: var(--border-radius);
     transition: var(--transition);
     background: white;
-    overflow: hidden;
+    /* Allow dropdown menus within cards to overflow properly */
+    overflow: visible;
     margin-bottom: var(--card-spacing);
 }
 
@@ -85,7 +86,7 @@ main {
     margin-bottom: 0;
 }
 
-.card:hover {
+.card.hover-lift:hover {
     box-shadow: var(--card-shadow-hover);
     transform: translateY(-2px);
 }
@@ -251,6 +252,16 @@ main {
 }
 
 .btn-outline-secondary:hover {
+    background: var(--light-color);
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+}
+
+/* Keep outline secondary buttons light when opened/active */
+.btn-outline-secondary:focus,
+.btn-outline-secondary:active,
+.btn-outline-secondary.dropdown-toggle.show,
+.show > .btn-outline-secondary.dropdown-toggle {
     background: var(--light-color);
     border-color: var(--text-secondary);
     color: var(--text-primary);
@@ -705,11 +716,55 @@ h6 { font-size: 1rem; }
     background: #ffffff !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-    z-index: 1055; /* above navbar (1030) */
+    z-index: 1060; /* above navbar (1030) and our backdrop */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--card-shadow-hover);
+    margin-top: 0.5rem;
+    overflow: visible; /* allow soft shadow rounding */
+    position: absolute !important; /* ensure above backdrop and positioned by Bootstrap */
+    pointer-events: auto; /* capture interactions */
+    background-clip: padding-box; /* ensure solid fill to rounded corners */
+}
+
+/* Ensure dropdowns inside cards stack above adjacent content */
+.card .dropdown,
+.mobile-card .dropdown {
+    position: relative;
+    z-index: 2000;
 }
 .dropdown-item {
-    background-color: transparent;
+    background-color: #ffffff !important; /* make items opaque */
 }
+.dropdown-menu::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff; /* solid background to avoid transparency */
+    border-radius: inherit;
+    z-index: -1; /* sit behind menu content but within menu stacking */
+}
+
+/* Solid hover state for items to further avoid transparency feel */
+.dropdown-item:hover, .dropdown-item:focus {
+    background-color: var(--light-color) !important;
+}
+
+/* Backdrop to block interactions behind open dropdowns */
+/* Removed custom dropdown backdrop; rely on Bootstrap defaults */
+
+/* Increase dropdown item touch targets and spacing */
+.dropdown-item {
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dropdown-item i { width: 1rem; text-align: center; }
 
 /* Enhanced Mobile Components */
 .mobile-stack {
@@ -926,4 +981,53 @@ h6 { font-size: 1rem; }
     background: var(--text-muted);
 }
 
+
+/* Shared summary cards used across pages (invoices, reports) */
+.summary-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.summary-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.summary-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.empty-state {
+    padding: 2rem;
+}
+
+.empty-state i {
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .summary-card { margin-bottom: 1rem; }
+    .summary-value { font-size: 18px; }
+}
 
