@@ -3,103 +3,130 @@
 {% block title %}Log Time - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
-            <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <i class="fas fa-plus me-2 text-primary"></i>
-                    <h5 class="mb-0">Log Time Manually</h5>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center">
+                    <h1 class="h3 mb-0 me-3">
+                        <i class="fas fa-clock text-primary"></i>
+                        Log Time
+                    </h1>
+                </div>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-plus me-2"></i>Manual Entry
+                    </h6>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('timer.manual_entry') }}">
-                        <div class="mb-4">
-                            <label for="project_id" class="form-label fw-semibold">
-                                <i class="fas fa-project-diagram me-1"></i>Project *
-                            </label>
-                            <select class="form-select" id="project_id" name="project_id" required>
-                                <option value="">Select a project...</option>
-                                {% set selected_project_id = (request.form.get('project_id') or '')|int %}
-                                {% for project in projects %}
-                                    <option value="{{ project.id }}" {% if project.id == selected_project_id %}selected{% endif %}>{{ project.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="task_id" class="form-label fw-semibold">
-                                <i class="fas fa-tasks me-1"></i>Task (optional)
-                            </label>
-                            {% set preselected_task_id = request.form.get('task_id') or request.args.get('task_id') %}
-                            <select class="form-select" id="task_id" name="task_id" data-selected-task-id="{{ preselected_task_id or '' }}" disabled>
-                                <option value="">No task</option>
-                            </select>
-                            <div class="form-text">Tasks will be loaded for the selected project.</div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <select class="form-select" id="project_id" name="project_id" required>
+                                        <option value=""></option>
+                                        {% set selected_project_id = (request.form.get('project_id') or '')|int %}
+                                        {% for project in projects %}
+                                            <option value="{{ project.id }}" {% if project.id == selected_project_id %}selected{% endif %}>{{ project.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="project_id"><i class="fas fa-project-diagram me-1"></i>Project *</label>
+                                    <div class="form-text">Select the project to log time for</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {% set preselected_task_id = request.form.get('task_id') or request.args.get('task_id') %}
+                                <div class="form-floating mb-3">
+                                    <select class="form-select" id="task_id" name="task_id" data-selected-task-id="{{ preselected_task_id or '' }}" disabled>
+                                        <option value=""></option>
+                                    </select>
+                                    <label for="task_id"><i class="fas fa-tasks me-1"></i>Task (optional)</label>
+                                    <div class="form-text">Tasks load after selecting a project</div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <div class="mb-4">
-                                    <label class="form-label fw-semibold">
-                                        <i class="fas fa-play me-1"></i>Start *
-                                    </label>
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <input type="date" class="form-control" name="start_date" id="start_date" required value="{{ request.form.get('start_date','') }}">
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="time" class="form-control" name="start_time" id="start_time" required value="{{ request.form.get('start_time','') }}">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="mb-2 fw-semibold text-primary"><i class="fas fa-play me-1"></i>Start *</div>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <div class="form-floating">
+                                                    <input type="date" class="form-control" name="start_date" id="start_date" required value="{{ request.form.get('start_date','') }}">
+                                                    <label for="start_date">Date</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-floating">
+                                                    <input type="time" class="form-control" name="start_time" id="start_time" required value="{{ request.form.get('start_time','') }}">
+                                                    <label for="start_time">Time</label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-12 col-md-6">
-                                <div class="mb-4">
-                                    <label class="form-label fw-semibold">
-                                        <i class="fas fa-stop me-1"></i>End *
-                                    </label>
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <input type="date" class="form-control" name="end_date" id="end_date" required value="{{ request.form.get('end_date','') }}">
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="time" class="form-control" name="end_time" id="end_time" required value="{{ request.form.get('end_time','') }}">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="mb-2 fw-semibold text-primary"><i class="fas fa-stop me-1"></i>End *</div>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <div class="form-floating">
+                                                    <input type="date" class="form-control" name="end_date" id="end_date" required value="{{ request.form.get('end_date','') }}">
+                                                    <label for="end_date">Date</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-floating">
+                                                    <input type="time" class="form-control" name="end_time" id="end_time" required value="{{ request.form.get('end_time','') }}">
+                                                    <label for="end_time">Time</label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <label for="notes" class="form-label fw-semibold">
-                                <i class="fas fa-sticky-note me-1"></i>Notes
-                            </label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="What did you work on?">{{ request.form.get('notes','') }}</textarea>
+                        <div class="form-floating my-3">
+                            <textarea class="form-control" id="notes" name="notes" style="height: 100px" placeholder="What did you work on?">{{ request.form.get('notes','') }}</textarea>
+                            <label for="notes"><i class="fas fa-sticky-note me-1"></i>Notes</label>
                         </div>
 
-                        <div class="row g-3">
+                        <div class="row g-3 align-items-center">
                             <div class="col-12 col-md-8">
-                                <div class="mb-4">
-                                    <label for="tags" class="form-label fw-semibold">
-                                        <i class="fas fa-tags me-1"></i>Tags
-                                    </label>
+                                <div class="form-floating mb-3 mb-md-0">
                                     <input type="text" class="form-control" id="tags" name="tags" placeholder="tag1, tag2, tag3" value="{{ request.form.get('tags','') }}">
+                                    <label for="tags"><i class="fas fa-tags me-1"></i>Tags</label>
                                     <div class="form-text">Separate tags with commas</div>
                                 </div>
                             </div>
-                            <div class="col-12 col-md-4 d-flex align-items-center">
-                                <div class="form-check form-switch mt-4 w-100">
+                            <div class="col-12 col-md-4">
+                                <div class="form-check form-switch mt-2 d-flex align-items-center">
                                     <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if request.form.get('billable') %}checked{% else %}checked{% endif %}>
-                                    <label class="form-check-label fw-semibold" for="billable">
+                                    <label class="form-check-label fw-semibold ms-2" for="billable">
                                         <i class="fas fa-dollar-sign me-1"></i>Billable
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between flex-column flex-md-row">
-                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary mb-2 mb-md-0">
-                                <i class="fas fa-arrow-left me-1"></i>Back
+                        <div class="d-flex justify-content-between flex-column flex-md-row mt-3">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary mb-2 mb-md-0">
+                                <i class="fas fa-arrow-left me-1"></i> Back
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Save Entry
@@ -109,8 +136,57 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header py-3 bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-lightbulb me-2"></i>Quick Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="tip-item mb-3 d-flex gap-3">
+                        <div class="tip-icon text-primary"><i class="fas fa-tasks"></i></div>
+                        <div class="tip-content">
+                            <strong>Use Tasks</strong>
+                            <p class="small text-muted mb-0">Categorize time by selecting a task after choosing a project.</p>
+                        </div>
+                    </div>
+                    <div class="tip-item mb-3 d-flex gap-3">
+                        <div class="tip-icon text-success"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="tip-content">
+                            <strong>Billable Time</strong>
+                            <p class="small text-muted mb-0">Enable billable to include this entry in invoices.</p>
+                        </div>
+                    </div>
+                    <div class="tip-item d-flex gap-3">
+                        <div class="tip-icon text-info"><i class="fas fa-tags"></i></div>
+                        <div class="tip-content">
+                            <strong>Tag Entries</strong>
+                            <p class="small text-muted mb-0">Add tags to filter entries in reports later.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select:focus ~ label,
+.form-floating > .form-select:not([value=""]) ~ label {
+    color: var(--primary-color);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+}
+
+.tip-icon { font-size: 18px; }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
