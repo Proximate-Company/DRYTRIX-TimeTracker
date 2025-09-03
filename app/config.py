@@ -69,12 +69,20 @@ class Config:
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
     }
     
+    # Versioning
+    # Prefer explicit app version from environment (e.g., Git tag)
+    APP_VERSION = os.getenv('APP_VERSION', os.getenv('GITHUB_TAG', None))
+    if not APP_VERSION:
+        # If no tag provided, create a dev-build identifier if available
+        github_run_number = os.getenv('GITHUB_RUN_NUMBER')
+        APP_VERSION = f"dev-{github_run_number}" if github_run_number else "dev-0"
+
     # License server settings (no license required)
     # All settings are hardcoded since clients cannot change license server configuration
     LICENSE_SERVER_ENABLED = True  # Always enabled by default
     LICENSE_SERVER_API_KEY = "no-license-required"  # Hardcoded placeholder
     LICENSE_SERVER_APP_ID = "timetracker"  # Hardcoded app identifier
-    LICENSE_SERVER_APP_VERSION = "1.0.0"  # Hardcoded app version
+    LICENSE_SERVER_APP_VERSION = APP_VERSION  # Match application version
     LICENSE_SERVER_HEARTBEAT_INTERVAL = 3600  # Hardcoded heartbeat interval (1 hour)
 
 class DevelopmentConfig(Config):

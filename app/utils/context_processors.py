@@ -45,10 +45,20 @@ def register_context_processors(app):
             # Log the error but continue with defaults
             print(f"Warning: Could not inject globals: {e}")
             timezone_name = 'Europe/Rome'
+
+        # Determine app version from environment or config
+        try:
+            import os
+            from app.config import Config
+            env_version = os.getenv('APP_VERSION')
+            # If running in GitHub Actions build, prefer tag-like versions
+            version_value = env_version or getattr(Config, 'APP_VERSION', None) or 'dev-0'
+        except Exception:
+            version_value = 'dev-0'
         
         return {
             'app_name': 'Time Tracker',
-            'app_version': '1.0.0',
+            'app_version': version_value,
             'timezone': timezone_name,
             'timezone_offset': get_timezone_offset_for_timezone(timezone_name)
         }

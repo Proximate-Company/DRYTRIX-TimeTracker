@@ -1,10 +1,14 @@
 FROM python:3.11-slim-bullseye
 
+# Build-time version argument with safe default
+ARG APP_VERSION=dev-0
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app
 ENV FLASK_ENV=production
+ENV APP_VERSION=${APP_VERSION}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
