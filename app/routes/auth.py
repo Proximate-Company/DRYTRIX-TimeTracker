@@ -93,9 +93,15 @@ def profile():
 def edit_profile():
     """Edit user profile"""
     if request.method == 'POST':
-        # For now, just update last login timestamp
-        current_user.update_last_login()
-        flash('Profile updated successfully', 'success')
+        # Update real name if provided
+        full_name = request.form.get('full_name', '').strip()
+        current_user.full_name = full_name or None
+        try:
+            db.session.commit()
+            flash('Profile updated successfully', 'success')
+        except Exception:
+            db.session.rollback()
+            flash('Could not update your profile due to a database error.', 'error')
         return redirect(url_for('auth.profile'))
     
     return render_template('auth/edit_profile.html')

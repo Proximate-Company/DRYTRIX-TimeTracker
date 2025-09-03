@@ -126,7 +126,7 @@
                                 <option value="">Unassigned</option>
                                 {% for user in users %}
                                 <option value="{{ user.id }}" {% if request.form.get('assigned_to')|int == user.id %}selected{% endif %}>
-                                    {{ user.username }}
+                                    {{ user.display_name }}
                                 </option>
                                 {% endfor %}
                             </select>

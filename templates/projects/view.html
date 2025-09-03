@@ -190,7 +190,7 @@
                                     <div class="task-meta small">
                                         {% if task.assigned_user %}
                                         <div class="text-muted mb-1">
-                                            <i class="fas fa-user"></i> {{ task.assigned_user.username }}
+                                            <i class="fas fa-user"></i> {{ task.assigned_user.display_name }}
                                         </div>
                                         {% endif %}
                                         {% if task.due_date %}
@@ -296,7 +296,7 @@
                             <tbody>
                                 {% for entry in entries %}
                                 <tr>
-                                    <td>{{ entry.user.username }}</td>
+                                    <td>{{ entry.user.display_name }}</td>
                                                                 <td>{{ entry.start_time.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 {{ entry.start_time.strftime('%H:%M') }} -

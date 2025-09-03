@@ -54,7 +54,7 @@
                                 <option value="">All Users</option>
                                 {% for user in users %}
                                 <option value="{{ user.id }}" {% if request.args.get('user_id')|int == user.id %}selected{% endif %}>
-                                    {{ user.username }}
+                                    {{ user.display_name }}
                                 </option>
                                 {% endfor %}
                             </select>
@@ -235,7 +235,7 @@
                             <tbody>
                                 {% for entry in entries %}
                                 <tr>
-                                    <td>{{ entry.user.username }}</td>
+                                    <td>{{ entry.user.display_name }}</td>
                                     <td>
                                         <a href="{{ url_for('projects.view_project', project_id=entry.project.id) }}">
                                             {{ entry.project.name }}

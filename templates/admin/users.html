@@ -96,7 +96,7 @@
                         <table class="table table-hover mb-0" id="usersTable">
                             <thead>
                                 <tr>
-                                    <th>Username</th>
+                                    <th>User</th>
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th>Created</th>
@@ -110,7 +110,7 @@
                                 <tr>
                                     <td>
                                         <div>
-                                            <strong>{{ user.username }}</strong>
+                                            <strong>{{ user.display_name }}</strong>
                                             {% if user.active_timer %}
                                             <br><small class="text-warning">
                                                 <i class="fas fa-clock"></i> Timer Running

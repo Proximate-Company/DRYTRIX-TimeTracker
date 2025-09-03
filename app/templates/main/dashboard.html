@@ -6,6 +6,9 @@
 <!-- Toast Container -->
 <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
 
+<!-- Template meta for JS flags -->
+<div id="dashboard-meta" data-has-active-timer="{{ 1 if active_timer else 0 }}" style="display:none;"></div>
+
 <!-- Enhanced Welcome Section -->
 <div class="row section-spacing">
     <div class="col-12">
@@ -19,7 +22,7 @@
                 {% else %}
                 <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="me-3" width="32" height="32">
                 {% endif %}
-                            <h2 class="mb-0">Welcome back, {{ current_user.username }}!</h2>
+                            <h2 class="mb-0">Welcome back, {{ current_user.display_name }}!</h2>
                         </div>
                         <p class="text-muted mb-0 fs-5">Track your productivity and manage your time effectively with <strong>DryTrix</strong> TimeTracker</p>
                     </div>
@@ -398,48 +401,48 @@
 {% block extra_js %}
 <script>
     let timerInterval;
-    
-    {% if active_timer %}
-    // Enhanced timer update
-    function updateTimer() {
-        fetch('/api/timer/status')
-            .then(response => response.json())
-            .then(data => {
-                if (data.active && data.timer) {
-                    const display = document.getElementById('timer-display');
-                    if (display) {
-                        // Prefer server-provided current duration; fallback to computing from start_time
-                        let totalSeconds = typeof data.timer.current_duration === 'number'
-                            ? data.timer.current_duration
-                            : Math.floor((new Date() - new Date(data.timer.start_time)) / 1000);
-                        if (totalSeconds < 0 || Number.isNaN(totalSeconds)) totalSeconds = 0;
-                        const hours = Math.floor(totalSeconds / 3600);
-                        const minutes = Math.floor((totalSeconds % 3600) / 60);
-                        const seconds = totalSeconds % 60;
-                        display.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const HAS_ACTIVE_TIMER = !!Number(document.getElementById('dashboard-meta')?.getAttribute('data-has-active-timer') || '0');
+    if (HAS_ACTIVE_TIMER) {
+        // Enhanced timer update
+        function updateTimer() {
+            fetch('/api/timer/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.active && data.timer) {
+                        const display = document.getElementById('timer-display');
+                        if (display) {
+                            // Prefer server-provided current duration; fallback to computing from start_time
+                            let totalSeconds = typeof data.timer.current_duration === 'number'
+                                ? data.timer.current_duration
+                                : Math.floor((new Date() - new Date(data.timer.start_time)) / 1000);
+                            if (totalSeconds < 0 || Number.isNaN(totalSeconds)) totalSeconds = 0;
+                            const hours = Math.floor(totalSeconds / 3600);
+                            const minutes = Math.floor((totalSeconds % 3600) / 60);
+                            const seconds = totalSeconds % 60;
+                            display.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        }
+                    } else {
+                        // Timer stopped, reload page
+                        clearInterval(timerInterval);
+                        location.reload();
                     }
-                } else {
-                    // Timer stopped, reload page
-                    clearInterval(timerInterval);
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Error updating timer:', error);
-            });
-    }
-    
-    // Update timer immediately and then every second
-    updateTimer();
-    timerInterval = setInterval(updateTimer, 1000);
-    
-    // Clean up on page unload
-    window.addEventListener('beforeunload', () => {
-        if (timerInterval) {
-            clearInterval(timerInterval);
+                })
+                .catch(error => {
+                    console.error('Error updating timer:', error);
+                });
         }
-    });
-    {% endif %}
+        
+        // Update timer immediately and then every second
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+        });
+    }
     
     // Populate tasks when project changes
     const projectSelect = document.getElementById('project_id');

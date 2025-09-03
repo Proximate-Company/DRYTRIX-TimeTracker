@@ -111,7 +111,7 @@ def project_report():
             if project.hourly_rate:
                 agg['billable_amount'] += hours * float(project.hourly_rate)
         # per-user totals
-        username = entry.user.username if entry.user else 'Unknown'
+        username = entry.user.display_name if entry.user else 'Unknown'
         agg['user_totals'][username] = agg['user_totals'].get(username, 0.0) + hours
 
     # Finalize structures
@@ -205,7 +205,7 @@ def user_report():
             projects_set.add(entry.project.id)
         if entry.user:
             users_set.add(entry.user.id)
-        username = entry.user.username if entry.user else 'Unknown'
+        username = entry.user.display_name if entry.user else 'Unknown'
         if username not in user_totals:
             user_totals[username] = {
                 'hours': 0,
@@ -291,7 +291,7 @@ def export_csv():
     for entry in entries:
         writer.writerow([
             entry.id,
-            entry.user.username,
+            entry.user.display_name,
             entry.project.name,
             entry.project.client,
             entry.start_time.isoformat(),
