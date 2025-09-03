@@ -16,7 +16,6 @@ A comprehensive web-based time tracking application built with Flask, featuring 
 <div align="center">
   <img src="assets/screenshots/Reports.png" alt="Reports" width="300" style="margin: 10px;">
   <img src="assets/screenshots/VisualAnalytics.png" alt="Visual Analytics" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/Task_Management.png" alt="Task Management" width="300" style="margin: 10px;">
   <img src="assets/screenshots/Admin.png" alt="Admin Panel" width="300" style="margin: 10px;">
 </div>
 
@@ -433,7 +432,7 @@ See `docs/CONTRIBUTING.md` for detailed guidelines.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the `docs/LICENSE` file for details.
+This project is licensed under the GNU General Public License v3.0 — see `LICENSE` for details.
 
 ## 🆘 Support
 

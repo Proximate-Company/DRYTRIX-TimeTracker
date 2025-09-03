@@ -24,16 +24,17 @@ This guide explains how to set up and use the public Docker image for TimeTracke
 
 **Linux/macOS:**
 ```bash
-git clone https://github.com/yourusername/TimeTracker.git
+git clone https://github.com/drytrix/TimeTracker.git
 cd TimeTracker
-./deploy-public.sh
+# Remote production image (latest)
+docker-compose -f docker-compose.remote.yml up -d
 ```
 
 **Windows:**
 ```cmd
-git clone https://github.com/yourusername/TimeTracker.git
+git clone https://github.com/drytrix/TimeTracker.git
 cd TimeTracker
-deploy-public.bat
+docker-compose -f docker-compose.remote.yml up -d
 ```
 
 #### Option B: Manual Deployment
@@ -44,10 +45,7 @@ deploy-public.bat
    cd TimeTracker
    ```
 
-2. **Set your GitHub repository:**
-   ```bash
-   export GITHUB_REPOSITORY="yourusername/timetracker"
-   ```
+2. (Optional) **Use a specific version tag:** set the tag in `docker-compose.remote.yml`.
 
 3. **Create environment file:**
    ```bash
@@ -57,8 +55,8 @@ deploy-public.bat
 
 4. **Pull and run the image:**
    ```bash
-   docker pull ghcr.io/$GITHUB_REPOSITORY:latest
-   docker-compose -f docker-compose.public.yml up -d
+   docker pull ghcr.io/drytrix/timetracker:latest
+   docker-compose -f docker-compose.remote.yml up -d
    ```
 
 ## 🔧 Configuration
@@ -86,11 +84,11 @@ DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
 
 ### Docker Compose Configuration
 
-The `docker-compose.public.yml` file includes:
+Use `docker-compose.remote.yml` (production) or `docker-compose.remote-dev.yml` (testing):
 
-- **TimeTracker App**: Main application container
-- **PostgreSQL Database**: Persistent data storage
-- **Caddy Reverse Proxy**: Optional HTTPS support
+- **App**: `ghcr.io/drytrix/timetracker` image
+- **PostgreSQL**: Database service with healthcheck
+- **Ports**: App exposed on 8080 by default
 
 ## 📦 Available Images
 
@@ -114,10 +112,10 @@ The public image is automatically updated when you push to the main branch. To u
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/yourusername/timetracker:latest
+docker pull ghcr.io/drytrix/timetracker:latest
 
 # Restart the containers
-docker-compose -f docker-compose.public.yml up -d
+docker-compose -f docker-compose.remote.yml up -d
 ```
 
 ### Manual Updates
@@ -126,11 +124,11 @@ For specific versions:
 
 ```bash
 # Pull a specific version
-docker pull ghcr.io/yourusername/timetracker:v1.0.0
+docker pull ghcr.io/drytrix/timetracker:v1.0.0
 
-# Update docker-compose.public.yml to use the specific tag
+# Update docker-compose.remote.yml to use the specific tag
 # Then restart
-docker-compose -f docker-compose.public.yml up -d
+docker-compose -f docker-compose.remote.yml up -d
 ```
 
 ## 🛠️ Troubleshooting
@@ -168,23 +166,23 @@ docker-compose -f docker-compose.public.yml up -d
 
 ```bash
 # List available images
-docker images ghcr.io/yourusername/timetracker
+docker images ghcr.io/drytrix/timetracker
 
 # Inspect image details
-docker inspect ghcr.io/yourusername/timetracker:latest
+docker inspect ghcr.io/drytrix/timetracker:latest
 ```
 
 #### View Logs
 
 ```bash
 # Application logs
-docker-compose -f docker-compose.public.yml logs app
+docker-compose -f docker-compose.remote.yml logs app
 
 # Database logs
-docker-compose -f docker-compose.public.yml logs db
+docker-compose -f docker-compose.remote.yml logs db
 
 # All logs
-docker-compose -f docker-compose.public.yml logs -f
+docker-compose -f docker-compose.remote.yml logs -f
 ```
 
 #### Health Check
@@ -194,7 +192,7 @@ docker-compose -f docker-compose.public.yml logs -f
 curl http://localhost:8080/_health
 
 # Check container status
-docker-compose -f docker-compose.public.yml ps
+docker-compose -f docker-compose.remote.yml ps
 ```
 
 ## 🔒 Security Considerations
@@ -240,10 +238,10 @@ docker ps --format "table {{.Names}}\t{{.Status}}"
 
 ```bash
 # Follow application logs
-docker-compose -f docker-compose.public.yml logs -f app
+docker-compose -f docker-compose.remote.yml logs -f app
 
 # Export logs for analysis
-docker-compose -f docker-compose.public.yml logs app > timetracker.log
+docker-compose -f docker-compose.remote.yml logs app > timetracker.log
 ```
 
 ## 🚀 Production Deployment
@@ -263,7 +261,7 @@ docker-compose -f docker-compose.public.yml logs app > timetracker.log
 version: '3.8'
 services:
   app:
-    image: ghcr.io/yourusername/timetracker:v1.0.0
+    image: ghcr.io/drytrix/timetracker:v1.0.0
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - ADMIN_USERNAMES=${ADMIN_USERNAMES}

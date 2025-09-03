@@ -130,7 +130,7 @@ existing governing policies.
 
 * [Contributing Guidelines](CONTRIBUTING.md)
 * [Project Documentation](README.md)
-* [Community Guidelines](https://github.com/yourusername/TimeTracker/discussions)
+* [Community Guidelines](https://github.com/drytrix/TimeTracker/discussions)
 
 ## License
 

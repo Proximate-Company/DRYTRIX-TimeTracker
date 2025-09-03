@@ -13,6 +13,8 @@ class Invoice(db.Model):
     client_name = db.Column(db.String(200), nullable=False)
     client_email = db.Column(db.String(200), nullable=True)
     client_address = db.Column(db.Text, nullable=True)
+    # Link to clients table (enforced by DB schema)
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False, index=True)
     
     # Invoice details
     issue_date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date)
@@ -36,15 +38,17 @@ class Invoice(db.Model):
     
     # Relationships
     project = db.relationship('Project', backref='invoices')
+    client = db.relationship('Client', backref='invoices')
     creator = db.relationship('User', backref='created_invoices')
     items = db.relationship('InvoiceItem', backref='invoice', lazy='dynamic', cascade='all, delete-orphan')
     
-    def __init__(self, invoice_number, project_id, client_name, due_date, created_by, **kwargs):
+    def __init__(self, invoice_number, project_id, client_name, due_date, created_by, client_id, **kwargs):
         self.invoice_number = invoice_number
         self.project_id = project_id
         self.client_name = client_name
         self.due_date = due_date
         self.created_by = created_by
+        self.client_id = client_id
         
         # Set optional fields
         self.client_email = kwargs.get('client_email')
@@ -89,6 +93,7 @@ class Invoice(db.Model):
             'client_name': self.client_name,
             'client_email': self.client_email,
             'client_address': self.client_address,
+            'client_id': self.client_id,
             'issue_date': self.issue_date.isoformat() if self.issue_date else None,
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'status': self.status,

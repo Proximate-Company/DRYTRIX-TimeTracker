@@ -85,6 +85,7 @@ def create_invoice():
             client_name=client_name,
             due_date=due_date,
             created_by=current_user.id,
+            client_id=project.client_id,
             client_email=client_email,
             client_address=client_address,
             tax_rate=tax_rate,
@@ -393,7 +394,7 @@ def export_invoice_pdf(invoice_id):
     # Check access permissions
     if not current_user.is_admin and invoice.created_by != current_user.id:
         flash('You do not have permission to export this invoice', 'error')
-        return redirect(url_for('invoices.list_invoices'))
+        return redirect(request.referrer or url_for('invoices.list_invoices'))
     
     try:
         from app.utils.pdf_generator import InvoicePDFGenerator
@@ -414,7 +415,7 @@ def export_invoice_pdf(invoice_id):
         
     except ImportError:
         flash('PDF generation is not available. Please install WeasyPrint.', 'error')
-        return redirect(url_for('invoices.view_invoice', invoice_id=invoice.id))
+        return redirect(request.referrer or url_for('invoices.view_invoice', invoice_id=invoice.id))
     except Exception as e:
         # Try fallback PDF generator
         try:
@@ -438,7 +439,7 @@ def export_invoice_pdf(invoice_id):
             
         except Exception as fallback_error:
             flash(f'PDF generation failed: {str(e)}. Fallback also failed: {str(fallback_error)}', 'error')
-            return redirect(url_for('invoices.view_invoice', invoice_id=invoice.id))
+            return redirect(request.referrer or url_for('invoices.view_invoice', invoice_id=invoice.id))
 
 @invoices_bp.route('/invoices/<int:invoice_id>/duplicate')
 @login_required
@@ -463,6 +464,7 @@ def duplicate_invoice(invoice_id):
         client_address=original_invoice.client_address,
         due_date=original_invoice.due_date + timedelta(days=30),  # 30 days from original due date
         created_by=current_user.id,
+        client_id=original_invoice.client_id,
         tax_rate=original_invoice.tax_rate,
         notes=original_invoice.notes,
         terms=original_invoice.terms

@@ -20,7 +20,7 @@ Welcome to the TimeTracker documentation. This directory contains comprehensive 
 - **[INVOICE_FEATURE_README.md](INVOICE_FEATURE_README.md)** - Invoice system documentation
 - **[ENHANCED_INVOICE_SYSTEM_README.md](ENHANCED_INVOICE_SYSTEM_README.md)** - Advanced invoice features
 - **[INVOICE_INTERFACE_IMPROVEMENTS.md](INVOICE_INTERFACE_IMPROVEMENTS.md)** - Invoice UI improvements
-- **[ANALYTICS_FEATURE.md](ANALYTICS_FEATURE.md)** - Analytics and reporting features
+- Analytics and reporting features (see the Reports section in the app)
 - **[MOBILE_IMPROVEMENTS.md](MOBILE_IMPROVEMENTS.md)** - Mobile interface enhancements
 
 ### 🛠️ Technical Details
