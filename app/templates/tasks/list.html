@@ -203,7 +203,7 @@
                                 </a></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('timer.start_timer', project_id=task.project_id, task_id=task.id) }}">
+                                <li><a class="dropdown-item" href="{{ url_for('timer.start_timer_for_project', project_id=task.project_id, task_id=task.id) }}">
                                     <i class="fas fa-play me-2"></i>Start Timer
                                 </a></li>
                             </ul>
@@ -300,7 +300,7 @@
                             <i class="fas fa-eye me-2"></i>View Details
                         </a>
                         {% if task.status == 'todo' or task.status == 'in_progress' %}
-                        <a href="{{ url_for('timer.start_timer', project_id=task.project_id, task_id=task.id) }}" class="btn btn-success btn-sm">
+                        <a href="{{ url_for('timer.start_timer_for_project', project_id=task.project_id, task_id=task.id) }}" class="btn btn-success btn-sm">
                             <i class="fas fa-play me-2"></i>Start Timer
                         </a>
                         {% endif %}

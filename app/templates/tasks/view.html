@@ -50,7 +50,7 @@
                         <div class="col-lg-4 col-md-5">
                             <div class="d-flex flex-column gap-2">
                                 {% if task.status == 'todo' or task.status == 'in_progress' %}
-                                <a href="{{ url_for('timer.start_timer', project_id=task.project_id, task_id=task.id) }}" class="btn btn-success">
+                                <a href="{{ url_for('timer.start_timer_for_project', project_id=task.project_id, task_id=task.id) }}" class="btn btn-success">
                                     <i class="fas fa-play me-2"></i>Start Timer
                                 </a>
                                 {% endif %}

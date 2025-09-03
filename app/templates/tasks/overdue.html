@@ -97,7 +97,7 @@
                             <i class="fas fa-edit"></i> Edit
                         </a>
                         {% endif %}
-                        <a href="{{ url_for('timer.start_timer', project_id=task.project.id, task_id=task.id) }}" 
+                        <a href="{{ url_for('timer.start_timer_for_project', project_id=task.project.id, task_id=task.id) }}" 
                            class="btn btn-outline-success">
                             <i class="fas fa-play"></i> Timer
                         </a>
