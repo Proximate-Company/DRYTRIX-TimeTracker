@@ -3,6 +3,9 @@ from flask_login import login_required, current_user
 from app import db, socketio
 from app.models import User, Project, TimeEntry, Settings, Task
 from datetime import datetime, timedelta
+from app.utils.db import safe_commit
+from app.utils.timezone import parse_local_datetime, utc_to_local
+from app.models.time_entry import local_now
 import json
 
 api_bp = Blueprint('api', __name__)
@@ -164,8 +167,15 @@ def get_entries():
         error_out=False
     )
     
+    # Ensure frontend receives project_name like other endpoints
+    entries_payload = []
+    for entry in entries.items:
+        e = entry.to_dict()
+        e['project_name'] = e.get('project') or (entry.project.name if entry.project else None)
+        entries_payload.append(e)
+
     return jsonify({
-        'entries': [entry.to_dict() for entry in entries.items],
+        'entries': entries_payload,
         'total': entries.total,
         'pages': entries.pages,
         'current_page': entries.page,
@@ -181,6 +191,40 @@ def get_projects():
     return jsonify({
         'projects': [project.to_dict() for project in projects]
     })
+
+@api_bp.route('/api/projects/<int:project_id>/tasks')
+@login_required
+def get_project_tasks(project_id):
+    """Get tasks for a specific project"""
+    # Check if project exists and is active
+    project = Project.query.filter_by(id=project_id, status='active').first()
+    if not project:
+        return jsonify({'error': 'Project not found or inactive'}), 404
+    
+    # Get tasks for the project
+    tasks = Task.query.filter_by(project_id=project_id).order_by(Task.name).all()
+    
+    return jsonify({
+        'success': True,
+        'tasks': [{
+            'id': task.id,
+            'name': task.name,
+            'description': task.description,
+            'status': task.status,
+            'priority': task.priority
+        } for task in tasks]
+    })
+
+# Fetch a single time entry (details for edit modal)
+@api_bp.route('/api/entry/<int:entry_id>', methods=['GET'])
+@login_required
+def get_entry(entry_id):
+    entry = TimeEntry.query.get_or_404(entry_id)
+    if entry.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    payload = entry.to_dict()
+    payload['project_name'] = entry.project.name if entry.project else None
+    return jsonify(payload)
 
 @api_bp.route('/api/users')
 @login_required
@@ -235,25 +279,77 @@ def update_entry(entry_id):
     if entry.user_id != current_user.id and not current_user.is_admin:
         return jsonify({'error': 'Access denied'}), 403
     
-    data = request.get_json()
-    
-    # Update fields
+    data = request.get_json() or {}
+
+    # Optional: project change (admin only)
+    new_project_id = data.get('project_id')
+    if new_project_id is not None and current_user.is_admin:
+        if new_project_id != entry.project_id:
+            project = Project.query.filter_by(id=new_project_id, status='active').first()
+            if not project:
+                return jsonify({'error': 'Invalid project'}), 400
+            entry.project_id = new_project_id
+
+    # Optional: start/end time updates (admin only for safety)
+    # Accept HTML datetime-local format: YYYY-MM-DDTHH:MM
+    def parse_dt_local(dt_str):
+        if not dt_str:
+            return None
+        try:
+            if 'T' in dt_str:
+                date_part, time_part = dt_str.split('T', 1)
+            else:
+                date_part, time_part = dt_str.split(' ', 1)
+            # Parse as UTC-aware then convert to local naive to match model storage
+            parsed_utc = parse_local_datetime(date_part, time_part)
+            parsed_local_aware = utc_to_local(parsed_utc)
+            return parsed_local_aware.replace(tzinfo=None)
+        except Exception:
+            return None
+
+    if current_user.is_admin:
+        start_time_str = data.get('start_time')
+        end_time_str = data.get('end_time')
+
+        if start_time_str:
+            parsed_start = parse_dt_local(start_time_str)
+            if not parsed_start:
+                return jsonify({'error': 'Invalid start time format'}), 400
+            entry.start_time = parsed_start
+
+        if end_time_str is not None:
+            if end_time_str == '' or end_time_str is False:
+                entry.end_time = None
+                entry.duration_seconds = None
+            else:
+                parsed_end = parse_dt_local(end_time_str)
+                if not parsed_end:
+                    return jsonify({'error': 'Invalid end time format'}), 400
+                if parsed_end <= (entry.start_time or parsed_end):
+                    return jsonify({'error': 'End time must be after start time'}), 400
+                entry.end_time = parsed_end
+                # Recalculate duration
+                entry.calculate_duration()
+
+    # Notes, tags, billable (both admin and owner can change)
     if 'notes' in data:
         entry.notes = data['notes'].strip() if data['notes'] else None
-    
+
     if 'tags' in data:
         entry.tags = data['tags'].strip() if data['tags'] else None
-    
+
     if 'billable' in data:
         entry.billable = bool(data['billable'])
-    
-    entry.updated_at = datetime.utcnow()
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'entry': entry.to_dict()
-    })
+
+    # Prefer local time for updated_at per project preference
+    entry.updated_at = local_now()
+
+    if not safe_commit('api_update_entry', {'entry_id': entry_id}):
+        return jsonify({'error': 'Database error while updating entry'}), 500
+
+    payload = entry.to_dict()
+    payload['project_name'] = entry.project.name if entry.project else None
+    return jsonify({'success': True, 'entry': payload})
 
 @api_bp.route('/api/entry/<int:entry_id>', methods=['DELETE'])
 @login_required

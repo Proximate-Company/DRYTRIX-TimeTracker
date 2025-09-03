@@ -2,50 +2,361 @@
 
 {% block title %}Edit Time Entry - {{ app_name }}{% endblock %}
 
+{% block extra_js %}
+{% if current_user.is_admin %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const projectSelect = document.getElementById('project_id');
+    const taskSelect = document.getElementById('task_id');
+    const form = document.querySelector('form');
+    
+    if (projectSelect && taskSelect) {
+        projectSelect.addEventListener('change', function() {
+            const projectId = this.value;
+            
+            // Clear current tasks
+            taskSelect.innerHTML = '<option value="">No Task</option>';
+            
+            if (projectId) {
+                // Fetch tasks for the selected project
+                fetch(`/api/projects/${projectId}/tasks`, { credentials: 'same-origin' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.tasks) {
+                            data.tasks.forEach(task => {
+                                const option = document.createElement('option');
+                                option.value = task.id;
+                                option.textContent = task.name;
+                                taskSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching tasks:', error);
+                    });
+            }
+        });
+    }
+    
+    // Add form submission confirmation for admin users (custom modal)
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // If we already confirmed, let it proceed
+            if (form.dataset.confirmed === '1') {
+                delete form.dataset.confirmed;
+                return true;
+            }
+
+            const originalProject = '{{ timer.project.name }}';
+            const selectedProject = projectSelect.options[projectSelect.selectedIndex].text;
+            const originalStart = '{{ timer.start_time.strftime("%Y-%m-%d %H:%M") }}';
+            const originalEnd = '{{ timer.end_time.strftime("%Y-%m-%d %H:%M") if timer.end_time else "Running" }}';
+            const originalNotes = {{ (timer.notes or '')|tojson }};
+            const originalTags = {{ (timer.tags or '')|tojson }};
+            const originalBillable = {{ 'true' if timer.billable else 'false' }};
+            
+            const startDate = document.getElementById('start_date').value;
+            const startTime = document.getElementById('start_time').value;
+            const endDate = document.getElementById('end_date').value;
+            const endTime = document.getElementById('end_time').value;
+            const notesVal = document.getElementById('notes').value || '';
+            const tagsVal = document.getElementById('tags').value || '';
+            const billableVal = document.getElementById('billable').checked;
+            
+            const newStart = startDate && startTime ? `${startDate} ${startTime}` : originalStart;
+            const newEnd = endDate && endTime ? `${endDate} ${endTime}` : originalEnd;
+            
+            const changes = [];
+            if (originalProject !== selectedProject) changes.push({ label: 'Project', from: originalProject, to: selectedProject });
+            if (originalStart !== newStart) changes.push({ label: 'Start', from: originalStart, to: newStart });
+            if (originalEnd !== newEnd) changes.push({ label: 'End', from: originalEnd, to: newEnd });
+            if (originalNotes !== notesVal) changes.push({ label: 'Notes', from: originalNotes || '—', to: notesVal || '—' });
+            if (originalTags !== tagsVal) changes.push({ label: 'Tags', from: originalTags || '—', to: tagsVal || '—' });
+            if ((originalBillable ? true : false) !== billableVal) changes.push({ label: 'Billable', from: originalBillable ? 'Yes' : 'No', to: billableVal ? 'Yes' : 'No' });
+
+            if (changes.length > 0) {
+                e.preventDefault();
+
+                const modalEl = document.getElementById('confirmChangesModal');
+                const summaryEl = document.getElementById('confirmChangesSummary');
+                const confirmBtn = document.getElementById('confirmChangesConfirmBtn');
+
+                summaryEl.innerHTML = changes.map(ch => `
+                    <div class="mb-2">
+                        <div class="small text-muted">${ch.label}</div>
+                        <div><span class="text-danger">${ch.from}</span> <i class="fas fa-arrow-right mx-2"></i> <span class="text-success">${ch.to}</span></div>
+                    </div>
+                `).join('');
+
+                confirmBtn.onclick = function() {
+                    const inst = bootstrap.Modal.getInstance(modalEl);
+                    if (inst) inst.hide();
+                    form.dataset.confirmed = '1';
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                };
+
+                // Ensure modal is attached to body to avoid stacking/pointer issues
+                try {
+                    if (modalEl.parentElement !== document.body) {
+                        document.body.appendChild(modalEl);
+                    }
+                } catch (e) {}
+                const bsModal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+                bsModal.show();
+                // Focus confirm button when modal is shown
+                modalEl.addEventListener('shown.bs.modal', function onShown() {
+                    confirmBtn.focus();
+                    modalEl.removeEventListener('shown.bs.modal', onShown);
+                });
+                // Handle Enter/Escape keys inside modal
+                modalEl.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        confirmBtn.click();
+                    }
+                });
+            }
+        });
+    }
+
+    // Ensure admin save button programmatically submits the form (avoids any other JS interference)
+    const adminSaveBtn = document.getElementById('adminEditSaveBtn');
+    if (adminSaveBtn && form) {
+        adminSaveBtn.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+                if (typeof form.reportValidity === 'function') form.reportValidity();
+                return;
+            }
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+        });
+    }
+
+    // Live update duration when date/time fields change (admin form)
+    const startDate = document.getElementById('start_date');
+    const startTime = document.getElementById('start_time');
+    const endDate = document.getElementById('end_date');
+    const endTime = document.getElementById('end_time');
+    const durationLabel = document.getElementById('adminEditDuration');
+    function updateDuration() {
+        if (!startDate || !startTime || !endDate || !endTime || !durationLabel) return;
+        const sd = startDate.value;
+        const st = startTime.value;
+        const ed = endDate.value;
+        const et = endTime.value;
+        if (!sd || !st || !ed || !et) {
+            durationLabel.textContent = '--:--:--';
+            return;
+        }
+        const s = new Date(`${sd}T${st}`);
+        const e = new Date(`${ed}T${et}`);
+        const diff = Math.max(0, Math.floor((e - s) / 1000));
+        const h = Math.floor(diff / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const srem = diff % 60;
+        durationLabel.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${srem.toString().padStart(2,'0')}`;
+    }
+    if (startDate && startTime && endDate && endTime) {
+        startDate.addEventListener('change', updateDuration);
+        startTime.addEventListener('change', updateDuration);
+        endDate.addEventListener('change', updateDuration);
+        endTime.addEventListener('change', updateDuration);
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card">
-                <div class="card-header d-flex align-items-center">
-                    <i class="fas fa-edit me-2 text-primary"></i>
-                    <h5 class="mb-0">Edit Time Entry</h5>
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-edit me-2 text-primary"></i>
+                        <h5 class="mb-0">Edit Time Entry</h5>
+                    </div>
+                    {% if current_user.is_admin %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-shield-alt me-1"></i>Admin Mode
+                        </span>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <div class="mb-4">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-control-plaintext">
-                                    <strong>Project:</strong> {{ timer.project.name }}
+                        {% if current_user.is_admin %}
+                            <!-- Admin view with editable fields -->
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Admin Mode:</strong> You can edit all fields of this time entry, including project, task, start/end times, and source.
+                            </div>
+                            <form method="POST" action="{{ url_for('timer.edit_timer', timer_id=timer.id) }}">
+                                                        <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="project_id" class="form-label fw-semibold">
+                                            <i class="fas fa-project-diagram me-1"></i>Project
+                                        </label>
+                                        <select class="form-select" id="project_id" name="project_id" required>
+                                            {% for project in projects %}
+                                                <option value="{{ project.id }}" {% if project.id == timer.project_id %}selected{% endif %}>
+                                                    {{ project.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">Select the project this time entry belongs to</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="task_id" class="form-label fw-semibold">
+                                            <i class="fas fa-tasks me-1"></i>Task (Optional)
+                                        </label>
+                                        <select class="form-select" id="task_id" name="task_id">
+                                            <option value="">No Task</option>
+                                            {% for task in tasks %}
+                                                <option value="{{ task.id }}" {% if task.id == timer.task_id %}selected{% endif %}>
+                                                    {{ task.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">Select a specific task within the project</div>
+                                    </div>
+                                </div>
+                        <!-- Confirm Changes Modal (Admin) -->
+                        <div class="modal fade" id="confirmChangesModal" tabindex="-1" role="dialog" aria-modal="true" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index:1085;">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Confirm Changes</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p class="mb-3">You are about to apply the following changes:</p>
+                                        <div id="confirmChangesSummary"></div>
+                                        <div class="alert alert-warning mt-3 mb-0">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            These updates will modify this time entry permanently.
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="fas fa-times me-1"></i>Cancel
+                                        </button>
+                                        <button type="button" class="btn btn-primary" id="confirmChangesConfirmBtn">
+                                            <i class="fas fa-check me-1"></i>Confirm & Save
+                                        </button>
+                                    </div>
+                                </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="start_date" class="form-label fw-semibold">
+                                            <i class="fas fa-clock me-1"></i>Start Date
+                                        </label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" 
+                                               value="{{ timer.start_time.strftime('%Y-%m-%d') }}" required>
+                                        <div class="form-text">When the work started</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="start_time" class="form-label fw-semibold">
+                                            <i class="fas fa-clock me-1"></i>Start Time
+                                        </label>
+                                        <input type="time" class="form-control" id="start_time" name="start_time" 
+                                               value="{{ timer.start_time.strftime('%H:%M') }}" required>
+                                        <div class="form-text">Time the work started</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="end_date" class="form-label fw-semibold">
+                                            <i class="fas fa-stop-circle me-1"></i>End Date
+                                        </label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" 
+                                               value="{{ timer.end_time.strftime('%Y-%m-%d') if timer.end_time else '' }}">
+                                        <div class="form-text">When the work ended (leave empty if still running)</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="end_time" class="form-label fw-semibold">
+                                            <i class="fas fa-stop-circle me-1"></i>End Time
+                                        </label>
+                                        <input type="time" class="form-control" id="end_time" name="end_time" 
+                                               value="{{ timer.end_time.strftime('%H:%M') if timer.end_time else '' }}">
+                                        <div class="form-text">Time the work ended</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label for="source" class="form-label fw-semibold">
+                                            <i class="fas fa-tag me-1"></i>Source
+                                        </label>
+                                        <select class="form-select" id="source" name="source">
+                                            <option value="manual" {% if timer.source == 'manual' %}selected{% endif %}>Manual</option>
+                                            <option value="auto" {% if timer.source == 'auto' %}selected{% endif %}>Automatic</option>
+                                        </select>
+                                        <div class="form-text">How this entry was created</div>
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-center">
+                                        <div class="form-check form-switch mt-4">
+                                            <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if timer.billable %}checked{% endif %}>
+                                            <label class="form-check-label fw-semibold" for="billable">
+                                                <i class="fas fa-dollar-sign me-1"></i>Billable
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-control-plaintext">
+                                            <strong>Duration:</strong> <span id="adminEditDuration">{{ timer.duration_formatted }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                        {% else %}
+                            <!-- Regular user view (read-only) -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-control-plaintext">
+                                        <strong>Project:</strong> {{ timer.project.name }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-control-plaintext">
+                                        <strong>Start:</strong> {{ timer.start_time.strftime('%Y-%m-%d %H:%M') }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-control-plaintext">
+                                        <strong>End:</strong>
+                                        {% if timer.end_time %}
+                                            {{ timer.end_time.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                            <span class="text-warning">Running</span>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-control-plaintext">
-                                    <strong>Start:</strong> {{ timer.start_time.strftime('%Y-%m-%d %H:%M') }}
-                                </div>
+                            <div class="mt-2">
+                                <span class="badge bg-primary">Duration: {{ timer.duration_formatted }}</span>
+                                {% if timer.source == 'manual' %}
+                                    <span class="badge bg-secondary">Manual</span>
+                                {% else %}
+                                    <span class="badge bg-info">Automatic</span>
+                                {% endif %}
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-control-plaintext">
-                                    <strong>End:</strong>
-                                    {% if timer.end_time %}
-                                        {{ timer.end_time.strftime('%Y-%m-%d %H:%M') }}
-                                    {% else %}
-                                        <span class="text-warning">Running</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-2">
-                            <span class="badge bg-primary">Duration: {{ timer.duration_formatted }}</span>
-                            {% if timer.source == 'manual' %}
-                                <span class="badge bg-secondary">Manual</span>
-                            {% else %}
-                                <span class="badge bg-info">Automatic</span>
-                            {% endif %}
-                        </div>
+                        {% endif %}
                     </div>
 
-                    <form method="POST" action="{{ url_for('timer.edit_timer', timer_id=timer.id) }}">
+                    {% if current_user.is_admin %}
+                        <!-- Admin form fields -->
                         <div class="mb-4">
                             <label for="notes" class="form-label fw-semibold">
                                 <i class="fas fa-sticky-note me-1"></i>Notes
@@ -63,25 +374,57 @@
                                     <div class="form-text">Separate tags with commas</div>
                                 </div>
                             </div>
-                            <div class="col-md-4 d-flex align-items-center">
-                                <div class="form-check form-switch mt-4">
-                                    <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if timer.billable %}checked{% endif %}>
-                                    <label class="form-check-label fw-semibold" for="billable">
-                                        <i class="fas fa-dollar-sign me-1"></i>Billable
-                                    </label>
-                                </div>
-                            </div>
                         </div>
 
                         <div class="d-flex justify-content-between">
                             <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-1"></i>Back
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="adminEditSaveBtn">
                                 <i class="fas fa-save me-2"></i>Save Changes
                             </button>
                         </div>
-                    </form>
+                        </form>
+                    {% else %}
+                        <!-- Regular user form -->
+                        <form method="POST" action="{{ url_for('timer.edit_timer', timer_id=timer.id) }}">
+                            <div class="mb-4">
+                                <label for="notes" class="form-label fw-semibold">
+                                    <i class="fas fa-sticky-note me-1"></i>Notes
+                                </label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Describe what you worked on">{{ timer.notes or '' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-4">
+                                        <label for="tags" class="form-label fw-semibold">
+                                            <i class="fas fa-tags me-1"></i>Tags
+                                        </label>
+                                        <input type="text" class="form-control" id="tags" name="tags" placeholder="tag1, tag2" value="{{ timer.tags or '' }}">
+                                        <div class="form-text">Separate tags with commas</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center">
+                                    <div class="form-check form-switch mt-4">
+                                        <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if timer.billable %}checked{% endif %}>
+                                        <label class="form-check-label fw-semibold" for="billable">
+                                            <i class="fas fa-dollar-sign me-1"></i>Billable
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Back
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
         </div>

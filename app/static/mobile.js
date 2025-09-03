@@ -177,17 +177,19 @@ class MobileForms {
     handleFormSubmit(event, form) {
         const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) {
+            // If form is invalid, let browser show native messages and do NOT lock the button
+            if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+                return;
+            }
+
             // Store original text if not already stored
             if (!submitBtn.getAttribute('data-original-text')) {
                 submitBtn.setAttribute('data-original-text', submitBtn.innerHTML);
             }
-            
-            // Show loading state
+
+            // Show loading state and allow native submit
             submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Processing...';
             submitBtn.disabled = true;
-            
-            // Allow form to submit normally
-            // The form will be submitted and page will reload, so we don't need to re-enable
         }
     }
     

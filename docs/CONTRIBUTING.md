@@ -61,7 +61,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/TimeTracker.git
+   git clone https://github.com/drytrix/TimeTracker.git
    cd TimeTracker
    ```
 
