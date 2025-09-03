@@ -7,25 +7,38 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ url_for('projects.list_projects') }}">Projects</a></li>
-                            <li class="breadcrumb-item active">{{ project.name }}</li>
-                        </ol>
-                    </nav>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-project-diagram text-primary"></i> {{ project.name }}
-                    </h1>
+                <div class="d-flex align-items-center">
+                    <div>
+                        <nav aria-label="breadcrumb" class="mb-1">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{{ url_for('projects.list_projects') }}">Projects</a></li>
+                                <li class="breadcrumb-item active">{{ project.name }}</li>
+                            </ol>
+                        </nav>
+                        <h1 class="h3 mb-0 me-3">
+                            <i class="fas fa-project-diagram text-primary"></i>
+                            {{ project.name }}
+                        </h1>
+                    </div>
+                    <div class="ms-3">
+                        {% if project.status == 'active' %}
+                        <span class="status-badge bg-success text-white"><i class="fas fa-check-circle me-2"></i>Active</span>
+                        {% else %}
+                        <span class="status-badge bg-secondary text-white"><i class="fas fa-archive me-2"></i>Archived</span>
+                        {% endif %}
+                    </div>
                 </div>
-                <div>
+                <div class="btn-group" role="group">
                     {% if current_user.is_admin %}
                     <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" class="btn btn-secondary">
-                        <i class="fas fa-edit"></i> Edit
+                        <i class="fas fa-edit me-1"></i> Edit
                     </a>
                     {% endif %}
-                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
-                        <i class="fas fa-clock"></i> Start Timer
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                    <a href="{{ url_for('timer.start_timer_for_project', project_id=project.id) }}" class="btn btn-primary">
+                        <i class="fas fa-play me-1"></i> Start Timer
                     </a>
                 </div>
             </div>
@@ -35,74 +48,51 @@
     <!-- Project Details -->
     <div class="row mb-4">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Project Details
-                    </h5>
-                </div>
+            <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <dl class="row">
-                                <dt class="col-sm-4">Name:</dt>
-                                <dd class="col-sm-8">{{ project.name }}</dd>
-                                
-                                <dt class="col-sm-4">Client:</dt>
-                                <dd class="col-sm-8">
-                                    {% if project.client_obj %}
-                                    <a href="{{ url_for('clients.view_client', client_id=project.client_id) }}">
-                                        {{ project.client_obj.name }}
-                                    </a>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </dd>
-                                
-                                <dt class="col-sm-4">Status:</dt>
-                                <dd class="col-sm-8">
-                                    {% if project.status == 'active' %}
-                                    <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">Archived</span>
-                                    {% endif %}
-                                </dd>
-                                
-                                <dt class="col-sm-4">Created:</dt>
-                                <dd class="col-sm-8">{{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
-                            </dl>
+                            <div class="invoice-section">
+                                <h6 class="section-title text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>General
+                                </h6>
+                                <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value">{{ project.name }}</span></div>
+                                <div class="detail-row"><span class="detail-label">Client</span>
+                                    <span class="detail-value">
+                                        {% if project.client_obj %}
+                                        <a href="{{ url_for('clients.view_client', client_id=project.client_id) }}">{{ project.client_obj.name }}</a>
+                                        {% else %}<span class="text-muted">-</span>{% endif %}
+                                    </span>
+                                </div>
+                                <div class="detail-row"><span class="detail-label">Status</span>
+                                    <span class="detail-value">{% if project.status == 'active' %}Active{% else %}Archived{% endif %}</span>
+                                </div>
+                                <div class="detail-row"><span class="detail-label">Created</span><span class="detail-value">{{ project.created_at.strftime('%B %d, %Y') }}</span></div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <dl class="row">
-                                <dt class="col-sm-4">Billable:</dt>
-                                <dd class="col-sm-8">
-                                    {% if project.billable %}
-                                    <span class="badge bg-success">Yes</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">No</span>
-                                    {% endif %}
-                                </dd>
-                                
+                            <div class="invoice-section">
+                                <h6 class="section-title text-primary mb-3">
+                                    <i class="fas fa-cog me-2"></i>Billing
+                                </h6>
+                                <div class="detail-row"><span class="detail-label">Billable</span>
+                                    <span class="detail-value">{% if project.billable %}Yes{% else %}No{% endif %}</span>
+                                </div>
                                 {% if project.billable and project.hourly_rate %}
-                                <dt class="col-sm-4">Hourly Rate:</dt>
-                                <dd class="col-sm-8">{{ currency }} {{ "%.2f"|format(project.hourly_rate) }}</dd>
+                                <div class="detail-row"><span class="detail-label">Hourly Rate</span><span class="detail-value">{{ currency }} {{ "%.2f"|format(project.hourly_rate) }}</span></div>
                                 {% endif %}
-                                
                                 {% if project.billing_ref %}
-                                <dt class="col-sm-4">Billing Ref:</dt>
-                                <dd class="col-sm-8">{{ project.billing_ref }}</dd>
+                                <div class="detail-row"><span class="detail-label">Billing Ref</span><span class="detail-value">{{ project.billing_ref }}</span></div>
                                 {% endif %}
-                                
-                                <dt class="col-sm-4">Last Updated:</dt>
-                                <dd class="col-sm-8">{{ project.updated_at.strftime('%Y-%m-%d %H:%M') }}</dd>
-                            </dl>
+                                <div class="detail-row"><span class="detail-label">Last Updated</span><span class="detail-value">{{ project.updated_at.strftime('%B %d, %Y') }}</span></div>
+                            </div>
                         </div>
                     </div>
                     
                     {% if project.description %}
                     <div class="mt-3">
-                        <h6>Description:</h6>
-                        <p class="text-muted">{{ project.description }}</p>
+                        <h6 class="section-title text-primary mb-2">Description</h6>
+                        <div class="content-box">{{ project.description }}</div>
                     </div>
                     {% endif %}
                 </div>
@@ -110,11 +100,11 @@
         </div>
         
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar"></i> Statistics
-                    </h5>
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Statistics
+                    </h6>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
@@ -137,11 +127,11 @@
             </div>
             
             {% if project.billable and project.hourly_rate %}
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-users"></i> User Breakdown
-                    </h5>
+            <div class="card mt-3 shadow-sm border-0">
+                <div class="card-header bg-light py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users me-2"></i>User Breakdown
+                    </h6>
                 </div>
                 <div class="card-body">
                     {% for user_total in project.get_user_totals() %}
@@ -200,7 +190,7 @@
                                     <div class="task-meta small">
                                         {% if task.assigned_user %}
                                         <div class="text-muted mb-1">
-                                            <i class="fas fa-user"></i> {{ task.assigned_user.username }}
+                                            <i class="fas fa-user"></i> {{ task.assigned_user.display_name }}
                                         </div>
                                         {% endif %}
                                         {% if task.due_date %}
@@ -237,7 +227,7 @@
                                         <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ url_for('timer.start_timer', project_id=task.project.id, task_id=task.id) }}" 
+                                        <a href="{{ url_for('timer.start_timer_for_project', project_id=task.project.id, task_id=task.id) }}" 
                                            class="btn btn-outline-success btn-sm">
                                             <i class="fas fa-play"></i>
                                         </a>
@@ -278,16 +268,14 @@
     <!-- Time Entries -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-clock"></i> Time Entries
-                    </h5>
-                    <div>
-                        <a href="{{ url_for('reports.project_report', project_id=project.id) }}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-chart-line"></i> View Report
-                        </a>
-                    </div>
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock me-2"></i>Time Entries
+                    </h6>
+                    <a href="{{ url_for('reports.project_report', project_id=project.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-chart-line"></i> View Report
+                    </a>
                 </div>
                 <div class="card-body">
                     {% if entries %}
@@ -308,7 +296,7 @@
                             <tbody>
                                 {% for entry in entries %}
                                 <tr>
-                                    <td>{{ entry.user.username }}</td>
+                                    <td>{{ entry.user.display_name }}</td>
                                                                 <td>{{ entry.start_time.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 {{ entry.start_time.strftime('%H:%M') }} -
@@ -512,6 +500,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .btn-group .btn {
     flex: 1;
+}
+</style>
+<style>
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.invoice-section { padding: 12px 0; }
+.section-title { font-size: 16px; font-weight: 600; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px; }
+.detail-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:8px 0; border-bottom:1px solid var(--border-color); }
+.detail-label { font-weight:600; color:var(--text-secondary); }
+.detail-value { font-weight:600; color:var(--text-primary); }
+.content-box { background: var(--light-color); padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary-color); line-height: 1.6; }
+
+@media (max-width:768px){
+  .detail-row{flex-direction:column; align-items:flex-start; gap:4px;}
 }
 </style>
 {% endblock %}

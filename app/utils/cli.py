@@ -5,6 +5,7 @@ from app import db
 from app.models import User, Project, TimeEntry, Settings, Client
 from datetime import datetime, timedelta
 import shutil
+from app.utils.backup import create_backup, restore_backup
 
 def register_cli_commands(app):
     """Register CLI commands for the application"""
@@ -93,6 +94,36 @@ def register_cli_commands(app):
                             click.echo(f"Removed old backup: {backup_file}")
             except Exception as e:
                 click.echo(f"Warning: Could not clean up old backups: {e}")
+
+    @app.cli.command()
+    @with_appcontext
+    def backup_create():
+        """Create a full backup archive (DB, settings, uploads)."""
+        try:
+            archive_path = create_backup(click.get_current_context().obj or app)
+            if archive_path:
+                click.echo(f"Backup created: {archive_path}")
+            else:
+                click.echo("Backup failed: no archive path returned")
+        except Exception as e:
+            click.echo(f"Backup failed: {e}")
+
+    @app.cli.command()
+    @with_appcontext
+    @click.argument('archive_path')
+    def backup_restore(archive_path):
+        """Restore from a backup archive and run migrations."""
+        if not archive_path:
+            click.echo('Usage: flask backup_restore <path_to_backup_zip>')
+            return
+        try:
+            success, message = restore_backup(click.get_current_context().obj or app, archive_path)
+            click.echo(message)
+            if not success:
+                raise SystemExit(1)
+        except Exception as e:
+            click.echo(f"Restore failed: {e}")
+            raise SystemExit(1)
 
     @app.cli.command()
     @with_appcontext

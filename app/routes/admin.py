@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, send_file
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, Project, TimeEntry, Settings
@@ -8,8 +8,14 @@ import os
 from werkzeug.utils import secure_filename
 import uuid
 from app.utils.db import safe_commit
+from app.utils.backup import create_backup, restore_backup
+import threading
+import time
 
 admin_bp = Blueprint('admin', __name__)
+
+# In-memory restore progress tracking (simple, per-process)
+RESTORE_PROGRESS = {}
 
 # Allowed file extensions for logos
 ALLOWED_LOGO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
@@ -313,15 +319,79 @@ def remove_logo():
     
     return redirect(url_for('admin.settings'))
 
-@admin_bp.route('/admin/backup')
+@admin_bp.route('/admin/backup', methods=['GET'])
 @login_required
 @admin_required
 def backup():
-    """Create manual backup"""
-    # This would typically trigger a backup process
-    # For now, just show a success message
-    flash('Backup process initiated', 'success')
-    return redirect(url_for('admin.admin_dashboard'))
+    """Create manual backup and return the archive for download."""
+    try:
+        archive_path = create_backup(current_app)
+        if not archive_path or not os.path.exists(archive_path):
+            flash('Backup failed: archive not created', 'error')
+            return redirect(url_for('admin.admin_dashboard'))
+        # Stream file to user
+        return send_file(archive_path, as_attachment=True)
+    except Exception as e:
+        flash(f'Backup failed: {e}', 'error')
+        return redirect(url_for('admin.admin_dashboard'))
+
+@admin_bp.route('/admin/restore', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def restore():
+    """Restore from an uploaded backup archive."""
+    if request.method == 'POST':
+        if 'backup_file' not in request.files or request.files['backup_file'].filename == '':
+            flash('No backup file uploaded', 'error')
+            return redirect(url_for('admin.restore'))
+        file = request.files['backup_file']
+        filename = secure_filename(file.filename)
+        if not filename.lower().endswith('.zip'):
+            flash('Invalid file type. Please upload a .zip backup archive.', 'error')
+            return redirect(url_for('admin.restore'))
+        # Save temporarily under project backups
+        backups_dir = os.path.join(os.path.abspath(os.path.join(current_app.root_path, '..')), 'backups')
+        os.makedirs(backups_dir, exist_ok=True)
+        temp_path = os.path.join(backups_dir, f"restore_{uuid.uuid4().hex[:8]}_{filename}")
+        file.save(temp_path)
+
+        # Initialize progress state
+        token = uuid.uuid4().hex[:8]
+        RESTORE_PROGRESS[token] = {'status': 'starting', 'percent': 0, 'message': 'Queued'}
+
+        def progress_cb(label, percent):
+            RESTORE_PROGRESS[token] = {'status': 'running', 'percent': int(percent), 'message': label}
+
+        # Capture the real Flask app object for use in a background thread
+        app_obj = current_app._get_current_object()
+
+        def _do_restore():
+            try:
+                RESTORE_PROGRESS[token] = {'status': 'running', 'percent': 5, 'message': 'Starting restore'}
+                success, message = restore_backup(app_obj, temp_path, progress_callback=progress_cb)
+                RESTORE_PROGRESS[token] = {
+                    'status': 'done' if success else 'error',
+                    'percent': 100 if success else RESTORE_PROGRESS[token].get('percent', 0),
+                    'message': message
+                }
+            except Exception as e:
+                RESTORE_PROGRESS[token] = {'status': 'error', 'percent': RESTORE_PROGRESS[token].get('percent', 0), 'message': str(e)}
+            finally:
+                try:
+                    os.remove(temp_path)
+                except Exception:
+                    pass
+
+        # Run restore in background to keep request responsive
+        t = threading.Thread(target=_do_restore, daemon=True)
+        t.start()
+
+        flash('Restore started. You can monitor progress on this page.', 'info')
+        return redirect(url_for('admin.restore', token=token))
+    # GET
+    token = request.args.get('token')
+    progress = RESTORE_PROGRESS.get(token) if token else None
+    return render_template('admin/restore.html', progress=progress, token=token)
 
 @admin_bp.route('/admin/system')
 @login_required

@@ -332,22 +332,68 @@ def delete_task(task_id):
 @tasks_bp.route('/tasks/my-tasks')
 @login_required
 def my_tasks():
-    """Show current user's tasks"""
+    """Show current user's tasks with filters and pagination"""
+    page = request.args.get('page', 1, type=int)
     status = request.args.get('status', '')
-    
-    query = Task.query.filter(
-        db.or_(
-            Task.assigned_to == current_user.id,
-            Task.created_by == current_user.id
+    priority = request.args.get('priority', '')
+    project_id = request.args.get('project_id', type=int)
+    search = request.args.get('search', '').strip()
+    task_type = request.args.get('task_type', '')  # '', 'assigned', 'created'
+
+    query = Task.query
+
+    # Restrict to current user's tasks depending on task_type filter
+    if task_type == 'assigned':
+        query = query.filter(Task.assigned_to == current_user.id)
+    elif task_type == 'created':
+        query = query.filter(Task.created_by == current_user.id)
+    else:
+        query = query.filter(
+            db.or_(
+                Task.assigned_to == current_user.id,
+                Task.created_by == current_user.id
+            )
         )
-    )
-    
+
+    # Apply filters
     if status:
         query = query.filter_by(status=status)
-    
-    tasks = query.order_by(Task.priority.desc(), Task.due_date.asc(), Task.created_at.asc()).all()
-    
-    return render_template('tasks/my_tasks.html', tasks=tasks, status=status)
+
+    if priority:
+        query = query.filter_by(priority=priority)
+
+    if project_id:
+        query = query.filter_by(project_id=project_id)
+
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            db.or_(
+                Task.name.ilike(like),
+                Task.description.ilike(like)
+            )
+        )
+
+    tasks = query.order_by(
+        Task.priority.desc(),
+        Task.due_date.asc(),
+        Task.created_at.asc()
+    ).paginate(page=page, per_page=20, error_out=False)
+
+    # Provide projects for filter dropdown
+    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+
+    return render_template(
+        'tasks/my_tasks.html',
+        tasks=tasks.items,
+        pagination=tasks,
+        projects=projects,
+        status=status,
+        priority=priority,
+        project_id=project_id,
+        search=search,
+        task_type=task_type
+    )
 
 @tasks_bp.route('/tasks/overdue')
 @login_required
