@@ -1031,3 +1031,20 @@ h6 { font-size: 1rem; }
     .summary-value { font-size: 18px; }
 }
 
+/* Shared page header utilities to align with admin dashboard */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.page-header .h3 { margin: 0; }
+
+/* Consistent badge sizing used next to page titles */
+.badge.fs-6 {
+    line-height: 1;
+    padding: 0.5rem 0.75rem;
+    border-radius: 9999px;
+}
+

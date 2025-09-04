@@ -4,24 +4,17 @@
 
 {% block content %}
 <div class="container-fluid">
+    {% from "_components.html" import page_header %}
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="d-flex align-items-center">
-                    <h1 class="h3 mb-0 me-3">
-                        <i class="fas fa-project-diagram text-primary"></i>
-                        Projects
-                    </h1>
-                    <span class="badge bg-primary fs-6">{{ projects|length }} total</span>
-                </div>
-                <div class="d-flex gap-2">
-                    {% if current_user.is_admin %}
-                    <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary touch-target">
-                        <i class="fas fa-plus me-1"></i> New Project
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
+            {% set actions %}
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('projects.create_project') }}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-plus"></i> New Project
+            </a>
+            {% endif %}
+            {% endset %}
+            {{ page_header('fas fa-project-diagram', 'Projects', 'Manage all projects • ' ~ (projects|length) ~ ' total', actions) }}
         </div>
     </div>
 
