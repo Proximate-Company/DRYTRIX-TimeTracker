@@ -3,7 +3,13 @@
 {% block title %}About - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="container">
+{% from "_components.html" import page_header %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {{ page_header('fas fa-info-circle', 'About', 'Learn more about ' ~ app_name, None) }}
+        </div>
+    </div>
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="text-center mb-5">
