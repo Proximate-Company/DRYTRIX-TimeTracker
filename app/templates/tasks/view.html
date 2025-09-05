@@ -175,6 +175,7 @@
                                     <th>Duration</th>
                                     <th>Notes</th>
                                     <th>User</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -190,6 +191,20 @@
                                     </td>
                                     <td>{{ entry.notes[:50] if entry.notes else '-' }}</td>
                                     <td>{{ entry.user.display_name if entry.user else '-' }}</td>
+                                    <td class="text-end">
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}"
+                                               class="btn btn-sm btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if current_user.is_admin or entry.user_id == current_user.id %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger" title="Delete"
+                                                    onclick="showDeleteEntryModal('{{ entry.id }}', '{{ task.project.name }}', '{{ entry.duration_formatted }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -560,5 +575,63 @@ function updateTaskStatus(status) {
         form.submit();
     }
 }
+
+// Function to show delete time entry modal
+function showDeleteEntryModal(entryId, projectName, duration) {
+    const nameEl = document.getElementById('deleteEntryProjectName');
+    const durationEl = document.getElementById('deleteEntryDuration');
+    const formEl = document.getElementById('deleteEntryForm');
+    if (nameEl) nameEl.textContent = projectName || '';
+    if (durationEl) durationEl.textContent = duration || '';
+    if (formEl) formEl.action = "{{ url_for('timer.delete_timer', timer_id=0) }}".replace('0', entryId);
+    const modal = document.getElementById('deleteEntryModal');
+    if (modal) new bootstrap.Modal(modal).show();
+}
+
+// Loading state on delete submit
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deleteEntryForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function() {
+            const btn = deleteForm.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
+                btn.disabled = true;
+            }
+        });
+    }
+});
 </script>
+
+<!-- Delete Time Entry Modal -->
+<div class="modal fade" id="deleteEntryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2 text-danger"></i>Delete Time Entry
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete the time entry for <strong id="deleteEntryProjectName"></strong>?</p>
+                <p class="text-muted mb-0">Duration: <strong id="deleteEntryDuration"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form method="POST" id="deleteEntryForm" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Entry
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

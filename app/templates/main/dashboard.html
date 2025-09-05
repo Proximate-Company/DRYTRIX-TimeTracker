@@ -260,13 +260,13 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-end pe-4 actions-cell" data-label="Actions">
-                                    <div class="btn-group d-flex d-md-inline-flex mobile-stack" role="group">
+                                    <div class="btn-group" role="group">
                                         <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
-                                           class="btn btn-sm btn-outline-secondary touch-target" title="Edit entry">
+                                           class="btn btn-sm btn-action btn-action--edit touch-target" title="Edit entry">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                        <button type="button" class="btn btn-sm btn-outline-danger touch-target" title="Delete entry" 
+                                        <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="Delete entry" 
                                                 onclick="showDeleteEntryModal('{{ entry.id }}', '{{ entry.project.name }}', '{{ entry.duration_formatted }}')">
                                             <i class="fas fa-trash"></i>
                                         </button>
