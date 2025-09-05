@@ -5,6 +5,7 @@ from app.models import Task, Project, User, TimeEntry
 from datetime import datetime, date
 from decimal import Decimal
 from app.utils.db import safe_commit
+from app.utils.timezone import now_in_app_timezone
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -18,6 +19,8 @@ def list_tasks():
     project_id = request.args.get('project_id', type=int)
     assigned_to = request.args.get('assigned_to', type=int)
     search = request.args.get('search', '').strip()
+    overdue_param = request.args.get('overdue', '').strip().lower()
+    overdue = overdue_param in ['1', 'true', 'on', 'yes']
     
     query = Task.query
     
@@ -41,6 +44,14 @@ def list_tasks():
                 Task.name.ilike(like),
                 Task.description.ilike(like)
             )
+        )
+    
+    # Overdue filter (uses application's local date)
+    if overdue:
+        today_local = now_in_app_timezone().date()
+        query = query.filter(
+            Task.due_date < today_local,
+            Task.status.in_(['todo', 'in_progress', 'review'])
         )
     
     # Show user's tasks first, then others
@@ -72,7 +83,8 @@ def list_tasks():
         priority=priority,
         project_id=project_id,
         assigned_to=assigned_to,
-        search=search
+        search=search,
+        overdue=overdue
     )
 
 @tasks_bp.route('/tasks/create', methods=['GET', 'POST'])
@@ -339,6 +351,8 @@ def my_tasks():
     project_id = request.args.get('project_id', type=int)
     search = request.args.get('search', '').strip()
     task_type = request.args.get('task_type', '')  # '', 'assigned', 'created'
+    overdue_param = request.args.get('overdue', '').strip().lower()
+    overdue = overdue_param in ['1', 'true', 'on', 'yes']
 
     query = Task.query
 
@@ -374,6 +388,14 @@ def my_tasks():
             )
         )
 
+    # Overdue filter (uses application's local date)
+    if overdue:
+        today_local = now_in_app_timezone().date()
+        query = query.filter(
+            Task.due_date < today_local,
+            Task.status.in_(['todo', 'in_progress', 'review'])
+        )
+
     tasks = query.order_by(
         Task.priority.desc(),
         Task.due_date.asc(),
@@ -392,7 +414,8 @@ def my_tasks():
         priority=priority,
         project_id=project_id,
         search=search,
-        task_type=task_type
+        task_type=task_type,
+        overdue=overdue
     )
 
 @tasks_bp.route('/tasks/overdue')

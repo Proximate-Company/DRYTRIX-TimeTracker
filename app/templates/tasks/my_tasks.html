@@ -147,6 +147,14 @@
                         <option value="created" {% if task_type == 'created' %}selected{% endif %}>Created by Me</option>
                     </select>
                 </div>
+                <div class="col-md-2 col-sm-6 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="overdue" name="overdue" {% if overdue %}checked{% endif %}>
+                        <label class="form-check-label" for="overdue">
+                            Show overdue only
+                        </label>
+                    </div>
+                </div>
                 <div class="col-12">
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
