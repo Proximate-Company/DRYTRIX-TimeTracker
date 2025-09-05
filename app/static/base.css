@@ -23,6 +23,8 @@
     --card-spacing: 1.5rem;
     --mobile-section-spacing: 1.5rem;
     --mobile-card-spacing: 1rem;
+    /* Bootstrap interop (light theme fallback) */
+    --bs-body-bg: #ffffff;
 }
 
 /* Dark theme variables */
@@ -597,8 +599,10 @@ main {
 
 /* Enhanced Navigation Layout */
 .navbar {
-    background: white !important;
-    backdrop-filter: blur(10px);
+    background: #ffffff !important;
+    background-color: #ffffff !important; /* ensure solid fill */
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important; /* avoid translucency */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border-bottom: 1px solid var(--border-color);
     padding: 1rem 0;
@@ -610,6 +614,13 @@ main {
 [data-theme="dark"] .navbar {
     background: #0b1220 !important;
     border-bottom-color: var(--border-color);
+}
+[data-theme="light"] .navbar,
+html[data-theme="light"] .navbar {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
 }
 [data-theme="dark"] .navbar-collapse {
     background: #0b1220 !important;
@@ -920,6 +931,36 @@ h6 { font-size: 1rem; }
 }
 [data-theme="dark"] .dropdown-item { color: var(--text-secondary) !important; }
 [data-theme="dark"] .dropdown-item:hover { background-color: #111827 !important; color: var(--text-primary) !important; }
+
+/* Light mode dropdown fixes (ensure solid background and proper contrast) */
+[data-theme="light"] .dropdown-menu,
+.navbar .dropdown-menu {
+    --bs-dropdown-bg: #ffffff;
+    --bs-dropdown-link-color: var(--text-primary);
+    --bs-dropdown-link-hover-bg: var(--light-color);
+    --bs-dropdown-link-hover-color: var(--text-primary);
+    --bs-dropdown-border-color: var(--border-color);
+    background-color: #ffffff !important;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow-hover);
+}
+
+[data-theme="light"] .dropdown-item,
+.navbar .dropdown-item {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .dropdown-item:hover,
+.navbar .dropdown-item:hover {
+    background-color: var(--light-color) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .dropdown-divider,
+.navbar .dropdown-divider {
+    background-color: var(--border-color) !important;
+    opacity: 1;
+}
 
 /* Ensure dropdowns inside cards stack above adjacent content */
 .card .dropdown,
