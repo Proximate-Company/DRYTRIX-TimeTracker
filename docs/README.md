@@ -13,10 +13,12 @@ Welcome to the TimeTracker documentation. This directory contains comprehensive 
 - **[DOCKER_PUBLIC_SETUP.md](DOCKER_PUBLIC_SETUP.md)** - Public Docker deployment guide
 - **[DOCKER_STARTUP_TROUBLESHOOTING.md](DOCKER_STARTUP_TROUBLESHOOTING.md)** - Docker troubleshooting
 - **[SOLUTION_GUIDE.md](SOLUTION_GUIDE.md)** - Common problems and solutions
+- **[GITHUB_WORKFLOW_IMAGES.md](GITHUB_WORKFLOW_IMAGES.md)** - Images built on releases and main
 
 ### 🔧 Features
 - **[TASK_MANAGEMENT.md](TASK_MANAGEMENT.md)** - Task management system overview
 - **[TASK_MANAGEMENT_README.md](TASK_MANAGEMENT_README.md)** - Detailed task management guide
+- **[CLIENT_MANAGEMENT_README.md](CLIENT_MANAGEMENT_README.md)** - Client model and relationships
 - **[INVOICE_FEATURE_README.md](INVOICE_FEATURE_README.md)** - Invoice system documentation
 - **[ENHANCED_INVOICE_SYSTEM_README.md](ENHANCED_INVOICE_SYSTEM_README.md)** - Advanced invoice features
 - **[INVOICE_INTERFACE_IMPROVEMENTS.md](INVOICE_INTERFACE_IMPROVEMENTS.md)** - Invoice UI improvements
