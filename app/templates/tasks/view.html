@@ -333,6 +333,10 @@
                         <button class="btn btn-warning btn-sm" onclick="updateTaskStatus('in_progress')">
                             <i class="fas fa-undo me-2"></i>Back to Progress
                         </button>
+                        {% elif task.status == 'done' %}
+                        <button class="btn btn-warning btn-sm" onclick="updateTaskStatus('todo')">
+                            <i class="fas fa-undo me-2"></i>Reopen Task
+                        </button>
                         {% endif %}
                         
                         {% if task.status != 'done' and task.status != 'cancelled' %}
