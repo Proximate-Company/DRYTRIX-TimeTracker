@@ -366,16 +366,16 @@ See [Version Management Documentation](docs/VERSION_MANAGEMENT.md) for detailed 
 
 ## 🔧 Features
 
-- **Time Tracking**: Start/stop timer with project and task association
-- **Project Management**: Create and manage projects with client information
-- **Task Management**: Organize work into tasks and categories
-- **Invoicing**: Generate professional invoices from time entries
-- **Analytics**: Comprehensive reporting and time analysis
-- **User Management**: Multi-user support with role-based access
-- **Mobile Responsive**: Works on all devices
-- **CLI Tools**: Command-line interface for administration
-- **API Access**: RESTful API for integrations
-- **Real-time Updates**: WebSocket-powered live updates
+- **Time Tracking**: Start/stop timer with project and task association; idle detection; single-active-timer mode; manual and automatic entry sources; rounding rules
+- **Client & Project Management**: Client organizations with contacts and default rates; project relationships; status management; error-preventing dropdowns; auto-populated rates
+- **Task Management**: Per-project tasks, categories, and task-level time tracking
+- **Invoicing**: Generate branded PDF invoices; billable hours, company branding/logo, currency, and rounding support
+- **Analytics & Reports**: Real-time stats, period analysis, project/user summaries, CSV export, visual analytics
+- **User & Roles**: Multi-user with role-based access control and admin panel
+- **Mobile-Optimized UI**: Responsive layout and mobile-friendly charts
+- **API & Integrations**: RESTful endpoints with JSON responses
+- **CLI & Admin Tools**: Database migrations, management scripts, and utilities
+- **Dockerized Deployment**: Local and remote compose files, public images on GitHub Container Registry
 
 ## 📚 Documentation
 
