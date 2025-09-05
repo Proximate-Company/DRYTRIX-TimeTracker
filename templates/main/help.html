@@ -3,7 +3,13 @@
 {% block title %}Help - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="container">
+{% from "_components.html" import page_header %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {{ page_header('fas fa-question-circle', 'Help', 'Documentation and guidance', None) }}
+        </div>
+    </div>
     <div class="row">
         <div class="col-lg-3">
             <!-- Navigation -->

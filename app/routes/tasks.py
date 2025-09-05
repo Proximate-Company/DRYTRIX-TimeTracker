@@ -5,6 +5,7 @@ from app.models import Task, Project, User, TimeEntry
 from datetime import datetime, date
 from decimal import Decimal
 from app.utils.db import safe_commit
+from app.utils.timezone import now_in_app_timezone
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -18,6 +19,8 @@ def list_tasks():
     project_id = request.args.get('project_id', type=int)
     assigned_to = request.args.get('assigned_to', type=int)
     search = request.args.get('search', '').strip()
+    overdue_param = request.args.get('overdue', '').strip().lower()
+    overdue = overdue_param in ['1', 'true', 'on', 'yes']
     
     query = Task.query
     
@@ -41,6 +44,14 @@ def list_tasks():
                 Task.name.ilike(like),
                 Task.description.ilike(like)
             )
+        )
+    
+    # Overdue filter (uses application's local date)
+    if overdue:
+        today_local = now_in_app_timezone().date()
+        query = query.filter(
+            Task.due_date < today_local,
+            Task.status.in_(['todo', 'in_progress', 'review'])
         )
     
     # Show user's tasks first, then others
@@ -72,7 +83,8 @@ def list_tasks():
         priority=priority,
         project_id=project_id,
         assigned_to=assigned_to,
-        search=search
+        search=search,
+        overdue=overdue
     )
 
 @tasks_bp.route('/tasks/create', methods=['GET', 'POST'])
@@ -204,7 +216,33 @@ def edit_task(task_id):
         task.estimated_hours = estimated_hours
         task.due_date = due_date
         task.assigned_to = assigned_to
-        task.updated_at = datetime.utcnow()
+        # Handle status update (including reopening from done)
+        selected_status = request.form.get('status', '').strip()
+        valid_statuses = ['todo', 'in_progress', 'review', 'done', 'cancelled']
+        if selected_status and selected_status in valid_statuses and selected_status != task.status:
+            try:
+                if selected_status == 'in_progress':
+                    task.start_task()
+                elif selected_status == 'done':
+                    task.complete_task()
+                elif selected_status == 'cancelled':
+                    task.cancel_task()
+                else:
+                    # Reopen or move to non-special states
+                    # Clear completed_at if reopening from done
+                    if task.status == 'done' and selected_status in ['todo', 'in_progress', 'review']:
+                        task.completed_at = None
+                    task.status = selected_status
+                    task.updated_at = now_in_app_timezone()
+                    if not safe_commit('edit_task_status_change', {'task_id': task.id, 'status': selected_status}):
+                        flash('Could not update status due to a database error. Please check server logs.', 'error')
+                        return render_template('tasks/edit.html', task=task)
+            except ValueError as e:
+                flash(str(e), 'error')
+                return render_template('tasks/edit.html', task=task)
+
+        # Always update the updated_at timestamp to local time after edits
+        task.updated_at = now_in_app_timezone()
         
         if not safe_commit('edit_task', {'task_id': task.id}):
             flash('Could not update task due to a database error. Please check server logs.', 'error')
@@ -240,14 +278,29 @@ def update_task_status(task_id):
     # Update status
     try:
         if new_status == 'in_progress':
-            task.start_task()
+            # If reopening from done, bypass start_task restriction
+            if task.status == 'done':
+                task.completed_at = None
+                task.status = 'in_progress'
+                # Preserve existing started_at if present, otherwise set now
+                if not task.started_at:
+                    task.started_at = now_in_app_timezone()
+                task.updated_at = now_in_app_timezone()
+                if not safe_commit('update_task_status_reopen_in_progress', {'task_id': task.id, 'status': new_status}):
+                    flash('Could not update status due to a database error. Please check server logs.', 'error')
+                    return redirect(url_for('tasks.view_task', task_id=task.id))
+            else:
+                task.start_task()
         elif new_status == 'done':
             task.complete_task()
         elif new_status == 'cancelled':
             task.cancel_task()
         else:
+            # For other transitions, handle reopening from done and local timestamps
+            if task.status == 'done' and new_status in ['todo', 'review']:
+                task.completed_at = None
             task.status = new_status
-            task.updated_at = datetime.utcnow()
+            task.updated_at = now_in_app_timezone()
             if not safe_commit('update_task_status', {'task_id': task.id, 'status': new_status}):
                 flash('Could not update status due to a database error. Please check server logs.', 'error')
                 return redirect(url_for('tasks.view_task', task_id=task.id))
@@ -339,6 +392,8 @@ def my_tasks():
     project_id = request.args.get('project_id', type=int)
     search = request.args.get('search', '').strip()
     task_type = request.args.get('task_type', '')  # '', 'assigned', 'created'
+    overdue_param = request.args.get('overdue', '').strip().lower()
+    overdue = overdue_param in ['1', 'true', 'on', 'yes']
 
     query = Task.query
 
@@ -374,6 +429,14 @@ def my_tasks():
             )
         )
 
+    # Overdue filter (uses application's local date)
+    if overdue:
+        today_local = now_in_app_timezone().date()
+        query = query.filter(
+            Task.due_date < today_local,
+            Task.status.in_(['todo', 'in_progress', 'review'])
+        )
+
     tasks = query.order_by(
         Task.priority.desc(),
         Task.due_date.asc(),
@@ -392,7 +455,8 @@ def my_tasks():
         priority=priority,
         project_id=project_id,
         search=search,
-        task_type=task_type
+        task_type=task_type,
+        overdue=overdue
     )
 
 @tasks_bp.route('/tasks/overdue')
@@ -439,14 +503,25 @@ def api_update_status(task_id):
     # Update status
     try:
         if new_status == 'in_progress':
-            task.start_task()
+            if task.status == 'done':
+                task.completed_at = None
+                task.status = 'in_progress'
+                if not task.started_at:
+                    task.started_at = now_in_app_timezone()
+                task.updated_at = now_in_app_timezone()
+                if not safe_commit('api_update_task_status_reopen_in_progress', {'task_id': task.id, 'status': new_status}):
+                    return jsonify({'error': 'Database error while updating status'}), 500
+            else:
+                task.start_task()
         elif new_status == 'done':
             task.complete_task()
         elif new_status == 'cancelled':
             task.cancel_task()
         else:
+            if task.status == 'done' and new_status in ['todo', 'review']:
+                task.completed_at = None
             task.status = new_status
-            task.updated_at = datetime.utcnow()
+            task.updated_at = now_in_app_timezone()
             if not safe_commit('api_update_task_status', {'task_id': task.id, 'status': new_status}):
                 return jsonify({'error': 'Database error while updating status'}), 500
         

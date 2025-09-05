@@ -234,7 +234,10 @@
     .navbar {
         min-height: var(--mobile-nav-height);
         padding: 0.75rem 0;
-        background: white !important;
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
@@ -257,12 +260,14 @@
     }
     
     .navbar-collapse {
-        background: white;
-        border-top: 1px solid #e2e8f0;
+        background: var(--bs-body-bg, #ffffff);
+        border-top: 1px solid var(--border-color);
         margin-top: 0.75rem;
         padding: 1rem 0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
         border-radius: 0 0 var(--mobile-border-radius) var(--mobile-border-radius);
+        position: relative;
+        z-index: 1100; /* above page content */
     }
     
     .navbar-nav .nav-link {
@@ -300,11 +305,10 @@
         float: none;
         width: 100%;
         margin: 0;
-        border: 2px solid #3b82f6 !important;
+        border: 1px solid var(--border-color) !important;
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
-        background: #ffffff !important;
-        background-color: #ffffff !important; /* ensure solid bg */
-        --bs-dropdown-bg: #ffffff; /* bootstrap var override */
+        background: var(--bs-dropdown-bg, #ffffff) !important;
+        background-color: var(--bs-dropdown-bg, #ffffff) !important; /* ensure solid bg */
         border-radius: var(--mobile-border-radius);
         margin-top: 0.75rem;
         padding: 0.5rem;
@@ -323,8 +327,8 @@
         align-items: center;
         gap: 0.75rem;
         transition: all 0.3s ease;
-        color: #1e293b !important;
-        background: #ffffff !important; /* ensure solid bg for items */
+        color: var(--bs-dropdown-link-color, #1e293b) !important;
+        background: var(--bs-dropdown-bg, #ffffff) !important; /* ensure solid bg for items */
         border: none;
         text-decoration: none;
         font-weight: 600;
@@ -333,8 +337,8 @@
     }
     
     .dropdown-item:hover {
-        background: #f1f5f9 !important;
-        color: #0f172a !important;
+        background: var(--bs-dropdown-link-hover-bg, #f1f5f9) !important;
+        color: var(--text-primary, #0f172a) !important;
         transform: translateX(4px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
@@ -404,8 +408,8 @@
     .navbar .dropdown-menu.show {
         display: block !important;
         transform: none !important;
-        background: #ffffff !important;
-        border: 2px solid #3b82f6 !important;
+        background: var(--bs-dropdown-bg, #ffffff) !important;
+        border: 1px solid var(--border-color) !important;
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
     }
     
@@ -414,8 +418,8 @@
     .navbar .dropdown-menu.show,
     .navbar .dropdown-menu[data-bs-popper="static"] {
         display: block !important;
-        background: #ffffff !important;
-        border: 2px solid #3b82f6 !important;
+        background: var(--bs-dropdown-bg, #ffffff) !important;
+        border: 1px solid var(--border-color) !important;
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
         z-index: 9999 !important;
     }
@@ -775,6 +779,15 @@
     }
     .mobile-tabbar .tab-item.active {
         color: #3b82f6;
+    }
+}
+
+/* Respect forced light theme on mobile if explicitly set */
+@media (prefers-color-scheme: dark) {
+    html[data-theme="light"] .navbar,
+    html[data-theme="light"] .mobile-tabbar {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
     }
 }
 

@@ -3,12 +3,21 @@
 {% block title %}Edit Profile - {{ app_name }}{% endblock %}
 
 {% block content %}
+{% from "_components.html" import page_header %}
+<div class="row">
+	<div class="col-12">
+		{% set actions %}
+		<a href="{{ url_for('auth.profile') }}" class="btn btn-outline-light btn-sm">
+			<i class="fas fa-arrow-left"></i> Back to Profile
+		</a>
+		{% endset %}
+		{{ page_header('fas fa-user-cog', 'Edit Profile', 'Update your personal information', actions) }}
+	</div>
+</div>
 <div class="row justify-content-center">
 	<div class="col-md-6">
 		<div class="card">
-			<div class="card-header">
-				<i class="fas fa-user-cog me-2"></i>Edit Profile
-			</div>
+			<div class="card-header"><i class="fas fa-id-card me-2"></i> Profile Details</div>
 			<div class="card-body">
 				<form method="POST">
 					<div class="mb-3">

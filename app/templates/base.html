@@ -6,7 +6,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#3b82f6" id="meta-theme-color">
+    <meta id="user-theme-pref" data-user-theme="{{ current_user.theme_preference if current_user.is_authenticated else '' }}">
     <title>{% block title %}{{ app_name }}{% endblock %}</title>
     
     <!-- Favicon -->
@@ -29,6 +30,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
     
     {% block extra_css %}{% endblock %}
+    <script>
+        (function() {
+            try {
+                const storageKey = 'tt-theme';
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const saved = localStorage.getItem(storageKey);
+                const userMeta = document.getElementById('user-theme-pref');
+                const serverPrefRaw = userMeta ? (userMeta.getAttribute('data-user-theme') || '').trim().toLowerCase() : '';
+                const serverPref = (serverPrefRaw === 'light' || serverPrefRaw === 'dark') ? serverPrefRaw : null;
+                const theme = serverPref || saved || (prefersDark ? 'dark' : 'light');
+                const root = document.documentElement;
+                root.setAttribute('data-theme', theme);
+                if (serverPref) {
+                    root.setAttribute('data-theme-locked', 'user');
+                } else if (saved) {
+                    root.setAttribute('data-theme-locked', 'local');
+                }
+                const meta = document.getElementById('meta-theme-color');
+                if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b1220' : '#3b82f6');
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body>
     <!-- Enhanced Navigation -->
@@ -173,10 +196,15 @@
                     </p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <div class="d-flex justify-content-md-end gap-3">
+                    <div class="d-flex justify-content-md-end gap-3 align-items-center">
                         <small class="text-muted">{{ app_version }}</small>
                         <small><a href="{{ url_for('main.about') }}" class="text-decoration-none">About</a></small>
                         <small><a href="{{ url_for('main.help') }}" class="text-decoration-none">Help</a></small>
+                        <small>
+                            <a href="https://buymeacoffee.com/DryTrix" target="_blank" rel="noopener" class="text-decoration-none">
+                                <i class="fas fa-mug-hot me-1"></i> Buy me a coffee
+                            </a>
+                        </small>
                     </div>
                 </div>
             </div>
@@ -238,6 +266,7 @@
 
         // Use Bootstrap's default dropdown behavior; no custom backdrop
     </script>
+    <!-- Theme toggle logic moved to settings/profile; base keeps only initial theme setup above -->
 
     {% if current_user.is_authenticated %}
     <!-- Socket.IO only for authenticated users -->

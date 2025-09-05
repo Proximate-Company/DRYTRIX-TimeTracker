@@ -4,30 +4,15 @@
 
 {% block content %}
 <div class="container-fluid">
+    {% from "_components.html" import page_header %}
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="d-flex align-items-start flex-column flex-md-row">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Admin</a></li>
-                            <li class="breadcrumb-item active">Users</li>
-                        </ol>
-                    </nav>
-                    <div class="d-flex align-items-center">
-                        <h1 class="h3 mb-0 me-3">
-                            <i class="fas fa-users text-primary"></i>
-                            User Management
-                        </h1>
-                        <span class="badge bg-primary fs-6">{{ users|length }} total</span>
-                    </div>
-                </div>
-                <div>
-                    <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
-                        <i class="fas fa-user-plus"></i> New User
-                    </a>
-                </div>
-            </div>
+            {% set actions %}
+            <a href="{{ url_for('admin.create_user') }}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-user-plus"></i> New User
+            </a>
+            {% endset %}
+            {{ page_header('fas fa-users', 'User Management', 'Manage users • ' ~ (users|length) ~ ' total', actions) }}
         </div>
     </div>
 

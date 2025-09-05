@@ -3,15 +3,25 @@
 {% block title %}Profile - {{ app_name }}{% endblock %}
 
 {% block content %}
+{% from "_components.html" import page_header %}
+<div class="row">
+	<div class="col-12">
+		{% set actions %}
+		<a href="{{ url_for('auth.edit_profile') }}" class="btn btn-outline-light btn-sm">
+			<i class="fas fa-edit"></i> Edit Profile
+		</a>
+		<button id="theme-toggle" class="btn btn-outline-secondary btn-sm">
+			<i class="fas fa-moon me-1"></i>
+			Toggle Theme
+		</button>
+		{% endset %}
+		{{ page_header('fas fa-user-circle', 'Your Profile', 'Manage your account details', actions) }}
+	</div>
+</div>
 <div class="row justify-content-center">
 	<div class="col-md-8">
 		<div class="card">
-			<div class="card-header d-flex justify-content-between align-items-center">
-				<span><i class="fas fa-user-circle me-2"></i>Your Profile</span>
-				<a href="{{ url_for('auth.edit_profile') }}" class="btn btn-sm btn-outline-primary">
-					<i class="fas fa-edit me-1"></i>Edit Profile
-				</a>
-			</div>
+			<div class="card-header"><i class="fas fa-id-card me-2"></i> Profile Details</div>
 			<div class="card-body">
 				<div class="row mb-3">
 					<div class="col-sm-4 text-muted">Username</div>
@@ -48,3 +58,44 @@
 {% endblock %}
 
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	const storageKey = 'tt-theme';
+	const btn = document.getElementById('theme-toggle');
+	const meta = document.getElementById('meta-theme-color');
+	if (!btn) return;
+
+	function applyTheme(theme) {
+		document.documentElement.setAttribute('data-theme', theme);
+		if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b1220' : '#3b82f6');
+		const icon = btn.querySelector('i');
+		if (icon) icon.className = theme === 'dark' ? 'fas fa-sun me-1' : 'fas fa-moon me-1';
+	}
+
+	function currentTheme() {
+		return document.documentElement.getAttribute('data-theme') || 'light';
+	}
+
+	async function saveThemeToUser(value) {
+		try {
+			await fetch('{{ url_for("auth.update_theme_preference") }}', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ theme: value })
+			});
+		} catch (e) {}
+	}
+
+	// Initialize icon state
+	applyTheme(currentTheme());
+
+	btn.addEventListener('click', async function() {
+		const next = currentTheme() === 'dark' ? 'light' : 'dark';
+		localStorage.setItem(storageKey, next);
+		applyTheme(next);
+		await saveThemeToUser(next);
+	});
+});
+</script>
+{% endblock %}

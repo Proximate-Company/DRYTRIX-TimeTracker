@@ -4,28 +4,15 @@
 
 {% block content %}
 <div class="container-fluid">
+    {% from "_components.html" import page_header %}
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Admin</a></li>
-                            <li class="breadcrumb-item"><a href="{{ url_for('admin.list_users') }}">Users</a></li>
-                            <li class="breadcrumb-item active">{% if user %}Edit{% else %}New{% endif %}</li>
-                        </ol>
-                    </nav>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-user text-primary"></i> 
-                        {% if user %}Edit User{% else %}New User{% endif %}
-                    </h1>
-                </div>
-                <div>
-                    <a href="{{ url_for('admin.list_users') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to Users
-                    </a>
-                </div>
-            </div>
+            {% set actions %}
+            <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-arrow-left"></i> Back to Users
+            </a>
+            {% endset %}
+            {{ page_header('fas fa-user', (user and 'Edit User' or 'New User'), 'Create or update user accounts', actions) }}
         </div>
     </div>
 

@@ -3,40 +3,25 @@
 {% block title %}Dashboard - {{ app_name }}{% endblock %}
 
 {% block content %}
+{% from "_components.html" import page_header %}
 <!-- Toast Container -->
 <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
 
 <!-- Template meta for JS flags -->
 <div id="dashboard-meta" data-has-active-timer="{{ 1 if active_timer else 0 }}" style="display:none;"></div>
 
-<!-- Enhanced Welcome Section -->
-<div class="row section-spacing">
+<!-- Page Header matching admin style -->
+<div class="row">
     <div class="col-12">
-        <div class="card mobile-card hover-lift">
-            <div class="card-body py-4">
-                <div class="row align-items-center">
-                    <div class="col-lg-8 col-md-7 mb-3 mb-md-0">
-                        <div class="d-flex align-items-center mb-3">
-                            {% if settings and settings.has_logo() %}
-                <img src="{{ settings.get_logo_url() }}" alt="Company Logo" class="me-3" width="32" height="32">
-                {% else %}
-                <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="me-3" width="32" height="32">
-                {% endif %}
-                            <h2 class="mb-0">Welcome back, {{ current_user.display_name }}!</h2>
-                        </div>
-                        <p class="text-muted mb-0 fs-5">Track your productivity and manage your time effectively with <strong>DryTrix</strong> TimeTracker</p>
-                    </div>
-                    <div class="col-lg-4 col-md-5 text-center text-md-end">
-                        <div class="d-flex justify-content-center justify-content-md-end">
-                            <div class="text-center">
-                                <div class="h1 text-primary mb-2 fw-bold">{{ today_hours|round(1) }}</div>
-                                <small class="text-muted fs-6">Hours Today</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% set actions %}
+        <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-outline-light btn-sm">
+            <i class="fas fa-plus"></i> Log Time
+        </a>
+        <a href="{{ url_for('reports.reports') }}" class="btn btn-outline-light btn-sm">
+            <i class="fas fa-chart-line"></i> Reports
+        </a>
+        {% endset %}
+        {{ page_header('fas fa-tachometer-alt', 'Dashboard', 'Welcome back, ' ~ current_user.display_name ~ ' • ' ~ (today_hours|round(1)) ~ 'h today', actions) }}
     </div>
 </div>
 
@@ -275,13 +260,13 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-end pe-4 actions-cell" data-label="Actions">
-                                    <div class="btn-group d-flex d-md-inline-flex mobile-stack" role="group">
+                                    <div class="btn-group" role="group">
                                         <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
-                                           class="btn btn-sm btn-outline-secondary touch-target" title="Edit entry">
+                                           class="btn btn-sm btn-action btn-action--edit touch-target" title="Edit entry">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                        <button type="button" class="btn btn-sm btn-outline-danger touch-target" title="Delete entry" 
+                                        <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="Delete entry" 
                                                 onclick="showDeleteEntryModal('{{ entry.id }}', '{{ entry.project.name }}', '{{ entry.duration_formatted }}')">
                                             <i class="fas fa-trash"></i>
                                         </button>
