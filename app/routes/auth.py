@@ -105,3 +105,26 @@ def edit_profile():
         return redirect(url_for('auth.profile'))
     
     return render_template('auth/edit_profile.html')
+
+
+@auth_bp.route('/profile/theme', methods=['POST'])
+@login_required
+def update_theme_preference():
+    """Persist user theme preference (light|dark|system)."""
+    try:
+        value = (request.json.get('theme') if request.is_json else request.form.get('theme') or '').strip().lower()
+    except Exception:
+        value = (request.form.get('theme') or '').strip().lower()
+
+    if value not in ('light', 'dark', 'system'):
+        return ({'error': 'invalid theme value'}, 400)
+
+    # Store None for system to allow fallback to system preference
+    current_user.theme_preference = None if value == 'system' else value
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return ({'error': 'failed to save preference'}, 500)
+
+    return ({'ok': True, 'theme': value}, 200)
