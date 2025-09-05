@@ -10,6 +10,10 @@
 		<a href="{{ url_for('auth.edit_profile') }}" class="btn btn-outline-light btn-sm">
 			<i class="fas fa-edit"></i> Edit Profile
 		</a>
+		<button id="theme-toggle" class="btn btn-outline-secondary btn-sm">
+			<i class="fas fa-moon me-1"></i>
+			Toggle Theme
+		</button>
 		{% endset %}
 		{{ page_header('fas fa-user-circle', 'Your Profile', 'Manage your account details', actions) }}
 	</div>
@@ -54,3 +58,44 @@
 {% endblock %}
 
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	const storageKey = 'tt-theme';
+	const btn = document.getElementById('theme-toggle');
+	const meta = document.getElementById('meta-theme-color');
+	if (!btn) return;
+
+	function applyTheme(theme) {
+		document.documentElement.setAttribute('data-theme', theme);
+		if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b1220' : '#3b82f6');
+		const icon = btn.querySelector('i');
+		if (icon) icon.className = theme === 'dark' ? 'fas fa-sun me-1' : 'fas fa-moon me-1';
+	}
+
+	function currentTheme() {
+		return document.documentElement.getAttribute('data-theme') || 'light';
+	}
+
+	async function saveThemeToUser(value) {
+		try {
+			await fetch('{{ url_for("auth.update_theme_preference") }}', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ theme: value })
+			});
+		} catch (e) {}
+	}
+
+	// Initialize icon state
+	applyTheme(currentTheme());
+
+	btn.addEventListener('click', async function() {
+		const next = currentTheme() === 'dark' ? 'light' : 'dark';
+		localStorage.setItem(storageKey, next);
+		applyTheme(next);
+		await saveThemeToUser(next);
+	});
+});
+</script>
+{% endblock %}
