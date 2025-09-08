@@ -200,7 +200,7 @@ def create_app(config=None):
     def initialize_database():
         try:
             # Import models to ensure they are registered
-            from app.models import User, Project, TimeEntry, Task, Settings
+            from app.models import User, Project, TimeEntry, Task, Settings, TaskActivity
             
             # Create database tables
             db.create_all()
@@ -322,7 +322,7 @@ def init_database(app):
     with app.app_context():
         try:
             # Import models to ensure they are registered
-            from app.models import User, Project, TimeEntry, Task, Settings
+            from app.models import User, Project, TimeEntry, Task, Settings, TaskActivity
             
             # Create database tables
             db.create_all()

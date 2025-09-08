@@ -46,10 +46,11 @@
 
                         <!-- Description -->
                         <div class="mb-4">
-                            <label for="description" class="form-label fw-semibold">
+                            <label for="description" class="form-label fw-semibold d-flex align-items-center justify-content-between">
                                 <i class="fas fa-align-left me-2 text-primary"></i>Description
+                                <small class="text-muted">Supports Markdown</small>
                             </label>
-                            <textarea class="form-control" id="description" name="description" rows="4" 
+                            <textarea class="form-control" id="description" name="description" rows="6" 
                                       placeholder="Provide detailed information about the task, requirements, and any specific instructions...">{{ request.form.get('description', '') }}</textarea>
                             <small class="form-text text-muted">Optional: Add context, requirements, or specific instructions for the task</small>
                         </div>
@@ -419,12 +420,30 @@
 }
 </style>
 
+<!-- EasyMDE Markdown Editor -->
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+
 <script>
 // Form validation and enhancement
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('createTaskForm');
     const nameInput = document.getElementById('name');
     const descriptionInput = document.getElementById('description');
+
+    // Initialize EasyMDE for Markdown input
+    if (descriptionInput && window.EasyMDE) {
+        const easyMDE = new EasyMDE({
+            element: descriptionInput,
+            spellChecker: false,
+            status: false,
+            toolbar: [
+                'bold','italic','heading','|','unordered-list','ordered-list','|','link','quote','code','table','horizontal-rule','|','preview','guide'
+            ],
+            renderingConfig: { singleLineBreaks: false },
+            minHeight: '260px'
+        });
+    }
     
     // Auto-resize description textarea
     if (descriptionInput) {
