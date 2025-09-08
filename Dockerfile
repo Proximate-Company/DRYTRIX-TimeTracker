@@ -54,7 +54,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create data and logs directories with proper permissions
-RUN mkdir -p /data /app/logs && chmod 755 /data && chmod 755 /app/logs
+RUN mkdir -p /data /data/uploads /app/logs && chmod 755 /data && chmod 755 /data/uploads && chmod 755 /app/logs
+
+# Create Flask instance directory with proper permissions
+RUN mkdir -p /app/instance && chmod 755 /app/instance
 
 # Create upload directories with proper permissions
 RUN mkdir -p /app/app/static/uploads/logos /app/static/uploads/logos && \
@@ -74,7 +77,7 @@ RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-databas
 
 # Create non-root user
 RUN useradd -m -u 1000 timetracker && \
-    chown -R timetracker:timetracker /app /data /app/logs /app/app/static/uploads /app/static/uploads
+    chown -R timetracker:timetracker /app /data /app/logs /app/instance /app/app/static/uploads /app/static/uploads
 
 # Verify startup script exists and is accessible
 RUN ls -la /app/start.py && \
