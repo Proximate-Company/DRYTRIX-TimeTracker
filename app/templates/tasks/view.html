@@ -25,9 +25,6 @@
                                 </div>
                                 <div class="flex-grow-1">
                                     <h1 class="h2 mb-2">{{ task.name }}</h1>
-                                    {% if task.description %}
-                                    <p class="text-muted mb-0">{{ task.description }}</p>
-                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -76,6 +73,22 @@
     <div class="row g-4">
         <!-- Main Task Information -->
         <div class="col-lg-8">
+            <!-- Task Description -->
+            {% if task.description %}
+            <div class="card mobile-card mb-4">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h6 class="mb-0">
+                        <i class="fas fa-align-left me-2 text-primary"></i>Description
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="task-description-content">
+                        {{ task.description | markdown | safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Project Information -->
             <div class="card mobile-card mb-4">
                 <div class="card-header">
@@ -178,8 +191,8 @@
                                     <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% for entry in time_entries[:5] %}
+                            <tbody id="timeEntriesTableBody">
+                                {% for entry in time_entries %}
                                 <tr>
                                     <td>{{ entry.start_time.strftime('%b %d, %Y') }}</td>
                                     <td>
@@ -191,14 +204,14 @@
                                     </td>
                                     <td>{{ entry.notes[:50] if entry.notes else '-' }}</td>
                                     <td>{{ entry.user.display_name if entry.user else '-' }}</td>
-                                    <td class="text-end">
+                                    <td class="text-end pe-4 actions-cell">
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}"
-                                               class="btn btn-sm btn-outline-primary" title="Edit">
+                                               class="btn btn-sm btn-action btn-action--edit touch-target" title="Edit entry">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                            <button type="button" class="btn btn-sm btn-outline-danger" title="Delete"
+                                            <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="Delete entry"
                                                     onclick="showDeleteEntryModal('{{ entry.id }}', '{{ task.project.name }}', '{{ entry.duration_formatted }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -210,9 +223,17 @@
                             </tbody>
                         </table>
                     </div>
-                    {% if task.time_entries.count() > 5 %}
-                    <div class="text-center mt-3">
-                        <small class="text-muted">Showing 5 of {{ task.time_entries.count() }} entries</small>
+                    {% if task.time_entries.count() > 10 %}
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted" id="entriesInfo">Showing 10 of {{ task.time_entries.count() }} entries</small>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" id="showMoreBtn" onclick="showMoreEntries()">
+                                <i class="fas fa-chevron-down me-2"></i>Show more
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary d-none" id="showLessBtn" onclick="showLessEntries()">
+                                <i class="fas fa-chevron-up me-2"></i>Show less
+                            </button>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -314,34 +335,38 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="d-grid gap-2">
+                    <div class="quick-actions d-flex flex-wrap gap-2">
                         {% if task.status == 'todo' %}
-                        <button class="btn btn-warning btn-sm" onclick="updateTaskStatus('in_progress')">
-                            <i class="fas fa-play me-2"></i>Start Task
+                        <button class="btn btn-sm btn-action btn-action--success" onclick="openStatusModal('in_progress')" title="Start Task" data-bs-toggle="tooltip">
+                            <i class="fas fa-play"></i>
                         </button>
                         {% elif task.status == 'in_progress' %}
-                        <button class="btn btn-info btn-sm" onclick="updateTaskStatus('review')">
-                            <i class="fas fa-eye me-2"></i>Mark for Review
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="updateTaskStatus('todo')">
-                            <i class="fas fa-pause me-2"></i>Pause Task
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-action btn-action--view" onclick="openStatusModal('review')" title="Mark for Review" data-bs-toggle="tooltip">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-action btn-action--warning" onclick="openStatusModal('todo')" title="Pause Task" data-bs-toggle="tooltip">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                        </div>
                         {% elif task.status == 'review' %}
-                        <button class="btn btn-success btn-sm" onclick="updateTaskStatus('done')">
-                            <i class="fas fa-check me-2"></i>Complete Task
-                        </button>
-                        <button class="btn btn-warning btn-sm" onclick="updateTaskStatus('in_progress')">
-                            <i class="fas fa-undo me-2"></i>Back to Progress
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-action btn-action--success" onclick="openStatusModal('done')" title="Complete Task" data-bs-toggle="tooltip">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-action btn-action--edit" onclick="openStatusModal('in_progress')" title="Back to Progress" data-bs-toggle="tooltip">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </div>
                         {% elif task.status == 'done' %}
-                        <button class="btn btn-warning btn-sm" onclick="updateTaskStatus('todo')">
-                            <i class="fas fa-undo me-2"></i>Reopen Task
+                        <button class="btn btn-sm btn-action btn-action--warning" onclick="openStatusModal('todo')" title="Reopen Task" data-bs-toggle="tooltip">
+                            <i class="fas fa-undo"></i>
                         </button>
                         {% endif %}
                         
                         {% if task.status != 'done' and task.status != 'cancelled' %}
-                        <button class="btn btn-danger btn-sm" onclick="updateTaskStatus('cancelled')">
-                            <i class="fas fa-times me-2"></i>Cancel Task
+                        <button class="btn btn-sm btn-action btn-action--danger" onclick="openStatusModal('cancelled')" title="Cancel Task" data-bs-toggle="tooltip">
+                            <i class="fas fa-times"></i>
                         </button>
                         {% endif %}
                     </div>
@@ -395,6 +420,41 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Activity Log -->
+            {% if task.activities.count() > 0 %}
+            <div class="card mobile-card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2 text-secondary"></i>Activity Log
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Event</th>
+                                    <th>User</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for act in activities %}
+                                <tr>
+                                    <td>{{ act.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td class="text-capitalize">{{ act.event.replace('_', ' ') }}</td>
+                                    <td>{{ act.user.display_name if act.user else '-' }}</td>
+                                    <td class="text-muted">{{ act.details or '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -555,29 +615,128 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+/* Dark mode for task details */
+[data-theme="dark"] .task-detail-item {
+    background-color: #0f172a;
+}
+[data-theme="dark"] .task-detail-item:hover {
+    background-color: #0b1220;
+}
+[data-theme="dark"] .timeline::before { background-color: #1f2937; }
+[data-theme="dark"] .timeline-marker { box-shadow: 0 0 0 2px #1f2937; }
+[data-theme="dark"] .card.mobile-card .card-header h6 { color: #e5e7eb; }
+
 .btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 </style>
+<style>
+/* Quick actions: prevent full-width buttons, improve spacing */
+.quick-actions .btn { width: auto; }
+@media (max-width: 768px) {
+    .quick-actions { gap: 0.5rem; }
+}
+</style>
 
 <script>
 function updateTaskStatus(status) {
-    if (confirm('Are you sure you want to update the task status?')) {
-        // Simple form submission approach instead of fetch with CSRF token
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ url_for("tasks.update_task_status", task_id=task.id) }}';
-        
-        const statusInput = document.createElement('input');
-        statusInput.type = 'hidden';
-        statusInput.name = 'status';
-        statusInput.value = status;
-        
-        form.appendChild(statusInput);
-        document.body.appendChild(form);
-        form.submit();
+    // Build and submit form without default confirm
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("tasks.update_task_status", task_id=task.id) }}';
+
+    const statusInput = document.createElement('input');
+    statusInput.type = 'hidden';
+    statusInput.name = 'status';
+    statusInput.value = status;
+
+    form.appendChild(statusInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function toggleEntries() { /* deprecated - replaced by showMoreEntries/showLessEntries */ }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('#timeEntriesTableBody tr');
+    const total = rows.length;
+    const initial = Math.min(10, total);
+    rows.forEach((row, idx) => row.style.display = (idx < initial ? '' : 'none'));
+    const info = document.getElementById('entriesInfo');
+    if (info && total > 10) info.textContent = `Showing ${initial} of ${total} entries`;
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+});
+
+// Quick Action Modal
+let pendingStatus = null;
+function openStatusModal(status) {
+    pendingStatus = status;
+    const titleMap = {
+        'in_progress': 'Start Task',
+        'review': 'Mark for Review',
+        'todo': 'Pause / Reopen Task',
+        'done': 'Complete Task',
+        'cancelled': 'Cancel Task'
+    };
+    const bodyMap = {
+        'in_progress': 'Are you sure you want to start this task now?',
+        'review': 'Move this task to Review?',
+        'todo': 'Move this task to To Do?',
+        'done': 'Mark this task as Completed?',
+        'cancelled': 'Cancel this task? You can reopen it later.'
+    };
+
+    const modalEl = document.getElementById('statusConfirmModal');
+    modalEl.querySelector('.modal-title').textContent = titleMap[status] || 'Confirm Action';
+    modalEl.querySelector('.modal-body-text').textContent = bodyMap[status] || 'Are you sure?';
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+function confirmStatusChange() {
+    if (!pendingStatus) return;
+    const btn = document.getElementById('statusConfirmBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Working...';
     }
+    updateTaskStatus(pendingStatus);
+}
+
+// Progressive show more/less for time entries
+function showMoreEntries() {
+    const rows = Array.from(document.querySelectorAll('#timeEntriesTableBody tr'));
+    const info = document.getElementById('entriesInfo');
+    const showMoreBtn = document.getElementById('showMoreBtn');
+    const showLessBtn = document.getElementById('showLessBtn');
+    const currentlyVisible = rows.filter(r => r.style.display !== 'none').length;
+    const toShow = Math.min(currentlyVisible + 10, rows.length);
+    rows.forEach((row, idx) => row.style.display = (idx < toShow ? '' : 'none'));
+    if (info) info.textContent = (toShow < rows.length) ? `Showing ${toShow} of ${rows.length} entries` : `Showing all ${rows.length} entries`;
+    if (toShow >= rows.length) {
+        showMoreBtn.classList.add('d-none');
+        showLessBtn.classList.remove('d-none');
+    } else {
+        showLessBtn.classList.remove('d-none');
+    }
+}
+
+function showLessEntries() {
+    const rows = Array.from(document.querySelectorAll('#timeEntriesTableBody tr'));
+    const info = document.getElementById('entriesInfo');
+    const showMoreBtn = document.getElementById('showMoreBtn');
+    const showLessBtn = document.getElementById('showLessBtn');
+    const initial = Math.min(10, rows.length);
+    rows.forEach((row, idx) => row.style.display = (idx < initial ? '' : 'none'));
+    if (info) info.textContent = `Showing ${initial} of ${rows.length} entries`;
+    showMoreBtn.classList.remove('d-none');
+    showLessBtn.classList.add('d-none');
 }
 
 // Function to show delete time entry modal
@@ -606,6 +765,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<!-- Status Confirm Modal -->
+<div class="modal fade" id="statusConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-body-text">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" id="statusConfirmBtn" class="btn btn-primary" onclick="confirmStatusChange()">
+                    <i class="fas fa-check me-2"></i>Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
 
 <!-- Delete Time Entry Modal -->
 <div class="modal fade" id="deleteEntryModal" tabindex="-1">

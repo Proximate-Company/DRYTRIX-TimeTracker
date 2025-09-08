@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Task, Project, User, TimeEntry
+from app.models import Task, Project, User, TimeEntry, TaskActivity
 from datetime import datetime, date
 from decimal import Decimal
 from app.utils.db import safe_commit
@@ -166,8 +166,10 @@ def view_task(task_id):
     
     # Get time entries for this task
     time_entries = task.time_entries.order_by(TimeEntry.start_time.desc()).all()
+    # Recent activity entries
+    activities = task.activities.order_by(TaskActivity.created_at.desc()).limit(20).all()
     
-    return render_template('tasks/view.html', task=task, time_entries=time_entries)
+    return render_template('tasks/view.html', task=task, time_entries=time_entries, activities=activities)
 
 @tasks_bp.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -221,19 +223,40 @@ def edit_task(task_id):
         valid_statuses = ['todo', 'in_progress', 'review', 'done', 'cancelled']
         if selected_status and selected_status in valid_statuses and selected_status != task.status:
             try:
+                previous_status = task.status
                 if selected_status == 'in_progress':
-                    task.start_task()
+                    # If reopening from done, preserve started_at
+                    if task.status == 'done':
+                        task.completed_at = None
+                        task.status = 'in_progress'
+                        if not task.started_at:
+                            task.started_at = now_in_app_timezone()
+                        task.updated_at = now_in_app_timezone()
+                        db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='reopen', details='Task reopened to In Progress'))
+                        if not safe_commit('edit_task_reopen_in_progress', {'task_id': task.id}):
+                            flash('Could not update status due to a database error. Please check server logs.', 'error')
+                            return render_template('tasks/edit.html', task=task)
+                    else:
+                        task.start_task()
+                        db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='start', details=f"Task moved from {previous_status} to In Progress"))
+                        safe_commit('log_task_start_from_edit', {'task_id': task.id})
                 elif selected_status == 'done':
                     task.complete_task()
+                    db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='complete', details='Task completed'))
+                    safe_commit('log_task_complete_from_edit', {'task_id': task.id})
                 elif selected_status == 'cancelled':
                     task.cancel_task()
+                    db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='cancel', details='Task cancelled'))
+                    safe_commit('log_task_cancel_from_edit', {'task_id': task.id})
                 else:
                     # Reopen or move to non-special states
                     # Clear completed_at if reopening from done
-                    if task.status == 'done' and selected_status in ['todo', 'in_progress', 'review']:
+                    if task.status == 'done' and selected_status in ['todo', 'review']:
                         task.completed_at = None
                     task.status = selected_status
                     task.updated_at = now_in_app_timezone()
+                    event_name = 'reopen' if previous_status == 'done' and selected_status in ['todo', 'review'] else ('pause' if selected_status == 'todo' else ('review' if selected_status == 'review' else 'status_change'))
+                    db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event=event_name, details=f"Task moved from {previous_status} to {selected_status}"))
                     if not safe_commit('edit_task_status_change', {'task_id': task.id, 'status': selected_status}):
                         flash('Could not update status due to a database error. Please check server logs.', 'error')
                         return render_template('tasks/edit.html', task=task)
@@ -286,21 +309,40 @@ def update_task_status(task_id):
                 if not task.started_at:
                     task.started_at = now_in_app_timezone()
                 task.updated_at = now_in_app_timezone()
+                db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='reopen', details='Task reopened to In Progress'))
                 if not safe_commit('update_task_status_reopen_in_progress', {'task_id': task.id, 'status': new_status}):
                     flash('Could not update status due to a database error. Please check server logs.', 'error')
                     return redirect(url_for('tasks.view_task', task_id=task.id))
             else:
+                previous_status = task.status
                 task.start_task()
+                db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='start', details=f"Task moved from {previous_status} to In Progress"))
+                safe_commit('log_task_start', {'task_id': task.id})
         elif new_status == 'done':
             task.complete_task()
+            db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='complete', details='Task completed'))
+            safe_commit('log_task_complete', {'task_id': task.id})
         elif new_status == 'cancelled':
             task.cancel_task()
+            db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='cancel', details='Task cancelled'))
+            safe_commit('log_task_cancel', {'task_id': task.id})
         else:
             # For other transitions, handle reopening from done and local timestamps
             if task.status == 'done' and new_status in ['todo', 'review']:
                 task.completed_at = None
+            previous_status = task.status
             task.status = new_status
             task.updated_at = now_in_app_timezone()
+            # Log pause or review or generic change
+            if previous_status == 'done' and new_status in ['todo', 'review']:
+                event_name = 'reopen'
+            else:
+                event_map = {
+                    'todo': 'pause',
+                    'review': 'review',
+                }
+                event_name = event_map.get(new_status, 'status_change')
+            db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event=event_name, details=f"Task moved from {previous_status} to {new_status}"))
             if not safe_commit('update_task_status', {'task_id': task.id, 'status': new_status}):
                 flash('Could not update status due to a database error. Please check server logs.', 'error')
                 return redirect(url_for('tasks.view_task', task_id=task.id))
