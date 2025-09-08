@@ -50,8 +50,9 @@
                                 <i class="fas fa-align-left me-2 text-primary"></i>Description
                                 <small class="text-muted">Supports Markdown</small>
                             </label>
-                            <textarea class="form-control" id="description" name="description" rows="6" 
-                                      placeholder="Provide detailed information about the task, requirements, and any specific instructions...">{{ request.form.get('description', '') }}</textarea>
+                            <div class="markdown-editor-wrapper">
+                                <textarea class="form-control" id="description" name="description" rows="12" placeholder="Provide detailed information about the task, requirements, and any specific instructions...">{{ request.form.get('description', '') }}</textarea>
+                            </div>
                             <small class="form-text text-muted">Optional: Add context, requirements, or specific instructions for the task</small>
                         </div>
 
@@ -418,6 +419,332 @@
 .tip-item:hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
+
+/* ===== ENHANCED MARKDOWN EDITOR ===== */
+
+/* Editor Wrapper */
+.markdown-editor-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.markdown-editor-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.8s;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.markdown-editor-wrapper:hover::before {
+    left: 100%;
+}
+
+.markdown-editor-wrapper:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Enhanced Editor Container */
+.enhanced-markdown-editor {
+    border-radius: 12px !important;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.enhanced-markdown-editor:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* CodeMirror Editor */
+.enhanced-markdown-editor .CodeMirror {
+    border-radius: 12px 12px 0 0 !important;
+    border: 2px solid #e2e8f0 !important;
+    border-bottom: none !important;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    padding: 16px !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+    min-height: 300px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.enhanced-markdown-editor .CodeMirror-focused {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    transform: scale(1.01);
+}
+
+/* Editor Toolbar */
+.enhanced-markdown-editor .editor-toolbar {
+    border: 2px solid #e2e8f0 !important;
+    border-top: none !important;
+    border-radius: 0 0 12px 12px !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    padding: 8px 12px !important;
+    position: relative;
+}
+
+.enhanced-markdown-editor .editor-toolbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+}
+
+/* Toolbar Buttons */
+.enhanced-markdown-editor .editor-toolbar button {
+    border-radius: 6px !important;
+    margin: 0 2px !important;
+    padding: 6px 8px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    color: #64748b !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.enhanced-markdown-editor .editor-toolbar button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.enhanced-markdown-editor .editor-toolbar button:hover::before {
+    left: 100%;
+}
+
+.enhanced-markdown-editor .editor-toolbar button:hover {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) !important;
+    color: var(--primary-color) !important;
+    transform: translateY(-1px) scale(1.05) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.enhanced-markdown-editor .editor-toolbar button.active {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+}
+
+.enhanced-markdown-editor .editor-toolbar i.separator {
+    border-left: 1px solid #cbd5e1 !important;
+    margin: 0 8px !important;
+    opacity: 0.6;
+}
+
+/* ===== DARK MODE ===== */
+.enhanced-markdown-editor.dark-mode .CodeMirror {
+    background: #0f172a !important;
+    color: #e5e7eb !important;
+    border-color: #1f2a44 !important;
+}
+
+.enhanced-markdown-editor.dark-mode .CodeMirror-focused {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2) !important;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-toolbar {
+    background: linear-gradient(135deg, #0b1220 0%, #1f2a44 100%) !important;
+    border-color: #1f2a44 !important;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-toolbar::before {
+    background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+}
+
+.enhanced-markdown-editor.dark-mode .editor-toolbar button {
+    color: #94a3b8 !important;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-toolbar button:hover {
+    background: linear-gradient(135deg, #1f2a44 0%, #374151 100%) !important;
+    color: var(--primary-color) !important;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-toolbar button.active {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%) !important;
+    color: white !important;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-toolbar i.separator {
+    border-left-color: #374151 !important;
+}
+
+/* ===== PREVIEW MODE ===== */
+.enhanced-markdown-editor .editor-preview {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+    line-height: 1.7 !important;
+    position: relative;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-preview {
+    background: #0f172a !important;
+    color: #e5e7eb !important;
+}
+
+/* Preview Headings */
+.enhanced-markdown-editor .editor-preview h1,
+.enhanced-markdown-editor .editor-preview h2,
+.enhanced-markdown-editor .editor-preview h3,
+.enhanced-markdown-editor .editor-preview h4,
+.enhanced-markdown-editor .editor-preview h5,
+.enhanced-markdown-editor .editor-preview h6 {
+    color: var(--primary-color) !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 0.5em !important;
+    position: relative;
+}
+
+.enhanced-markdown-editor .editor-preview h1::after,
+.enhanced-markdown-editor .editor-preview h2::after,
+.enhanced-markdown-editor .editor-preview h3::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-color), transparent);
+}
+
+/* Preview Blockquotes */
+.enhanced-markdown-editor .editor-preview blockquote {
+    border-left: 4px solid var(--primary-color) !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    padding: 12px 16px !important;
+    margin: 16px 0 !important;
+    border-radius: 0 8px 8px 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.enhanced-markdown-editor .editor-preview blockquote::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.8s;
+}
+
+.enhanced-markdown-editor .editor-preview blockquote:hover::before {
+    left: 100%;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-preview blockquote {
+    background: linear-gradient(135deg, #1f2a44 0%, #374151 100%) !important;
+}
+
+/* Preview Code */
+.enhanced-markdown-editor .editor-preview code {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+    color: #e11d48 !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-size: 0.9em !important;
+    font-weight: 600;
+    border: 1px solid rgba(225, 29, 72, 0.1);
+}
+
+.enhanced-markdown-editor.dark-mode .editor-preview code {
+    background: linear-gradient(135deg, #1f2a44 0%, #374151 100%) !important;
+    color: #f472b6 !important;
+    border-color: rgba(244, 114, 182, 0.2);
+}
+
+/* Preview Code Blocks */
+.enhanced-markdown-editor .editor-preview pre {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    overflow-x: auto !important;
+    position: relative;
+}
+
+.enhanced-markdown-editor .editor-preview pre::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+}
+
+.enhanced-markdown-editor.dark-mode .editor-preview pre {
+    background: linear-gradient(135deg, #0b1220 0%, #1f2a44 100%) !important;
+    border-color: #1f2a44 !important;
+}
+
+/* Preview Tables */
+.enhanced-markdown-editor .editor-preview table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 16px 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+.enhanced-markdown-editor .editor-preview th,
+.enhanced-markdown-editor .editor-preview td {
+    border: 1px solid #e2e8f0 !important;
+    padding: 8px 12px !important;
+    text-align: left !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.enhanced-markdown-editor .editor-preview th {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    font-weight: 600 !important;
+    color: var(--primary-color) !important;
+}
+
+.enhanced-markdown-editor .editor-preview tr:hover td {
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-preview th,
+.enhanced-markdown-editor.dark-mode .editor-preview td {
+    border-color: #1f2a44 !important;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-preview th {
+    background: linear-gradient(135deg, #1f2a44 0%, #374151 100%) !important;
+    color: #60a5fa !important;
+}
+
+.enhanced-markdown-editor.dark-mode .editor-preview tr:hover td {
+    background: rgba(96, 165, 250, 0.1) !important;
+}
 </style>
 
 <!-- EasyMDE Markdown Editor -->
@@ -441,8 +768,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 'bold','italic','heading','|','unordered-list','ordered-list','|','link','quote','code','table','horizontal-rule','|','preview','guide'
             ],
             renderingConfig: { singleLineBreaks: false },
-            minHeight: '260px'
+            minHeight: '300px',
+            maxHeight: '500px',
+            autofocus: false,
+            placeholder: 'Provide detailed information about the task, requirements, and any specific instructions...',
+            toolbarTips: true,
+            insertTexts: {
+                horizontalRule: ['', '\n\n-----\n\n'],
+                image: ['![](http://', ')'],
+                link: ['[', '](http://)'],
+                table: ['', '\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text     | Text     |\n\n']
+            }
         });
+        
+        // Apply custom styling
+        const editorContainer = descriptionInput.closest('.EasyMDEContainer');
+        if (editorContainer) {
+            editorContainer.classList.add('enhanced-markdown-editor');
+            
+            // Add dark mode support
+            function updateEditorTheme() {
+                if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                    editorContainer.classList.add('dark-mode');
+                } else {
+                    editorContainer.classList.remove('dark-mode');
+                }
+            }
+            
+            // Initial theme check
+            updateEditorTheme();
+            
+            // Listen for theme changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                        updateEditorTheme();
+                    }
+                });
+            });
+            
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['data-theme']
+            });
+        }
     }
     
     // Auto-resize description textarea
