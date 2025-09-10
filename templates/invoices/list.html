@@ -8,7 +8,7 @@
 	<div class="row">
 		<div class="col-12">
 			{% set actions %}
-			<a href="{{ url_for('invoices.create_invoice') }}" class="btn btn-outline-light btn-sm">
+			<a href="{{ url_for('invoices.create_invoice') }}" class="btn-header btn-primary">
 				<i class="fas fa-plus"></i> Create Invoice
 			</a>
 			{% endset %}
@@ -201,45 +201,43 @@
 										   title="Edit Invoice">
 											<i class="fas fa-edit"></i>
 										</a>
-										<div class="btn-group" role="group">
-											<button type="button" 
-											        class="btn btn-sm btn-action btn-action--more dropdown-toggle dropdown-toggle-split" 
-											        data-bs-toggle="dropdown" 
-											        aria-expanded="false">
-												<span class="visually-hidden">More actions</span>
-											</button>
-											<ul class="dropdown-menu dropdown-menu-end">
-												<li>
-													<a class="dropdown-item" 
-													   href="{{ url_for('invoices.export_invoice_csv', invoice_id=invoice.id) }}">
-														<i class="fas fa-download me-2"></i> Export CSV
-														</a>
+										<button type="button" 
+										        class="btn btn-sm btn-action btn-action--more dropdown-toggle dropdown-toggle-split" 
+										        data-bs-toggle="dropdown" 
+										        aria-expanded="false">
+											<span class="visually-hidden">More actions</span>
+										</button>
+										<ul class="dropdown-menu dropdown-menu-end" data-bs-auto-close="true">
+											<li>
+												<a class="dropdown-item" 
+												   href="{{ url_for('invoices.export_invoice_csv', invoice_id=invoice.id) }}">
+													<i class="fas fa-download me-2"></i> Export CSV
+													</a>
+											</li>
+											<li>
+												<a class="dropdown-item" 
+												   href="{{ url_for('invoices.duplicate_invoice', invoice_id=invoice.id) }}">
+													<i class="fas fa-copy me-2"></i> Duplicate
+													</a>
+											</li>
+											<li>
+												<a class="dropdown-item" 
+												   href="{{ url_for('invoices.generate_from_time', invoice_id=invoice.id) }}">
+													<i class="fas fa-clock me-2"></i> Generate from Time
+													</a>
+											</li>
+											<li><hr class="dropdown-divider"></li>
+											<li>
+												<form method="POST" 
+												      action="{{ url_for('invoices.delete_invoice', invoice_id=invoice.id) }}" 
+												      class="d-inline"
+												      onsubmit="return confirm('Are you sure you want to delete this invoice? This action cannot be undone.')">
+													<button type="submit" class="dropdown-item text-danger">
+														<i class="fas fa-trash me-2"></i> Delete
+														</button>
+													</form>
 												</li>
-												<li>
-													<a class="dropdown-item" 
-													   href="{{ url_for('invoices.duplicate_invoice', invoice_id=invoice.id) }}">
-														<i class="fas fa-copy me-2"></i> Duplicate
-														</a>
-												</li>
-												<li>
-													<a class="dropdown-item" 
-													   href="{{ url_for('invoices.generate_from_time', invoice_id=invoice.id) }}">
-														<i class="fas fa-clock me-2"></i> Generate from Time
-														</a>
-												</li>
-												<li><hr class="dropdown-divider"></li>
-												<li>
-													<form method="POST" 
-													      action="{{ url_for('invoices.delete_invoice', invoice_id=invoice.id) }}" 
-													      class="d-inline"
-													      onsubmit="return confirm('Are you sure you want to delete this invoice? This action cannot be undone.')">
-														<button type="submit" class="dropdown-item text-danger">
-															<i class="fas fa-trash me-2"></i> Delete
-															</button>
-														</form>
-													</li>
-											</ul>
-										</div>
+										</ul>
 									</div>
 								</td>
 							</tr>
@@ -264,6 +262,7 @@
 </div>
 
 <style>
+/* Keep dropdown stacking sane; rely on global dropdown styles for look/feel */
 .summary-card {
     transition: all 0.3s ease;
     border-radius: 12px;
@@ -297,6 +296,27 @@
     font-size: 20px;
     font-weight: 700;
     color: var(--text-primary);
+}
+
+/* Ensure dropdown menus work properly */
+.dropdown-menu {
+    z-index: 1050;
+    min-width: 160px;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+.btn-group .dropdown-toggle-split::after {
+    display: inline-block;
+    margin-left: 0.255em;
+    vertical-align: 0.255em;
+    content: "";
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-bottom: 0;
+    border-left: 0.3em solid transparent;
 }
 
 .invoice-number-badge {

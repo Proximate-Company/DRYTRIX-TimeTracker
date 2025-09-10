@@ -9,7 +9,7 @@
         <div class="col-12">
             {% set actions %}
             {% if current_user.is_admin %}
-            <a href="{{ url_for('projects.create_project') }}" class="btn btn-outline-light btn-sm">
+            <a href="{{ url_for('projects.create_project') }}" class="btn-header btn-primary">
                 <i class="fas fa-plus"></i> New Project
             </a>
             {% endif %}
@@ -108,10 +108,10 @@
                                    value="{{ request.args.get('search', '') }}" placeholder="Project name or description">
                         </div>
                         <div class="col-12 d-flex flex-column flex-md-row gap-2 mobile-stack">
-                            <button type="submit" class="btn btn-primary mobile-btn flex-fill">
+                            <button type="submit" class="btn btn-primary mobile-btn flex-fill fw-semibold" style="height: 44px; display: flex; align-items: center; justify-content: center;">
                                 <i class="fas fa-search me-1"></i>Filter
                             </button>
-                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary mobile-btn flex-fill">
+                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary mobile-btn flex-fill fw-semibold" style="height: 44px; display: flex; align-items: center; justify-content: center;">
                                 <i class="fas fa-times me-1"></i>Clear
                             </a>
                         </div>

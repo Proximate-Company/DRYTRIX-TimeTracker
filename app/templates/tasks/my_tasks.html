@@ -200,9 +200,7 @@
                                 </a></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('timer.start_timer_for_project', project_id=task.project_id, task_id=task.id) }}">
-                                    <i class="fas fa-play me-2"></i>Start Timer
-                                </a></li>
+                                <!-- Start Timer removed on tasks page -->
                             </ul>
                         </div>
                     </div>
@@ -310,7 +308,13 @@
                         <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-eye me-2"></i>View Details
                         </a>
-                        {% if task.status == 'todo' or task.status == 'in_progress' %}
+                        {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
+                        <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-stop me-2"></i>Stop Timer
+                            </button>
+                        </form>
+                        {% elif not current_user.active_timer %}
                         <a href="{{ url_for('timer.start_timer_for_project', project_id=task.project_id, task_id=task.id) }}" class="btn btn-success btn-sm">
                             <i class="fas fa-play me-2"></i>Start Timer
                         </a>

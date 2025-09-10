@@ -400,7 +400,7 @@ def export_invoice_pdf(invoice_id):
         from app.utils.pdf_generator import InvoicePDFGenerator
         settings = Settings.get_settings()
         
-        # Generate PDF
+        # Generate PDF (primary: WeasyPrint)
         pdf_generator = InvoicePDFGenerator(invoice, settings=settings)
         pdf_bytes = pdf_generator.generate_pdf()
         
@@ -413,18 +413,14 @@ def export_invoice_pdf(invoice_id):
             download_name=filename
         )
         
-    except ImportError:
-        flash('PDF generation is not available. Please install WeasyPrint.', 'error')
-        return redirect(request.referrer or url_for('invoices.view_invoice', invoice_id=invoice.id))
     except Exception as e:
-        # Try fallback PDF generator
+        # Any failure (including ImportError) -> try ReportLab fallback
         try:
             from app.utils.pdf_generator_fallback import InvoicePDFGeneratorFallback
             settings = Settings.get_settings()
             
-            flash('WeasyPrint failed, using fallback PDF generator. PDF quality may be reduced.', 'warning')
+            flash('High-quality generator unavailable; using fallback PDF generator.', 'warning')
             
-            # Generate PDF using fallback
             pdf_generator = InvoicePDFGeneratorFallback(invoice, settings=settings)
             pdf_bytes = pdf_generator.generate_pdf()
             

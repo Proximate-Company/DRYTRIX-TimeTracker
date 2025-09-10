@@ -192,6 +192,12 @@ Multiple Docker configurations are available for different deployment scenarios:
   - Includes optional Caddy reverse proxy for TLS
   - Suitable for development and testing
 
+- **`docker-compose.local-test.yml`** - Quick local testing with SQLite
+  - Uses SQLite database (no separate database container needed)
+  - Development mode with debug logging enabled
+  - Perfect for quick testing and development
+  - See [Local Testing Documentation](docs/LOCAL_TESTING_WITH_SQLITE.md)
+
 ### Remote Deployment
 - **`docker-compose.remote.yml`** - Production deployment using GitHub Container Registry
   - Uses pre-built `ghcr.io/drytrix/timetracker:latest` image
@@ -295,6 +301,21 @@ cp env.example .env
 docker-compose up -d
 
 # Access the application at http://localhost:8080
+```
+
+#### Quick Start with Local Testing (SQLite)
+```bash
+# Clone the repository
+git clone https://github.com/drytrix/TimeTracker.git
+cd TimeTracker
+
+# Start with SQLite (no database setup needed)
+docker-compose -f docker-compose.local-test.yml up --build
+
+# Access the application at http://localhost:8080
+# Or use the convenience script:
+# Windows: scripts\start-local-test.bat
+# Linux/macOS: ./scripts/start-local-test.sh
 ```
 
 #### Production Deployment with Remote Images

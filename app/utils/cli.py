@@ -26,14 +26,20 @@ def register_cli_commands(app):
             db.session.commit()
             click.echo("Database initialized with default settings")
         
-        # Create admin user if it doesn't exist
-        admin_username = os.getenv('ADMIN_USERNAMES', 'admin').split(',')[0]
-        if not User.query.filter_by(username=admin_username).first():
+        # Ensure admin user exists and has role 'admin'
+        admin_username = os.getenv('ADMIN_USERNAMES', 'admin').split(',')[0].strip().lower()
+        existing = User.query.filter_by(username=admin_username).first()
+        if not existing:
             admin_user = User(username=admin_username, role='admin')
             admin_user.is_active = True
             db.session.add(admin_user)
             db.session.commit()
             click.echo(f"Created admin user: {admin_username}")
+        elif existing.role != 'admin':
+            existing.role = 'admin'
+            existing.is_active = True
+            db.session.commit()
+            click.echo(f"Promoted user '{admin_username}' to admin")
         
         click.echo("Database initialization complete!")
 
