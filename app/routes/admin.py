@@ -319,6 +319,16 @@ def remove_logo():
     
     return redirect(url_for('admin.settings'))
 
+# Public route to serve uploaded logos from the static uploads directory
+@admin_bp.route('/uploads/logos/<path:filename>')
+def serve_uploaded_logo(filename):
+    """Serve company logo files stored under static/uploads/logos.
+    This route is intentionally public so logos render on unauthenticated pages
+    like the login screen and in favicons.
+    """
+    upload_folder = get_upload_folder()
+    return send_from_directory(upload_folder, filename)
+
 @admin_bp.route('/admin/backup', methods=['GET'])
 @login_required
 @admin_required

@@ -43,19 +43,9 @@ def start_timer():
     # Check if user already has an active timer
     active_timer = current_user.active_timer
     if active_timer:
-        # If single active timer is enabled, stop the current one
-        settings = Settings.get_settings()
-        if settings.single_active_timer:
-            try:
-                active_timer.stop_timer()
-                flash('Previous timer stopped', 'info')
-                current_app.logger.info("Stopped previous active timer id=%s for user=%s", active_timer.id, current_user.username)
-            except Exception as e:
-                current_app.logger.exception("Error stopping previous timer: %s", e)
-        else:
-            flash('You already have an active timer', 'error')
-            current_app.logger.info("Start timer blocked: user already has active timer and SINGLE_ACTIVE_TIMER disabled")
-            return redirect(url_for('main.dashboard'))
+        flash('You already have an active timer. Stop it before starting a new one.', 'error')
+        current_app.logger.info("Start timer blocked: user already has an active timer")
+        return redirect(url_for('main.dashboard'))
     
     # Create new timer
     from app.models.time_entry import local_now
@@ -112,19 +102,9 @@ def start_timer_for_project(project_id):
     # Check if user already has an active timer
     active_timer = current_user.active_timer
     if active_timer:
-        # If single active timer is enabled, stop the current one
-        settings = Settings.get_settings()
-        if settings.single_active_timer:
-            try:
-                active_timer.stop_timer()
-                flash('Previous timer stopped', 'info')
-                current_app.logger.info("Stopped previous active timer id=%s for user=%s", active_timer.id, current_user.username)
-            except Exception as e:
-                current_app.logger.exception("Error stopping previous timer: %s", e)
-        else:
-            flash('You already have an active timer', 'error')
-            current_app.logger.info("Start timer (GET) blocked: user already has active timer and SINGLE_ACTIVE_TIMER disabled")
-            return redirect(url_for('main.dashboard'))
+        flash('You already have an active timer. Stop it before starting a new one.', 'error')
+        current_app.logger.info("Start timer (GET) blocked: user already has an active timer")
+        return redirect(url_for('main.dashboard'))
     
     # Create new timer
     from app.models.time_entry import local_now

@@ -124,7 +124,7 @@
         padding: 1rem 1.25rem;
         font-size: 16px; /* Prevents zoom on iOS */
         border-radius: var(--mobile-border-radius);
-        border: 2px solid #e2e8f0;
+        border: 1px solid #e2e8f0;
         transition: all 0.3s ease;
         background: white;
         width: 100%;
@@ -999,8 +999,7 @@
 }
 
 /* Enhanced Mobile Dark Mode Support */
-@media (max-width: 768px) {
-    @media (prefers-color-scheme: dark) {
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
         :root {
             --mobile-bg-primary: #1e293b;
             --mobile-bg-secondary: #334155;
@@ -1087,6 +1086,5 @@
             border-color: var(--mobile-text-secondary) !important;
             color: var(--mobile-text-primary) !important;
         }
-    }
 }
 

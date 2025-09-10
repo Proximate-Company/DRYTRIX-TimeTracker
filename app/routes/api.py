@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app, send_from_directory
 from flask_login import login_required, current_user
 from app import db, socketio
 from app.models import User, Project, TimeEntry, Settings, Task
@@ -7,6 +7,9 @@ from app.utils.db import safe_commit
 from app.utils.timezone import parse_local_datetime, utc_to_local
 from app.models.time_entry import local_now
 import json
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 api_bp = Blueprint('api', __name__)
 
@@ -83,11 +86,7 @@ def api_start_timer():
     # Check if user already has an active timer
     active_timer = current_user.active_timer
     if active_timer:
-        settings = Settings.get_settings()
-        if settings.single_active_timer:
-            active_timer.stop_timer()
-        else:
-            return jsonify({'error': 'User already has an active timer'}), 400
+        return jsonify({'error': 'User already has an active timer'}), 400
     
     # Create new timer
     from app.models.time_entry import local_now
@@ -331,6 +330,18 @@ def update_entry(entry_id):
                 # Recalculate duration
                 entry.calculate_duration()
 
+    # Prevent multiple active timers for the same user when editing
+    if entry.end_time is None:
+        conflict = (
+            TimeEntry.query
+            .filter(TimeEntry.user_id == entry.user_id)
+            .filter(TimeEntry.end_time.is_(None))
+            .filter(TimeEntry.id != entry.id)
+            .first()
+        )
+        if conflict:
+            return jsonify({'error': 'User already has an active timer'}), 400
+
     # Notes, tags, billable (both admin and owner can change)
     if 'notes' in data:
         entry.notes = data['notes'].strip() if data['notes'] else None
@@ -369,6 +380,48 @@ def delete_entry(entry_id):
     db.session.commit()
     
     return jsonify({'success': True})
+
+# ================================
+# Editor image uploads
+# ================================
+
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_image_file(filename: str) -> bool:
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+
+def get_editor_upload_folder() -> str:
+    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'editor')
+    os.makedirs(upload_folder, exist_ok=True)
+    return upload_folder
+
+@api_bp.route('/api/uploads/images', methods=['POST'])
+@login_required
+def upload_editor_image():
+    """Handle image uploads from the markdown editor."""
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
+    file = request.files['image']
+    if not file or file.filename == '':
+        return jsonify({'error': 'No image provided'}), 400
+    if not allowed_image_file(file.filename):
+        return jsonify({'error': 'Invalid file type'}), 400
+
+    filename = secure_filename(file.filename)
+    ext = filename.rsplit('.', 1)[1].lower()
+    unique_name = f"editor_{uuid.uuid4().hex[:12]}.{ext}"
+    folder = get_editor_upload_folder()
+    path = os.path.join(folder, unique_name)
+    file.save(path)
+
+    url = f"/uploads/editor/{unique_name}"
+    return jsonify({'success': True, 'url': url})
+
+@api_bp.route('/uploads/editor/<path:filename>')
+def serve_editor_image(filename):
+    """Serve uploaded editor images from static/uploads/editor."""
+    folder = get_editor_upload_folder()
+    return send_from_directory(folder, filename)
 
 # WebSocket event handlers
 @socketio.on('connect')

@@ -3,9 +3,23 @@
 {% block title %}Log Time - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+{% block extra_css %}
+<style>
+/* Manual Entry alignment tweaks (light/dark consistent) */
+.manual-entry .form-label { color: var(--text-primary); }
+.manual-entry .card { border: 1px solid var(--border-color); }
+.manual-entry .card-body .form-control,
+.manual-entry .card-body .form-select { background: #ffffff; }
+[data-theme="dark"] .manual-entry .card-body .form-control,
+[data-theme="dark"] .manual-entry .card-body .form-select { background: #0f172a; color: var(--text-primary); border-color: var(--border-color); }
+.manual-entry .form-control::placeholder { color: var(--text-muted); }
+[data-theme="dark"] .manual-entry .form-control::placeholder { color: #64748b; }
+.manual-entry .form-check-input { cursor: pointer; }
+</style>
+{% endblock %}
+<div class="container-fluid manual-entry">
     {% from "_components.html" import page_header %}
-    <div class="row">
+    <div class="row g-3">
         <div class="col-12">
             {% set actions %}
             <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-light btn-sm">
@@ -24,7 +38,7 @@
                         <i class="fas fa-clock me-2 text-primary"></i>Manual Entry
                     </h6>
                     <div class="d-none d-md-flex gap-2">
-                        <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-sm btn-outline-secondary">
+                        <a href="{{ url_for('timer.manual_entry') }}" class="btn-header btn-outline-primary">
                             <i class="fas fa-rotate-right me-1"></i> Reset
                         </a>
                     </div>
@@ -33,7 +47,10 @@
                     <form method="POST" action="{{ url_for('timer.manual_entry') }}">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-floating mb-3">
+                                <div class="mb-3">
+                                    <label for="project_id" class="form-label fw-semibold">
+                                        <i class="fas fa-project-diagram me-1"></i>Project *
+                                    </label>
                                     <select class="form-select" id="project_id" name="project_id" required>
                                         <option value=""></option>
                                         {% set selected_project_id = (request.form.get('project_id') or '')|int %}
@@ -41,17 +58,18 @@
                                             <option value="{{ project.id }}" {% if project.id == selected_project_id %}selected{% endif %}>{{ project.name }}</option>
                                         {% endfor %}
                                     </select>
-                                    <label for="project_id"><i class="fas fa-project-diagram me-1"></i>Project *</label>
                                     <div class="form-text">Select the project to log time for</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 {% set preselected_task_id = request.form.get('task_id') or request.args.get('task_id') %}
-                                <div class="form-floating mb-3">
+                                <div class="mb-3">
+                                    <label for="task_id" class="form-label fw-semibold">
+                                        <i class="fas fa-tasks me-1"></i>Task (optional)
+                                    </label>
                                     <select class="form-select" id="task_id" name="task_id" data-selected-task-id="{{ preselected_task_id or '' }}" disabled>
                                         <option value=""></option>
                                     </select>
-                                    <label for="task_id"><i class="fas fa-tasks me-1"></i>Task (optional)</label>
                                     <div class="form-text">Tasks load after selecting a project</div>
                                 </div>
                             </div>
@@ -64,16 +82,12 @@
                                         <div class="mb-2 fw-semibold text-primary"><i class="fas fa-play me-1"></i>Start *</div>
                                         <div class="row g-2">
                                             <div class="col-6">
-                                                <div class="form-floating">
-                                                    <input type="date" class="form-control" name="start_date" id="start_date" required value="{{ request.form.get('start_date','') }}">
-                                                    <label for="start_date">Date</label>
-                                                </div>
+                                                <label for="start_date" class="form-label fw-semibold">Date</label>
+                                                <input type="date" class="form-control" name="start_date" id="start_date" required value="{{ request.form.get('start_date','') }}">
                                             </div>
                                             <div class="col-6">
-                                                <div class="form-floating">
-                                                    <input type="time" class="form-control" name="start_time" id="start_time" required value="{{ request.form.get('start_time','') }}">
-                                                    <label for="start_time">Time</label>
-                                                </div>
+                                                <label for="start_time" class="form-label fw-semibold">Time</label>
+                                                <input type="time" class="form-control" name="start_time" id="start_time" required value="{{ request.form.get('start_time','') }}">
                                             </div>
                                         </div>
                                     </div>
@@ -85,16 +99,12 @@
                                         <div class="mb-2 fw-semibold text-primary"><i class="fas fa-stop me-1"></i>End *</div>
                                         <div class="row g-2">
                                             <div class="col-6">
-                                                <div class="form-floating">
-                                                    <input type="date" class="form-control" name="end_date" id="end_date" required value="{{ request.form.get('end_date','') }}">
-                                                    <label for="end_date">Date</label>
-                                                </div>
+                                                <label for="end_date" class="form-label fw-semibold">Date</label>
+                                                <input type="date" class="form-control" name="end_date" id="end_date" required value="{{ request.form.get('end_date','') }}">
                                             </div>
                                             <div class="col-6">
-                                                <div class="form-floating">
-                                                    <input type="time" class="form-control" name="end_time" id="end_time" required value="{{ request.form.get('end_time','') }}">
-                                                    <label for="end_time">Time</label>
-                                                </div>
+                                                <label for="end_time" class="form-label fw-semibold">Time</label>
+                                                <input type="time" class="form-control" name="end_time" id="end_time" required value="{{ request.form.get('end_time','') }}">
                                             </div>
                                         </div>
                                     </div>
@@ -102,25 +112,32 @@
                             </div>
                         </div>
 
-                        <div class="form-floating my-3">
+                        <div class="my-3">
+                            <label for="notes" class="form-label fw-semibold">
+                                <i class="fas fa-sticky-note me-1"></i>Notes
+                            </label>
                             <textarea class="form-control" id="notes" name="notes" style="height: 100px" placeholder="What did you work on?">{{ request.form.get('notes','') }}</textarea>
-                            <label for="notes"><i class="fas fa-sticky-note me-1"></i>Notes</label>
                         </div>
 
                         <div class="row g-3 align-items-center">
                             <div class="col-12 col-md-8">
-                                <div class="form-floating mb-3 mb-md-0">
+                                <div class="mb-3 mb-md-0">
+                                    <label for="tags" class="form-label fw-semibold">
+                                        <i class="fas fa-tags me-1"></i>Tags
+                                    </label>
                                     <input type="text" class="form-control" id="tags" name="tags" placeholder="tag1, tag2, tag3" value="{{ request.form.get('tags','') }}">
-                                    <label for="tags"><i class="fas fa-tags me-1"></i>Tags</label>
                                     <div class="form-text">Separate tags with commas</div>
                                 </div>
                             </div>
                             <div class="col-12 col-md-4">
-                                <div class="form-check form-switch mt-2 d-flex align-items-center">
-                                    <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if request.form.get('billable') %}checked{% else %}checked{% endif %}>
-                                    <label class="form-check-label fw-semibold ms-2" for="billable">
+                                <div class="mb-3 mb-md-0">
+                                    <label class="form-label fw-semibold d-block" for="billable">
                                         <i class="fas fa-dollar-sign me-1"></i>Billable
                                     </label>
+                                    <div class="form-check form-switch d-flex align-items-center">
+                                        <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if request.form.get('billable') %}checked{% else %}checked{% endif %}>
+                                        <span class="ms-2 text-muted small">Include in invoices</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -190,9 +207,29 @@
     color: var(--primary-color);
 }
 
+/* Ensure task field label gets proper dark mode styling */
+#task_id:focus ~ label,
+#task_id:not([value=""]) ~ label {
+    color: var(--primary-color) !important;
+}
+
 .form-control:focus, .form-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+}
+
+/* Fix form-text visibility in both light and dark modes */
+.form-text {
+    color: var(--text-muted) !important;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+
+[data-theme="dark"] .form-text {
+    color: var(--text-muted) !important;
 }
 
 .tip-icon { font-size: 18px; }
@@ -205,7 +242,7 @@
     border: 1px solid var(--border-color);
 }
 .btn-outline-primary {
-    border-width: 2px;
+    border-width: 1px;
 }
 .btn-outline-primary:hover {
     color: #fff;

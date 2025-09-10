@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     tzdata \
     bash \
     dos2unix \
+    gosu \
     # Network tools for debugging
     iproute2 \
     net-tools \
@@ -68,10 +69,10 @@ RUN mkdir -p /app/app/static/uploads/logos /app/static/uploads/logos && \
 COPY docker/start-fixed.py /app/start.py
 
 # Fix line endings for the startup and entrypoint scripts
-RUN dos2unix /app/start.py /app/docker/entrypoint_fixed.sh /app/docker/entrypoint.sh /app/docker/entrypoint_simple.sh 2>/dev/null || true
+RUN dos2unix /app/start.py /app/docker/entrypoint_fixed.sh /app/docker/entrypoint.sh /app/docker/entrypoint_simple.sh /app/docker/entrypoint-local-test.sh /app/docker/entrypoint-local-test-simple.sh 2>/dev/null || true
 
 # Make startup scripts executable and ensure proper line endings
-RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/init-database-enhanced.py /app/docker/verify-database.py /app/docker/test-db.py /app/docker/test-routing.py /app/docker/entrypoint.sh /app/docker/entrypoint_fixed.sh /app/docker/entrypoint_simple.sh /app/docker/entrypoint.py /app/docker/startup_with_migration.py /app/docker/test_db_connection.py /app/docker/debug_startup.sh /app/docker/simple_test.sh && \
+RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-database-sql.py /app/docker/init-database-enhanced.py /app/docker/verify-database.py /app/docker/test-db.py /app/docker/test-routing.py /app/docker/entrypoint.sh /app/docker/entrypoint_fixed.sh /app/docker/entrypoint_simple.sh /app/docker/entrypoint-local-test.sh /app/docker/entrypoint-local-test-simple.sh /app/docker/entrypoint.py /app/docker/startup_with_migration.py /app/docker/test_db_connection.py /app/docker/debug_startup.sh /app/docker/simple_test.sh && \
     ls -la /app/docker/entrypoint.py && \
     head -5 /app/docker/entrypoint.py
 

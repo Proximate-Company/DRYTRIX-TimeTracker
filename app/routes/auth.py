@@ -28,6 +28,12 @@ def login():
                 flash('Username is required', 'error')
                 return render_template('auth/login.html')
             
+            # Normalize admin usernames from config
+            try:
+                admin_usernames = [u.strip().lower() for u in (Config.ADMIN_USERNAMES or [])]
+            except Exception:
+                admin_usernames = ['admin']
+
             # Check if user exists
             user = User.query.filter_by(username=username).first()
             current_app.logger.info("User lookup for '%s': %s", username, 'found' if user else 'not found')
@@ -35,8 +41,9 @@ def login():
             if not user:
                 # Check if self-registration is allowed
                 if Config.ALLOW_SELF_REGISTER:
-                    # Create new user
-                    user = User(username=username, role='user')
+                    # Create new user, promote to admin if username is configured as admin
+                    role = 'admin' if username in admin_usernames else 'user'
+                    user = User(username=username, role=role)
                     db.session.add(user)
                     if not safe_commit('self_register_user', {'username': username}):
                         current_app.logger.error("Self-registration failed for '%s' due to DB error", username)
@@ -47,6 +54,14 @@ def login():
                 else:
                     flash('User not found. Please contact an administrator.', 'error')
                     return render_template('auth/login.html')
+            else:
+                # If existing user matches admin usernames, ensure admin role
+                if username in admin_usernames and user.role != 'admin':
+                    user.role = 'admin'
+                    if not safe_commit('promote_admin_user', {'username': username}):
+                        current_app.logger.error("Failed to promote '%s' to admin due to DB error", username)
+                        flash('Could not update your account role due to a database error.', 'error')
+                        return render_template('auth/login.html')
             
             # Check if user is active
             if not user.is_active:
