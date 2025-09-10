@@ -79,7 +79,7 @@ class Config:
 
     # License server settings (no license required)
     # All settings are hardcoded since clients cannot change license server configuration
-    LICENSE_SERVER_ENABLED = True  # Always enabled by default
+    LICENSE_SERVER_ENABLED = os.getenv('LICENSE_SERVER_ENABLED', 'true').lower() == 'true'
     LICENSE_SERVER_API_KEY = "no-license-required"  # Hardcoded placeholder
     LICENSE_SERVER_APP_ID = "timetracker"  # Hardcoded app identifier
     LICENSE_SERVER_APP_VERSION = APP_VERSION  # Match application version

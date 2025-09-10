@@ -1,0 +1,46 @@
+services:
+  app:
+    build: .
+    container_name: timetracker-app-local-test
+    environment:
+      - TZ=${TZ:-Europe/Brussels}
+      - CURRENCY=${CURRENCY:-EUR}
+      - ROUNDING_MINUTES=${ROUNDING_MINUTES:-1}
+      - SINGLE_ACTIVE_TIMER=${SINGLE_ACTIVE_TIMER:-true}
+      - ALLOW_SELF_REGISTER=${ALLOW_SELF_REGISTER:-true}
+      - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
+      - ADMIN_USERNAMES=${ADMIN_USERNAMES:-admin}
+      - SECRET_KEY=${SECRET_KEY:-local-test-secret-key}
+      # Use SQLite database for local testing
+      - DATABASE_URL=sqlite:////data/timetracker.db
+      - LOG_FILE=/app/logs/timetracker.log
+      # Disable secure cookies for local testing
+      - SESSION_COOKIE_SECURE=false
+      - REMEMBER_COOKIE_SECURE=false
+      # Set Flask environment for development
+      - FLASK_ENV=development
+      - FLASK_DEBUG=true
+      # Disable license server for local testing
+      - LICENSE_SERVER_ENABLED=false
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount data directory for SQLite database and uploads
+      - app_data_local_test:/data
+      # Mount logs directory for easier debugging
+      - ./logs:/app/logs
+    restart: unless-stopped
+    # Run as root initially to set up permissions, then switch to timetracker user
+    user: "0:0"
+    # Use custom entrypoint for local testing
+    entrypoint: ["/app/docker/entrypoint-local-test.sh"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  app_data_local_test:
+    driver: local

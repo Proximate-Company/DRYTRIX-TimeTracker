@@ -18,8 +18,45 @@ def wait_for_database():
     
     # Get database URL from environment
     db_url = os.getenv('DATABASE_URL', 'postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker')
+
+    # If using SQLite, ensure the database directory exists and return immediately
+    if db_url.startswith('sqlite:'):
+        try:
+            # Normalize file path from URL
+            db_path = None
+            prefix_four = 'sqlite:////'
+            prefix_three = 'sqlite:///'
+            prefix_mem = 'sqlite://'
+            if db_url.startswith(prefix_four):
+                db_path = '/' + db_url[len(prefix_four):]
+            elif db_url.startswith(prefix_three):
+                # Relative inside container; keep as-is
+                db_path = db_url[len(prefix_three):]
+                # If it's a relative path, make sure directory exists
+                if not db_path.startswith('/'):
+                    db_path = '/' + db_path
+            elif db_url.startswith(prefix_mem):
+                # Could be sqlite:///:memory:
+                if db_url.endswith(':memory:'):
+                    return True
+                # Fallback: strip scheme
+                db_path = db_url[len(prefix_mem):]
+
+            if db_path:
+                import os as _os
+                import sqlite3 as _sqlite3
+                dir_path = _os.path.dirname(db_path)
+                if dir_path:
+                    _os.makedirs(dir_path, exist_ok=True)
+                # Try to open the database to ensure writability
+                conn = _sqlite3.connect(db_path)
+                conn.close()
+            return True
+        except Exception as e:
+            print(f"SQLite path/setup check failed: {e}")
+            return False
     
-    # Parse the URL to get connection details
+    # Parse the URL to get connection details (PostgreSQL)
     if db_url.startswith('postgresql+psycopg2://'):
         db_url = db_url.replace('postgresql+psycopg2://', '')
     
@@ -133,6 +170,28 @@ def main():
     
     print("✓ Database initialization and migration completed successfully")
     
+    # Ensure default settings and admin user exist (idempotent)
+    try:
+        print("Ensuring default settings and admin user exist (flask init_db)...")
+        result = subprocess.run(
+            ['flask', 'init_db'],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        if result.stdout:
+            print(result.stdout.strip())
+        if result.stderr:
+            print(result.stderr.strip())
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: flask init_db failed (continuing): exit {e.returncode}")
+        if e.stdout:
+            print(f"stdout: {e.stdout.strip()}")
+        if e.stderr:
+            print(f"stderr: {e.stderr.strip()}")
+    except Exception as e:
+        print(f"Warning: could not execute flask init_db: {e}")
+
     print("Starting application...")
     # Start gunicorn with access logs
     os.execv('/usr/local/bin/gunicorn', [

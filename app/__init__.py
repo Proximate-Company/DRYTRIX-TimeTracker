@@ -195,6 +195,24 @@ def create_app(config=None):
     # Register CLI commands
     from app.utils.cli import register_cli_commands
     register_cli_commands(app)
+
+    # Promote configured admin usernames automatically on each request (idempotent)
+    @app.before_request
+    def _promote_admin_users_on_request():
+        try:
+            from flask_login import current_user
+            if not current_user or not getattr(current_user, 'is_authenticated', False):
+                return
+            admin_usernames = [u.strip().lower() for u in app.config.get('ADMIN_USERNAMES', ['admin'])]
+            if current_user.username and current_user.username.lower() in admin_usernames and current_user.role != 'admin':
+                current_user.role = 'admin'
+                db.session.commit()
+        except Exception:
+            # Non-fatal; avoid breaking requests if this fails
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
     
     # Initialize database on first request
     def initialize_database():

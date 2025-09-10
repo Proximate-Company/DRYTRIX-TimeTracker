@@ -10,6 +10,7 @@ from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 from app.models import Settings
 from flask import current_app
+from pathlib import Path
 
 class InvoicePDFGenerator:
     """Generate PDF invoices with company branding"""
@@ -199,8 +200,12 @@ class InvoicePDFGenerator:
         if self.settings.has_logo():
             logo_path = self.settings.get_logo_path()
             if logo_path and os.path.exists(logo_path):
-                # Use file:// scheme so WeasyPrint can load local files
-                file_url = f'file://{logo_path}'
+                # Build a cross-platform file URI (handles Windows and POSIX paths)
+                try:
+                    file_url = Path(logo_path).resolve().as_uri()
+                except Exception:
+                    # Fallback to naive file:// if as_uri fails
+                    file_url = f'file://{logo_path}'
                 return f'<img src="{file_url}" alt="Company Logo" class="company-logo">'
         return ''
     

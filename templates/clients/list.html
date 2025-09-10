@@ -9,7 +9,7 @@
         <div class="col-12">
             {% set actions %}
             {% if current_user.is_admin %}
-            <a href="{{ url_for('clients.create_client') }}" class="btn btn-outline-light btn-sm">
+            <a href="{{ url_for('clients.create_client') }}" class="btn-header btn-primary">
                 <i class="fas fa-plus"></i> New Client
             </a>
             {% endif %}
@@ -21,7 +21,7 @@
     <!-- Client List -->
     <div class="row">
         <div class="col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card shadow-sm" style="border-radius: var(--border-radius);">
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">
@@ -161,6 +161,7 @@
     position: relative;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block; /* Ensure the badge is contained */
 }
 
 .status-badge::before {
