@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Clients - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Clients') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -10,11 +10,11 @@
             {% set actions %}
             {% if current_user.is_admin %}
             <a href="{{ url_for('clients.create_client') }}" class="btn-header btn-primary">
-                <i class="fas fa-plus"></i> New Client
+                <i class="fas fa-plus"></i> {{ _('New Client') }}
             </a>
             {% endif %}
             {% endset %}
-            {{ page_header('fas fa-building', 'Clients', 'Manage customers and contacts • ' ~ (clients|length) ~ ' total', actions) }}
+            {{ page_header('fas fa-building', _('Clients'), _('Manage customers and contacts') ~ ' • ' ~ (clients|length) ~ ' ' ~ _('total'), actions) }}
         </div>
     </div>
 
@@ -25,7 +25,7 @@
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-list me-2"></i>All Clients
+                            <i class="fas fa-list me-2"></i>{{ _('All Clients') }}
                         </h6>
                         <div class="d-flex gap-2">
                             <div class="input-group input-group-sm" style="width: 250px;">
@@ -33,7 +33,7 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="text" class="form-control border-start-0" id="searchInput" 
-                                       placeholder="Search clients...">
+                                       placeholder="{{ _('Search clients...') }}">
                             </div>
                         </div>
                     </div>
@@ -44,14 +44,14 @@
                         <table class="table table-hover mb-0" id="clientsTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Contact Person</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Default Rate</th>
-                                    <th>Projects</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>{{ _('Name') }}</th>
+                                    <th>{{ _('Contact Person') }}</th>
+                                    <th>{{ _('Email') }}</th>
+                                    <th>{{ _('Phone') }}</th>
+                                    <th>{{ _('Default Rate') }}</th>
+                                    <th>{{ _('Projects') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                    <th>{{ _('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -89,8 +89,8 @@
                                     </td>
                                     <td>
                                         {% set status_map = {
-                                            'active':   {'bg': 'bg-success',   'label': 'Active'},
-                                            'inactive': {'bg': 'bg-secondary', 'label': 'Inactive'}
+                                            'active':   {'bg': 'bg-success',   'label': _('Active')},
+                                            'inactive': {'bg': 'bg-secondary', 'label': _('Inactive')}
                                         } %}
                                         {% set sc = status_map.get(client.status, status_map['inactive']) %}
                                         <span class="status-badge {{ sc.bg }} text-white">{{ sc.label }}</span>
@@ -98,27 +98,27 @@
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a href="{{ url_for('clients.view_client', client_id=client.id) }}" 
-                                               class="btn btn-sm btn-action btn-action--view" title="View">
+                                               class="btn btn-sm btn-action btn-action--view" title="{{ _('View') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             {% if current_user.is_admin %}
                                             <a href="{{ url_for('clients.edit_client', client_id=client.id) }}" 
-                                               class="btn btn-sm btn-action btn-action--edit" title="Edit">
+                                               class="btn btn-sm btn-action btn-action--edit" title="{{ _('Edit') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% if client.status == 'active' %}
-                                            <button type="button" class="btn btn-sm btn-action btn-action--warning" title="Archive"
+                                            <button type="button" class="btn btn-sm btn-action btn-action--warning" title="{{ _('Archive') }}"
                                                     onclick="confirmArchiveClient('{{ client.id }}', '{{ client.name }}')">
                                                 <i class="fas fa-archive"></i>
                                             </button>
                                             {% else %}
-                                            <button type="button" class="btn btn-sm btn-action btn-action--success" title="Activate"
+                                            <button type="button" class="btn btn-sm btn-action btn-action--success" title="{{ _('Activate') }}"
                                                     onclick="confirmActivateClient('{{ client.id }}', '{{ client.name }}')">
                                                 <i class="fas fa-check"></i>
                                             </button>
                                             {% endif %}
                                             {% if client.total_projects == 0 %}
-                                            <button type="button" class="btn btn-sm btn-action btn-action--danger" title="Delete"
+                                            <button type="button" class="btn btn-sm btn-action btn-action--danger" title="{{ _('Delete') }}"
                                                     onclick="confirmDeleteClient('{{ client.id }}', '{{ client.name }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -134,11 +134,11 @@
                     {% else %}
                     <div class="text-center py-5">
                         <i class="fas fa-building fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No Clients Found</h4>
-                        <p class="text-muted">Get started by creating your first client.</p>
+                        <h4 class="text-muted">{{ _('No Clients Found') }}</h4>
+                        <p class="text-muted">{{ _('Get started by creating your first client.') }}</p>
                         {% if current_user.is_admin %}
                         <a href="{{ url_for('clients.create_client') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Create First Client
+                            <i class="fas fa-plus"></i> {{ _('Create First Client') }}
                         </a>
                         {% endif %}
                     </div>

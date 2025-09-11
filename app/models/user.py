@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     last_login = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     theme_preference = db.Column(db.String(10), default=None, nullable=True)  # 'light' | 'dark' | None=system
+    preferred_language = db.Column(db.String(8), default=None, nullable=True)  # e.g., 'en', 'de'
     
     # Relationships
     time_entries = db.relationship('TimeEntry', backref='user', lazy='dynamic', cascade='all, delete-orphan')

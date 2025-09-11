@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Projects - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Projects') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -10,11 +10,11 @@
             {% set actions %}
             {% if current_user.is_admin %}
             <a href="{{ url_for('projects.create_project') }}" class="btn-header btn-primary">
-                <i class="fas fa-plus"></i> New Project
+                <i class="fas fa-plus"></i> {{ _('New Project') }}
             </a>
             {% endif %}
             {% endset %}
-            {{ page_header('fas fa-project-diagram', 'Projects', 'Manage all projects • ' ~ (projects|length) ~ ' total', actions) }}
+            {{ page_header('fas fa-project-diagram', _('Projects'), _('Manage all projects') ~ ' • ' ~ (projects|length) ~ ' ' ~ _('total'), actions) }}
         </div>
     </div>
 
@@ -33,7 +33,7 @@
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="summary-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-list"></i></div>
                     <div class="ms-3">
-                        <div class="summary-label">Total Projects</div>
+                        <div class="summary-label">{{ _('Total Projects') }}</div>
                         <div class="summary-value">{{ projects|length }}</div>
                     </div>
                 </div>
@@ -44,7 +44,7 @@
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="summary-icon bg-success bg-opacity-10 text-success"><i class="fas fa-check-circle"></i></div>
                     <div class="ms-3">
-                        <div class="summary-label">Active</div>
+                        <div class="summary-label">{{ _('Active') }}</div>
                         <div class="summary-value">{{ _active }}</div>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="summary-icon bg-secondary bg-opacity-10 text-secondary"><i class="fas fa-archive"></i></div>
                     <div class="ms-3">
-                        <div class="summary-label">Archived</div>
+                        <div class="summary-label">{{ _('Archived') }}</div>
                         <div class="summary-value">{{ _archived }}</div>
                     </div>
                 </div>
@@ -66,7 +66,7 @@
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="summary-icon bg-info bg-opacity-10 text-info"><i class="fas fa-hourglass-half"></i></div>
                     <div class="ms-3">
-                        <div class="summary-label">Total Hours</div>
+                        <div class="summary-label">{{ _('Total Hours') }}</div>
                         <div class="summary-value">{{ '%.1f'|format(_total_hours) }}h</div>
                     </div>
                 </div>
@@ -80,39 +80,39 @@
             <div class="card mobile-card">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-filter me-2 text-primary"></i>Filters
+                        <i class="fas fa-filter me-2 text-primary"></i>{{ _('Filters') }}
                     </h6>
                 </div>
                 <div class="card-body">
                     <form method="GET" class="row g-3 mobile-form">
                         <div class="col-12 col-md-4 mobile-form-group">
-                            <label for="status" class="form-label">Status</label>
+                            <label for="status" class="form-label">{{ _('Status') }}</label>
                             <select class="form-select touch-target" id="status" name="status">
-                                <option value="">All Statuses</option>
-                                <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
-                                <option value="archived" {% if request.args.get('status') == 'archived' %}selected{% endif %}>Archived</option>
+                                <option value="">{{ _('All Statuses') }}</option>
+                                <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>{{ _('Active') }}</option>
+                                <option value="archived" {% if request.args.get('status') == 'archived' %}selected{% endif %}>{{ _('Archived') }}</option>
                             </select>
                         </div>
                         <div class="col-12 col-md-4 mobile-form-group">
-                            <label for="client" class="form-label">Client</label>
+                            <label for="client" class="form-label">{{ _('Client') }}</label>
                             <select class="form-select touch-target" id="client" name="client">
-                                <option value="">All Clients</option>
+                                <option value="">{{ _('All Clients') }}</option>
                                 {% for client in clients %}
                                 <option value="{{ client }}" {% if request.args.get('client') == client %}selected{% endif %}>{{ client }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-12 col-md-4 mobile-form-group">
-                            <label for="search" class="form-label">Search</label>
+                            <label for="search" class="form-label">{{ _('Search') }}</label>
                             <input type="text" class="form-control touch-target" id="search" name="search" 
-                                   value="{{ request.args.get('search', '') }}" placeholder="Project name or description">
+                                   value="{{ request.args.get('search', '') }}" placeholder="{{ _('Project name or description') }}">
                         </div>
                         <div class="col-12 d-flex flex-column flex-md-row gap-2 mobile-stack">
                             <button type="submit" class="btn btn-primary mobile-btn flex-fill fw-semibold" style="height: 44px; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-search me-1"></i>Filter
+                                <i class="fas fa-search me-1"></i>{{ _('Filter') }}
                             </button>
                             <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary mobile-btn flex-fill fw-semibold" style="height: 44px; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-times me-1"></i>Clear
+                                <i class="fas fa-times me-1"></i>{{ _('Clear') }}
                             </a>
                         </div>
                     </form>
@@ -128,7 +128,7 @@
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-list me-2"></i>All Projects
+                            <i class="fas fa-list me-2"></i>{{ _('All Projects') }}
                         </h6>
                         <div class="d-flex gap-2">
                             <div class="input-group input-group-sm" style="width: 250px;">
@@ -136,7 +136,7 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="text" class="form-control border-start-0" id="searchInput" 
-                                       placeholder="Search projects...">
+                                       placeholder="{{ _('Search projects...') }}">
                             </div>
                         </div>
                     </div>
@@ -147,12 +147,12 @@
                         <table class="table table-hover mb-0" id="projectsTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="border-0">Project</th>
-                                    <th class="border-0">Client</th>
-                                    <th class="border-0">Status</th>
-                                    <th class="border-0">Hours</th>
-                                    <th class="border-0">Rate</th>
-                                    <th class="border-0 text-center">Actions</th>
+                                    <th class="border-0">{{ _('Project') }}</th>
+                                    <th class="border-0">{{ _('Client') }}</th>
+                                    <th class="border-0">{{ _('Status') }}</th>
+                                    <th class="border-0">{{ _('Hours') }}</th>
+                                    <th class="border-0">{{ _('Rate') }}</th>
+                                    <th class="border-0 text-center">{{ _('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -173,9 +173,9 @@
                                     </td>
                                     <td data-label="Status">
                                         {% if project.status == 'active' %}
-                                        <span class="status-badge bg-success text-white">Active</span>
+                                        <span class="status-badge bg-success text-white">{{ _('Active') }}</span>
                                         {% else %}
-                                        <span class="status-badge bg-secondary text-white">Archived</span>
+                                        <span class="status-badge bg-secondary text-white">{{ _('Archived') }}</span>
                                         {% endif %}
                                     </td>
                                     <td data-label="Hours" class="align-middle" style="min-width:180px;">
@@ -184,7 +184,7 @@
                                         {% set pct = (billable_h / total_h * 100) if total_h > 0 else 0 %}
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <strong>{{ "%.1f"|format(total_h) }} h</strong>
-                                            <small class="text-success">{{ "%.1f"|format(billable_h) }} h billable</small>
+                                            <small class="text-success">{{ "%.1f"|format(billable_h) }} h {{ _('billable') }}</small>
                                         </div>
                                         <div class="progress bg-light rounded-pill" style="height:6px;">
                                             <div class="progress-bar bg-success rounded-pill" role="progressbar" data-pct="{{ pct|round(0, 'floor') }}" aria-valuenow="{{ pct|round(0, 'floor') }}" aria-valuemin="0" aria-valuemax="100"></div>
@@ -200,15 +200,15 @@
                                     <td class="actions-cell" data-label="Actions">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-action btn-action--view touch-target" title="View project">
+                                               class="btn btn-sm btn-action btn-action--view touch-target" title="{{ _('View project') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             {% if current_user.is_admin %}
                                             <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-action btn-action--edit touch-target" title="Edit project">
+                                               class="btn btn-sm btn-action btn-action--edit touch-target" title="{{ _('Edit project') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="Delete project"
+                                            <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="{{ _('Delete project') }}"
                                                     onclick="showDeleteProjectModal('{{ project.id }}', '{{ project.name }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -224,11 +224,11 @@
                     <div class="text-center py-5">
                         <div class="empty-state">
                             <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No projects found</h5>
-                            <p class="text-muted mb-4">Create your first project to get started.</p>
+                            <h5 class="text-muted">{{ _('No projects found') }}</h5>
+                            <p class="text-muted mb-4">{{ _('Create your first project to get started.') }}</p>
                             {% if current_user.is_admin %}
                             <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary touch-target">
-                                <i class="fas fa-plus me-2"></i> Create Project
+                                <i class="fas fa-plus me-2"></i> {{ _('Create Project') }}
                             </a>
                             {% endif %}
                         </div>
@@ -246,25 +246,25 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-trash me-2 text-danger"></i>Delete Project
+                    <i class="fas fa-trash me-2 text-danger"></i>{{ _('Delete Project') }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone.
+                    <strong>{{ _('Warning:') }}</strong> {{ _('This action cannot be undone.') }}
                 </div>
-                <p>Are you sure you want to delete the project <strong id="deleteProjectName"></strong>?</p>
-                <p class="text-muted mb-0">All associated time entries will also be deleted.</p>
+                <p>{{ _('Are you sure you want to delete the project') }} <strong id="deleteProjectName"></strong>?</p>
+                <p class="text-muted mb-0">{{ _('All associated time entries will also be deleted.') }}</p>
             </div>
             <div class="modal-footer d-flex flex-column flex-md-row">
                 <button type="button" class="btn btn-secondary mb-2 mb-md-0 me-md-2 touch-target" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancel
+                    <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteProjectForm" class="d-inline">
                     <button type="submit" class="btn btn-danger touch-target">
-                        <i class="fas fa-trash me-2"></i>Delete Project
+                        <i class="fas fa-trash me-2"></i>{{ _('Delete Project') }}
                     </button>
                 </form>
             </div>

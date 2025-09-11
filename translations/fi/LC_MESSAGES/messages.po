@@ -1,0 +1,85 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TimeTracker\n"
+"Language: fi\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Navbar and common
+msgid "Time Tracker"
+msgstr "Ajanseuranta"
+
+msgid "Dashboard"
+msgstr "Koontinäyttö"
+
+msgid "Projects"
+msgstr "Projektit"
+
+msgid "Clients"
+msgstr "Asiakkaat"
+
+msgid "Tasks"
+msgstr "Tehtävät"
+
+msgid "Log Time"
+msgstr "Kirjaa aikaa"
+
+msgid "Reports"
+msgstr "Raportit"
+
+msgid "Invoices"
+msgstr "Laskut"
+
+msgid "Analytics"
+msgstr "Analytiikka"
+
+msgid "Admin"
+msgstr "Ylläpito"
+
+msgid "Profile"
+msgstr "Profiili"
+
+msgid "Logout"
+msgstr "Kirjaudu ulos"
+
+msgid "Language"
+msgstr "Kieli"
+
+msgid "Home"
+msgstr "Etusivu"
+
+msgid "Log"
+msgstr "Loki"
+
+msgid "About"
+msgstr "Tietoa"
+
+msgid "Help"
+msgstr "Ohje"
+
+msgid "Buy me a coffee"
+msgstr "Tarjoa kahvi"
+
+# About page
+msgid "About TimeTracker"
+msgstr "Tietoa TimeTrackerista"
+
+msgid "Developed by DryTrix"
+msgstr "Kehittänyt DryTrix"
+
+msgid "What is"
+msgstr "Mikä on"
+
+msgid "A simple, efficient time tracking solution for teams and individuals."
+msgstr "Yksinkertainen ja tehokas ajanseurantaratkaisu tiimeille ja yksittäisille käyttäjille."
+
+msgid "It provides a simple and intuitive interface for tracking time spent on various projects and tasks."
+msgstr "Tarjoaa yksinkertaisen ja intuitiivisen käyttöliittymän ajan seuraamiseen eri projekteissa ja tehtävissä."
+
+msgid "%(app)s is a web-based time tracking application designed for internal use within organizations."
+msgstr "%(app)s on verkkopohjainen ajanseurantasovellus, joka on suunniteltu organisaatioiden sisäiseen käyttöön."
+
+msgid "Learn more about "
+msgstr "Lue lisää: "
+
+

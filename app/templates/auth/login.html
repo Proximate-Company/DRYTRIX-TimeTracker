@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Login - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Login') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -13,17 +13,17 @@
             {% else %}
             <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-3" width="64" height="64">
             {% endif %}
-                    <h2 class="card-title mb-2">Welcome to TimeTracker</h2>
-                    <p class="text-muted mb-0">Powered by <strong>DryTrix</strong></p>
+                    <h2 class="card-title mb-2">{{ _('Welcome to TimeTracker') }}</h2>
+                    <p class="text-muted mb-0">{{ _('Powered by') }} <strong>DryTrix</strong></p>
                 </div>
                 
                 <p class="text-muted mb-4">
-                    Enter your username to start tracking time
+                    {{ _('Enter your username to start tracking time') }}
                 </p>
                 
                 <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="on" novalidate>
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="username" class="form-label">{{ _('Username') }}</label>
                         <div class="input-group">
                             <span class="input-group-text">
                                 <i class="fas fa-user"></i>
@@ -32,14 +32,14 @@
                                    class="form-control" 
                                    id="username" 
                                    name="username" 
-                                   placeholder="Enter your username"
+                                   placeholder="{{ _('Enter your username') }}"
                                    required 
                                    autofocus>
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100" data-original-text="Continue">
-                        <i class="fas fa-sign-in-alt me-2"></i>Continue
+                    <button type="submit" class="btn btn-primary w-100" data-original-text="{{ _('Continue') }}">
+                        <i class="fas fa-sign-in-alt me-2"></i>{{ _('Continue') }}
                     </button>
                 </form>
                 
@@ -47,13 +47,13 @@
                 
                 <div class="alert alert-info" role="alert">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Internal Tool:</strong> This is a private time tracking application for internal use only.
+                    <strong>{{ _('Internal Tool:') }}</strong> {{ _('This is a private time tracking application for internal use only.') }}
                 </div>
                 
                 {% if settings and settings.allow_self_register %}
                 <p class="text-muted small">
                     <i class="fas fa-user-plus me-1"></i>
-                    New users will be created automatically
+                    {{ _('New users will be created automatically') }}
                 </p>
                 {% endif %}
             </div>
@@ -61,9 +61,9 @@
         
         <div class="text-center mt-3">
             <small class="text-muted">
-                Version {{ app_version }} | 
-                <a href="{{ url_for('main.about') }}" class="text-decoration-none">About</a> | 
-                <a href="{{ url_for('main.help') }}" class="text-decoration-none">Help</a>
+                {{ _('Version') }} {{ app_version }} | 
+                <a href="{{ url_for('main.about') }}" class="text-decoration-none">{{ _('About') }}</a> | 
+                <a href="{{ url_for('main.help') }}" class="text-decoration-none">{{ _('Help') }}</a>
             </small>
         </div>
     </div>
@@ -83,7 +83,7 @@
             const username = (usernameEl && usernameEl.value ? usernameEl.value : '').trim();
             if (!username) {
                 e.preventDefault();
-                alert('Please enter a username');
+                alert('{{ _('Please enter a username') }}');
                 return false;
             }
             // Show loading state
@@ -91,13 +91,13 @@
             if (submitBtn) {
                 const originalText = submitBtn.innerHTML;
                 submitBtn.setAttribute('data-original-text', originalText);
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing in...';
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ _('Signing in...') }}';
                 submitBtn.disabled = true;
                 // Fallback: re-enable after 8s in case of network/proxy issues
                 setTimeout(() => {
                     if (submitBtn.disabled) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = submitBtn.getAttribute('data-original-text') || 'Continue';
+                        submitBtn.innerHTML = submitBtn.getAttribute('data-original-text') || '{{ _('Continue') }}';
                         console.warn('Login submission appears stalled. Button re-enabled.');
                     }
                 }, 8000);

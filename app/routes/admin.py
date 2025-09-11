@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, send_file
+from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, Project, TimeEntry, Settings
@@ -26,7 +27,7 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or not current_user.is_admin:
-            flash('Administrator access required', 'error')
+            flash(_('Administrator access required'), 'error')
             return redirect(url_for('main.dashboard'))
         return f(*args, **kwargs)
     return decorated_function

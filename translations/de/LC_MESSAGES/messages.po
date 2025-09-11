@@ -1,0 +1,85 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TimeTracker\n"
+"Language: de\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Navbar and common
+msgid "Time Tracker"
+msgstr "Zeiterfassung"
+
+msgid "Dashboard"
+msgstr "Übersicht"
+
+msgid "Projects"
+msgstr "Projekte"
+
+msgid "Clients"
+msgstr "Kunden"
+
+msgid "Tasks"
+msgstr "Aufgaben"
+
+msgid "Log Time"
+msgstr "Zeit erfassen"
+
+msgid "Reports"
+msgstr "Berichte"
+
+msgid "Invoices"
+msgstr "Rechnungen"
+
+msgid "Analytics"
+msgstr "Analysen"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Logout"
+msgstr "Abmelden"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Home"
+msgstr "Start"
+
+msgid "Log"
+msgstr "Log"
+
+msgid "About"
+msgstr "Über"
+
+msgid "Help"
+msgstr "Hilfe"
+
+msgid "Buy me a coffee"
+msgstr "Spendier mir einen Kaffee"
+
+# About page
+msgid "About TimeTracker"
+msgstr "Über TimeTracker"
+
+msgid "Developed by DryTrix"
+msgstr "Entwickelt von DryTrix"
+
+msgid "What is"
+msgstr "Was ist"
+
+msgid "A simple, efficient time tracking solution for teams and individuals."
+msgstr "Eine einfache, effiziente Zeiterfassungslösung für Teams und Einzelpersonen."
+
+msgid "It provides a simple and intuitive interface for tracking time spent on various projects and tasks."
+msgstr "Sie bietet eine einfache und intuitive Oberfläche zur Erfassung der auf Projekte und Aufgaben verwendeten Zeit."
+
+msgid "%(app)s is a web-based time tracking application designed for internal use within organizations."
+msgstr "%(app)s ist eine webbasierte Zeiterfassungsanwendung für die interne Nutzung in Organisationen."
+
+msgid "Learn more about "
+msgstr "Erfahre mehr über "
+
+

@@ -1302,6 +1302,19 @@ main {
     min-height: var(--navbar-height);
 }
 
+/* Prevent overflow issues with longer localized labels */
+.navbar .container {
+    overflow: visible;
+}
+
+/* Allow left nav items to consume available space; keep right group fixed */
+.navbar-nav.me-auto { flex: 1 1 auto; min-width: 0; }
+.navbar-nav.ms-auto { flex: 0 0 auto; }
+
+/* Allow wrapping to a second row on tighter widths (desktop too) */
+.navbar-nav { flex-wrap: wrap; row-gap: 0.25rem; column-gap: 0.25rem; }
+.navbar-nav .nav-item { flex: 0 1 auto; min-width: 0; }
+
 /* body attribute now handled by CSS vars above */
 [data-theme="dark"] .navbar-collapse {
     background: #0b1220 !important;
@@ -1358,6 +1371,9 @@ main {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    white-space: nowrap;            /* keep single label per link */
+    overflow: hidden;               /* enable ellipsis if needed */
+    text-overflow: ellipsis;
 }
 
 .navbar-nav .nav-link:hover {
@@ -2300,5 +2316,7 @@ h6 { font-size: 1rem; }
         display: flex;
         align-items: center;
     }
+    /* Slightly tighter spacing on dense labels */
+    .navbar-nav .nav-link { padding: 0.7rem 1rem; }
 }
 

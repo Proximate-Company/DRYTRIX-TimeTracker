@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}User Management - {{ app_name }}{% endblock %}
+{% block title %}{{ _('User Management') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,10 +9,10 @@
         <div class="col-12">
             {% set actions %}
             <a href="{{ url_for('admin.create_user') }}" class="btn-header btn-primary">
-                <i class="fas fa-user-plus"></i> New User
+                <i class="fas fa-user-plus"></i> {{ _('New User') }}
             </a>
             {% endset %}
-            {{ page_header('fas fa-users', 'User Management', 'Manage users • ' ~ (users|length) ~ ' total', actions) }}
+            {{ page_header('fas fa-users', _('User Management'), _('Manage users') ~ ' • ' ~ (users|length) ~ ' ' ~ _('total'), actions) }}
         </div>
     </div>
 
@@ -23,7 +23,7 @@
                 <div class="card-body">
                     <i class="fas fa-users fa-2x text-primary mb-2"></i>
                     <h4 class="text-primary">{{ stats.total_users }}</h4>
-                    <p class="text-muted mb-0">Total Users</p>
+                    <p class="text-muted mb-0">{{ _('Total Users') }}</p>
                 </div>
             </div>
         </div>
@@ -32,7 +32,7 @@
                 <div class="card-body">
                     <i class="fas fa-user-check fa-2x text-success mb-2"></i>
                     <h4 class="text-success">{{ stats.active_users }}</h4>
-                    <p class="text-muted mb-0">Active Users</p>
+                    <p class="text-muted mb-0">{{ _('Active Users') }}</p>
                 </div>
             </div>
         </div>
@@ -41,7 +41,7 @@
                 <div class="card-body">
                     <i class="fas fa-user-shield fa-2x text-warning mb-2"></i>
                     <h4 class="text-warning">{{ stats.admin_users }}</h4>
-                    <p class="text-muted mb-0">Admin Users</p>
+                    <p class="text-muted mb-0">{{ _('Admin Users') }}</p>
                 </div>
             </div>
         </div>
@@ -50,7 +50,7 @@
                 <div class="card-body">
                     <i class="fas fa-clock fa-2x text-info mb-2"></i>
                     <h4 class="text-info">{{ "%.1f"|format(stats.total_hours) }}h</h4>
-                    <p class="text-muted mb-0">Total Hours</p>
+                    <p class="text-muted mb-0">{{ _('Total Hours') }}</p>
                 </div>
             </div>
         </div>
@@ -63,14 +63,14 @@
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-list me-2"></i>All Users
+                            <i class="fas fa-list me-2"></i>{{ _('All Users') }}
                         </h6>
                         <div class="d-flex gap-2">
                             <div class="input-group input-group-sm" style="width: 280px;">
                                 <span class="input-group-text bg-light border-end-0">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
-                                <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Search users...">
+                                <input type="text" class="form-control border-start-0" id="searchInput" placeholder="{{ _('Search users...') }}">
                             </div>
                         </div>
                     </div>
@@ -81,13 +81,13 @@
                         <table class="table table-hover mb-0" id="usersTable">
                             <thead>
                                 <tr>
-                                    <th>User</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th>Last Login</th>
-                                    <th>Total Hours</th>
-                                    <th class="text-center">Actions</th>
+                                    <th>{{ _('User') }}</th>
+                                    <th>{{ _('Role') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                    <th>{{ _('Created') }}</th>
+                                    <th>{{ _('Last Login') }}</th>
+                                    <th>{{ _('Total Hours') }}</th>
+                                    <th class="text-center">{{ _('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -98,23 +98,23 @@
                                             <strong>{{ user.display_name }}</strong>
                                             {% if user.active_timer %}
                                             <br><small class="text-warning">
-                                                <i class="fas fa-clock"></i> Timer Running
+                                                <i class="fas fa-clock"></i> {{ _('Timer Running') }}
                                             </small>
                                             {% endif %}
                                         </div>
                                     </td>
                                     <td>
                                         {% if user.role == 'admin' %}
-                                        <span class="badge bg-warning">Admin</span>
+                                        <span class="badge bg-warning">{{ _('Admin') }}</span>
                                         {% else %}
-                                        <span class="badge bg-secondary">User</span>
+                                        <span class="badge bg-secondary">{{ _('User') }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
                                         {% if user.is_active %}
-                                        <span class="badge bg-success">Active</span>
+                                        <span class="badge bg-success">{{ _('Active') }}</span>
                                         {% else %}
-                                        <span class="badge bg-danger">Inactive</span>
+                                        <span class="badge bg-danger">{{ _('Inactive') }}</span>
                                         {% endif %}
                                     </td>
                                     <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
@@ -122,7 +122,7 @@
                                         {% if user.last_login %}
                                         {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
                                         {% else %}
-                                        <span class="text-muted">Never</span>
+                                        <span class="text-muted">{{ _('Never') }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -131,11 +131,11 @@
                                     <td class="text-center actions-cell">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
-                                               class="btn btn-sm btn-action btn-action--edit" title="Edit">
+                                               class="btn btn-sm btn-action btn-action--edit" title="{{ _('Edit') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% if user.id != current_user.id %}
-                                            <button type="button" class="btn btn-sm btn-action btn-action--danger" title="Delete" 
+                                            <button type="button" class="btn btn-sm btn-action btn-action--danger" title="{{ _('Delete') }}" 
                                                     onclick="showDeleteUserModal('{{ user.id }}', '{{ user.username }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -151,10 +151,10 @@
                     <div class="text-center py-5">
                         <div class="empty-state">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No users found</h5>
-                            <p class="text-muted mb-4">Create your first user to get started with administration.</p>
+                            <h5 class="text-muted">{{ _('No users found') }}</h5>
+                            <p class="text-muted mb-4">{{ _('Create your first user to get started with administration.') }}</p>
                             <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
-                                <i class="fas fa-user-plus me-2"></i> Create First User
+                                <i class="fas fa-user-plus me-2"></i> {{ _('Create First User') }}
                             </a>
                         </div>
                     </div>
@@ -171,25 +171,25 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-trash me-2 text-danger"></i>Delete User
+                    <i class="fas fa-trash me-2 text-danger"></i>{{ _('Delete User') }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone.
+                    <strong>{{ _('Warning:') }}</strong> {{ _('This action cannot be undone.') }}
                 </div>
-                <p>Are you sure you want to delete the user <strong id="deleteUserName"></strong>?</p>
-                <p class="text-muted mb-0">This will permanently remove the user and all their data cannot be recovered.</p>
+                <p>{{ _('Are you sure you want to delete the user') }} <strong id="deleteUserName"></strong>?</p>
+                <p class="text-muted mb-0">{{ _('This will permanently remove the user and all their data cannot be recovered.') }}</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancel
+                    <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteUserForm" class="d-inline">
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>Delete User
+                        <i class="fas fa-trash me-2"></i>{{ _('Delete User') }}
                     </button>
                 </form>
             </div>

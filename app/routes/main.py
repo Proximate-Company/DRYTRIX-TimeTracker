@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_required, current_user
 from app.models import User, Project, TimeEntry, Settings
 from datetime import datetime, timedelta
@@ -79,6 +79,31 @@ def about():
 def help():
     """Help page"""
     return render_template('main/help.html')
+
+@main_bp.route('/i18n/set-language', methods=['POST', 'GET'])
+def set_language():
+    """Set preferred UI language via session or user profile."""
+    lang = request.args.get('lang') or (request.form.get('lang') if request.method == 'POST' else None) or (request.json.get('lang') if request.is_json else None) or 'en'
+    lang = lang.strip().lower()
+    from flask import current_app
+    supported = list(current_app.config.get('LANGUAGES', {}).keys()) or ['en']
+    if lang not in supported:
+        lang = current_app.config.get('BABEL_DEFAULT_LOCALE', 'en')
+    # Persist in session for guests
+    session['preferred_language'] = lang
+    # If authenticated, persist to user profile
+    try:
+        from flask_login import current_user
+        from app.utils.db import safe_commit
+        if current_user and getattr(current_user, 'is_authenticated', False):
+            if getattr(current_user, 'preferred_language', None) != lang:
+                current_user.preferred_language = lang
+                safe_commit('set_language', {'user_id': current_user.id, 'lang': lang})
+    except Exception:
+        pass
+    # Redirect back if referer exists
+    next_url = request.headers.get('Referer') or url_for('main.dashboard')
+    return redirect(next_url)
 
 @main_bp.route('/search')
 @login_required

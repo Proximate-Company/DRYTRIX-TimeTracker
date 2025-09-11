@@ -46,6 +46,10 @@
 					<div class="col-sm-4 text-muted">Last login</div>
 					<div class="col-sm-8">{{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else '—' }}</div>
 				</div>
+				<div class="row mb-3">
+					<div class="col-sm-4 text-muted">Language</div>
+					<div class="col-sm-8">{{ current_language_label }}</div>
+				</div>
 				<div class="row">
 					<div class="col-sm-4 text-muted">Total hours</div>
 					<div class="col-sm-8"><span class="badge bg-success">{{ current_user.total_hours }}</span></div>

@@ -1,4 +1,5 @@
-from flask import g, request
+from flask import g, request, current_app
+from flask_babel import get_locale
 from app.models import Settings
 from app.utils.timezone import get_timezone_offset_for_timezone
 
@@ -56,11 +57,25 @@ def register_context_processors(app):
         except Exception:
             version_value = 'dev-0'
         
+        # Current locale code (e.g., 'en', 'de')
+        try:
+            current_locale = str(get_locale())
+        except Exception:
+            current_locale = 'en'
+        # Normalize to short code for comparisons (e.g., 'en' from 'en_US')
+        short_locale = (current_locale.split('_', 1)[0] if current_locale else 'en')
+        available_languages = current_app.config.get('LANGUAGES', {}) or {}
+        current_language_label = available_languages.get(short_locale, short_locale.upper())
+
         return {
             'app_name': 'Time Tracker',
             'app_version': version_value,
             'timezone': timezone_name,
-            'timezone_offset': get_timezone_offset_for_timezone(timezone_name)
+            'timezone_offset': get_timezone_offset_for_timezone(timezone_name),
+            'current_locale': current_locale,
+            'current_language_code': short_locale,
+            'current_language_label': current_language_label,
+            'config': current_app.config
         }
     
     @app.before_request
