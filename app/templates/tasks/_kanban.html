@@ -1,0 +1,200 @@
+{# Reusable Kanban board for tasks. Expects `tasks` in context. #}
+{% set kanban_statuses = [
+  {'key': 'todo', 'label': 'To Do', 'icon': 'fas fa-list-check', 'accent': 'secondary'},
+  {'key': 'in_progress', 'label': 'In Progress', 'icon': 'fas fa-spinner', 'accent': 'warning'},
+  {'key': 'review', 'label': 'Review', 'icon': 'fas fa-user-check', 'accent': 'info'},
+  {'key': 'done', 'label': 'Done', 'icon': 'fas fa-check-circle', 'accent': 'success'},
+  {'key': 'cancelled', 'label': 'Cancelled', 'icon': 'fas fa-ban', 'accent': 'danger'}
+] %}
+
+<div class="kanban-board-wrapper">
+  <div class="kanban-toolbar d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-2">
+      <i class="fas fa-columns text-primary"></i>
+      <span class="fw-semibold">Kanban Board</span>
+    </div>
+    <div id="kanban-alert" class="d-none"></div>
+  </div>
+
+  <div id="kanbanBoard" class="kanban-board">
+    {% for col in kanban_statuses %}
+    <div class="kanban-column" data-status="{{ col.key }}">
+      <div class="kanban-column-header">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <div class="icon-circle bg-{{ col.accent }} bg-opacity-10 text-{{ col.accent }}">
+              <i class="{{ col.icon }}"></i>
+            </div>
+            <span class="fw-semibold">{{ col.label }}</span>
+          </div>
+          <span class="badge rounded-pill bg-{{ col.accent }} kanban-column-count">
+            {{ tasks|selectattr('status', 'equalto', col.key)|list|length }}
+          </span>
+        </div>
+      </div>
+      <div class="kanban-column-body" data-status="{{ col.key }}">
+        {% for task in tasks if task.status == col.key %}
+        <div class="kanban-card task-card {{ task.priority_class }}" draggable="true" data-task-id="{{ task.id }}" data-status="{{ task.status }}">
+          <div class="card-header border-0 pb-0">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="status-badge status-{{ task.status }}">{{ task.status_display }}</span>
+                <span class="priority-badge priority-{{ task.priority }}">{{ task.priority_display }}</span>
+                {% if task.is_overdue %}
+                <span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>Overdue</span>
+                {% endif %}
+              </div>
+              <small class="text-muted">#{{ task.id }}</small>
+            </div>
+          </div>
+          <div class="card-body pt-0">
+            <h6 class="card-title mb-2">
+              <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="text-decoration-none task-title-link">{{ task.name }}</a>
+            </h6>
+            {% if task.description %}
+            <p class="card-text text-muted small mb-2">{{ task.description[:90] }}{% if task.description|length > 90 %}...{% endif %}</p>
+            {% endif %}
+            <div class="d-flex align-items-center justify-content-between small text-muted">
+              <div class="d-flex align-items-center gap-2">
+                {% if task.assigned_user %}
+                <span title="Assignee"><i class="fas fa-user text-info"></i> {{ task.assigned_user.display_name }}</span>
+                {% endif %}
+              </div>
+              {% if task.due_date %}
+              <span class="{% if task.is_overdue %}text-danger fw-semibold{% endif %}"><i class="fas fa-calendar me-1"></i>{{ task.due_date.strftime('%b %d') }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.kanban-board { display: grid; grid-template-columns: repeat(5, minmax(260px, 1fr)); gap: 16px; align-items: start; }
+.kanban-column { background: var(--card-bg, #fff); border: 1px solid var(--border-color); border-radius: 12px; display: flex; flex-direction: column; min-height: 120px; }
+.kanban-column-header { padding: 12px 12px 8px 12px; border-bottom: 1px solid var(--border-color); background: var(--light-color, #f8fafc); border-top-left-radius: 12px; border-top-right-radius: 12px; }
+.kanban-column-body { padding: 12px; min-height: 120px; max-height: 70vh; overflow-y: auto; }
+.kanban-card { margin-bottom: 12px; cursor: grab; }
+.kanban-card.dragging { opacity: 0.6; cursor: grabbing; }
+.kanban-column-body.drag-over { outline: 2px dashed var(--primary-color); outline-offset: -6px; background: rgba(59, 130, 246, 0.05); }
+.icon-circle { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+#kanban-alert { width: 100%; }
+.alert-inline { margin: 0; padding: 6px 10px; }
+@media (max-width: 1200px) { .kanban-board { grid-template-columns: repeat(3, minmax(260px, 1fr)); } }
+@media (max-width: 768px) { .kanban-board { grid-template-columns: repeat(1, minmax(260px, 1fr)); } }
+[data-theme="dark"] .kanban-column { background: #0f172a; border-color: #1f2a44; }
+[data-theme="dark"] .kanban-column-header { background: #0b1220; border-color: #1f2a44; }
+</style>
+
+<script>
+(function(){
+  const board = document.getElementById('kanbanBoard');
+  if (!board) return;
+
+  const statusLabels = { todo: 'To Do', in_progress: 'In Progress', review: 'Review', done: 'Done', cancelled: 'Cancelled' };
+  const updateUrlTemplate = "{{ url_for('tasks.api_update_status', task_id=0) }}"; // will replace 0 with actual id
+
+  function showAlert(kind, msg) {
+    const holder = document.getElementById('kanban-alert');
+    if (!holder) return;
+    holder.className = '';
+    holder.classList.add('alert', 'alert-' + (kind === 'error' ? 'danger' : (kind === 'info' ? 'info' : 'success')), 'alert-inline');
+    holder.textContent = msg;
+    holder.classList.remove('d-none');
+    window.clearTimeout(holder._t);
+    holder._t = window.setTimeout(() => { holder.classList.add('d-none'); }, 2500);
+  }
+
+  function updateCounts() {
+    document.querySelectorAll('.kanban-column').forEach(col => {
+      const body = col.querySelector('.kanban-column-body');
+      const count = body ? body.querySelectorAll('.kanban-card').length : 0;
+      const badge = col.querySelector('.kanban-column-count');
+      if (badge) badge.textContent = count;
+    });
+  }
+
+  let dragCard = null;
+  board.addEventListener('dragstart', (e) => {
+    const card = e.target.closest('.kanban-card');
+    if (!card) return;
+    dragCard = card;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.dataset.taskId);
+  });
+
+  board.addEventListener('dragend', () => {
+    if (dragCard) dragCard.classList.remove('dragging');
+    dragCard = null;
+    document.querySelectorAll('.kanban-column-body').forEach(b => b.classList.remove('drag-over'));
+  });
+
+  document.querySelectorAll('.kanban-column-body').forEach(body => {
+    body.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      body.classList.add('drag-over');
+    });
+    body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
+    body.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      body.classList.remove('drag-over');
+      const targetStatus = body.dataset.status;
+      const taskId = e.dataTransfer.getData('text/plain');
+      const card = dragCard || board.querySelector(`.kanban-card[data-task-id="${taskId}"]`);
+      if (!card) return;
+      const originalParent = card.parentElement;
+      const originalStatus = card.dataset.status;
+      if (targetStatus === originalStatus) {
+        body.appendChild(card);
+        return;
+      }
+      body.appendChild(card);
+      updateCounts();
+      // optimistic UI: update badge
+      const statusBadge = card.querySelector('.status-badge');
+      if (statusBadge) {
+        statusBadge.className = `status-badge status-${targetStatus}`;
+        statusBadge.textContent = statusLabels[targetStatus] || targetStatus;
+      }
+      card.dataset.status = targetStatus;
+
+      const url = updateUrlTemplate.replace('/0/', `/${taskId}/`);
+      try {
+        const resp = await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ status: targetStatus })
+        });
+        if (!resp.ok) {
+          throw new Error('Failed to update status');
+        }
+        const data = await resp.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Update rejected');
+        }
+        showAlert('success', 'Task moved to ' + (statusLabels[targetStatus] || targetStatus));
+      } catch (err) {
+        // revert
+        if (originalParent) originalParent.appendChild(card);
+        card.dataset.status = originalStatus;
+        if (statusBadge) {
+          statusBadge.className = `status-badge status-${originalStatus}`;
+          statusBadge.textContent = statusLabels[originalStatus] || originalStatus;
+        }
+        updateCounts();
+        showAlert('error', err.message || 'Could not update task');
+      }
+    });
+  });
+
+  updateCounts();
+})();
+</script>
+
+
