@@ -10,14 +10,14 @@
             {% set actions %}
             {% if current_user.is_admin %}
             <a href="{{ url_for('clients.edit_client', client_id=client.id) }}" class="btn btn-outline-light btn-sm me-2">
-                <i class="fas fa-edit"></i> Edit Client
+                <i class="fas fa-edit"></i> {{ _('Edit Client') }}
             </a>
             {% endif %}
             <a href="{{ url_for('clients.list_clients') }}" class="btn btn-outline-light btn-sm">
-                <i class="fas fa-arrow-left"></i> Back to Clients
+                <i class="fas fa-arrow-left"></i> {{ _('Back to Clients') }}
             </a>
             {% endset %}
-            {{ page_header('fas fa-building', client.name, 'Client details and project overview', actions) }}
+            {{ page_header('fas fa-building', client.name, _('Client details and project overview'), actions) }}
         </div>
     </div>
 
@@ -29,7 +29,7 @@
                         <i class="fas fa-project-diagram"></i>
                     </div>
                     <div>
-                        <div class="summary-label">Total Projects</div>
+                        <div class="summary-label">{{ _('Total Projects') }}</div>
                         <div class="summary-value">{{ client.total_projects }}</div>
                     </div>
                 </div>
@@ -42,7 +42,7 @@
                         <i class="fas fa-toggle-on"></i>
                     </div>
                     <div>
-                        <div class="summary-label">Active Projects</div>
+                        <div class="summary-label">{{ _('Active Projects') }}</div>
                         <div class="summary-value">{{ client.active_projects }}</div>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                         <i class="fas fa-clock"></i>
                     </div>
                     <div>
-                        <div class="summary-label">Total Hours</div>
+                        <div class="summary-label">{{ _('Total Hours') }}</div>
                         <div class="summary-value">{{ "%.1f"|format(client.total_hours) }}</div>
                     </div>
                 </div>
@@ -68,7 +68,7 @@
                         <i class="fas fa-sack-dollar"></i>
                     </div>
                     <div>
-                        <div class="summary-label">Est. Total Cost</div>
+                        <div class="summary-label">{{ _('Est. Total Cost') }}</div>
                         <div class="summary-value">{{ "%.2f"|format(client.estimated_total_cost) }} {{ currency }}</div>
                     </div>
                 </div>
@@ -82,32 +82,32 @@
             <div class="card mb-4 shadow-sm border-0">
                 <div class="card-header bg-white py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-info-circle me-2"></i>Client Information
+                        <i class="fas fa-info-circle me-2"></i>{{ _('Client Information') }}
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
                         <div class="detail-row">
-                            <span class="detail-label">Status</span>
+                            <span class="detail-label">{{ _('Status') }}</span>
                             <span class="detail-value">
                                 {% if client.status == 'active' %}
-                                <span class="status-badge-large bg-success text-white">Active</span>
+                                <span class="status-badge-large bg-success text-white">{{ _('Active') }}</span>
                                 {% else %}
-                                <span class="status-badge-large bg-secondary text-white">Archived</span>
+                                <span class="status-badge-large bg-secondary text-white">{{ _('Archived') }}</span>
                                 {% endif %}
                             </span>
                         </div>
                     </div>
                     {% if client.description %}
                     <div class="mb-3">
-                        <div class="section-title text-primary mb-2">Description</div>
+                        <div class="section-title text-primary mb-2">{{ _('Description') }}</div>
                         <div class="content-box">{{ client.description }}</div>
                     </div>
                     {% endif %}
                     {% if client.contact_person %}
                     <div class="mb-3">
                         <div class="detail-row">
-                            <span class="detail-label">Contact Person</span>
+                            <span class="detail-label">{{ _('Contact Person') }}</span>
                             <span class="detail-value">{{ client.contact_person }}</span>
                         </div>
                     </div>
@@ -115,7 +115,7 @@
                     {% if client.email %}
                     <div class="mb-3">
                         <div class="detail-row">
-                            <span class="detail-label">Email</span>
+                            <span class="detail-label">{{ _('Email') }}</span>
                             <span class="detail-value"><a href="mailto:{{ client.email }}">{{ client.email }}</a></span>
                         </div>
                     </div>
@@ -123,21 +123,21 @@
                     {% if client.phone %}
                     <div class="mb-3">
                         <div class="detail-row">
-                            <span class="detail-label">Phone</span>
+                            <span class="detail-label">{{ _('Phone') }}</span>
                             <span class="detail-value">{{ client.phone }}</span>
                         </div>
                     </div>
                     {% endif %}
                     {% if client.address %}
                     <div class="mb-3">
-                        <div class="section-title text-primary mb-2">Address</div>
+                        <div class="section-title text-primary mb-2">{{ _('Address') }}</div>
                         <div class="content-box">{{ client.address }}</div>
                     </div>
                     {% endif %}
                     {% if client.default_hourly_rate %}
                     <div class="mb-3">
                         <div class="detail-row">
-                            <span class="detail-label">Default Hourly Rate</span>
+                            <span class="detail-label">{{ _('Default Hourly Rate') }}</span>
                             <span class="detail-value">{{ "%.2f"|format(client.default_hourly_rate) }} {{ currency }}</span>
                         </div>
                     </div>
@@ -149,29 +149,29 @@
             <div class="card mb-4 shadow-sm border-0">
                 <div class="card-header bg-white py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-bar me-2"></i>Statistics
+                        <i class="fas fa-chart-bar me-2"></i>{{ _('Statistics') }}
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
                         <div class="col-6">
                             <h4 class="text-primary">{{ client.total_projects }}</h4>
-                            <small class="text-muted">Total Projects</small>
+                            <small class="text-muted">{{ _('Total Projects') }}</small>
                         </div>
                         <div class="col-6">
                             <h4 class="text-success">{{ client.active_projects }}</h4>
-                            <small class="text-muted">Active Projects</small>
+                            <small class="text-muted">{{ _('Active Projects') }}</small>
                         </div>
                     </div>
                     <hr>
                     <div class="row text-center">
                         <div class="col-6">
                             <h4 class="text-info">{{ "%.1f"|format(client.total_hours) }}</h4>
-                            <small class="text-muted">Total Hours</small>
+                            <small class="text-muted">{{ _('Total Hours') }}</small>
                         </div>
                         <div class="col-6">
                             <h4 class="text-warning">{{ "%.2f"|format(client.estimated_total_cost) }}</h4>
-                            <small class="text-muted">Est. Total Cost</small>
+                            <small class="text-muted">{{ _('Est. Total Cost') }}</small>
                         </div>
                     </div>
                 </div>
@@ -182,28 +182,28 @@
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-cog me-2"></i>Status & Actions
+                        <i class="fas fa-cog me-2"></i>{{ _('Status & Actions') }}
                     </h6>
                 </div>
                 <div class="card-body">
                     {% if client.status == 'active' %}
-                    <form method="POST" action="{{ url_for('clients.archive_client', client_id=client.id) }}" class="mb-2" onsubmit="return confirm('Are you sure you want to archive this client?')">
+                    <form method="POST" action="{{ url_for('clients.archive_client', client_id=client.id) }}" class="mb-2" onsubmit="return confirm('{{ _('Are you sure you want to archive this client?') }}')">
                         <button type="submit" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-archive me-2"></i>Archive Client
+                            <i class="fas fa-archive me-2"></i>{{ _('Archive Client') }}
                         </button>
                     </form>
                     {% else %}
                     <form method="POST" action="{{ url_for('clients.activate_client', client_id=client.id) }}" class="mb-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-check me-2"></i>Activate Client
+                            <i class="fas fa-check me-2"></i>{{ _('Activate Client') }}
                         </button>
                     </form>
                     {% endif %}
                     
                     {% if client.total_projects == 0 %}
-                    <form method="POST" action="{{ url_for('clients.delete_client', client_id=client.id) }}" onsubmit="return confirm('Are you sure you want to delete this client? This action cannot be undone.')">
+                    <form method="POST" action="{{ url_for('clients.delete_client', client_id=client.id) }}" onsubmit="return confirm('{{ _('Are you sure you want to delete this client? This action cannot be undone.') }}')">
                         <button type="submit" class="btn btn-danger w-100">
-                            <i class="fas fa-trash me-2"></i>Delete Client
+                            <i class="fas fa-trash me-2"></i>{{ _('Delete Client') }}
                         </button>
                     </form>
                     {% endif %}
@@ -217,12 +217,12 @@
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-project-diagram me-2"></i>Projects
-                        <span class="badge badge-soft-secondary ms-2">{{ projects|length }} total</span>
+                        <i class="fas fa-project-diagram me-2"></i>{{ _('Projects') }}
+                        <span class="badge badge-soft-secondary ms-2">{{ projects|length }} {{ _('total') }}</span>
                     </h6>
                     {% if current_user.is_admin %}
                     <a href="{{ url_for('projects.create_project') }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-plus me-1"></i> New Project
+                        <i class="fas fa-plus me-1"></i> {{ _('New Project') }}
                     </a>
                     {% endif %}
                 </div>
@@ -232,13 +232,13 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Project Name</th>
-                                    <th>Status</th>
-                                    <th>Billable</th>
-                                    <th>Hourly Rate</th>
-                                    <th>Total Hours</th>
-                                    <th>Est. Cost</th>
-                                    <th>Actions</th>
+                                    <th>{{ _('Project Name') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                    <th>{{ _('Billable') }}</th>
+                                    <th>{{ _('Hourly Rate') }}</th>
+                                    <th>{{ _('Total Hours') }}</th>
+                                    <th>{{ _('Est. Cost') }}</th>
+                                    <th>{{ _('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -254,16 +254,16 @@
                                     </td>
                                     <td>
                                         {% if project.status == 'active' %}
-                                        <span class="badge badge-soft-success">Active</span>
+                                        <span class="badge badge-soft-success">{{ _('Active') }}</span>
                                         {% else %}
-                                        <span class="badge badge-soft-secondary">Archived</span>
+                                        <span class="badge badge-soft-secondary">{{ _('Archived') }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
                                         {% if project.billable %}
-                                        <span class="badge badge-soft-primary">Yes</span>
+                                        <span class="badge badge-soft-primary">{{ _('Yes') }}</span>
                                         {% else %}
-                                        <span class="badge badge-soft-secondary">No</span>
+                                        <span class="badge badge-soft-secondary">{{ _('No') }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -284,12 +284,12 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-action btn-action--view" title="View">
+                                               class="btn btn-sm btn-action btn-action--view" title="{{ _('View') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             {% if current_user.is_admin %}
                                             <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-action btn-action--edit" title="Edit">
+                                               class="btn btn-sm btn-action btn-action--edit" title="{{ _('Edit') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% endif %}
@@ -304,11 +304,11 @@
                     <div class="text-center py-5">
                         <div class="empty-state">
                             <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No projects found</h5>
-                            <p class="text-muted mb-3">This client doesn't have any projects yet.</p>
+                            <h5 class="text-muted">{{ _('No projects found') }}</h5>
+                            <p class="text-muted mb-3">{{ _("This client doesn't have any projects yet.") }}</p>
                             {% if current_user.is_admin %}
                             <a href="{{ url_for('projects.create_project') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i> Create First Project
+                                <i class="fas fa-plus me-2"></i> {{ _('Create First Project') }}
                             </a>
                             {% endif %}
                         </div>

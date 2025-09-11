@@ -2,9 +2,9 @@
 <div class="card stats-card hover-lift mb-4">
     <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
         <div class="mb-3 mb-md-0">
-            <h1 class="h3 mb-1">{% if icon_class %}<i class="{{ icon_class }} me-2"></i>{% endif %}{{ title_text }}</h1>
+            <h1 class="h3 mb-1">{% if icon_class %}<i class="{{ icon_class }} me-2"></i>{% endif %}{{ _(title_text) }}</h1>
             {% if subtitle_text %}
-            <p class="mb-0 text-muted">{{ subtitle_text }}</p>
+            <p class="mb-0 text-muted">{{ _(subtitle_text) }}</p>
             {% endif %}
         </div>
         <div class="d-flex flex-wrap gap-2 align-items-center">
@@ -24,7 +24,7 @@
                 </div>
             </div>
             <div class="flex-grow-1 ms-3">
-                <div class="summary-label">{{ label }}</div>
+                <div class="summary-label">{{ _(label) }}</div>
                 <div class="summary-value">{{ value }}</div>
             </div>
         </div>
@@ -37,8 +37,8 @@
     <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
         <i class="{{ icon_class }} fa-2x text-muted"></i>
     </div>
-    <h4 class="text-muted mb-2">{{ title }}</h4>
-    <p class="text-muted mb-4">{{ message }}</p>
+    <h4 class="text-muted mb-2">{{ _(title) }}</h4>
+    <p class="text-muted mb-4">{{ _(message) }}</p>
     {% if actions_html %}
     <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
         {{ actions_html|safe }}

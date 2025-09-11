@@ -4,6 +4,8 @@ from app import db
 from app.models import User
 from app.config import Config
 from app.utils.db import safe_commit
+from flask_babel import gettext as _
+
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -25,7 +27,7 @@ def login():
             current_app.logger.info("POST /login (username=%s) from %s", username or '<empty>', request.headers.get('X-Forwarded-For') or request.remote_addr)
             
             if not username:
-                flash('Username is required', 'error')
+                flash(_('Username is required'), 'error')
                 return render_template('auth/login.html')
             
             # Normalize admin usernames from config
@@ -47,12 +49,12 @@ def login():
                     db.session.add(user)
                     if not safe_commit('self_register_user', {'username': username}):
                         current_app.logger.error("Self-registration failed for '%s' due to DB error", username)
-                        flash('Could not create your account due to a database error. Please try again later.', 'error')
+                        flash(_('Could not create your account due to a database error. Please try again later.'), 'error')
                         return render_template('auth/login.html')
                     current_app.logger.info("Created new user '%s'", username)
-                    flash(f'Welcome! Your account has been created.', 'success')
+                    flash(_('Welcome! Your account has been created.'), 'success')
                 else:
-                    flash('User not found. Please contact an administrator.', 'error')
+                    flash(_('User not found. Please contact an administrator.'), 'error')
                     return render_template('auth/login.html')
             else:
                 # If existing user matches admin usernames, ensure admin role
@@ -60,12 +62,12 @@ def login():
                     user.role = 'admin'
                     if not safe_commit('promote_admin_user', {'username': username}):
                         current_app.logger.error("Failed to promote '%s' to admin due to DB error", username)
-                        flash('Could not update your account role due to a database error.', 'error')
+                        flash(_('Could not update your account role due to a database error.'), 'error')
                         return render_template('auth/login.html')
             
             # Check if user is active
             if not user.is_active:
-                flash('Account is disabled. Please contact an administrator.', 'error')
+                flash(_('Account is disabled. Please contact an administrator.'), 'error')
                 return render_template('auth/login.html')
             
             # Log in the user
@@ -79,11 +81,11 @@ def login():
                 next_page = url_for('main.dashboard')
             current_app.logger.info("Redirecting '%s' to %s", user.username, next_page)
             
-            flash(f'Welcome back, {user.username}!', 'success')
+            flash(_('Welcome back, %(username)s!', username=user.username), 'success')
             return redirect(next_page)
         except Exception as e:
             current_app.logger.exception("Login error: %s", e)
-            flash('Unexpected error during login. Please try again or check server logs.', 'error')
+            flash(_('Unexpected error during login. Please try again or check server logs.'), 'error')
             return render_template('auth/login.html')
     
     return render_template('auth/login.html')
@@ -94,7 +96,7 @@ def logout():
     """Logout the current user"""
     username = current_user.username
     logout_user()
-    flash(f'Goodbye, {username}!', 'info')
+    flash(_('Goodbye, %(username)s!', username=username), 'info')
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/profile')
@@ -111,12 +113,19 @@ def edit_profile():
         # Update real name if provided
         full_name = request.form.get('full_name', '').strip()
         current_user.full_name = full_name or None
+        # Update preferred language
+        preferred_language = (request.form.get('preferred_language') or '').strip().lower()
+        available = (current_app.config.get('LANGUAGES') or {}).keys()
+        if preferred_language in available:
+            current_user.preferred_language = preferred_language
+            # Also set session so it applies immediately
+            session['preferred_language'] = preferred_language
         try:
             db.session.commit()
-            flash('Profile updated successfully', 'success')
+            flash(_('Profile updated successfully'), 'success')
         except Exception:
             db.session.rollback()
-            flash('Could not update your profile due to a database error.', 'error')
+            flash(_('Could not update your profile due to a database error.'), 'error')
         return redirect(url_for('auth.profile'))
     
     return render_template('auth/edit_profile.html')

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if project %}Edit{% else %}New{% endif %} Project - {{ app_name }}{% endblock %}
+{% block title %}{% if project %}{{ _('Edit') }}{% else %}{{ _('New') }}{% endif %} {{ _('Project') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -10,18 +10,18 @@
                 <div>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ url_for('projects.list_projects') }}">Projects</a></li>
-                            <li class="breadcrumb-item active">{% if project %}Edit{% else %}New{% endif %}</li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('projects.list_projects') }}">{{ _('Projects') }}</a></li>
+                            <li class="breadcrumb-item active">{% if project %}{{ _('Edit') }}{% else %}{{ _('New') }}{% endif %}</li>
                         </ol>
                     </nav>
                     <h1 class="h3 mb-0">
                         <i class="fas fa-project-diagram text-primary"></i> 
-                        {% if project %}Edit Project{% else %}New Project{% endif %}
+                        {% if project %}{{ _('Edit Project') }}{% else %}{{ _('New Project') }}{% endif %}
                     </h1>
                 </div>
                 <div>
                     <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to Projects
+                        <i class="fas fa-arrow-left"></i> {{ _('Back to Projects') }}
                     </a>
                 </div>
             </div>
@@ -33,7 +33,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-edit"></i> Project Information
+                        <i class="fas fa-edit"></i> {{ _('Project Information') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -127,7 +127,7 @@
                                         {% endfor %}
                                     </div>
                                     {% endif %}
-                                    <div class="form-text">Leave empty for non-billable projects</div>
+                                    <div class="form-text">{{ _('Leave empty for non-billable projects') }}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -148,11 +148,11 @@
 
                         <div class="d-flex justify-content-between">
                             <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancel
+                                <i class="fas fa-times"></i> {{ _('Cancel') }}
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> 
-                                {% if project %}Update Project{% else %}Create Project{% endif %}
+                                {% if project %}{{ _('Update Project') }}{% else %}{{ _('Create Project') }}{% endif %}
                             </button>
                         </div>
                     </form>
@@ -164,30 +164,30 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Help
+                        <i class="fas fa-info-circle"></i> {{ _('Help') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <h6>Project Name</h6>
-                    <p class="text-muted small">Choose a descriptive name that clearly identifies the project.</p>
+                    <h6>{{ _('Project Name') }}</h6>
+                    <p class="text-muted small">{{ _('Choose a descriptive name that clearly identifies the project.') }}</p>
                     
-                    <h6>Client</h6>
-                    <p class="text-muted small">Optional client name for organization. You can group projects by client.</p>
+                    <h6>{{ _('Client') }}</h6>
+                    <p class="text-muted small">{{ _('Optional client name for organization. You can group projects by client.') }}</p>
                     
-                    <h6>Description</h6>
-                    <p class="text-muted small">Provide details about the project scope, objectives, or any relevant information.</p>
+                    <h6>{{ _('Description') }}</h6>
+                    <p class="text-muted small">{{ _('Provide details about the project scope, objectives, or any relevant information.') }}</p>
                     
-                    <h6>Billable</h6>
-                    <p class="text-muted small">Check this if time spent on this project should be tracked for billing purposes.</p>
+                    <h6>{{ _('Billable') }}</h6>
+                    <p class="text-muted small">{{ _('Check this if time spent on this project should be tracked for billing purposes.') }}</p>
                     
-                    <h6>Hourly Rate</h6>
-                    <p class="text-muted small">Set the hourly rate for billable time. Leave empty for non-billable projects.</p>
+                    <h6>{{ _('Hourly Rate') }}</h6>
+                    <p class="text-muted small">{{ _('Set the hourly rate for billable time. Leave empty for non-billable projects.') }}</p>
                     
-                    <h6>Billing Reference</h6>
-                    <p class="text-muted small">Optional reference number or code for billing systems.</p>
+                    <h6>{{ _('Billing Reference') }}</h6>
+                    <p class="text-muted small">{{ _('Optional reference number or code for billing systems.') }}</p>
                     
-                    <h6>Status</h6>
-                    <p class="text-muted small">Active projects can have time tracked. Archived projects are hidden from timers but retain data.</p>
+                    <h6>{{ _('Status') }}</h6>
+                    <p class="text-muted small">{{ _('Active projects can have time tracked. Archived projects are hidden from timers but retain data.') }}</p>
                 </div>
             </div>
 
@@ -195,23 +195,23 @@
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-bar"></i> Current Statistics
+                        <i class="fas fa-chart-bar"></i> {{ _('Current Statistics') }}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
                         <div class="col-6 mb-3">
                             <div class="h5 text-primary">{{ "%.1f"|format(project.total_hours) }}</div>
-                            <small class="text-muted">Total Hours</small>
+                            <small class="text-muted">{{ _('Total Hours') }}</small>
                         </div>
                         <div class="col-6 mb-3">
                             <div class="h5 text-success">{{ "%.1f"|format(project.total_billable_hours) }}</div>
-                            <small class="text-muted">Billable Hours</small>
+                            <small class="text-muted">{{ _('Billable Hours') }}</small>
                         </div>
                         {% if project.billable and project.hourly_rate %}
                         <div class="col-12">
                             <div class="h5 text-success">{{ currency }} {{ "%.2f"|format(project.estimated_cost) }}</div>
-                            <small class="text-muted">Estimated Cost</small>
+                            <small class="text-muted">{{ _('Estimated Cost') }}</small>
                         </div>
                         {% endif %}
                     </div>

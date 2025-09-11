@@ -1,0 +1,85 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TimeTracker\n"
+"Language: nl\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Navbar and common
+msgid "Time Tracker"
+msgstr "Tijdregistratie"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Projects"
+msgstr "Projecten"
+
+msgid "Clients"
+msgstr "Klanten"
+
+msgid "Tasks"
+msgstr "Taken"
+
+msgid "Log Time"
+msgstr "Tijd loggen"
+
+msgid "Reports"
+msgstr "Rapporten"
+
+msgid "Invoices"
+msgstr "Facturen"
+
+msgid "Analytics"
+msgstr "Analyses"
+
+msgid "Admin"
+msgstr "Beheer"
+
+msgid "Profile"
+msgstr "Profiel"
+
+msgid "Logout"
+msgstr "Afmelden"
+
+msgid "Language"
+msgstr "Taal"
+
+msgid "Home"
+msgstr "Start"
+
+msgid "Log"
+msgstr "Log"
+
+msgid "About"
+msgstr "Over"
+
+msgid "Help"
+msgstr "Help"
+
+msgid "Buy me a coffee"
+msgstr "Trakteer me op een koffie"
+
+# About page
+msgid "About TimeTracker"
+msgstr "Over TimeTracker"
+
+msgid "Developed by DryTrix"
+msgstr "Ontwikkeld door DryTrix"
+
+msgid "What is"
+msgstr "Wat is"
+
+msgid "A simple, efficient time tracking solution for teams and individuals."
+msgstr "Een eenvoudige, efficiënte tijdregistratie-oplossing voor teams en individuen."
+
+msgid "It provides a simple and intuitive interface for tracking time spent on various projects and tasks."
+msgstr "Het biedt een eenvoudige en intuïtieve interface om tijd bij te houden voor verschillende projecten en taken."
+
+msgid "%(app)s is a web-based time tracking application designed for internal use within organizations."
+msgstr "%(app)s is een webgebaseerde tijdregistratie-applicatie ontworpen voor intern gebruik binnen organisaties."
+
+msgid "Learn more about "
+msgstr "Meer informatie over "
+
+

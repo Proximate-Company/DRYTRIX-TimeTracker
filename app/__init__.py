@@ -1,12 +1,13 @@
 import os
 import logging
 from datetime import timedelta
-from flask import Flask, request
+from flask import Flask, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
+from flask_babel import Babel, _
 import re
 from jinja2 import ChoiceLoader, FileSystemLoader
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -19,6 +20,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 socketio = SocketIO()
+babel = Babel()
 
 def create_app(config=None):
     """Application factory pattern"""
@@ -68,6 +70,62 @@ def create_app(config=None):
     login_manager.init_app(app)
     socketio.init_app(app, cors_allowed_origins="*")
 
+    # Ensure translations exist and configure absolute translation directories before Babel init
+    try:
+        translations_dirs = (app.config.get('BABEL_TRANSLATION_DIRECTORIES') or 'translations').split(',')
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        abs_dirs = []
+        for d in translations_dirs:
+            d = d.strip()
+            if not d:
+                continue
+            abs_dirs.append(d if os.path.isabs(d) else os.path.abspath(os.path.join(base_path, d)))
+        if abs_dirs:
+            app.config['BABEL_TRANSLATION_DIRECTORIES'] = os.pathsep.join(abs_dirs)
+        # Best-effort compile with Babel CLI if available, else Python fallback
+        try:
+            import subprocess
+            subprocess.run(['pybabel', 'compile', '-d', abs_dirs[0]], check=False)
+        except Exception:
+            pass
+        from app.utils.i18n import ensure_translations_compiled
+        for d in abs_dirs:
+            ensure_translations_compiled(d)
+    except Exception:
+        pass
+
+    # Internationalization: locale selector compatible with Flask-Babel v4+
+    def _select_locale():
+        try:
+            # 1) User preference from DB
+            from flask_login import current_user
+            if current_user and getattr(current_user, 'is_authenticated', False):
+                pref = getattr(current_user, 'preferred_language', None)
+                if pref:
+                    return pref
+            # 2) Session override (set-language route)
+            if 'preferred_language' in session:
+                return session.get('preferred_language')
+            # 3) Best match with Accept-Language
+            supported = list(app.config.get('LANGUAGES', {}).keys()) or ['en']
+            return request.accept_languages.best_match(supported) or app.config.get('BABEL_DEFAULT_LOCALE', 'en')
+        except Exception:
+            return app.config.get('BABEL_DEFAULT_LOCALE', 'en')
+
+    babel.init_app(
+        app,
+        default_locale=app.config.get('BABEL_DEFAULT_LOCALE', 'en'),
+        default_timezone=app.config.get('TZ', 'Europe/Rome'),
+        locale_selector=_select_locale,
+    )
+
+    # Ensure gettext helpers available in Jinja
+    try:
+        from flask_babel import gettext as _gettext, ngettext as _ngettext
+        app.jinja_env.globals.update(_=_gettext, ngettext=_ngettext)
+    except Exception:
+        pass
+
     # Log effective database URL (mask password)
     db_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
     try:
@@ -80,6 +138,8 @@ def create_app(config=None):
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
+
+    # Internationalization selector handled via babel.init_app(locale_selector=...)
     
     # Register user loader
     @login_manager.user_loader
@@ -187,6 +247,8 @@ def create_app(config=None):
     # Register context processors
     from app.utils.context_processors import register_context_processors
     register_context_processors(app)
+    
+    # (translations compiled and directories set before Babel init)
     
     # Register template filters
     from app.utils.template_filters import register_template_filters

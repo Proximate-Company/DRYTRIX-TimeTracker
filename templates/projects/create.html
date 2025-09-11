@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Create Project - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Create Project') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -14,8 +14,8 @@
                             <i class="fas fa-project-diagram text-primary fa-lg"></i>
                         </div>
                         <div>
-                            <h1 class="h2 mb-1">Create New Project</h1>
-                            <p class="text-muted mb-0">Set up a new project to organize your work and track time effectively</p>
+                            <h1 class="h2 mb-1">{{ _('Create New Project') }}</h1>
+                            <p class="text-muted mb-0">{{ _('Set up a new project to organize your work and track time effectively') }}</p>
                         </div>
                     </div>
                 </div>
@@ -29,7 +29,7 @@
             <div class="card mobile-card">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-edit me-2 text-primary"></i>Project Information
+                        <i class="fas fa-edit me-2 text-primary"></i>{{ _('Project Information') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -39,20 +39,20 @@
                             <div class="col-md-8">
                                 <div class="mb-3">
                                     <label for="name" class="form-label fw-semibold">
-                                        <i class="fas fa-tag me-2 text-primary"></i>Project Name <span class="text-danger">*</span>
+                                        <i class="fas fa-tag me-2 text-primary"></i>{{ _('Project Name') }} <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control form-control-lg" id="name" name="name" required 
-                                           value="{{ request.form.get('name','') }}" placeholder="Enter a descriptive project name">
-                                    <small class="form-text text-muted">Choose a clear, descriptive name that explains the project scope</small>
+                                           value="{{ request.form.get('name','') }}" placeholder="{{ _('Enter a descriptive project name') }}">
+                                    <small class="form-text text-muted">{{ _('Choose a clear, descriptive name that explains the project scope') }}</small>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="client_id" class="form-label fw-semibold">
-                                        <i class="fas fa-user me-2 text-info"></i>Client <span class="text-danger">*</span>
+                                        <i class="fas fa-user me-2 text-info"></i>{{ _('Client') }} <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-select form-select-lg" id="client_id" name="client_id" required>
-                                        <option value="">Select a client...</option>
+                                        <option value="">{{ _('Select a client...') }}</option>
                                         {% for client in clients %}
                                         <option value="{{ client.id }}" 
                                                 {% if request.form.get('client_id') == client.id|string %}selected{% endif %}
@@ -63,7 +63,7 @@
                                     </select>
                                     <div class="form-text">
                                         <a href="{{ url_for('clients.create_client') }}" class="text-decoration-none">
-                                            <i class="fas fa-plus"></i> Create new client
+                                            <i class="fas fa-plus"></i> {{ _('Create new client') }}
                                         </a>
                                     </div>
                                 </div>
@@ -73,11 +73,11 @@
                         <!-- Description -->
                         <div class="mb-4">
                             <label for="description" class="form-label fw-semibold">
-                                <i class="fas fa-align-left me-2 text-primary"></i>Description
+                                <i class="fas fa-align-left me-2 text-primary"></i>{{ _('Description') }}
                             </label>
                             <textarea class="form-control" id="description" name="description" rows="4" 
-                                      placeholder="Provide detailed information about the project, objectives, and deliverables...">{{ request.form.get('description','') }}</textarea>
-                            <small class="form-text text-muted">Optional: Add context, objectives, or specific requirements for the project</small>
+                                      placeholder="{{ _('Provide detailed information about the project, objectives, and deliverables...') }}">{{ request.form.get('description','') }}</textarea>
+                            <small class="form-text text-muted">{{ _('Optional: Add context, objectives, or specific requirements for the project') }}</small>
                         </div>
 
                         <!-- Billing Settings -->
@@ -87,20 +87,20 @@
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if request.form.get('billable') %}checked{% endif %}>
                                         <label class="form-check-label fw-semibold" for="billable">
-                                            <i class="fas fa-dollar-sign me-2 text-success"></i>Billable Project
+                                            <i class="fas fa-dollar-sign me-2 text-success"></i>{{ _('Billable Project') }}
                                         </label>
-                                        <small class="form-text text-muted d-block">Enable billing for this project</small>
+                                        <small class="form-text text-muted d-block">{{ _('Enable billing for this project') }}</small>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="hourly_rate" class="form-label fw-semibold">
-                                        <i class="fas fa-clock me-2 text-warning"></i>Hourly Rate
+                                        <i class="fas fa-clock me-2 text-warning"></i>{{ _('Hourly Rate') }}
                                     </label>
                                     <input type="number" step="0.01" min="0" class="form-control" id="hourly_rate" name="hourly_rate" 
-                                           value="{{ request.form.get('hourly_rate','') }}" placeholder="e.g. 75.00">
-                                    <small class="form-text text-muted">Leave empty for non-billable projects</small>
+                                           value="{{ request.form.get('hourly_rate','') }}" placeholder="{{ _('e.g. 75.00') }}">
+                                    <small class="form-text text-muted">{{ _('Leave empty for non-billable projects') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -108,20 +108,20 @@
                         <!-- Billing Reference -->
                         <div class="mb-4">
                             <label for="billing_ref" class="form-label fw-semibold">
-                                <i class="fas fa-receipt me-2 text-secondary"></i>Billing Reference
+                                <i class="fas fa-receipt me-2 text-secondary"></i>{{ _('Billing Reference') }}
                             </label>
                             <input type="text" class="form-control" id="billing_ref" name="billing_ref" 
-                                   value="{{ request.form.get('billing_ref','') }}" placeholder="PO number, contract reference, etc.">
-                            <small class="form-text text-muted">Optional: Add a reference number or identifier for billing purposes</small>
+                                   value="{{ request.form.get('billing_ref','') }}" placeholder="{{ _('PO number, contract reference, etc.') }}">
+                            <small class="form-text text-muted">{{ _('Optional: Add a reference number or identifier for billing purposes') }}</small>
                         </div>
 
                         <!-- Form Actions -->
                         <div class="d-flex gap-3 pt-3 border-top">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-save me-2"></i>Create Project
+                                <i class="fas fa-save me-2"></i>{{ _('Create Project') }}
                             </button>
                             <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary btn-lg">
-                                <i class="fas fa-times me-2"></i>Cancel
+                                <i class="fas fa-times me-2"></i>{{ _('Cancel') }}
                             </a>
                         </div>
                     </form>
@@ -135,7 +135,7 @@
             <div class="card mobile-card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-lightbulb me-2 text-warning"></i>Project Creation Tips
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>{{ _('Project Creation Tips') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -145,8 +145,8 @@
                                 <i class="fas fa-check text-primary fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Clear Naming</small>
-                                <small class="text-muted">Use descriptive names that clearly indicate the project's purpose</small>
+                                <small class="fw-semibold d-block">{{ _('Clear Naming') }}</small>
+                                <small class="text-muted">{{ _("Use descriptive names that clearly indicate the project's purpose") }}</small>
                             </div>
                         </div>
                     </div>
@@ -157,8 +157,8 @@
                                 <i class="fas fa-dollar-sign text-success fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Billing Setup</small>
-                                <small class="text-muted">Set appropriate hourly rates based on project complexity and client budget</small>
+                                <small class="fw-semibold d-block">{{ _('Billing Setup') }}</small>
+                                <small class="text-muted">{{ _('Set appropriate hourly rates based on project complexity and client budget') }}</small>
                             </div>
                         </div>
                     </div>
@@ -169,8 +169,8 @@
                                 <i class="fas fa-info-circle text-info fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Detailed Description</small>
-                                <small class="text-muted">Include project objectives, deliverables, and key requirements</small>
+                                <small class="fw-semibold d-block">{{ _('Detailed Description') }}</small>
+                                <small class="text-muted">{{ _('Include project objectives, deliverables, and key requirements') }}</small>
                             </div>
                         </div>
                     </div>
@@ -181,8 +181,8 @@
                                 <i class="fas fa-user text-warning fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Client Selection</small>
-                                <small class="text-muted">Choose the right client to ensure proper project organization</small>
+                                <small class="fw-semibold d-block">{{ _('Client Selection') }}</small>
+                                <small class="text-muted">{{ _('Choose the right client to ensure proper project organization') }}</small>
                             </div>
                         </div>
                     </div>
@@ -193,28 +193,28 @@
             <div class="card mobile-card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-info-circle me-2 text-info"></i>Billing Guide
+                        <i class="fas fa-info-circle me-2 text-info"></i>{{ _('Billing Guide') }}
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="billing-guide-item mb-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="billing-badge billing-billable me-2">Billable</span>
-                            <small class="text-muted">Track time and bill client</small>
+                            <span class="billing-badge billing-billable me-2">{{ _('Billable') }}</span>
+                            <small class="text-muted">{{ _('Track time and bill client') }}</small>
                         </div>
                     </div>
                     
                     <div class="billing-guide-item mb-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="billing-badge billing-non-billable me-2">Non-Billable</span>
-                            <small class="text-muted">Track time without billing</small>
+                            <span class="billing-badge billing-non-billable me-2">{{ _('Non-Billable') }}</span>
+                            <small class="text-muted">{{ _('Track time without billing') }}</small>
                         </div>
                     </div>
                     
                     <div class="billing-guide-item">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="billing-badge billing-rate me-2">Rate Setting</span>
-                            <small class="text-muted">Set appropriate hourly rates</small>
+                            <span class="billing-badge billing-rate me-2">{{ _('Rate Setting') }}</span>
+                            <small class="text-muted">{{ _('Set appropriate hourly rates') }}</small>
                         </div>
                     </div>
                 </div>
@@ -224,7 +224,7 @@
             <div class="card mobile-card">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-tasks me-2 text-secondary"></i>Project Management
+                        <i class="fas fa-tasks me-2 text-secondary"></i>{{ _('Project Management') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -234,8 +234,8 @@
                                 <i class="fas fa-clock text-primary fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Time Tracking</small>
-                                <small class="text-muted">Log time entries for accurate project tracking</small>
+                                <small class="fw-semibold d-block">{{ _('Time Tracking') }}</small>
+                                <small class="text-muted">{{ _('Log time entries for accurate project tracking') }}</small>
                             </div>
                         </div>
                     </div>
@@ -246,8 +246,8 @@
                                 <i class="fas fa-list text-success fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Task Creation</small>
-                                <small class="text-muted">Break down projects into manageable tasks</small>
+                                <small class="fw-semibold d-block">{{ _('Task Creation') }}</small>
+                                <small class="text-muted">{{ _('Break down projects into manageable tasks') }}</small>
                             </div>
                         </div>
                     </div>
@@ -258,8 +258,8 @@
                                 <i class="fas fa-chart-bar text-info fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Progress Monitoring</small>
-                                <small class="text-muted">Track project progress and time allocation</small>
+                                <small class="fw-semibold d-block">{{ _('Progress Monitoring') }}</small>
+                                <small class="text-muted">{{ _('Track project progress and time allocation') }}</small>
                             </div>
                         </div>
                     </div>

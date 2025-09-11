@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Tasks - Time Tracker{% endblock %}
+{% block title %}{{ _('Tasks') }} - Time Tracker{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -12,17 +12,17 @@
             {% set actions %}
             <div class="d-flex align-items-center gap-2">
                 <a href="{{ url_for('tasks.list_tasks', view='board', search=search, status=status, priority=priority, project_id=project_id, assigned_to=assigned_to, overdue=1 if overdue else None) }}" class="btn-header btn-outline-primary {% if view != 'table' %}active{% endif %}">
-                    <i class="fas fa-columns"></i> Board
+                    <i class="fas fa-columns"></i> {{ _('Board') }}
                 </a>
                 <a href="{{ url_for('tasks.list_tasks', view='table', search=search, status=status, priority=priority, project_id=project_id, assigned_to=assigned_to, overdue=1 if overdue else None) }}" class="btn-header btn-outline-primary {% if view == 'table' %}active{% endif %}">
-                    <i class="fas fa-table"></i> Table
+                    <i class="fas fa-table"></i> {{ _('Table') }}
                 </a>
                 <a href="{{ url_for('tasks.create_task') }}" class="btn-header btn-primary">
-                    <i class="fas fa-plus"></i> New Task
+                    <i class="fas fa-plus"></i> {{ _('New Task') }}
                 </a>
             </div>
             {% endset %}
-            {{ page_header('fas fa-tasks', 'Tasks', 'Plan and track work • ' ~ (tasks|length) ~ ' total', actions) }}
+            {{ page_header('fas fa-tasks', _('Tasks'), _('Plan and track work') ~ ' • ' ~ (tasks|length) ~ ' ' ~ _('total'), actions) }}
         </div>
     </div>
 
@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">To Do</div>
+                            <div class="summary-label">{{ _('To Do') }}</div>
                             <div class="summary-value">{{ tasks|selectattr('status', 'equalto', 'todo')|list|length }}</div>
                         </div>
                     </div>
@@ -57,7 +57,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">In Progress</div>
+                            <div class="summary-label">{{ _('In Progress') }}</div>
                             <div class="summary-value">{{ tasks|selectattr('status', 'equalto', 'in_progress')|list|length }}</div>
                         </div>
                     </div>
@@ -74,7 +74,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">Review</div>
+                            <div class="summary-label">{{ _('Review') }}</div>
                             <div class="summary-value">{{ tasks|selectattr('status', 'equalto', 'review')|list|length }}</div>
                         </div>
                     </div>
@@ -91,7 +91,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">Completed</div>
+                            <div class="summary-label">{{ _('Completed') }}</div>
                             <div class="summary-value">{{ tasks|selectattr('status', 'equalto', 'done')|list|length }}</div>
                         </div>
                     </div>
@@ -104,44 +104,44 @@
     <div class="card mobile-card mb-4">
         <div class="card-header">
             <h6 class="mb-0">
-                <i class="fas fa-filter me-2 text-muted"></i>Filter Tasks
+                <i class="fas fa-filter me-2 text-muted"></i>{{ _('Filter Tasks') }}
             </h6>
         </div>
         <div class="card-body">
             <form method="GET" class="row g-3">
                 <div class="col-md-4 col-sm-6">
-                    <label for="search" class="form-label">Search</label>
+                    <label for="search" class="form-label">{{ _('Search') }}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                         <input type="text" class="form-control" id="search" name="search" 
-                               value="{{ search }}" placeholder="Task name or description">
+                               value="{{ search }}" placeholder="{{ _('Task name or description') }}">
                     </div>
                 </div>
                 <div class="col-md-2 col-sm-6">
-                    <label for="status" class="form-label">Status</label>
+                    <label for="status" class="form-label">{{ _('Status') }}</label>
                     <select class="form-select" id="status" name="status">
-                        <option value="">All Statuses</option>
-                        <option value="todo" {% if status == 'todo' %}selected{% endif %}>To Do</option>
-                        <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                        <option value="review" {% if status == 'review' %}selected{% endif %}>Review</option>
-                        <option value="done" {% if status == 'done' %}selected{% endif %}>Done</option>
-                        <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        <option value="">{{ _('All Statuses') }}</option>
+                        <option value="todo" {% if status == 'todo' %}selected{% endif %}>{{ _('To Do') }}</option>
+                        <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>{{ _('In Progress') }}</option>
+                        <option value="review" {% if status == 'review' %}selected{% endif %}>{{ _('Review') }}</option>
+                        <option value="done" {% if status == 'done' %}selected{% endif %}>{{ _('Done') }}</option>
+                        <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>{{ _('Cancelled') }}</option>
                     </select>
                 </div>
                 <div class="col-md-2 col-sm-6">
-                    <label for="priority" class="form-label">Priority</label>
+                    <label for="priority" class="form-label">{{ _('Priority') }}</label>
                     <select class="form-select" id="priority" name="priority">
-                        <option value="">All Priorities</option>
-                        <option value="low" {% if priority == 'low' %}selected{% endif %}>Low</option>
-                        <option value="medium" {% if priority == 'medium' %}selected{% endif %}>Medium</option>
-                        <option value="high" {% if priority == 'high' %}selected{% endif %}>High</option>
-                        <option value="urgent" {% if priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                        <option value="">{{ _('All Priorities') }}</option>
+                        <option value="low" {% if priority == 'low' %}selected{% endif %}>{{ _('Low') }}</option>
+                        <option value="medium" {% if priority == 'medium' %}selected{% endif %}>{{ _('Medium') }}</option>
+                        <option value="high" {% if priority == 'high' %}selected{% endif %}>{{ _('High') }}</option>
+                        <option value="urgent" {% if priority == 'urgent' %}selected{% endif %}>{{ _('Urgent') }}</option>
                     </select>
                 </div>
                 <div class="col-md-2 col-sm-6">
-                    <label for="project_id" class="form-label">Project</label>
+                    <label for="project_id" class="form-label">{{ _('Project') }}</label>
                     <select class="form-select" id="project_id" name="project_id">
-                        <option value="">All Projects</option>
+                        <option value="">{{ _('All Projects') }}</option>
                         {% for project in projects %}
                         <option value="{{ project.id }}" {% if project_id == project.id %}selected{% endif %}>
                             {{ project.name }}
@@ -150,9 +150,9 @@
                     </select>
                 </div>
                 <div class="col-md-2 col-sm-6">
-                    <label for="assigned_to" class="form-label">Assigned To</label>
+                    <label for="assigned_to" class="form-label">{{ _('Assigned To') }}</label>
                     <select class="form-select" id="assigned_to" name="assigned_to">
-                        <option value="">All Users</option>
+                        <option value="">{{ _('All Users') }}</option>
                         {% for user in users %}
                         <option value="{{ user.id }}" {% if assigned_to == user.id %}selected{% endif %}>
                             {{ user.display_name }}
@@ -164,17 +164,17 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="1" id="overdue" name="overdue" {% if overdue %}checked{% endif %}>
                         <label class="form-check-label" for="overdue">
-                            Show overdue only
+                            {{ _('Show overdue only') }}
                         </label>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search me-2"></i>Apply Filters
+                            <i class="fas fa-search me-2"></i>{{ _('Apply Filters') }}
                         </button>
                         <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>Clear
+                            <i class="fas fa-times me-2"></i>{{ _('Clear') }}
                         </a>
                     </div>
                 </div>
@@ -190,16 +190,16 @@
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Task</th>
-                    <th>Project</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Assignee</th>
-                    <th>Due</th>
-                    <th>Est.</th>
-                    <th>Progress</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ _('ID') }}</th>
+                    <th>{{ _('Task') }}</th>
+                    <th>{{ _('Project') }}</th>
+                    <th>{{ _('Status') }}</th>
+                    <th>{{ _('Priority') }}</th>
+                    <th>{{ _('Assignee') }}</th>
+                    <th>{{ _('Due') }}</th>
+                    <th>{{ _('Est.') }}</th>
+                    <th>{{ _('Progress') }}</th>
+                    <th class="text-end">{{ _('Actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -257,14 +257,14 @@
                     <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
                         <i class="fas fa-tasks fa-2x text-muted"></i>
                     </div>
-                    <h3 class="text-muted mb-3">No tasks found</h3>
-                    <p class="text-muted mb-4">Try adjusting your filters or create your first task to get started.</p>
+                    <h3 class="text-muted mb-3">{{ _('No tasks found') }}</h3>
+                    <p class="text-muted mb-4">{{ _('Try adjusting your filters or create your first task to get started.') }}</p>
                     <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
                         <a href="{{ url_for('tasks.create_task') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Create Your First Task
+                            <i class="fas fa-plus me-2"></i>{{ _('Create Your First Task') }}
                         </a>
                         <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>Clear Filters
+                            <i class="fas fa-times me-2"></i>{{ _('Clear Filters') }}
                         </a>
                     </div>
                 </div>

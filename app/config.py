@@ -69,6 +69,19 @@ class Config:
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
     }
     
+    # Internationalization
+    LANGUAGES = {
+        'en': 'English',
+        'nl': 'Nederlands',
+        'de': 'Deutsch',
+        'fr': 'Français',
+        'it': 'Italiano',
+        'fi': 'Suomi',
+    }
+    BABEL_DEFAULT_LOCALE = os.getenv('DEFAULT_LOCALE', 'en')
+    # Comma-separated list of translation directories relative to instance root
+    BABEL_TRANSLATION_DIRECTORIES = os.getenv('BABEL_TRANSLATION_DIRECTORIES', 'translations')
+    
     # Versioning
     # Prefer explicit app version from environment (e.g., Git tag)
     APP_VERSION = os.getenv('APP_VERSION', os.getenv('GITHUB_TAG', None))

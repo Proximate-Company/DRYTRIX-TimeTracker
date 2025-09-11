@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Time Entry - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Edit Time Entry') }} - {{ app_name }}{% endblock %}
 
 {% block extra_js %}
 {% if current_user.is_admin %}
@@ -183,11 +183,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-edit me-2 text-primary"></i>
-                        <h5 class="mb-0">Edit Time Entry</h5>
+                        <h5 class="mb-0">{{ _('Edit Time Entry') }}</h5>
                     </div>
                     {% if current_user.is_admin %}
                         <span class="badge bg-warning text-dark">
-                            <i class="fas fa-shield-alt me-1"></i>Admin Mode
+                            <i class="fas fa-shield-alt me-1"></i>{{ _('Admin Mode') }}
                         </span>
                     {% endif %}
                 </div>
@@ -197,13 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             <!-- Admin view with editable fields -->
                             <div class="alert alert-info mb-3">
                                 <i class="fas fa-info-circle me-2"></i>
-                                <strong>Admin Mode:</strong> You can edit all fields of this time entry, including project, task, start/end times, and source.
+                                <strong>{{ _('Admin Mode:') }}</strong> {{ _('You can edit all fields of this time entry, including project, task, start/end times, and source.') }}
                             </div>
                             <form method="POST" action="{{ url_for('timer.edit_timer', timer_id=timer.id) }}">
                                                         <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label for="project_id" class="form-label fw-semibold">
-                                            <i class="fas fa-project-diagram me-1"></i>Project
+                                            <i class="fas fa-project-diagram me-1"></i>{{ _('Project') }}
                                         </label>
                                         <select class="form-select" id="project_id" name="project_id" required>
                                             {% for project in projects %}
@@ -212,11 +212,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 </option>
                                             {% endfor %}
                                         </select>
-                                        <div class="form-text">Select the project this time entry belongs to</div>
+                                        <div class="form-text">{{ _('Select the project this time entry belongs to') }}</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="task_id" class="form-label fw-semibold">
-                                            <i class="fas fa-tasks me-1"></i>Task (Optional)
+                                            <i class="fas fa-tasks me-1"></i>{{ _('Task (Optional)') }}
                                         </label>
                                         <select class="form-select" id="task_id" name="task_id">
                                             <option value="">No Task</option>
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 </option>
                                             {% endfor %}
                                         </select>
-                                        <div class="form-text">Select a specific task within the project</div>
+                                        <div class="form-text">{{ _('Select a specific task within the project') }}</div>
                                     </div>
                                 </div>
                         <!-- Confirm Changes Modal (Admin) -->
@@ -234,23 +234,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Confirm Changes</h5>
+                                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle text-warning me-2"></i>{{ _('Confirm Changes') }}</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <p class="mb-3">You are about to apply the following changes:</p>
+                                        <p class="mb-3">{{ _('You are about to apply the following changes:') }}</p>
                                         <div id="confirmChangesSummary"></div>
                                         <div class="alert alert-warning mt-3 mb-0">
                                             <i class="fas fa-info-circle me-1"></i>
-                                            These updates will modify this time entry permanently.
+                                            {{ _('These updates will modify this time entry permanently.') }}
                                         </div>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                            <i class="fas fa-times me-1"></i>Cancel
+                                            <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                                         </button>
                                         <button type="button" class="btn btn-primary" id="confirmChangesConfirmBtn">
-                                            <i class="fas fa-check me-1"></i>Confirm & Save
+                                            <i class="fas fa-check me-1"></i>{{ _('Confirm & Save') }}
                                         </button>
                                     </div>
                                 </div>
@@ -260,63 +260,63 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label for="start_date" class="form-label fw-semibold">
-                                            <i class="fas fa-clock me-1"></i>Start Date
+                                            <i class="fas fa-clock me-1"></i>{{ _('Start Date') }}
                                         </label>
                                         <input type="date" class="form-control" id="start_date" name="start_date" 
                                                value="{{ timer.start_time.strftime('%Y-%m-%d') }}" required>
-                                        <div class="form-text">When the work started</div>
+                                        <div class="form-text">{{ _('When the work started') }}</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="start_time" class="form-label fw-semibold">
-                                            <i class="fas fa-clock me-1"></i>Start Time
+                                            <i class="fas fa-clock me-1"></i>{{ _('Start Time') }}
                                         </label>
                                         <input type="time" class="form-control" id="start_time" name="start_time" 
                                                value="{{ timer.start_time.strftime('%H:%M') }}" required>
-                                        <div class="form-text">Time the work started</div>
+                                        <div class="form-text">{{ _('Time the work started') }}</div>
                                     </div>
                                 </div>
                                 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label for="end_date" class="form-label fw-semibold">
-                                            <i class="fas fa-stop-circle me-1"></i>End Date
+                                            <i class="fas fa-stop-circle me-1"></i>{{ _('End Date') }}
                                         </label>
                                         <input type="date" class="form-control" id="end_date" name="end_date" 
                                                value="{{ timer.end_time.strftime('%Y-%m-%d') if timer.end_time else '' }}">
-                                        <div class="form-text">When the work ended (leave empty if still running)</div>
+                                        <div class="form-text">{{ _('When the work ended (leave empty if still running)') }}</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="end_time" class="form-label fw-semibold">
-                                            <i class="fas fa-stop-circle me-1"></i>End Time
+                                            <i class="fas fa-stop-circle me-1"></i>{{ _('End Time') }}
                                         </label>
                                         <input type="time" class="form-control" id="end_time" name="end_time" 
                                                value="{{ timer.end_time.strftime('%H:%M') if timer.end_time else '' }}">
-                                        <div class="form-text">Time the work ended</div>
+                                        <div class="form-text">{{ _('Time the work ended') }}</div>
                                     </div>
                                 </div>
                                 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-4">
                                         <label for="source" class="form-label fw-semibold">
-                                            <i class="fas fa-tag me-1"></i>Source
+                                            <i class="fas fa-tag me-1"></i>{{ _('Source') }}
                                         </label>
                                         <select class="form-select" id="source" name="source">
-                                            <option value="manual" {% if timer.source == 'manual' %}selected{% endif %}>Manual</option>
-                                            <option value="auto" {% if timer.source == 'auto' %}selected{% endif %}>Automatic</option>
+                                            <option value="manual" {% if timer.source == 'manual' %}selected{% endif %}>{{ _('Manual') }}</option>
+                                            <option value="auto" {% if timer.source == 'auto' %}selected{% endif %}>{{ _('Automatic') }}</option>
                                         </select>
-                                        <div class="form-text">How this entry was created</div>
+                                        <div class="form-text">{{ _('How this entry was created') }}</div>
                                     </div>
                                     <div class="col-md-4 d-flex align-items-center">
                                         <div class="form-check form-switch mt-4">
                                             <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if timer.billable %}checked{% endif %}>
                                             <label class="form-check-label fw-semibold" for="billable">
-                                                <i class="fas fa-dollar-sign me-1"></i>Billable
+                                                <i class="fas fa-dollar-sign me-1"></i>{{ _('Billable') }}
                                             </label>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-control-plaintext">
-                                            <strong>Duration:</strong> <span id="adminEditDuration">{{ timer.duration_formatted }}</span>
+                                            <strong>{{ _('Duration:') }}</strong> <span id="adminEditDuration">{{ timer.duration_formatted }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -325,31 +325,31 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="form-control-plaintext">
-                                        <strong>Project:</strong> {{ timer.project.name }}
+                                        <strong>{{ _('Project:') }}</strong> {{ timer.project.name }}
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-control-plaintext">
-                                        <strong>Start:</strong> {{ timer.start_time.strftime('%Y-%m-%d %H:%M') }}
+                                        <strong>{{ _('Start:') }}</strong> {{ timer.start_time.strftime('%Y-%m-%d %H:%M') }}
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-control-plaintext">
-                                        <strong>End:</strong>
+                                        <strong>{{ _('End:') }}</strong>
                                         {% if timer.end_time %}
                                             {{ timer.end_time.strftime('%Y-%m-%d %H:%M') }}
                                         {% else %}
-                                            <span class="text-warning">Running</span>
+                                            <span class="text-warning">{{ _('Running') }}</span>
                                         {% endif %}
                                     </div>
                                 </div>
                             </div>
                             <div class="mt-2">
-                                <span class="badge bg-primary">Duration: {{ timer.duration_formatted }}</span>
+                                <span class="badge bg-primary">{{ _('Duration:') }} {{ timer.duration_formatted }}</span>
                                 {% if timer.source == 'manual' %}
-                                    <span class="badge bg-secondary">Manual</span>
+                                    <span class="badge bg-secondary">{{ _('Manual') }}</span>
                                 {% else %}
-                                    <span class="badge bg-info">Automatic</span>
+                                    <span class="badge bg-info">{{ _('Automatic') }}</span>
                                 {% endif %}
                             </div>
                         {% endif %}
@@ -359,19 +359,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         <!-- Admin form fields -->
                         <div class="mb-4">
                             <label for="notes" class="form-label fw-semibold">
-                                <i class="fas fa-sticky-note me-1"></i>Notes
+                                <i class="fas fa-sticky-note me-1"></i>{{ _('Notes') }}
                             </label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Describe what you worked on">{{ timer.notes or '' }}</textarea>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="{{ _('Describe what you worked on') }}">{{ timer.notes or '' }}</textarea>
                         </div>
 
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-4">
                                     <label for="tags" class="form-label fw-semibold">
-                                        <i class="fas fa-tags me-1"></i>Tags
+                                        <i class="fas fa-tags me-1"></i>{{ _('Tags') }}
                                     </label>
-                                    <input type="text" class="form-control" id="tags" name="tags" placeholder="tag1, tag2" value="{{ timer.tags or '' }}">
-                                    <div class="form-text">Separate tags with commas</div>
+                                    <input type="text" class="form-control" id="tags" name="tags" placeholder="{{ _('tag1, tag2') }}" value="{{ timer.tags or '' }}">
+                                    <div class="form-text">{{ _('Separate tags with commas') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="form-check form-switch mt-4">
                                         <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if timer.billable %}checked{% endif %}>
                                         <label class="form-check-label fw-semibold" for="billable">
-                                            <i class="fas fa-dollar-sign me-1"></i>Billable
+                                            <i class="fas fa-dollar-sign me-1"></i>{{ _('Billable') }}
                                         </label>
                                     </div>
                                 </div>
