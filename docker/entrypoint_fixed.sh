@@ -223,6 +223,51 @@ execute_migration_strategy() {
     esac
 }
 
+# Compile translations (.po -> .mo) if needed
+compile_translations() {
+    log "Compiling translation catalogs (if needed)..."
+    # Try pybabel if available
+    if command_exists pybabel; then
+        # Ensure writable permissions before compiling
+        chmod -R u+rwX,g+rwX /app/translations 2>/dev/null || true
+        if pybabel compile -d /app/translations >/dev/null 2>&1; then
+            log "✓ Translations compiled via pybabel"
+            return 0
+        else
+            log "⚠ pybabel compile failed or no catalogs to compile"
+        fi
+    else
+        log "pybabel not available; trying Python fallback"
+    fi
+    # Python fallback using app.utils.i18n
+    if python - <<'PY'
+try:
+    import os
+    from app.utils.i18n import ensure_translations_compiled
+    try:
+        import pathlib
+        p = pathlib.Path('/app/translations')
+        for sub in p.glob('**/LC_MESSAGES'):
+            try:
+                os.chmod(str(sub), 0o775)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    ensure_translations_compiled('/app/translations')
+    print('Python fallback: ensure_translations_compiled executed')
+except Exception as e:
+    print(f'Python fallback failed: {e}')
+PY
+    then
+        log "✓ Translations compiled via Python fallback"
+        return 0
+    else
+        log "⚠ Could not compile translations (will fallback to msgid)"
+        return 1
+    fi
+}
+
 # Function to execute fresh database initialization
 execute_fresh_init() {
     local db_url="$1"
@@ -851,6 +896,8 @@ main() {
     log "Final migration status: $final_status"
     
     # Start the application
+    # Best-effort compile translations before starting
+    compile_translations || true
     log "Starting TimeTracker application..."
     exec "$@"
 }

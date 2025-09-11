@@ -16,10 +16,12 @@ class LicenseServerClient:
     """Client for communicating with the DryLicenseServer"""
     
     def __init__(self, app_identifier: str = "timetracker", app_version: str = "1.0.0"):
-        # Hardcoded server configuration (no license required)
-        # IP address is hardcoded in code - clients cannot change this
-        self.server_url = "http://host.docker.internal:8081"  # Hardcoded IP as requested
-        self.api_key = "no-license-required"  # Placeholder since no license needed
+        # Server configuration (env-overridable)
+        # Defaults target the dev API port per docs (HTTP 8082). In prod, set HTTPS 8443 via env.
+        default_server_url = "http://metrics.drytrix.com:58082"
+        configured_server_url = default_server_url
+        self.server_url = self._normalize_base_url(configured_server_url)
+        self.api_key = "no-license-required"
         self.app_identifier = app_identifier
         self.app_version = app_version
         
@@ -28,11 +30,23 @@ class LicenseServerClient:
         self.registration_token = None
         self.is_registered = False
         self.heartbeat_thread = None
-        self.heartbeat_interval = 3600  # 1 hour
+        # Timing configuration
+        self.heartbeat_interval = int(os.getenv("LICENSE_HEARTBEAT_SECONDS", "3600"))  # default: 1 hour
+        self.request_timeout = int(os.getenv("LICENSE_SERVER_TIMEOUT_SECONDS", "30"))  # default: 30s per docs
         self.running = False
         
         # System information
         self.system_info = self._collect_system_info()
+
+        logger.info(f"License server configured: base='{self.server_url}', app='{self.app_identifier}', version='{self.app_version}'")
+        if not self.api_key:
+            logger.warning("X-API-Key is empty; server may reject requests. Set LICENSE_SERVER_API_KEY.")
+
+        # Registration synchronization and persistence
+        self._registration_lock = threading.Lock()
+        self._registration_in_progress = False
+        self._state_file_path = self._compute_state_file_path()
+        self._load_persisted_state()
         
         # Offline storage for failed requests
         self.offline_data = []
@@ -85,6 +99,73 @@ class LicenseServerClient:
                 "architecture": "unknown",
                 "analytics_disabled": False
             }
+
+    def _normalize_base_url(self, base_url: str) -> str:
+        """Normalize base URL to avoid duplicate '/api/v1' when building endpoints.
+
+        Accepts values with or without trailing slash and with or without '/api/v1'.
+        Always returns a URL WITHOUT trailing slash and WITHOUT '/api/v1'.
+        """
+        try:
+            if not base_url:
+                return ""
+            url = base_url.strip().rstrip("/")
+            # If caller provided a base that already includes '/api/v1', strip it.
+            if url.endswith("/api/v1"):
+                url = url[: -len("/api/v1")]
+                url = url.rstrip("/")
+            return url
+        except Exception:
+            # Fallback to provided value if normalization fails
+            return base_url
+
+    def _compute_state_file_path(self) -> str:
+        """Compute a per-user path to persist license client state (instance id, token)."""
+        try:
+            if os.name == "nt":
+                base_dir = os.getenv("APPDATA") or os.path.expanduser("~")
+                app_dir = os.path.join(base_dir, "TimeTracker")
+            else:
+                app_dir = os.path.join(os.path.expanduser("~"), ".timetracker")
+            os.makedirs(app_dir, exist_ok=True)
+            return os.path.join(app_dir, "license_client_state.json")
+        except Exception:
+            # Fallback to current directory
+            return os.path.join(os.getcwd(), "license_client_state.json")
+
+    def _load_persisted_state(self):
+        """Load previously persisted state if available (instance id, token)."""
+        try:
+            if self._state_file_path and os.path.exists(self._state_file_path):
+                with open(self._state_file_path, "r", encoding="utf-8") as f:
+                    state = json.load(f)
+                loaded_instance_id = state.get("instance_id")
+                loaded_token = state.get("registration_token")
+                if loaded_instance_id and not self.instance_id:
+                    self.instance_id = loaded_instance_id
+                if loaded_token:
+                    self.registration_token = loaded_token
+                logger.info(f"Loaded persisted license client state from '{self._state_file_path}'")
+        except Exception as e:
+            logger.warning(f"Failed to load persisted license client state: {e}")
+
+    def _persist_state(self):
+        """Persist current state (instance id, token) to disk."""
+        try:
+            if not self._state_file_path:
+                return
+            state = {
+                "instance_id": self.instance_id,
+                "registration_token": self.registration_token,
+                "app_identifier": self.app_identifier,
+                "app_version": self.app_version,
+                "updated_at": datetime.now().isoformat()
+            }
+            with open(self._state_file_path, "w", encoding="utf-8") as f:
+                json.dump(state, f, indent=2)
+            logger.debug(f"Persisted license client state to '{self._state_file_path}'")
+        except Exception as e:
+            logger.warning(f"Failed to persist license client state: {e}")
     
     def get_detailed_error_info(self, response) -> Dict[str, Any]:
         """Extract detailed error information from a failed response"""
@@ -129,9 +210,9 @@ class LicenseServerClient:
         
         try:
             if method.upper() == "GET":
-                response = requests.get(url, headers=headers, timeout=10)
+                response = requests.get(url, headers=headers, timeout=self.request_timeout)
             elif method.upper() == "POST":
-                response = requests.post(url, headers=headers, json=data, timeout=10)
+                response = requests.post(url, headers=headers, json=data, timeout=self.request_timeout)
             else:
                 logger.error(f"Unsupported HTTP method: {method}")
                 return None
@@ -166,7 +247,7 @@ class LicenseServerClient:
                 return None
                 
         except requests.exceptions.Timeout as e:
-            logger.error(f"Phone home request timed out after 10 seconds: {e}")
+            logger.error(f"Phone home request timed out after {self.request_timeout} seconds: {e}")
             return None
         except requests.exceptions.ConnectionError as e:
             logger.error(f"Phone home connection error: {e}")
@@ -186,44 +267,46 @@ class LicenseServerClient:
     
     def register_instance(self) -> bool:
         """Register this instance with the phone home service"""
-        if self.is_registered:
-            logger.info("Instance already registered")
-            return True
-            
-        # Generate instance ID if not exists
-        if not self.instance_id:
-            self.instance_id = str(uuid.uuid4())
-        
-        registration_data = {
-            "app_identifier": self.app_identifier,
-            "version": self.app_version,
-            "instance_id": self.instance_id,
-            "system_metadata": self.system_info,
-            "country": "Unknown",  # Could be enhanced with IP geolocation
-            "city": "Unknown",
-            "license_id": "NO-LICENSE-REQUIRED"
-        }
-        
-        logger.info(f"Registering instance {self.instance_id} with phone home service at {self.server_url}")
-        logger.info(f"App identifier: {self.app_identifier}, Version: {self.app_version}")
-        logger.debug(f"System info: {json.dumps(self.system_info, indent=2)}")
-        logger.debug(f"Full registration data: {json.dumps(registration_data, indent=2)}")
-        
-        response = self._make_request("/api/v1/register", "POST", registration_data)
-        
-        if response and "instance_id" in response:
-            self.instance_id = response["instance_id"]
-            self.registration_token = response.get("token")
-            self.is_registered = True
-            logger.info(f"Successfully registered instance {self.instance_id}")
-            if self.registration_token:
-                logger.debug(f"Received registration token: {self.registration_token[:10]}...")
-            return True
-        else:
-            logger.error(f"Registration failed - no valid response from phone home service")
-            logger.error(f"Expected 'instance_id' in response, but got: {response}")
-            logger.info(f"Phone home service at {self.server_url} is not available - continuing without registration")
-            return False
+        with self._registration_lock:
+            if self.is_registered:
+                logger.info("Instance already registered")
+                return True
+
+            # Generate instance ID if not exists (prefer persisted one)
+            if not self.instance_id:
+                self.instance_id = str(uuid.uuid4())
+
+            registration_data = {
+                "app_identifier": self.app_identifier,
+                "version": self.app_version,
+                "instance_id": self.instance_id,
+                "system_metadata": self.system_info,
+                "country": "Unknown",  # Could be enhanced with IP geolocation
+                "city": "Unknown",
+                "license_id": "NO-LICENSE-REQUIRED"
+            }
+
+            logger.info(f"Registering instance {self.instance_id} with phone home service at {self.server_url}")
+            logger.info(f"App identifier: {self.app_identifier}, Version: {self.app_version}")
+            logger.debug(f"System info: {json.dumps(self.system_info, indent=2)}")
+            logger.debug(f"Full registration data: {json.dumps(registration_data, indent=2)}")
+
+            response = self._make_request("/api/v1/register", "POST", registration_data)
+
+            if response and "instance_id" in response:
+                self.instance_id = response["instance_id"]
+                self.registration_token = response.get("token")
+                self.is_registered = True
+                self._persist_state()
+                logger.info(f"Successfully registered instance {self.instance_id}")
+                if self.registration_token:
+                    logger.debug(f"Received registration token: {self.registration_token[:10]}...")
+                return True
+            else:
+                logger.error(f"Registration failed - no valid response from phone home service")
+                logger.error(f"Expected 'instance_id' in response, but got: {response}")
+                logger.info(f"Phone home service at {self.server_url} is not available - continuing without registration")
+                return False
     
     def validate_license(self) -> bool:
         """Validate license (always returns True since no license required)"""
@@ -237,6 +320,26 @@ class LicenseServerClient:
             "instance_id": self.instance_id
         }
         
+        # Log the complete license validation request (URL, method, headers, body)
+        validation_url = f"{self.server_url}/api/v1/validate"
+        validation_headers = {
+            "X-API-Key": self.api_key,
+            "Content-Type": "application/json"
+        }
+        try:
+            logger.info("Complete license validation request:")
+            logger.info(json.dumps({
+                "url": validation_url,
+                "method": "POST",
+                "headers": validation_headers,
+                "body": validation_data
+            }, indent=2))
+        except Exception:
+            # Fallback logging if JSON serialization fails for any reason
+            logger.info(f"License validation URL: {validation_url}")
+            logger.info(f"License validation headers: {validation_headers}")
+            logger.info(f"License validation body: {validation_data}")
+
         logger.info("Validating phone home token (no license required)")
         response = self._make_request("/api/v1/validate", "POST", validation_data)
         
@@ -307,7 +410,8 @@ class LicenseServerClient:
     def _store_offline_data(self, data_points: List[Dict[str, Any]]):
         """Store data points for offline transmission"""
         for point in data_points:
-            point["timestamp"] = datetime.utcnow().isoformat()
+            # Use local time per project preference
+            point["timestamp"] = datetime.now().isoformat()
             self.offline_data.append(point)
             
         # Keep only the most recent data points

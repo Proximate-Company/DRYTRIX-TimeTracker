@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}About - {{ app_name }}{% endblock %}
+{% block title %}{{ _('About') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 {% from "_components.html" import page_header %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            {{ page_header('fas fa-info-circle', 'About', 'Learn more about ' ~ app_name, None) }}
+            {{ page_header('fas fa-info-circle', _('About'), _('Learn more about ') ~ app_name, None) }}
         </div>
     </div>
     <div class="row justify-content-center">
@@ -18,25 +18,25 @@
             {% else %}
             <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-4" width="80" height="80">
             {% endif %}
-                <h1 class="h2 mb-3">About TimeTracker</h1>
+                <h1 class="h2 mb-3">{{ _('About TimeTracker') }}</h1>
                 <p class="lead text-muted">
-                    A simple, efficient time tracking solution for teams and individuals.
+                    {{ _('A simple, efficient time tracking solution for teams and individuals.') }}
                 </p>
                 <p class="text-muted">
-                    <strong>Developed by DryTrix</strong>
+                    <strong>{{ _('Developed by DryTrix') }}</strong>
                 </p>
             </div>
 
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> What is {{ app_name }}?
+                        <i class="fas fa-info-circle"></i> {{ _('What is') }} {{ app_name }}?
                     </h5>
                 </div>
                 <div class="card-body">
                     <p>
-                        {{ app_name }} is a web-based time tracking application designed for internal use within organizations. 
-                        It provides a simple and intuitive interface for tracking time spent on various projects and tasks.
+                        {{ _('%(app)s is a web-based time tracking application designed for internal use within organizations.', app=app_name) }}
+                        {{ _('It provides a simple and intuitive interface for tracking time spent on various projects and tasks.') }}
                     </p>
                     <p>
                         Built with modern web technologies, it offers real-time timer functionality, comprehensive reporting, 

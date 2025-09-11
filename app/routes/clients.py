@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
 from app.models import Client, Project
@@ -41,7 +42,7 @@ def list_clients():
 def create_client():
     """Create a new client"""
     if not current_user.is_admin:
-        flash('Only administrators can create clients', 'error')
+        flash(_('Only administrators can create clients'), 'error')
         return redirect(url_for('clients.list_clients'))
     
     if request.method == 'POST':

@@ -54,6 +54,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
+# Ensure translation catalogs are writable by the app user
+RUN mkdir -p /app/translations && \
+    chmod -R 775 /app/translations || true
+
 # Create data and logs directories with proper permissions
 RUN mkdir -p /data /data/uploads /app/logs && chmod 755 /data && chmod 755 /data/uploads && chmod 755 /app/logs
 
@@ -78,7 +82,7 @@ RUN chmod +x /app/start.py /app/docker/init-database.py /app/docker/init-databas
 
 # Create non-root user
 RUN useradd -m -u 1000 timetracker && \
-    chown -R timetracker:timetracker /app /data /app/logs /app/instance /app/app/static/uploads /app/static/uploads
+    chown -R timetracker:timetracker /app /data /app/logs /app/instance /app/app/static/uploads /app/static/uploads /app/translations
 
 # Verify startup script exists and is accessible
 RUN ls -la /app/start.py && \

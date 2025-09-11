@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, Project, TimeEntry, Invoice, InvoiceItem, Settings

@@ -33,6 +33,16 @@
 					</div>
 
 					<div class="mb-3">
+						<label class="form-label">Language</label>
+						<select name="preferred_language" class="form-select">
+							{% for code, label in config['LANGUAGES'].items() %}
+							<option value="{{ code }}" {% if (current_user.preferred_language or current_language_code) == code %}selected{% endif %}>{{ label }}</option>
+							{% endfor %}
+						</select>
+						<div class="form-text">Choose your interface language.</div>
+					</div>
+
+					<div class="mb-3">
 						<label class="form-label">Role</label>
 						<input type="text" class="form-control" value="{{ current_user.role|capitalize }}" disabled>
 					</div>

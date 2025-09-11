@@ -29,6 +29,10 @@ reportlab==4.0.7
 # Background tasks
 APScheduler==3.10.4
 
+# Internationalization
+Flask-Babel==4.0.0
+Babel==2.14.0
+
 # Development and testing
 pytest==7.4.3
 pytest-flask==1.3.0

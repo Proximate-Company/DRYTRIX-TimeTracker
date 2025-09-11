@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_locale or 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -64,7 +64,7 @@
         {% else %}
         <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" width="36" height="36">
         {% endif %}
-                <span class="text-dark fw-bold">Time Tracker</span>
+                <span class="text-dark fw-bold">{{ _('Time Tracker') }}</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,54 +76,56 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}" {% if request.endpoint == 'main.dashboard' %}aria-current="page"{% endif %} href="{{ url_for('main.dashboard') }}">
-                            <i class="fas fa-tachometer-alt"></i>Dashboard
+                            <i class="fas fa-tachometer-alt"></i>{{ _('Dashboard') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and 'projects.' in request.endpoint %}active{% endif %}" {% if request.endpoint and 'projects.' in request.endpoint %}aria-current="page"{% endif %} href="{{ url_for('projects.list_projects') }}">
-                            <i class="fas fa-project-diagram"></i>Projects
+                            <i class="fas fa-project-diagram"></i>{{ _('Projects') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and 'clients.' in request.endpoint %}active{% endif %}" {% if request.endpoint and 'clients.' in request.endpoint %}aria-current="page"{% endif %} href="{{ url_for('clients.list_clients') }}">
-                            <i class="fas fa-building"></i>Clients
+                            <i class="fas fa-building"></i>{{ _('Clients') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and 'tasks.' in request.endpoint %}active{% endif %}" {% if request.endpoint and 'tasks.' in request.endpoint %}aria-current="page"{% endif %} href="{{ url_for('tasks.list_tasks') }}">
-                            <i class="fas fa-tasks"></i>Tasks
+                            <i class="fas fa-tasks"></i>{{ _('Tasks') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and 'timer.' in request.endpoint %}active{% endif %}" {% if request.endpoint and 'timer.' in request.endpoint %}aria-current="page"{% endif %} href="{{ url_for('timer.manual_entry') }}">
-                            <i class="fas fa-plus"></i>Log Time
+                            <i class="fas fa-plus"></i>{{ _('Log Time') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and 'reports.' in request.endpoint %}active{% endif %}" {% if request.endpoint and 'reports.' in request.endpoint %}aria-current="page"{% endif %} href="{{ url_for('reports.reports') }}">
-                            <i class="fas fa-chart-bar"></i>Reports
+                            <i class="fas fa-chart-bar"></i>{{ _('Reports') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and 'invoices.' in request.endpoint %}active{% endif %}" {% if request.endpoint and 'invoices.' in request.endpoint %}aria-current="page"{% endif %} href="{{ url_for('invoices.list_invoices') }}">
-                            <i class="fas fa-file-invoice-dollar"></i>Invoices
+                            <i class="fas fa-file-invoice-dollar"></i>{{ _('Invoices') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and 'analytics.' in request.endpoint %}active{% endif %}" {% if request.endpoint and 'analytics.' in request.endpoint %}aria-current="page"{% endif %} href="{{ url_for('analytics.analytics_dashboard') }}">
-                            <i class="fas fa-chart-line"></i>Analytics
+                            <i class="fas fa-chart-line"></i>{{ _('Analytics') }}
                         </a>
                     </li>
                     {% if current_user.is_admin %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint and 'admin.' in request.endpoint %}active{% endif %}" {% if request.endpoint and 'admin.' in request.endpoint %}aria-current="page"{% endif %} href="{{ url_for('admin.admin_dashboard') }}">
-                            <i class="fas fa-cog"></i>Admin
+                            <i class="fas fa-cog"></i>{{ _('Admin') }}
                         </a>
                     </li>
                     {% endif %}
                 </ul>
                 
-                <ul class="navbar-nav">
+                <ul class="navbar-nav ms-auto">
+                    
+                    {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                             <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
@@ -133,14 +135,15 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">
-                                <i class="fas fa-user-circle me-2"></i>Profile
+                                <i class="fas fa-user-circle me-2"></i>{{ _('Profile') }}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                <i class="fas fa-sign-out-alt me-2"></i>{{ _('Logout') }}
                             </a></li>
                         </ul>
                     </li>
+                    {% endif %}
                 </ul>
                 {% endif %}
             </div>
@@ -168,21 +171,21 @@
     <!-- Mobile Bottom Tab Bar -->
     {% if current_user.is_authenticated %}
     <div class="mobile-tabbar d-lg-none">
-        <a href="{{ url_for('main.dashboard') }}" class="tab-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}" aria-label="Dashboard">
+        <a href="{{ url_for('main.dashboard') }}" class="tab-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}" aria-label="{{ _('Dashboard') }}">
             <i class="fas fa-tachometer-alt tab-icon"></i>
-            <span>Home</span>
+            <span>{{ _('Home') }}</span>
         </a>
-        <a href="{{ url_for('timer.manual_entry') }}" class="tab-item {% if request.endpoint and 'timer.' in request.endpoint %}active{% endif %}" aria-label="Log Time">
+        <a href="{{ url_for('timer.manual_entry') }}" class="tab-item {% if request.endpoint and 'timer.' in request.endpoint %}active{% endif %}" aria-label="{{ _('Log Time') }}">
             <i class="fas fa-plus tab-icon"></i>
-            <span>Log</span>
+            <span>{{ _('Log') }}</span>
         </a>
-        <a href="{{ url_for('tasks.list_tasks') }}" class="tab-item {% if request.endpoint and 'tasks.' in request.endpoint %}active{% endif %}" aria-label="Tasks">
+        <a href="{{ url_for('tasks.list_tasks') }}" class="tab-item {% if request.endpoint and 'tasks.' in request.endpoint %}active{% endif %}" aria-label="{{ _('Tasks') }}">
             <i class="fas fa-tasks tab-icon"></i>
-            <span>Tasks</span>
+            <span>{{ _('Tasks') }}</span>
         </a>
-        <a href="{{ url_for('reports.reports') }}" class="tab-item {% if request.endpoint and 'reports.' in request.endpoint %}active{% endif %}" aria-label="Reports">
+        <a href="{{ url_for('reports.reports') }}" class="tab-item {% if request.endpoint and 'reports.' in request.endpoint %}active{% endif %}" aria-label="{{ _('Reports') }}">
             <i class="fas fa-chart-bar tab-icon"></i>
-            <span>Reports</span>
+            <span>{{ _('Reports') }}</span>
         </a>
     </div>
     {% endif %}
@@ -199,11 +202,11 @@
                 <div class="col-md-6 text-md-end">
                     <div class="d-flex justify-content-md-end gap-3 align-items-center">
                         <small class="text-muted">{{ app_version }}</small>
-                        <small><a href="{{ url_for('main.about') }}" class="text-decoration-none">About</a></small>
-                        <small><a href="{{ url_for('main.help') }}" class="text-decoration-none">Help</a></small>
+                        <small><a href="{{ url_for('main.about') }}" class="text-decoration-none">{{ _('About') }}</a></small>
+                        <small><a href="{{ url_for('main.help') }}" class="text-decoration-none">{{ _('Help') }}</a></small>
                         <small>
                             <a href="https://buymeacoffee.com/DryTrix" target="_blank" rel="noopener" class="text-decoration-none">
-                                <i class="fas fa-mug-hot me-1"></i> Buy me a coffee
+                                <i class="fas fa-mug-hot me-1"></i> {{ _('Buy me a coffee') }}
                             </a>
                         </small>
                     </div>
@@ -267,7 +270,65 @@
 
         // Use Bootstrap's default dropdown behavior; no custom backdrop
     </script>
-    <!-- Theme toggle logic moved to settings/profile; base keeps only initial theme setup above -->
+    <!-- Global theme toggle logic -->
+    <script>
+        (function(){
+            try {
+                const storageKey = 'tt-theme';
+                const btn = document.getElementById('theme-toggle-global');
+                const meta = document.getElementById('meta-theme-color');
+                const root = document.documentElement;
+                const updateUrl = btn ? btn.getAttribute('data-update-theme-url') : null;
+
+                function currentTheme(){
+                    return root.getAttribute('data-theme') || 'light';
+                }
+
+                function updateIcon(theme){
+                    if (!btn) return;
+                    const icon = btn.querySelector('i');
+                    if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                    btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+                    btn.title = theme === 'dark' ? 'Light mode' : 'Dark mode';
+                }
+
+                function applyTheme(theme, persist){
+                    root.setAttribute('data-theme', theme);
+                    if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b1220' : '#3b82f6');
+                    updateIcon(theme);
+                    if (persist) {
+                        try { localStorage.setItem(storageKey, theme); } catch(e) {}
+                        if (updateUrl) {
+                            try {
+                                fetch(updateUrl, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ theme })
+                                }).catch(function(){});
+                            } catch(e) {}
+                        }
+                    }
+                }
+
+                if (btn) {
+                    // Initialize icon to current theme
+                    updateIcon(currentTheme());
+                    btn.addEventListener('click', function(){
+                        const next = currentTheme() === 'dark' ? 'light' : 'dark';
+                        applyTheme(next, true);
+                    });
+                    // Enable tooltip if available
+                    try { new bootstrap.Tooltip(btn); } catch(e) {}
+                }
+
+                // Keep icon in sync if theme changes elsewhere
+                try {
+                    new MutationObserver(function(){ updateIcon(currentTheme()); })
+                        .observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+                } catch(e) {}
+            } catch(e) {}
+        })();
+    </script>
 
     {% if current_user.is_authenticated %}
     <!-- Socket.IO only for authenticated users -->
