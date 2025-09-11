@@ -7,12 +7,11 @@
 <div class="row">
 	<div class="col-12">
 		{% set actions %}
-		<a href="{{ url_for('auth.edit_profile') }}" class="btn btn-outline-light btn-sm">
+		<a href="{{ url_for('auth.edit_profile') }}" class="btn-header btn-outline-primary">
 			<i class="fas fa-edit"></i> Edit Profile
 		</a>
-		<button id="theme-toggle" class="btn btn-outline-secondary btn-sm">
-			<i class="fas fa-moon me-1"></i>
-			Toggle Theme
+		<button id="theme-toggle" class="btn-header btn-outline-primary" type="button">
+			<i class="fas fa-moon"></i> Toggle Theme
 		</button>
 		{% endset %}
 		{{ page_header('fas fa-user-circle', 'Your Profile', 'Manage your account details', actions) }}
@@ -70,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		document.documentElement.setAttribute('data-theme', theme);
 		if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b1220' : '#3b82f6');
 		const icon = btn.querySelector('i');
-		if (icon) icon.className = theme === 'dark' ? 'fas fa-sun me-1' : 'fas fa-moon me-1';
+		if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 	}
 
 	function currentTheme() {

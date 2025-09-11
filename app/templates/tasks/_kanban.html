@@ -3,14 +3,15 @@
   {'key': 'todo', 'label': 'To Do', 'icon': 'fas fa-list-check', 'accent': 'secondary'},
   {'key': 'in_progress', 'label': 'In Progress', 'icon': 'fas fa-spinner', 'accent': 'warning'},
   {'key': 'review', 'label': 'Review', 'icon': 'fas fa-user-check', 'accent': 'info'},
-  {'key': 'done', 'label': 'Done', 'icon': 'fas fa-check-circle', 'accent': 'success'},
-  {'key': 'cancelled', 'label': 'Cancelled', 'icon': 'fas fa-ban', 'accent': 'danger'}
+  {'key': 'done', 'label': 'Done', 'icon': 'fas fa-check-circle', 'accent': 'success'}
 ] %}
 
 <div class="kanban-board-wrapper">
   <div class="kanban-toolbar d-flex justify-content-between align-items-center mb-3">
     <div class="d-flex align-items-center gap-2">
-      <i class="fas fa-columns text-primary"></i>
+      <div class="summary-icon bg-primary bg-opacity-10 text-primary" style="width:34px;height:34px;border-radius:8px;">
+        <i class="fas fa-columns"></i>
+      </div>
       <span class="fw-semibold">Kanban Board</span>
     </div>
     <div id="kanban-alert" class="d-none"></div>
@@ -19,7 +20,7 @@
   <div id="kanbanBoard" class="kanban-board">
     {% for col in kanban_statuses %}
     <div class="kanban-column" data-status="{{ col.key }}">
-      <div class="kanban-column-header">
+      <div class="kanban-column-header sticky-top">
         <div class="d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
             <div class="icon-circle bg-{{ col.accent }} bg-opacity-10 text-{{ col.accent }}">
@@ -34,34 +35,71 @@
       </div>
       <div class="kanban-column-body" data-status="{{ col.key }}">
         {% for task in tasks if task.status == col.key %}
-        <div class="kanban-card task-card {{ task.priority_class }}" draggable="true" data-task-id="{{ task.id }}" data-status="{{ task.status }}">
-          <div class="card-header border-0 pb-0">
+        <div class="kanban-card task-card {{ task.priority_class }} {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}is-active{% endif %}" draggable="true" data-task-id="{{ task.id }}" data-status="{{ task.status }}">
+          <div class="card-body p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
               <div class="d-flex align-items-center flex-wrap gap-2">
-                <span class="status-badge status-{{ task.status }}">{{ task.status_display }}</span>
-                <span class="priority-badge priority-{{ task.priority }}">{{ task.priority_display }}</span>
+                <span class="badge badge-soft-{{ col.accent }} badge-pill status-badge status-{{ task.status }}">{{ task.status_display }}</span>
+                <span class="badge priority-badge priority-{{ task.priority }}">{{ task.priority_display }}</span>
+                {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
+                <span class="badge badge-soft-primary active-badge">
+                  <i class="fas fa-circle me-1" style="font-size:8px;"></i>Active
+                </span>
+                {% endif %}
                 {% if task.is_overdue %}
-                <span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>Overdue</span>
+                <span class="badge bg-danger-subtle text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Overdue</span>
                 {% endif %}
               </div>
-              <small class="text-muted">#{{ task.id }}</small>
+              <div class="d-flex align-items-center gap-2">
+                <small class="text-muted">#{{ task.id }}</small>
+                {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
+                <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline">
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-stop me-1"></i>Stop
+                  </button>
+                </form>
+                {% else %}
+                <form method="POST" action="{{ url_for('timer.start_timer') }}" class="d-inline">
+                  <input type="hidden" name="project_id" value="{{ task.project_id }}">
+                  <input type="hidden" name="task_id" value="{{ task.id }}">
+                  <button type="submit" class="btn btn-success btn-sm">
+                    <i class="fas fa-play me-1"></i>Start
+                  </button>
+                </form>
+                {% endif %}
+                <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-outline-secondary btn-sm btn-icon" title="Edit task">
+                  <i class="fas fa-pen"></i>
+                </a>
+              </div>
             </div>
-          </div>
-          <div class="card-body pt-0">
-            <h6 class="card-title mb-2">
+            <h6 class="card-title mb-1">
               <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="text-decoration-none task-title-link">{{ task.name }}</a>
             </h6>
             {% if task.description %}
-            <p class="card-text text-muted small mb-2">{{ task.description[:90] }}{% if task.description|length > 90 %}...{% endif %}</p>
+            <p class="card-text text-muted small mb-2 task-description">{{ task.description[:110] }}{% if task.description|length > 110 %}...{% endif %}</p>
             {% endif %}
-            <div class="d-flex align-items-center justify-content-between small text-muted">
+            {% if task.estimated_hours %}
+            <div class="d-flex justify-content-between align-items-center small text-muted mb-1">
+              <span>Progress</span>
+              <span>{{ task.progress_percentage }}%</span>
+            </div>
+            <div class="progress progress-thin mb-2">
+              <div class="progress-bar" role="progressbar" style="width: {{ task.progress_percentage }}%"></div>
+            </div>
+            {% endif %}
+            <div class="d-flex align-items-center justify-content-between small task-meta-row">
               <div class="d-flex align-items-center gap-2">
                 {% if task.assigned_user %}
-                <span title="Assignee"><i class="fas fa-user text-info"></i> {{ task.assigned_user.display_name }}</span>
+                <span class="d-inline-flex align-items-center gap-1" title="Assignee">
+                  <i class="fas fa-user text-info"></i>
+                  {{ task.assigned_user.display_name }}
+                </span>
                 {% endif %}
               </div>
               {% if task.due_date %}
-              <span class="{% if task.is_overdue %}text-danger fw-semibold{% endif %}"><i class="fas fa-calendar me-1"></i>{{ task.due_date.strftime('%b %d') }}</span>
+              <span class="d-inline-flex align-items-center gap-1 {% if task.is_overdue %}text-danger fw-semibold{% endif %}">
+                <i class="fas fa-calendar"></i>{{ task.due_date.strftime('%b %d') }}
+              </span>
               {% endif %}
             </div>
           </div>
@@ -74,20 +112,30 @@
 </div>
 
 <style>
-.kanban-board { display: grid; grid-template-columns: repeat(5, minmax(260px, 1fr)); gap: 16px; align-items: start; }
-.kanban-column { background: var(--card-bg, #fff); border: 1px solid var(--border-color); border-radius: 12px; display: flex; flex-direction: column; min-height: 120px; }
-.kanban-column-header { padding: 12px 12px 8px 12px; border-bottom: 1px solid var(--border-color); background: var(--light-color, #f8fafc); border-top-left-radius: 12px; border-top-right-radius: 12px; }
-.kanban-column-body { padding: 12px; min-height: 120px; max-height: 70vh; overflow-y: auto; }
-.kanban-card { margin-bottom: 12px; cursor: grab; }
+.kanban-board-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+.kanban-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; align-items: start; }
+.kanban-column { background: #fff; border: 1px solid var(--border-color); border-radius: var(--border-radius); display: flex; flex-direction: column; min-height: 120px; box-shadow: var(--card-shadow); }
+.kanban-column-header { padding: 12px 12px 8px 12px; border-bottom: 1px solid var(--border-color); background: #fff; border-top-left-radius: var(--border-radius); border-top-right-radius: var(--border-radius); font-weight: 600; color: var(--text-primary); position: sticky; top: 0; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.03); }
+.kanban-column-body { padding: 12px; min-height: 120px; max-height: 70vh; overflow-y: auto; background: var(--light-color); }
+.kanban-card { margin-bottom: 12px; cursor: grab; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: #fff; box-shadow: var(--card-shadow); transition: transform .15s ease, box-shadow .15s ease; }
+.kanban-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
+.kanban-card.is-active { box-shadow: 0 0 0 2px rgba(59,130,246,0.12), var(--card-shadow); }
+.task-meta-row { color: var(--text-muted); }
+.kanban-card.priority-low { border-left: 3px solid #22c55e; }
+.kanban-card.priority-medium { border-left: 3px solid #eab308; }
+.kanban-card.priority-high { border-left: 3px solid #f97316; }
+.kanban-card.priority-urgent { border-left: 3px solid #ef4444; }
 .kanban-card.dragging { opacity: 0.6; cursor: grabbing; }
 .kanban-column-body.drag-over { outline: 2px dashed var(--primary-color); outline-offset: -6px; background: rgba(59, 130, 246, 0.05); }
 .icon-circle { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
 #kanban-alert { width: 100%; }
 .alert-inline { margin: 0; padding: 6px 10px; }
-@media (max-width: 1200px) { .kanban-board { grid-template-columns: repeat(3, minmax(260px, 1fr)); } }
 @media (max-width: 768px) { .kanban-board { grid-template-columns: repeat(1, minmax(260px, 1fr)); } }
-[data-theme="dark"] .kanban-column { background: #0f172a; border-color: #1f2a44; }
-[data-theme="dark"] .kanban-column-header { background: #0b1220; border-color: #1f2a44; }
+[data-theme="dark"] .kanban-column { background: #0f172a; border-color: var(--border-color); box-shadow: var(--card-shadow); }
+[data-theme="dark"] .kanban-column-header { background: #0f172a; border-color: var(--border-color); color: var(--text-secondary); box-shadow: 0 1px 0 rgba(255,255,255,0.04); }
+[data-theme="dark"] .kanban-card.is-active { box-shadow: 0 0 0 2px rgba(96,165,250,0.25), var(--card-shadow); }
+.active-badge { font-weight: 600; }
+[data-theme="dark"] .kanban-column-body { background: #0f172a; }
 </style>
 
 <script>

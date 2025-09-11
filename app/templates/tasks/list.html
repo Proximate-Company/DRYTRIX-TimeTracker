@@ -6,12 +6,21 @@
 <div class="container-fluid">
     {% from "_components.html" import page_header %}
     {% set skeleton = request.args.get('loading') %}
+    {% set view = request.args.get('view', 'board') %}
     <div class="row">
         <div class="col-12">
             {% set actions %}
-            <a href="{{ url_for('tasks.create_task') }}" class="btn-header btn-primary">
-                <i class="fas fa-plus"></i> New Task
-            </a>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('tasks.list_tasks', view='board', search=search, status=status, priority=priority, project_id=project_id, assigned_to=assigned_to, overdue=1 if overdue else None) }}" class="btn-header btn-outline-primary {% if view != 'table' %}active{% endif %}">
+                    <i class="fas fa-columns"></i> Board
+                </a>
+                <a href="{{ url_for('tasks.list_tasks', view='table', search=search, status=status, priority=priority, project_id=project_id, assigned_to=assigned_to, overdue=1 if overdue else None) }}" class="btn-header btn-outline-primary {% if view == 'table' %}active{% endif %}">
+                    <i class="fas fa-table"></i> Table
+                </a>
+                <a href="{{ url_for('tasks.create_task') }}" class="btn-header btn-primary">
+                    <i class="fas fa-plus"></i> New Task
+                </a>
+            </div>
             {% endset %}
             {{ page_header('fas fa-tasks', 'Tasks', 'Plan and track work • ' ~ (tasks|length) ~ ' total', actions) }}
         </div>
@@ -173,8 +182,72 @@
         </div>
     </div>
 
+    <div class="card mobile-card mb-4">
+        <div class="card-body">
     {% if tasks %}
+    {% if view == 'table' %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Task</th>
+                    <th>Project</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Assignee</th>
+                    <th>Due</th>
+                    <th>Est.</th>
+                    <th>Progress</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr class="{% if current_user.active_timer and current_user.active_timer.task_id == task.id %}table-active{% endif %}">
+                    <td>#{{ task.id }}</td>
+                    <td>
+                        <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="fw-semibold text-decoration-none">{{ task.name }}</a>
+                        {% if task.description %}
+                        <div class="text-muted small">{{ task.description[:90] }}{% if task.description|length > 90 %}...{% endif %}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ task.project.name if task.project else '-' }}</td>
+                    <td><span class="status-badge status-{{ task.status }}">{{ task.status_display }}</span></td>
+                    <td><span class="priority-badge priority-{{ task.priority }}">{{ task.priority_display }}</span></td>
+                    <td>{{ task.assigned_user.display_name if task.assigned_user else '-' }}</td>
+                    <td>{% if task.due_date %}{{ task.due_date.strftime('%Y-%m-%d') }}{% else %}-{% endif %}</td>
+                    <td>{% if task.estimated_hours %}{{ '%.1f'|format(task.estimated_hours) }}h{% else %}-{% endif %}</td>
+                    <td style="min-width:140px;">
+                        <div class="progress progress-thin">
+                            <div class="progress-bar" role="progressbar" style="width: {{ task.progress_percentage }}%"></div>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group" role="group">
+                            {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
+                            <form method="POST" action="{{ url_for('timer.stop_timer') }}">
+                                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-stop"></i></button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('timer.start_timer') }}">
+                                <input type="hidden" name="project_id" value="{{ task.project_id }}">
+                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-play"></i></button>
+                            </form>
+                            {% endif %}
+                            <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-pen"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
     {% include 'tasks/_kanban.html' %}
+    {% endif %}
     {% else %}
     <!-- Empty State -->
     <div class="row">
@@ -199,6 +272,8 @@
         </div>
     </div>
     {% endif %}
+        </div>
+    </div>
 </div>
 
 <style>
@@ -356,22 +431,11 @@
     border: 1px solid #ef4444;
 }
 
-/* Priority Card Borders */
-.task-card.priority-low {
-    border-left: 4px solid #22c55e;
-}
-
-.task-card.priority-medium {
-    border-left: 4px solid #eab308;
-}
-
-.task-card.priority-high {
-    border-left: 4px solid #f97316;
-}
-
-.task-card.priority-urgent {
-    border-left: 4px solid #ef4444;
-}
+/* Priority Card Borders (subtle) */
+.task-card.priority-low { border-left: 3px solid #22c55e; background: #fff; }
+.task-card.priority-medium { border-left: 3px solid #eab308; background: #fff; }
+.task-card.priority-high { border-left: 3px solid #f97316; background: #fff; }
+.task-card.priority-urgent { border-left: 3px solid #ef4444; background: #fff; }
 
 /* Enhanced Task Card Elements */
 .task-title-link {

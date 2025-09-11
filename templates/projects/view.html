@@ -162,17 +162,18 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    {% if tasks %}
                     {% set project_tasks = tasks %}
                     {% include 'tasks/_kanban.html' with context %}
-                    {% else %}
-                    {% from "_components.html" import empty_state %}
-                    {% set actions %}
-                    <a href="{{ url_for('tasks.create_task') }}?project_id={{ project.id }}" class="btn btn-success btn-sm">
-                        <i class="fas fa-plus"></i> Create First Task
-                    </a>
-                    {% endset %}
-                    {{ empty_state('fas fa-tasks', 'No Tasks Yet', 'Break down this project into manageable tasks to track progress.', actions) }}
+                    {% if not tasks %}
+                    <div class="mt-3">
+                        {% from "_components.html" import empty_state %}
+                        {% set actions %}
+                        <a href="{{ url_for('tasks.create_task') }}?project_id={{ project.id }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> Create First Task
+                        </a>
+                        {% endset %}
+                        {{ empty_state('fas fa-tasks', 'No Tasks Yet', 'Break down this project into manageable tasks to track progress.', actions) }}
+                    </div>
                     {% endif %}
                 </div>
             </div>

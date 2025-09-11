@@ -31,6 +31,7 @@ def timer_status():
             'id': active_timer.id,
             'project_name': active_timer.project.name,
             'project_id': active_timer.project_id,
+            'task_id': active_timer.task_id,
             'start_time': active_timer.start_time.isoformat(),
             'current_duration': active_timer.current_duration_seconds,
             'duration_formatted': active_timer.duration_formatted
@@ -74,6 +75,7 @@ def api_start_timer():
     """Start timer via API"""
     data = request.get_json()
     project_id = data.get('project_id')
+    task_id = data.get('task_id')
     
     if not project_id:
         return jsonify({'error': 'Project ID is required'}), 400
@@ -83,6 +85,13 @@ def api_start_timer():
     if not project:
         return jsonify({'error': 'Invalid project'}), 400
     
+    # Validate task if provided
+    task = None
+    if task_id:
+        task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+        if not task:
+            return jsonify({'error': 'Invalid task for selected project'}), 400
+
     # Check if user already has an active timer
     active_timer = current_user.active_timer
     if active_timer:
@@ -93,6 +102,7 @@ def api_start_timer():
     new_timer = TimeEntry(
         user_id=current_user.id,
         project_id=project_id,
+        task_id=task.id if task else None,
         start_time=local_now(),
         source='auto'
     )
@@ -105,13 +115,15 @@ def api_start_timer():
         'user_id': current_user.id,
         'timer_id': new_timer.id,
         'project_name': project.name,
+        'task_id': task.id if task else None,
         'start_time': new_timer.start_time.isoformat()
     })
     
     return jsonify({
         'success': True,
         'timer_id': new_timer.id,
-        'project_name': project.name
+        'project_name': project.name,
+        'task_id': task.id if task else None
     })
 
 @api_bp.route('/api/timer/stop', methods=['POST'])
