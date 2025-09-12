@@ -29,6 +29,10 @@ class Settings(db.Model):
     company_tax_id = db.Column(db.String(100), default='', nullable=True)
     company_bank_info = db.Column(db.Text, default='', nullable=True)
     
+    # PDF template customization
+    invoice_pdf_template_html = db.Column(db.Text, default='', nullable=True)
+    invoice_pdf_template_css = db.Column(db.Text, default='', nullable=True)
+    
     # Invoice defaults
     invoice_prefix = db.Column(db.String(10), default='INV', nullable=False)
     invoice_start_number = db.Column(db.Integer, default=1000, nullable=False)
@@ -62,6 +66,10 @@ class Settings(db.Model):
         self.company_logo_filename = kwargs.get('company_logo_filename', '')
         self.company_tax_id = kwargs.get('company_tax_id', '')
         self.company_bank_info = kwargs.get('company_bank_info', '')
+        
+        # PDF template customization
+        self.invoice_pdf_template_html = kwargs.get('invoice_pdf_template_html', '')
+        self.invoice_pdf_template_css = kwargs.get('invoice_pdf_template_css', '')
         
         # Set invoice defaults
         self.invoice_prefix = kwargs.get('invoice_prefix', 'INV')
@@ -127,6 +135,8 @@ class Settings(db.Model):
             'invoice_start_number': self.invoice_start_number,
             'invoice_terms': self.invoice_terms,
             'invoice_notes': self.invoice_notes,
+            'invoice_pdf_template_html': self.invoice_pdf_template_html,
+            'invoice_pdf_template_css': self.invoice_pdf_template_css,
             'allow_analytics': self.allow_analytics,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None

@@ -7,6 +7,7 @@ except Exception:
     _md = None
     bleach = None
 
+
 def register_template_filters(app):
     """Register custom template filters for the application"""
     
@@ -68,3 +69,36 @@ def register_template_filters(app):
             'img': ['src', 'alt', 'title'],
         }
         return bleach.clean(html, tags=allowed_tags, attributes=allowed_attrs, strip=True)
+
+    # Additional filters for PDFs / i18n-friendly formatting
+    import datetime
+    try:
+        from babel.dates import format_date as babel_format_date
+    except Exception:
+        babel_format_date = None
+
+    @app.template_filter('format_date')
+    def format_date_filter(value, format='medium'):
+        if not value:
+            return ''
+        if isinstance(value, (datetime.date, datetime.datetime)):
+            try:
+                if babel_format_date:
+                    if format == 'full':
+                        return babel_format_date(value, format='full')
+                    if format == 'long':
+                        return babel_format_date(value, format='long')
+                    if format == 'short':
+                        return babel_format_date(value, format='short')
+                    return babel_format_date(value, format='medium')
+                return value.strftime('%Y-%m-%d')
+            except Exception:
+                return value.strftime('%Y-%m-%d')
+        return str(value)
+
+    @app.template_filter('format_money')
+    def format_money_filter(value):
+        try:
+            return f"{float(value):,.2f}"
+        except Exception:
+            return str(value)

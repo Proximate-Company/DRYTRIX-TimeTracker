@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}?v={{ app_version }}">
     
     {% block extra_css %}{% endblock %}
+    {% block head_extra %}{% endblock %}
     <script>
         (function() {
             try {
@@ -373,6 +374,7 @@
     </script>
     {% endif %}
     
+    {% block scripts_extra %}{% endblock %}
     {% block extra_js %}{% endblock %}
     <script>
         // Compact density toggle
