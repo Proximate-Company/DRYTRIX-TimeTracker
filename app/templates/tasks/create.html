@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Create Task - Time Tracker{% endblock %}
+{% block title %}{{ _('Create Task') }} - Time Tracker{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
@@ -19,8 +19,8 @@
                             <i class="fas fa-plus text-primary fa-lg"></i>
                         </div>
                         <div>
-                            <h1 class="h2 mb-1">Create New Task</h1>
-                            <p class="text-muted mb-0">Add a new task to your project to break down work into manageable components</p>
+                            <h1 class="h2 mb-1">{{ _('Create New Task') }}</h1>
+                            <p class="text-muted mb-0">{{ _('Add a new task to your project to break down work into manageable components') }}</p>
                         </div>
                     </div>
                 </div>
@@ -34,7 +34,7 @@
             <div class="card mobile-card">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-edit me-2 text-primary"></i>Task Information
+                        <i class="fas fa-edit me-2 text-primary"></i>{{ _('Task Information') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -42,65 +42,65 @@
                         <!-- Task Name -->
                         <div class="mb-4">
                             <label for="name" class="form-label fw-semibold">
-                                <i class="fas fa-tag me-2 text-primary"></i>Task Name <span class="text-danger">*</span>
+                                <i class="fas fa-tag me-2 text-primary"></i>{{ _('Task Name') }} <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control form-control-lg" id="name" name="name" 
-                                   value="{{ request.form.get('name', '') }}" placeholder="Enter a descriptive task name" required>
-                            <small class="form-text text-muted">Choose a clear, descriptive name that explains what needs to be done</small>
+                                   value="{{ request.form.get('name', '') }}" placeholder="{{ _('Enter a descriptive task name') }}" required>
+                            <small class="form-text text-muted">{{ _('Choose a clear, descriptive name that explains what needs to be done') }}</small>
                         </div>
 
                         <!-- Description -->
                         <div class="mb-4">
                             <label for="description" class="form-label fw-semibold d-flex align-items-center justify-content-between">
-                                <i class="fas fa-align-left me-2 text-primary"></i>Description
-                                <small class="text-muted">Supports Markdown</small>
+                                <i class="fas fa-align-left me-2 text-primary"></i>{{ _('Description') }}
+                                <small class="text-muted">{{ _('Supports Markdown') }}</small>
                             </label>
                             <div class="markdown-editor-wrapper">
-                                <textarea class="form-control d-none" id="description" name="description" rows="12" placeholder="Provide detailed information about the task, requirements, and any specific instructions...">{{ request.form.get('description', '') }}</textarea>
+                                <textarea class="form-control d-none" id="description" name="description" rows="12" placeholder="{{ _('Provide detailed information about the task, requirements, and any specific instructions...') }}">{{ request.form.get('description', '') }}</textarea>
                                 <div id="description_editor"></div>
                             </div>
-                            <small class="form-text text-muted">Optional: Add context, requirements, or specific instructions for the task</small>
+                            <small class="form-text text-muted">{{ _('Optional: Add context, requirements, or specific instructions for the task') }}</small>
                         </div>
 
                         <!-- Project Selection -->
                         <div class="mb-4">
                             <label for="project_id" class="form-label fw-semibold">
-                                <i class="fas fa-project-diagram me-2 text-primary"></i>Project <span class="text-danger">*</span>
+                                <i class="fas fa-project-diagram me-2 text-primary"></i>{{ _('Project') }} <span class="text-danger">*</span>
                             </label>
                             <select class="form-select form-select-lg" id="project_id" name="project_id" required>
-                                <option value="">Select a project</option>
+                                <option value="">{{ _('Select a project') }}</option>
                                 {% for project in projects %}
                                 <option value="{{ project.id }}" {% if request.form.get('project_id')|int == project.id or request.args.get('project_id')|int == project.id %}selected{% endif %}>
                                     {{ project.name }} ({{ project.client }})
                                 </option>
                                 {% endfor %}
                             </select>
-                            <small class="form-text text-muted">Select the project this task belongs to</small>
+                            <small class="form-text text-muted">{{ _('Select the project this task belongs to') }}</small>
                         </div>
 
                         <!-- Priority and Status -->
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="priority" class="form-label fw-semibold">
-                                    <i class="fas fa-flag me-2 text-warning"></i>Priority
+                                    <i class="fas fa-flag me-2 text-warning"></i>{{ _('Priority') }}
                                 </label>
                                 <select class="form-select" id="priority" name="priority">
-                                    <option value="low" {% if request.form.get('priority') == 'low' %}selected{% endif %}>Low</option>
-                                    <option value="medium" {% if request.form.get('priority') == 'medium' or not request.form.get('priority') %}selected{% endif %}>Medium</option>
-                                    <option value="high" {% if request.form.get('priority') == 'high' %}selected{% endif %}>High</option>
-                                    <option value="urgent" {% if request.form.get('priority') == 'urgent' %}selected{% endif %}>Urgent</option>
+                                    <option value="low" {% if request.form.get('priority') == 'low' %}selected{% endif %}>{{ _('Low') }}</option>
+                                    <option value="medium" {% if request.form.get('priority') == 'medium' or not request.form.get('priority') %}selected{% endif %}>{{ _('Medium') }}</option>
+                                    <option value="high" {% if request.form.get('priority') == 'high' %}selected{% endif %}>{{ _('High') }}</option>
+                                    <option value="urgent" {% if request.form.get('priority') == 'urgent' %}selected{% endif %}>{{ _('Urgent') }}</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label for="status" class="form-label fw-semibold">
-                                    <i class="fas fa-tasks me-2 text-info"></i>Initial Status
+                                    <i class="fas fa-tasks me-2 text-info"></i>{{ _('Initial Status') }}
                                 </label>
                                 <select class="form-select" id="status" name="status">
-                                    <option value="todo" {% if request.form.get('status') == 'todo' or not request.form.get('status') %}selected{% endif %}>To Do</option>
-                                    <option value="in_progress" {% if request.form.get('status') == 'in_progress' %}selected{% endif %}>In Progress</option>
-                                    <option value="review" {% if request.form.get('status') == 'review' %}selected{% endif %}>Review</option>
-                                    <option value="done" {% if request.form.get('status') == 'done' %}selected{% endif %}>Done</option>
-                                    <option value="cancelled" {% if request.form.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                    <option value="todo" {% if request.form.get('status') == 'todo' or not request.form.get('status') %}selected{% endif %}>{{ _('To Do') }}</option>
+                                    <option value="in_progress" {% if request.form.get('status') == 'in_progress' %}selected{% endif %}>{{ _('In Progress') }}</option>
+                                    <option value="review" {% if request.form.get('status') == 'review' %}selected{% endif %}>{{ _('Review') }}</option>
+                                    <option value="done" {% if request.form.get('status') == 'done' %}selected{% endif %}>{{ _('Done') }}</option>
+                                    <option value="cancelled" {% if request.form.get('status') == 'cancelled' %}selected{% endif %}>{{ _('Cancelled') }}</option>
                                 </select>
                             </div>
                         </div>
@@ -109,45 +109,45 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="due_date" class="form-label fw-semibold">
-                                    <i class="fas fa-calendar me-2 text-secondary"></i>Due Date
+                                    <i class="fas fa-calendar me-2 text-secondary"></i>{{ _('Due Date') }}
                                 </label>
                                 <input type="date" class="form-control" id="due_date" name="due_date" 
                                        value="{{ request.form.get('due_date', '') }}">
-                                <small class="form-text text-muted">Optional: Set a deadline for this task</small>
+                                <small class="form-text text-muted">{{ _('Optional: Set a deadline for this task') }}</small>
                             </div>
                             <div class="col-md-6">
                                 <label for="estimated_hours" class="form-label fw-semibold">
-                                    <i class="fas fa-clock me-2 text-warning"></i>Estimated Hours
+                                    <i class="fas fa-clock me-2 text-warning"></i>{{ _('Estimated Hours') }}
                                 </label>
                                 <input type="number" class="form-control" id="estimated_hours" name="estimated_hours" 
                                        value="{{ request.form.get('estimated_hours', '') }}" step="0.5" min="0" placeholder="0.0">
-                                <small class="form-text text-muted">Optional: Estimate how long this task will take</small>
+                                <small class="form-text text-muted">{{ _('Optional: Estimate how long this task will take') }}</small>
                             </div>
                         </div>
 
                         <!-- Assignment -->
                         <div class="mb-4">
                             <label for="assigned_to" class="form-label fw-semibold">
-                                <i class="fas fa-user me-2 text-info"></i>Assign To
+                                <i class="fas fa-user me-2 text-info"></i>{{ _('Assign To') }}
                             </label>
                             <select class="form-select" id="assigned_to" name="assigned_to">
-                                <option value="">Unassigned</option>
+                                <option value="">{{ _('Unassigned') }}</option>
                                 {% for user in users %}
                                 <option value="{{ user.id }}" {% if request.form.get('assigned_to')|int == user.id %}selected{% endif %}>
                                     {{ user.display_name }}
                                 </option>
                                 {% endfor %}
                             </select>
-                            <small class="form-text text-muted">Optional: Assign this task to a team member</small>
+                            <small class="form-text text-muted">{{ _('Optional: Assign this task to a team member') }}</small>
                         </div>
 
                         <!-- Form Actions -->
                         <div class="d-flex gap-3 pt-3 border-top">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-save me-2"></i>Create Task
+                                <i class="fas fa-save me-2"></i>{{ _('Create Task') }}
                             </button>
                             <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary btn-lg">
-                                <i class="fas fa-times me-2"></i>Cancel
+                                <i class="fas fa-times me-2"></i>{{ _('Cancel') }}
                             </a>
                         </div>
                     </form>
@@ -161,7 +161,7 @@
             <div class="card mobile-card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-lightbulb me-2 text-warning"></i>Task Creation Tips
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>{{ _('Task Creation Tips') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -171,8 +171,8 @@
                                 <i class="fas fa-check text-primary fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Clear Naming</small>
-                                <small class="text-muted">Use action verbs and be specific about what needs to be done</small>
+                                <small class="fw-semibold d-block">{{ _('Clear Naming') }}</small>
+                                <small class="text-muted">{{ _('Use action verbs and be specific about what needs to be done') }}</small>
                             </div>
                         </div>
                     </div>
@@ -183,8 +183,8 @@
                                 <i class="fas fa-clock text-success fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Realistic Estimates</small>
-                                <small class="text-muted">Consider complexity and dependencies when estimating time</small>
+                                <small class="fw-semibold d-block">{{ _('Realistic Estimates') }}</small>
+                                <small class="text-muted">{{ _('Consider complexity and dependencies when estimating time') }}</small>
                             </div>
                         </div>
                     </div>
@@ -195,8 +195,8 @@
                                 <i class="fas fa-calendar text-info fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Set Deadlines</small>
-                                <small class="text-muted">Due dates help prioritize work and track progress</small>
+                                <small class="fw-semibold d-block">{{ _('Set Deadlines') }}</small>
+                                <small class="text-muted">{{ _('Due dates help prioritize work and track progress') }}</small>
                             </div>
                         </div>
                     </div>
@@ -207,8 +207,8 @@
                                 <i class="fas fa-flag text-warning fa-xs"></i>
                             </div>
                             <div>
-                                <small class="fw-semibold d-block">Priority Matters</small>
-                                <small class="text-muted">Use priority levels to help team members focus on what's most important</small>
+                                <small class="fw-semibold d-block">{{ _('Priority Matters') }}</small>
+                                <small class="text-muted">{{ _('Use priority levels to help team members focus on what\'s most important') }}</small>
                             </div>
                         </div>
                     </div>
@@ -219,35 +219,35 @@
             <div class="card mobile-card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-info-circle me-2 text-info"></i>Priority Guide
+                        <i class="fas fa-info-circle me-2 text-info"></i>{{ _('Priority Guide') }}
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="priority-guide-item mb-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="priority-badge priority-low me-2">Low</span>
-                            <small class="text-muted">Non-urgent, can be done later</small>
+                            <span class="priority-badge priority-low me-2">{{ _('Low') }}</span>
+                            <small class="text-muted">{{ _('Non-urgent, can be done later') }}</small>
                         </div>
                     </div>
                     
                     <div class="priority-guide-item mb-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="priority-badge priority-medium me-2">Medium</span>
-                            <small class="text-muted">Normal priority, standard timeline</small>
+                            <span class="priority-badge priority-medium me-2">{{ _('Medium') }}</span>
+                            <small class="text-muted">{{ _('Normal priority, standard timeline') }}</small>
                         </div>
                     </div>
                     
                     <div class="priority-guide-item mb-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="priority-badge priority-high me-2">High</span>
-                            <small class="text-muted">Important, needs attention soon</small>
+                            <span class="priority-badge priority-high me-2">{{ _('High') }}</span>
+                            <small class="text-muted">{{ _('Important, needs attention soon') }}</small>
                         </div>
                     </div>
                     
                     <div class="priority-guide-item">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="priority-badge priority-urgent me-2">Urgent</span>
-                            <small class="text-muted">Critical, immediate attention required</small>
+                            <span class="priority-badge priority-urgent me-2">{{ _('Urgent') }}</span>
+                            <small class="text-muted">{{ _('Critical, immediate attention required') }}</small>
                         </div>
                     </div>
                 </div>
@@ -257,35 +257,35 @@
             <div class="card mobile-card">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-list me-2 text-secondary"></i>Status Guide
+                        <i class="fas fa-list me-2 text-secondary"></i>{{ _('Status Guide') }}
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="status-guide-item mb-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="status-badge status-todo me-2">To Do</span>
-                            <small class="text-muted">Task is planned but not started</small>
+                            <span class="status-badge status-todo me-2">{{ _('To Do') }}</span>
+                            <small class="text-muted">{{ _('Task is planned but not started') }}</small>
                         </div>
                     </div>
                     
                     <div class="status-guide-item mb-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="status-badge status-in_progress me-2">In Progress</span>
-                            <small class="text-muted">Work has begun on the task</small>
+                            <span class="status-badge status-in_progress me-2">{{ _('In Progress') }}</span>
+                            <small class="text-muted">{{ _('Work has begun on the task') }}</small>
                         </div>
                     </div>
                     
                     <div class="status-guide-item mb-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="status-badge status-review me-2">Review</span>
-                            <small class="text-muted">Task is ready for review/testing</small>
+                            <span class="status-badge status-review me-2">{{ _('Review') }}</span>
+                            <small class="text-muted">{{ _('Task is ready for review/testing') }}</small>
                         </div>
                     </div>
                     
                     <div class="status-guide-item">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="status-badge status-done me-2">Done</span>
-                            <small class="text-muted">Task is completed successfully</small>
+                            <span class="status-badge status-done me-2">{{ _('Done') }}</span>
+                            <small class="text-muted">{{ _('Task is completed successfully') }}</small>
                         </div>
                     </div>
                 </div>

@@ -334,12 +334,30 @@
 }
 </style>
 
+<script type="application/json" id="i18n-json-projects-list">
+{
+    "search_projects": {{ _('Search projects:')|tojson }},
+    "length_menu": {{ _('Show _MENU_ projects per page')|tojson }},
+    "info": {{ _('Showing _START_ to _END_ of _TOTAL_ projects')|tojson }},
+    "status_active": {{ _('Active')|tojson }},
+    "status_archived": {{ _('Archived')|tojson }},
+    "deleting": {{ _('Deleting...')|tojson }}
+}
+</script>
+<script>
+var i18nProjects = (function(){ try{ var el = document.getElementById('i18n-json-projects-list'); return el ? JSON.parse(el.textContent) : {}; } catch(e){ return {}; } })();
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize DataTable
     const table = $('#projectsTable').DataTable({
         order: [[0, 'asc']],
         pageLength: 25,
+        language: {
+            search: i18nProjects.search_projects || 'Search projects:',
+            lengthMenu: i18nProjects.length_menu || 'Show _MENU_ projects per page',
+            info: i18nProjects.info || 'Showing _START_ to _END_ of _TOTAL_ projects'
+        },
         responsive: true,
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
              '<"row"<"col-sm-12"tr>>' +
@@ -369,8 +387,11 @@ function filterByStatus(status) {
     if (status === 'all') {
         table.column(2).search('').draw();
     } else {
-        // Match the rendered badge text
-        const regex = status === 'active' ? '^Active$' : '^Archived$';
+        // Match the rendered localized badge text
+        const activeLabel = i18nProjects.status_active || 'Active';
+        const archivedLabel = i18nProjects.status_archived || 'Archived';
+        const label = status === 'active' ? activeLabel : archivedLabel;
+        const regex = `^${label}$`;
         table.column(2).search(regex, true, false).draw();
     }
     document.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
@@ -391,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (deleteForm) {
         deleteForm.addEventListener('submit', function() {
             const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
+            submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>' + (i18nProjects.deleting || 'Deleting...');
             submitBtn.disabled = true;
         });
     }

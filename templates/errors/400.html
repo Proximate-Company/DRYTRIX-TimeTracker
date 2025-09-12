@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}400 Bad Request - {{ app_name }}{% endblock %}
+{% block title %}{{ _('400 Bad Request') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -9,24 +9,24 @@
             <div class="card">
                 <div class="card-header bg-warning text-dark">
                     <h4 class="mb-0">
-                        <i class="fas fa-exclamation-triangle"></i> 400 Bad Request
+                        <i class="fas fa-exclamation-triangle"></i> {{ _('400 Bad Request') }}
                     </h4>
                 </div>
                 <div class="card-body text-center">
-                    <h5 class="card-title">Invalid Request</h5>
+                    <h5 class="card-title">{{ _('Invalid Request') }}</h5>
                     <p class="card-text">
-                        The request you made is invalid or contains errors. This could be due to:
+                        {{ _('The request you made is invalid or contains errors. This could be due to:') }}
                     </p>
                     <ul class="list-unstyled text-start">
-                        <li><i class="fas fa-check text-success"></i> Missing or invalid form data</li>
-                        <li><i class="fas fa-check text-success"></i> Malformed request parameters</li>
+                        <li><i class="fas fa-check text-success"></i> {{ _('Missing or invalid form data') }}</li>
+                        <li><i class="fas fa-check text-success"></i> {{ _('Malformed request parameters') }}</li>
                     </ul>
                     <div class="mt-4">
                         <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
-                            <i class="fas fa-home"></i> Go to Dashboard
+                            <i class="fas fa-home"></i> {{ _('Go to Dashboard') }}
                         </a>
                         <button onclick="history.back()" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Go Back
+                            <i class="fas fa-arrow-left"></i> {{ _('Go Back') }}
                         </button>
                     </div>
                 </div>

@@ -1,32 +1,31 @@
-# License Server Integration
+# Metrics Server Integration
 
-This document describes the implementation of the DryLicenseServer communication in the TimeTracker application.
+This document describes the implementation of the metrics server communication in the TimeTracker application.
 
 ## Overview
 
-The TimeTracker application includes a license server client that communicates with a DryLicenseServer for monitoring and analytics purposes. **No license is required** to use the application - this integration is purely for usage tracking and system monitoring.
+The TimeTracker application includes a metrics client that communicates with a metrics server for monitoring and analytics purposes. **No license is required** to use the application — this integration is purely for usage tracking and system monitoring.
 
 ## Implementation Details
 
 ### Core Components
 
 1. **LicenseServerClient** (`app/utils/license_server.py`)
-   - Main client class for communicating with the license server
+   - Main client class for communicating with the metrics server
    - Handles instance registration, heartbeats, and usage data transmission
    - Implements offline data storage for failed requests
    - Runs background heartbeat thread
 
-2. **Configuration** (`app/config.py`)
-   - License server settings in the main configuration
-   - Environment variable support for customization
-   - Default values for development
+2. **Configuration** (`app/utils/license_server.py` and environment)
+   - Metrics server settings are environment-configurable with sane defaults
+   - Default values are provided for development
 
 3. **Integration** (`app/__init__.py`)
    - Automatic initialization during application startup
-   - Graceful error handling if license server is unavailable
+   - Graceful error handling if metrics server is unavailable
 
 4. **Admin Interface** (`app/routes/admin.py`)
-   - License server status monitoring
+   - Metrics server status monitoring
    - Testing and restart capabilities
    - Integration with admin dashboard
 
@@ -36,7 +35,7 @@ The TimeTracker application includes a license server client that communicates w
 - ✅ **Periodic Heartbeats**: Sends status updates every hour (configurable)
 - ✅ **Usage Data Collection**: Tracks application usage and features
 - ✅ **Offline Storage**: Stores data locally when server is unavailable
-- ✅ **Graceful Error Handling**: Continues operation even if license server fails
+- ✅ **Graceful Error Handling**: Continues operation even if metrics server fails
 - ✅ **System Information Collection**: Gathers OS, hardware, and environment details
 - ✅ **Admin Monitoring**: Web interface for status and management
 
@@ -44,31 +43,19 @@ The TimeTracker application includes a license server client that communicates w
 
 ### Environment Variables
 
-**No environment variables are needed for license server configuration.**
+Metrics server configuration supports environment overrides (legacy variable names are also accepted for compatibility):
 
-All license server settings are hardcoded in the application code and cannot be changed by clients:
-
-- **Server URL**: `http://192.168.1.100:8081` (hardcoded in `app/utils/license_server.py`)
-- **App ID**: `timetracker` (hardcoded in `app/config.py`)
-- **App Version**: `1.0.0` (hardcoded in `app/config.py`)
-- **Heartbeat Interval**: 3600 seconds (1 hour) (hardcoded in `app/config.py`)
-- **Enabled by default**: Yes (hardcoded in `app/config.py`)
-
-### Hardcoded Values
-
-The license server configuration is intentionally hardcoded to ensure:
-
-- **Consistent monitoring** across all deployments
-- **No client configuration** required
-- **Predictable behavior** regardless of environment
-- **Security** - clients cannot change monitoring endpoints
+- `METRICS_SERVER_URL` (legacy: `LICENSE_SERVER_BASE_URL`)
+- `METRICS_SERVER_API_KEY` (legacy: `LICENSE_SERVER_API_KEY`)
+- `METRICS_HEARTBEAT_SECONDS` (legacy: `LICENSE_HEARTBEAT_SECONDS`) — default 3600
+- `METRICS_SERVER_TIMEOUT_SECONDS` (legacy: `LICENSE_SERVER_TIMEOUT_SECONDS`) — default 30
 
 ## API Endpoints Used
 
 | Endpoint | Purpose | Status |
 |----------|---------|---------|
 | `/api/v1/register` | Instance registration | ✅ Implemented |
-| `/api/v1/validate` | License validation | ✅ Implemented (always succeeds) |
+| `/api/v1/validate` | Token validation | ✅ Implemented (no license required) |
 | `/api/v1/heartbeat` | Status updates | ✅ Implemented |
 | `/api/v1/data` | Usage data transmission | ✅ Implemented |
 | `/api/v1/status` | Server health check | ✅ Implemented |
@@ -77,7 +64,7 @@ The license server configuration is intentionally hardcoded to ensure:
 
 ### Automatic Operation
 
-The license server client starts automatically when the application starts:
+The metrics client starts automatically when the application starts:
 
 1. **Application Startup**: Client initializes and registers instance
 2. **Background Heartbeats**: Sends status updates every hour
@@ -89,22 +76,22 @@ The license server client starts automatically when the application starts:
 #### CLI Commands
 
 ```bash
-# Check license server status
+# Check metrics status
 flask license-status
 
-# Test license server communication
+# Test metrics communication
 flask license-test
 
-# Restart license server client
+# Restart metrics client
 flask license-restart
 ```
 
 #### Admin Interface
 
-- **Dashboard**: Quick access to license status
-- **License Status Page**: Detailed status information
+- **Dashboard**: Quick access to metrics status
+- **Metrics Status Page**: Detailed status information
 - **Test Connection**: Verify server communication
-- **Restart Client**: Restart the license server client
+- **Restart Client**: Restart the metrics client
 
 ### Programmatic Usage
 
@@ -123,7 +110,7 @@ if client:
 
 ## Data Collection
 
-### System Information
+### System Information (minimal)
 
 - Operating system and version
 - Hardware architecture
@@ -131,7 +118,7 @@ if client:
 - Hostname and local IP
 - Processor information
 
-### Usage Events
+### Usage Events (aggregate)
 
 - Feature usage tracking
 - User actions
@@ -172,14 +159,14 @@ if client:
 ### Startup Failures
 
 - Application continues to function
-- License server client marked as unavailable
+- Metrics client marked as unavailable
 - Admin interface shows error status
 
 ## Monitoring and Debugging
 
 ### Logs
 
-License server operations are logged with appropriate levels:
+Metrics client operations are logged with appropriate levels:
 
 - **INFO**: Successful operations and status changes
 - **WARNING**: Failed requests and connection issues
@@ -221,13 +208,13 @@ python test_license_server.py
 ### Manual Testing
 
 1. Start the application
-2. Check admin dashboard for license status
+2. Check admin dashboard for metrics status
 3. Use CLI commands to test functionality
 4. Monitor logs for operation details
 
 ### Integration Testing
 
-1. Start a license server on localhost:8081
+1. Start a metrics server on localhost:8081
 2. Verify registration and heartbeats
 3. Test usage data transmission
 4. Check offline data handling
@@ -237,7 +224,7 @@ python test_license_server.py
 ### Common Issues
 
 1. **Server Not Responding**
-   - Check if license server is running on port 8081
+   - Check if metrics server is running on port 8081
    - Verify network connectivity
    - Check firewall settings
 
@@ -274,12 +261,12 @@ tail -f logs/timetracker.log
 
 ## Support
 
-For issues with the license server integration:
+For issues with the metrics server integration:
 
 1. Check the admin interface for status
 2. Review application logs
 3. Use CLI commands for testing
-4. Verify license server availability
+4. Verify metrics server availability
 5. Check configuration values
 
 The integration is designed to be non-intrusive and will not prevent the application from functioning normally.

@@ -187,7 +187,7 @@
                 </div>
                 <div class="card-body">
                     {% if client.status == 'active' %}
-                    <form method="POST" action="{{ url_for('clients.archive_client', client_id=client.id) }}" class="mb-2" onsubmit="return confirm('{{ _('Are you sure you want to archive this client?') }}')">
+                    <form method="POST" action="{{ url_for('clients.archive_client', client_id=client.id) }}" class="mb-2" data-confirm="{{ _('Are you sure you want to archive this client?') }}">
                         <button type="submit" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-archive me-2"></i>{{ _('Archive Client') }}
                         </button>
@@ -201,7 +201,7 @@
                     {% endif %}
                     
                     {% if client.total_projects == 0 %}
-                    <form method="POST" action="{{ url_for('clients.delete_client', client_id=client.id) }}" onsubmit="return confirm('{{ _('Are you sure you want to delete this client? This action cannot be undone.') }}')">
+                    <form method="POST" action="{{ url_for('clients.delete_client', client_id=client.id) }}" data-confirm="{{ _('Are you sure you want to delete this client? This action cannot be undone.') }}">
                         <button type="submit" class="btn btn-danger w-100">
                             <i class="fas fa-trash me-2"></i>{{ _('Delete Client') }}
                         </button>
@@ -651,4 +651,15 @@
     }
 }
 </style>
+<script>
+// Generic data-confirm handler
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('form[data-confirm]').forEach(function(f){
+    f.addEventListener('submit', function(e){
+      var msg = f.getAttribute('data-confirm') || '';
+      if (msg && !confirm(msg)) { e.preventDefault(); return false; }
+    });
+  });
+});
+</script>
 {% endblock %}

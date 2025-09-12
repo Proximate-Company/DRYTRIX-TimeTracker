@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Profile - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Profile') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 {% from "_components.html" import page_header %}
@@ -8,30 +8,30 @@
 	<div class="col-12">
 		{% set actions %}
 		<a href="{{ url_for('auth.edit_profile') }}" class="btn-header btn-outline-primary">
-			<i class="fas fa-edit"></i> Edit Profile
+			<i class="fas fa-edit"></i> {{ _('Edit Profile') }}
 		</a>
 		<button id="theme-toggle" class="btn-header btn-outline-primary" type="button">
-			<i class="fas fa-moon"></i> Toggle Theme
+			<i class="fas fa-moon"></i> {{ _('Toggle Theme') }}
 		</button>
 		{% endset %}
-		{{ page_header('fas fa-user-circle', 'Your Profile', 'Manage your account details', actions) }}
+		{{ page_header('fas fa-user-circle', _('Your Profile'), _('Manage your account details'), actions) }}
 	</div>
 </div>
 <div class="row justify-content-center">
 	<div class="col-md-8">
 		<div class="card">
-			<div class="card-header"><i class="fas fa-id-card me-2"></i> Profile Details</div>
+			<div class="card-header"><i class="fas fa-id-card me-2"></i> {{ _('Profile Details') }}</div>
 			<div class="card-body">
 				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">Username</div>
+					<div class="col-sm-4 text-muted">{{ _('Username') }}</div>
 					<div class="col-sm-8"><strong>{{ current_user.username }}</strong></div>
 				</div>
 				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">Full name</div>
+					<div class="col-sm-4 text-muted">{{ _('Full name') }}</div>
 					<div class="col-sm-8">{{ current_user.full_name or '—' }}</div>
 				</div>
 				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">Role</div>
+					<div class="col-sm-4 text-muted">{{ _('Role') }}</div>
 					<div class="col-sm-8">
 						<span class="badge bg-{{ 'primary' if current_user.is_admin else 'secondary' }}">
 							{{ current_user.role|capitalize }}
@@ -39,19 +39,19 @@
 					</div>
 				</div>
 				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">Member since</div>
+					<div class="col-sm-4 text-muted">{{ _('Member since') }}</div>
 					<div class="col-sm-8">{{ current_user.created_at.strftime('%Y-%m-%d %H:%M') if current_user.created_at else '—' }}</div>
 				</div>
 				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">Last login</div>
+					<div class="col-sm-4 text-muted">{{ _('Last login') }}</div>
 					<div class="col-sm-8">{{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else '—' }}</div>
 				</div>
 				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">Language</div>
+					<div class="col-sm-4 text-muted">{{ _('Language') }}</div>
 					<div class="col-sm-8">{{ current_language_label }}</div>
 				</div>
 				<div class="row">
-					<div class="col-sm-4 text-muted">Total hours</div>
+					<div class="col-sm-4 text-muted">{{ _('Total hours') }}</div>
 					<div class="col-sm-8"><span class="badge bg-success">{{ current_user.total_hours }}</span></div>
 				</div>
 			</div>

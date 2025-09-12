@@ -231,7 +231,7 @@
 												<form method="POST" 
 												      action="{{ url_for('invoices.delete_invoice', invoice_id=invoice.id) }}" 
 												      class="d-inline"
-												      onsubmit="return confirm('{{ _('Are you sure you want to delete this invoice? This action cannot be undone.') }}')">
+												      data-confirm="{{ _('Are you sure you want to delete this invoice? This action cannot be undone.') }}">
 													<button type="submit" class="dropdown-item text-danger">
 														<i class="fas fa-trash me-2"></i> {{ _('Delete') }}
 														</button>
@@ -406,6 +406,21 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="application/json" id="i18n-json-invoices-list">
+{
+    "search_invoices": {{ _('Search invoices:')|tojson }},
+    "length_menu": {{ _('Show _MENU_ invoices per page')|tojson }},
+    "info": {{ _('Showing _START_ to _END_ of _TOTAL_ invoices')|tojson }},
+    "confirm_delete_prefix": {{ _('Are you sure you want to delete invoice')|tojson }},
+    "confirm_delete_suffix": {{ _('This action cannot be undone.')|tojson }}
+}
+</script>
+<script>
+var i18nList = (function(){
+    try { var el = document.getElementById('i18n-json-invoices-list'); return el ? JSON.parse(el.textContent) : {}; }
+    catch(e) { return {}; }
+})();
+</script>
 <script>
 $(document).ready(function() {
     // Initialize DataTable with enhanced features
@@ -413,9 +428,9 @@ $(document).ready(function() {
         order: [[3, 'desc']], // Sort by issue date descending
         pageLength: 25,
         language: {
-            search: "{{ _('Search invoices:') }}",
-            lengthMenu: "{{ _('Show _MENU_ invoices per page') }}",
-            info: "{{ _('Showing _START_ to _END_ of _TOTAL_ invoices') }}"
+            search: i18nList.search_invoices || 'Search invoices:',
+            lengthMenu: i18nList.length_menu || 'Show _MENU_ invoices per page',
+            info: i18nList.info || 'Showing _START_ to _END_ of _TOTAL_ invoices'
         },
         responsive: true,
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
@@ -459,7 +474,9 @@ function filterByStatus(status) {
 
 // Enhanced confirmation for delete
 function confirmDelete(invoiceNumber) {
-    return confirm(`{{ _('Are you sure you want to delete invoice') }} ${invoiceNumber}? {{ _('This action cannot be undone.') }}`);
+    const prefix = i18nList.confirm_delete_prefix || 'Are you sure you want to delete invoice';
+    const suffix = i18nList.confirm_delete_suffix || 'This action cannot be undone.';
+    return confirm(`${prefix} ${invoiceNumber}? ${suffix}`);
 }
 
 // Quick status update (if implemented in backend)
@@ -467,5 +484,14 @@ function updateStatus(invoiceId, newStatus) {
     // This would typically make an AJAX call to update the status
     console.log(`Updating invoice ${invoiceId} to status: ${newStatus}`);
 }
+
+// Handle generic data-confirm forms to avoid inline JS Jinja
+$(document).on('submit', 'form[data-confirm]', function(e) {
+    const message = $(this).attr('data-confirm');
+    if (!confirm(message)) {
+        e.preventDefault();
+        return false;
+    }
+});
 </script>
 {% endblock %}

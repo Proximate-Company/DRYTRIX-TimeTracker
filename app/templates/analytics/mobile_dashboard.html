@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Analytics - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Analytics') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-3">
@@ -17,7 +17,7 @@
                 <i class="fas fa-sync-alt"></i>
             </button>
             {% endset %}
-            {{ page_header('fas fa-chart-line', 'Analytics', 'Mobile insights overview', actions) }}
+            {{ page_header('fas fa-chart-line', _('Analytics'), _('Mobile insights overview'), actions) }}
         </div>
     </div>
 
@@ -28,7 +28,7 @@
                 <div class="card-body py-2">
                     <i class="fas fa-clock fa-lg text-primary mb-1"></i>
                     <h6 class="text-primary mb-0" id="totalHours">-</h6>
-                    <small class="text-muted">Total Hours</small>
+                    <small class="text-muted">{{ _('Total Hours') }}</small>
                 </div>
             </div>
         </div>
@@ -37,7 +37,7 @@
                 <div class="card-body py-2">
                     <i class="fas fa-dollar-sign fa-lg text-success mb-1"></i>
                     <h6 class="text-success mb-0" id="billableHours">-</h6>
-                    <small class="text-muted">Billable</small>
+                    <small class="text-muted">{{ _('Billable') }}</small>
                 </div>
             </div>
         </div>
@@ -46,7 +46,7 @@
                 <div class="card-body py-2">
                     <i class="fas fa-project-diagram fa-lg text-info mb-1"></i>
                     <h6 class="text-info mb-0" id="activeProjects">-</h6>
-                    <small class="text-muted">Projects</small>
+                    <small class="text-muted">{{ _('Projects') }}</small>
                 </div>
             </div>
         </div>
@@ -55,7 +55,7 @@
                 <div class="card-body py-2">
                     <i class="fas fa-chart-line fa-lg text-warning mb-1"></i>
                     <h6 class="text-warning mb-0" id="avgDailyHours">-</h6>
-                    <small class="text-muted">Daily Avg</small>
+                    <small class="text-muted">{{ _('Daily Avg') }}</small>
                 </div>
             </div>
         </div>
@@ -67,7 +67,7 @@
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0">
-                        <i class="fas fa-chart-area"></i> Daily Hours
+                        <i class="fas fa-chart-area"></i> {{ _('Daily Hours') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -82,7 +82,7 @@
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0">
-                        <i class="fas fa-chart-pie"></i> Billable vs Non-Billable
+                        <i class="fas fa-chart-pie"></i> {{ _('Billable vs Non-Billable') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -97,7 +97,7 @@
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0">
-                        <i class="fas fa-chart-bar"></i> Top Projects
+                        <i class="fas fa-chart-bar"></i> {{ _('Top Projects') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -112,7 +112,7 @@
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0">
-                        <i class="fas fa-clock"></i> Hours by Time of Day
+                        <i class="fas fa-clock"></i> {{ _('Hours by Time of Day') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -128,7 +128,7 @@
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0">
-                        <i class="fas fa-users"></i> User Performance
+                        <i class="fas fa-users"></i> {{ _('User Performance') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -145,13 +145,23 @@
 <!-- Loading Spinner -->
 <div id="loadingSpinner" class="position-fixed top-50 start-50 translate-middle" style="display: none; z-index: 9999;">
     <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+        <span class="visually-hidden">{{ _('Loading...') }}</span>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+// i18n for mobile analytics
+try {
+  var i18n_mobile_analytics = (function(){
+    var obj = {
+      error_loading_charts: {{ _('Failed to load charts. Please try again.')|tojson }},
+      error_refreshing_charts: {{ _('Failed to refresh charts. Please try again.')|tojson }}
+    };
+    return obj;
+  })();
+} catch (e) { var i18n_mobile_analytics = {}; }
 // Mobile-optimized chart defaults
 Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 Chart.defaults.font.size = 11;
@@ -209,7 +219,7 @@ class MobileAnalyticsDashboard {
             ]);
         } catch (error) {
             console.error('Error loading charts:', error);
-            this.showError('Failed to load charts. Please try again.');
+            this.showError(i18n_mobile_analytics.error_loading_charts || 'Failed to load charts. Please try again.');
         } finally {
             this.hideLoading();
         }
@@ -231,7 +241,7 @@ class MobileAnalyticsDashboard {
             this.updateSummaryCards();
         } catch (error) {
             console.error('Error refreshing charts:', error);
-            this.showError('Failed to refresh charts. Please try again.');
+            this.showError(i18n_mobile_analytics.error_refreshing_charts || 'Failed to refresh charts. Please try again.');
         } finally {
             this.hideLoading();
         }

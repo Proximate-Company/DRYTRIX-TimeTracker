@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}403 Forbidden - {{ app_name }}{% endblock %}
+{% block title %}{{ _('403 Forbidden') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -9,25 +9,25 @@
             <div class="card">
                 <div class="card-header bg-danger text-white">
                     <h4 class="mb-0">
-                        <i class="fas fa-ban"></i> 403 Forbidden
+                        <i class="fas fa-ban"></i> {{ _('403 Forbidden') }}
                     </h4>
                 </div>
                 <div class="card-body text-center">
-                    <h5 class="card-title">Access Denied</h5>
+                    <h5 class="card-title">{{ _('Access Denied') }}</h5>
                     <p class="card-text">
-                        You don't have permission to access this resource. This could be due to:
+                        {{ _("You don't have permission to access this resource. This could be due to:") }}
                     </p>
                     <ul class="list-unstyled text-start">
-                        <li><i class="fas fa-check text-success"></i> Insufficient privileges</li>
-                        <li><i class="fas fa-check text-success"></i> Not logged in</li>
-                        <li><i class="fas fa-check text-success"></i> Resource access restrictions</li>
+                        <li><i class="fas fa-check text-success"></i> {{ _('Insufficient privileges') }}</li>
+                        <li><i class="fas fa-check text-success"></i> {{ _('Not logged in') }}</li>
+                        <li><i class="fas fa-check text-success"></i> {{ _('Resource access restrictions') }}</li>
                     </ul>
                     <div class="mt-4">
                         <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
-                            <i class="fas fa-home"></i> Go to Dashboard
+                            <i class="fas fa-home"></i> {{ _('Go to Dashboard') }}
                         </a>
                         <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">
-                            <i class="fas fa-sign-in-alt"></i> Login
+                            <i class="fas fa-sign-in-alt"></i> {{ _('Login') }}
                         </a>
                     </div>
                 </div>

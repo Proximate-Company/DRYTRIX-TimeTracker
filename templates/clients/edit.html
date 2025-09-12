@@ -8,10 +8,10 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">
-                    <i class="fas fa-edit text-primary"></i> Edit Client: {{ client.name }}
+                    <i class="fas fa-edit text-primary"></i> {{ _('Edit Client') }}: {{ client.name }}
                 </h1>
                 <a href="{{ url_for('clients.view_client', client_id=client.id) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Client
+                    <i class="fas fa-arrow-left"></i> {{ _('Back to Client') }}
                 </a>
             </div>
         </div>
@@ -22,7 +22,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Client Information
+                        <i class="fas fa-info-circle"></i> {{ _('Client Information') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -30,42 +30,42 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="name" class="form-label">Client Name *</label>
+                                    <label for="name" class="form-label">{{ _('Client Name') }} *</label>
                                     <input type="text" class="form-control" id="name" name="name" required 
-                                           value="{{ request.form.get('name', client.name) }}" placeholder="Enter client name">
+                                           value="{{ request.form.get('name', client.name) }}" placeholder="{{ _('Enter client name') }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="default_hourly_rate" class="form-label">Default Hourly Rate</label>
+                                    <label for="default_hourly_rate" class="form-label">{{ _('Default Hourly Rate') }}</label>
                                     <input type="number" step="0.01" min="0" class="form-control" id="default_hourly_rate" 
                                            name="default_hourly_rate" 
                                            value="{{ request.form.get('default_hourly_rate', client.default_hourly_rate or '') }}" 
-                                           placeholder="e.g. 75.00">
-                                    <div class="form-text">This rate will be automatically filled when creating projects for this client</div>
+                                           placeholder="{{ _('e.g. 75.00') }}">
+                                    <div class="form-text">{{ _('This rate will be automatically filled when creating projects for this client') }}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
+                            <label for="description" class="form-label">{{ _('Description') }}</label>
                             <textarea class="form-control" id="description" name="description" rows="3" 
-                                      placeholder="Brief description of the client or project scope">{{ request.form.get('description', client.description or '') }}</textarea>
+                                      placeholder="{{ _('Brief description of the client or project scope') }}">{{ request.form.get('description', client.description or '') }}</textarea>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="contact_person" class="form-label">Contact Person</label>
+                                    <label for="contact_person" class="form-label">{{ _('Contact Person') }}</label>
                                     <input type="text" class="form-control" id="contact_person" name="contact_person" 
-                                           value="{{ request.form.get('contact_person', client.contact_person or '') }}" placeholder="Primary contact name">
+                                           value="{{ request.form.get('contact_person', client.contact_person or '') }}" placeholder="{{ _('Primary contact name') }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
+                                    <label for="email" class="form-label">{{ _('Email') }}</label>
                                     <input type="email" class="form-control" id="email" name="email" 
-                                           value="{{ request.form.get('email', client.email or '') }}" placeholder="contact@client.com">
+                                           value="{{ request.form.get('email', client.email or '') }}" placeholder="{{ _('contact@client.com') }}">
                                 </div>
                             </div>
                         </div>
@@ -73,26 +73,26 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="phone" class="form-label">Phone</label>
+                                    <label for="phone" class="form-label">{{ _('Phone') }}</label>
                                     <input type="tel" class="form-control" id="phone" name="phone" 
-                                           value="{{ request.form.get('phone', client.phone or '') }}" placeholder="+1 (555) 123-4567">
+                                           value="{{ request.form.get('phone', client.phone or '') }}" placeholder="{{ _('+1 (555) 123-4567') }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="address" class="form-label">Address</label>
+                                    <label for="address" class="form-label">{{ _('Address') }}</label>
                                     <textarea class="form-control" id="address" name="address" rows="2" 
-                                              placeholder="Client address">{{ request.form.get('address', client.address or '') }}</textarea>
+                                              placeholder="{{ _('Client address') }}">{{ request.form.get('address', client.address or '') }}</textarea>
                                 </div>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-between">
                             <a href="{{ url_for('clients.view_client', client_id=client.id) }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancel
+                                <i class="fas fa-times"></i> {{ _('Cancel') }}
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Update Client
+                                <i class="fas fa-save"></i> {{ _('Update Client') }}
                             </button>
                         </div>
                     </form>
@@ -104,50 +104,50 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Help
+                        <i class="fas fa-info-circle"></i> {{ _('Help') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <h6>Client Name</h6>
-                    <p class="text-muted small">Choose a clear, descriptive name for the client organization.</p>
+                    <h6>{{ _('Client Name') }}</h6>
+                    <p class="text-muted small">{{ _('Choose a clear, descriptive name for the client organization.') }}</p>
                     
-                    <h6>Default Hourly Rate</h6>
-                    <p class="text-muted small">Set the standard hourly rate for this client. This will automatically populate when creating new projects.</p>
+                    <h6>{{ _('Default Hourly Rate') }}</h6>
+                    <p class="text-muted small">{{ _('Set the standard hourly rate for this client. This will automatically populate when creating new projects.') }}</p>
                     
-                    <h6>Contact Information</h6>
-                    <p class="text-muted small">Add contact details for easy communication and record keeping.</p>
+                    <h6>{{ _('Contact Information') }}</h6>
+                    <p class="text-muted small">{{ _('Add contact details for easy communication and record keeping.') }}</p>
                     
-                    <h6>Description</h6>
-                    <p class="text-muted small">Provide context about the client relationship or typical project types.</p>
+                    <h6>{{ _('Description') }}</h6>
+                    <p class="text-muted small">{{ _('Provide context about the client relationship or typical project types.') }}</p>
                 </div>
             </div>
 
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-bar"></i> Client Statistics
+                        <i class="fas fa-chart-bar"></i> {{ _('Client Statistics') }}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
                         <div class="col-6">
                             <h4 class="text-primary">{{ client.total_projects }}</h4>
-                            <small class="text-muted">Total Projects</small>
+                            <small class="text-muted">{{ _('Total Projects') }}</small>
                         </div>
                         <div class="col-6">
                             <h4 class="text-success">{{ client.active_projects }}</h4>
-                            <small class="text-muted">Active Projects</small>
+                            <small class="text-muted">{{ _('Active Projects') }}</small>
                         </div>
                     </div>
                     <hr>
                     <div class="row text-center">
                         <div class="col-6">
                             <h4 class="text-info">{{ "%.1f"|format(client.total_hours) }}</h4>
-                            <small class="text-muted">Total Hours</small>
+                            <small class="text-muted">{{ _('Total Hours') }}</small>
                         </div>
                         <div class="col-6">
                             <h4 class="text-warning">{{ "%.2f"|format(client.estimated_total_cost) }}</h4>
-                            <small class="text-muted">Est. Total Cost</small>
+                            <small class="text-muted">{{ _('Est. Total Cost') }}</small>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Reports - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Reports') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,10 +9,10 @@
         <div class="col-12">
             {% set actions %}
             <a href="{{ url_for('reports.export_csv') }}" class="btn-header btn-outline-primary">
-                <i class="fas fa-download"></i> Export CSV
+                <i class="fas fa-download"></i> {{ _('Export CSV') }}
             </a>
             {% endset %}
-            {{ page_header('fas fa-chart-line', 'Reports', 'Analytics and summaries at a glance', actions) }}
+            {{ page_header('fas fa-chart-line', _('Reports'), _('Analytics and summaries at a glance'), actions) }}
         </div>
     </div>
 
@@ -28,7 +28,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">Total Hours</div>
+                            <div class="summary-label">{{ _('Total Hours') }}</div>
                             <div class="summary-value">{{ "%.1f"|format(summary.total_hours) }}h</div>
                         </div>
                     </div>
@@ -45,7 +45,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">Billable Hours</div>
+                            <div class="summary-label">{{ _('Billable Hours') }}</div>
                             <div class="summary-value">{{ "%.1f"|format(summary.billable_hours) }}h</div>
                         </div>
                     </div>
@@ -62,7 +62,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">Active Projects</div>
+                            <div class="summary-label">{{ _('Active Projects') }}</div>
                             <div class="summary-value">{{ summary.active_projects }}</div>
                         </div>
                     </div>
@@ -79,7 +79,7 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">Users</div>
+                            <div class="summary-label">{{ _('Users') }}</div>
                             <div class="summary-value">{{ summary.total_users }}</div>
                         </div>
                     </div>
@@ -94,17 +94,17 @@
             <div class="card h-100 border-0 shadow-sm hover-lift">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-project-diagram"></i> Project Reports
+                        <i class="fas fa-project-diagram"></i> {{ _('Project Reports') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Generate detailed reports by project with time breakdowns and user statistics.</p>
+                    <p class="text-muted">{{ _('Generate detailed reports by project with time breakdowns and user statistics.') }}</p>
                     <div class="d-grid">
                         <a href="{{ url_for('reports.project_report') }}" class="btn btn-primary">
-                            <i class="fas fa-chart-bar"></i> Project Report
+                            <i class="fas fa-chart-bar"></i> {{ _('Project Report') }}
                         </a>
                         <a href="{{ url_for('reports.task_report') }}" class="btn btn-primary mt-2">
-                            <i class="fas fa-tasks"></i> Finished Tasks Report
+                            <i class="fas fa-tasks"></i> {{ _('Finished Tasks Report') }}
                         </a>
                     </div>
                 </div>
@@ -115,14 +115,14 @@
             <div class="card h-100 border-0 shadow-sm hover-lift">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-user"></i> User Reports
+                        <i class="fas fa-user"></i> {{ _('User Reports') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">View time tracking statistics by user with project breakdowns and productivity metrics.</p>
+                    <p class="text-muted">{{ _('View time tracking statistics by user with project breakdowns and productivity metrics.') }}</p>
                     <div class="d-grid">
                         <a href="{{ url_for('reports.user_report') }}" class="btn btn-primary">
-                            <i class="fas fa-chart-pie"></i> User Report
+                            <i class="fas fa-chart-pie"></i> {{ _('User Report') }}
                         </a>
                     </div>
                 </div>
@@ -133,14 +133,14 @@
             <div class="card h-100 border-0 shadow-sm hover-lift">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-calendar-alt"></i> Summary Report
+                        <i class="fas fa-calendar-alt"></i> {{ _('Summary Report') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Get an overview of key metrics including total hours, billable amounts, and trends.</p>
+                    <p class="text-muted">{{ _('Get an overview of key metrics including total hours, billable amounts, and trends.') }}</p>
                     <div class="d-grid">
                         <a href="{{ url_for('reports.summary_report') }}" class="btn btn-primary">
-                            <i class="fas fa-chart-line"></i> Summary Report
+                            <i class="fas fa-chart-line"></i> {{ _('Summary Report') }}
                         </a>
                     </div>
                 </div>
@@ -151,14 +151,14 @@
             <div class="card h-100 border-0 shadow-sm hover-lift">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-line"></i> Visual Analytics
+                        <i class="fas fa-chart-line"></i> {{ _('Visual Analytics') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Interactive charts and graphs for better data visualization and insights.</p>
+                    <p class="text-muted">{{ _('Interactive charts and graphs for better data visualization and insights.') }}</p>
                     <div class="d-grid">
                         <a href="{{ url_for('analytics.analytics_dashboard') }}" class="btn btn-primary">
-                            <i class="fas fa-chart-area"></i> View Analytics
+                            <i class="fas fa-chart-area"></i> {{ _('View Analytics') }}
                         </a>
                     </div>
                 </div>
@@ -169,14 +169,14 @@
             <div class="card h-100 border-0 shadow-sm hover-lift">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-download"></i> Data Export
+                        <i class="fas fa-download"></i> {{ _('Data Export') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Export time entries to CSV format for external analysis or backup purposes.</p>
+                    <p class="text-muted">{{ _('Export time entries to CSV format for external analysis or backup purposes.') }}</p>
                     <div class="d-grid">
                         <a href="{{ url_for('reports.export_csv') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-file-csv"></i> Export CSV
+                            <i class="fas fa-file-csv"></i> {{ _('Export CSV') }}
                         </a>
                     </div>
                 </div>
@@ -190,7 +190,7 @@
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3">
                     <h5 class="mb-0">
-                        <i class="fas fa-history"></i> Recent Activity
+                        <i class="fas fa-history"></i> {{ _('Recent Activity') }}
                     </h5>
                 </div>
                 <div class="card-body p-0">
@@ -199,12 +199,12 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>User</th>
-                                    <th>Project</th>
-                                    <th>Date</th>
-                                    <th>Duration</th>
-                                    <th>Notes</th>
-                                    <th>Billable</th>
+                                    <th>{{ _('User') }}</th>
+                                    <th>{{ _('Project') }}</th>
+                                    <th>{{ _('Date') }}</th>
+                                    <th>{{ _('Duration') }}</th>
+                                    <th>{{ _('Notes') }}</th>
+                                    <th>{{ _('Billable') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -229,9 +229,9 @@
                                     </td>
                                     <td>
                                         {% if entry.billable %}
-                                        <span class="badge bg-success">Yes</span>
+                                        <span class="badge bg-success">{{ _('Yes') }}</span>
                                         {% else %}
-                                        <span class="badge bg-secondary">No</span>
+                                        <span class="badge bg-secondary">{{ _('No') }}</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -243,8 +243,8 @@
                     <div class="text-center py-5">
                         <div class="empty-state">
                             <i class="fas fa-clock fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No Recent Activity</h5>
-                            <p class="text-muted">No time entries have been recorded recently.</p>
+                            <h5 class="text-muted">{{ _('No Recent Activity') }}</h5>
+                            <p class="text-muted">{{ _('No time entries have been recorded recently.') }}</p>
                         </div>
                     </div>
                     {% endif %}

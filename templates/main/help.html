@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Help - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Help') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 {% from "_components.html" import page_header %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            {{ page_header('fas fa-question-circle', 'Help', 'Documentation and guidance', None) }}
+            {{ page_header('fas fa-question-circle', _('Help'), _('Documentation and guidance'), None) }}
         </div>
     </div>
     <div class="row">
@@ -16,19 +16,19 @@
             <div class="card sticky-top" style="top: 1rem;">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-list"></i> Contents
+                        <i class="fas fa-list"></i> {{ _('Contents') }}
                     </h5>
                 </div>
                 <div class="card-body">
                     <nav class="nav flex-column">
-                        <a class="nav-link" href="#getting-started">Getting Started</a>
-                        <a class="nav-link" href="#timer">Using the Timer</a>
-                        <a class="nav-link" href="#projects">Managing Projects</a>
-                        <a class="nav-link" href="#reports">Reports</a>
+                        <a class="nav-link" href="#getting-started">{{ _('Getting Started') }}</a>
+                        <a class="nav-link" href="#timer">{{ _('Using the Timer') }}</a>
+                        <a class="nav-link" href="#projects">{{ _('Managing Projects') }}</a>
+                        <a class="nav-link" href="#reports">{{ _('Reports') }}</a>
                         {% if current_user.is_admin %}
-                        <a class="nav-link" href="#admin">Admin Features</a>
+                        <a class="nav-link" href="#admin">{{ _('Admin Features') }}</a>
                         {% endif %}
-                        <a class="nav-link" href="#faq">FAQ</a>
+                        <a class="nav-link" href="#faq">{{ _('FAQ') }}</a>
                     </nav>
                 </div>
             </div>
@@ -37,22 +37,25 @@
         <div class="col-lg-9">
             <div class="text-center mb-4">
                 {% if settings and settings.has_logo() %}
-                <img src="{{ settings.get_logo_url() }}" alt="Company Logo" class="mb-3" width="48" height="48">
+                <img src="{{ settings.get_logo_url() }}" alt="{{ _('Company Logo') }}" class="mb-3" width="48" height="48">
                 {% else %}
                 <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-3" width="48" height="48">
                 {% endif %}
-                <h1 class="h2 mb-2">Help & Documentation</h1>
-                <p class="text-muted">TimeTracker by <strong>DryTrix</strong></p>
+                <h1 class="h2 mb-2">{{ _('Help & Documentation') }}</h1>
+                <p class="text-muted">{{ _('TimeTracker by') }} <strong>DryTrix</strong></p>
                 <div class="d-flex justify-content-center gap-2 mt-2">
                     <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> Log Time
+                        <i class="fas fa-play"></i> {{ _('Log Time') }}
                     </a>
                     <a href="{{ url_for('reports.reports') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-chart-bar"></i> View Reports
+                        <i class="fas fa-chart-bar"></i> {{ _('View Reports') }}
                     </a>
                     {% if current_user.is_admin %}
                     <a href="{{ url_for('admin.settings') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-sliders-h"></i> System Settings
+                        <i class="fas fa-sliders-h"></i> {{ _('System Settings') }}
+                    </a>
+                    <a href="{{ url_for('admin.license_status') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-chart-line"></i> {{ _('Metrics Status') }}
                     </a>
                     {% endif %}
                 </div>
@@ -60,24 +63,24 @@
 
             <!-- Getting Started -->
             <section id="getting-started" class="mb-5">
-                <h2 class="h3 mb-3">Getting Started</h2>
+                <h2 class="h3 mb-3">{{ _('Getting Started') }}</h2>
                 <div class="card">
                     <div class="card-body">
-                        <h5>First Time Setup</h5>
+                        <h5>{{ _('First Time Setup') }}</h5>
                         <ol>
-                            <li>Log in with your username (no password required)</li>
-                            <li>If you're an admin, create projects for your team</li>
-                            <li>Start tracking time on your first project</li>
+                            <li>{{ _('Log in with your username (no password required)') }}</li>
+                            <li>{{ _("If you're an admin, create projects for your team") }}</li>
+                            <li>{{ _('Start tracking time on your first project') }}</li>
                         </ol>
 
-                        <h5>Navigation</h5>
+                        <h5>{{ _('Navigation') }}</h5>
                         <ul>
-                            <li><strong>Dashboard:</strong> Overview of your current timer and recent activity</li>
-                            <li><strong>Timer:</strong> Start, stop, and manage time tracking (<a href="{{ url_for('timer.manual_entry') }}">Log Time</a>)</li>
-                            <li><strong>Projects:</strong> View and manage projects{% if current_user.is_admin %} (<a href="{{ url_for('projects.list_projects') }}">Open Projects</a>){% endif %}</li>
-                            <li><strong>Reports:</strong> Generate time reports and export data (<a href="{{ url_for('reports.reports') }}">Open Reports</a>)</li>
+                            <li><strong>{{ _('Dashboard') }}:</strong> {{ _('Overview of your current timer and recent activity') }}</li>
+                            <li><strong>{{ _('Timer') }}:</strong> {{ _('Start, stop, and manage time tracking') }} (<a href="{{ url_for('timer.manual_entry') }}">{{ _('Log Time') }}</a>)</li>
+                            <li><strong>{{ _('Projects') }}:</strong> {{ _('View and manage projects') }}{% if current_user.is_admin %} (<a href="{{ url_for('projects.list_projects') }}">{{ _('Open Projects') }}</a>){% endif %}</li>
+                            <li><strong>{{ _('Reports') }}:</strong> {{ _('Generate time reports and export data') }} (<a href="{{ url_for('reports.reports') }}">{{ _('Open Reports') }}</a>)</li>
                             {% if current_user.is_admin %}
-                            <li><strong>Admin:</strong> Manage users and system settings</li>
+                            <li><strong>{{ _('Admin') }}:</strong> {{ _('Manage users and system settings') }}</li>
                             {% endif %}
                         </ul>
                     </div>
@@ -86,93 +89,93 @@
 
             <!-- Timer -->
             <section id="timer" class="mb-5">
-                <h2 class="h3 mb-3">Using the Timer</h2>
+                <h2 class="h3 mb-3">{{ _('Using the Timer') }}</h2>
                 <div class="card">
                     <div class="card-body">
-                        <h5>Starting a Timer</h5>
+                        <h5>{{ _('Starting a Timer') }}</h5>
                         <ol>
-                            <li>Go to the Timer page or use the "Start Timer" button on the dashboard</li>
-                            <li>Select a project from the dropdown</li>
-                            <li>Add optional notes about what you're working on</li>
-                            <li>Add optional tags (separated by commas)</li>
-                            <li>Click "Start Timer"</li>
+                            <li>{{ _('Go to the Timer page or use the "Start Timer" button on the dashboard') }}</li>
+                            <li>{{ _('Select a project from the dropdown') }}</li>
+                            <li>{{ _('Add optional notes about what you\'re working on') }}</li>
+                            <li>{{ _('Add optional tags (separated by commas)') }}</li>
+                            <li>{{ _('Click "Start Timer"') }}</li>
                         </ol>
 
-                        <h5>Active Timer</h5>
+                        <h5>{{ _('Active Timer') }}</h5>
                         <ul>
-                            <li>The timer runs continuously until you stop it</li>
-                            <li>You can see the current duration in real-time</li>
-                            <li>The timer persists even if you close your browser</li>
-                            <li>Only one timer can be active at a time per user</li>
+                            <li>{{ _('The timer runs continuously until you stop it') }}</li>
+                            <li>{{ _('You can see the current duration in real-time') }}</li>
+                            <li>{{ _('The timer persists even if you close your browser') }}</li>
+                            <li>{{ _('Only one timer can be active at a time per user') }}</li>
                         </ul>
 
-                        <h5>Stopping a Timer</h5>
+                        <h5>{{ _('Stopping a Timer') }}</h5>
                         <ul>
-                            <li>Click the "Stop Timer" button to end the current session</li>
-                            <li>The time entry will be saved automatically</li>
-                            <li>You can edit the entry later if needed</li>
+                            <li>{{ _('Click the "Stop Timer" button to end the current session') }}</li>
+                            <li>{{ _('The time entry will be saved automatically') }}</li>
+                            <li>{{ _('You can edit the entry later if needed') }}</li>
                         </ul>
 
-                        <h5>Manual Time Entries</h5>
-                        <p>You can also create time entries manually by specifying start and end times, useful for recording time spent away from the computer.</p>
+                        <h5>{{ _('Manual Time Entries') }}</h5>
+                        <p>{{ _('You can also create time entries manually by specifying start and end times, useful for recording time spent away from the computer.') }}</p>
                     </div>
                 </div>
             </section>
 
             <!-- Projects -->
             <section id="projects" class="mb-5">
-                <h2 class="h3 mb-3">Managing Projects</h2>
+                <h2 class="h3 mb-3">{{ _('Managing Projects') }}</h2>
                 <div class="card">
                     <div class="card-body">
-                        <h5>Project Structure</h5>
+                        <h5>{{ _('Project Structure') }}</h5>
                         <ul>
-                            <li><strong>Name:</strong> Descriptive project name</li>
-                            <li><strong>Client:</strong> Optional client name for organization</li>
-                            <li><strong>Description:</strong> Project details and scope</li>
-                            <li><strong>Billable:</strong> Whether time should be tracked for billing</li>
-                            <li><strong>Hourly Rate:</strong> Rate for billable time calculations</li>
-                            <li><strong>Status:</strong> Active or archived</li>
+                            <li><strong>{{ _('Name') }}:</strong> {{ _('Descriptive project name') }}</li>
+                            <li><strong>{{ _('Client') }}:</strong> {{ _('Optional client name for organization') }}</li>
+                            <li><strong>{{ _('Description') }}:</strong> {{ _('Project details and scope') }}</li>
+                            <li><strong>{{ _('Billable') }}:</strong> {{ _('Whether time should be tracked for billing') }}</li>
+                            <li><strong>{{ _('Hourly Rate') }}:</strong> {{ _('Rate for billable time calculations') }}</li>
+                            <li><strong>{{ _('Status') }}:</strong> {{ _('Active or archived') }}</li>
                         </ul>
 
                         {% if current_user.is_admin %}
-                        <h5>Admin Project Management</h5>
+                        <h5>{{ _('Admin Project Management') }}</h5>
                         <ul>
-                            <li>Create new projects with the "New Project" button</li>
-                            <li>Edit existing projects to update details</li>
-                            <li>Archive projects to hide them from timers (data is preserved)</li>
-                            <li>Delete projects (use with caution - this removes all associated time entries)</li>
+                            <li>{{ _('Create new projects with the "New Project" button') }}</li>
+                            <li>{{ _('Edit existing projects to update details') }}</li>
+                            <li>{{ _('Archive projects to hide them from timers (data is preserved)') }}</li>
+                            <li>{{ _('Delete projects (use with caution - this removes all associated time entries)') }}</li>
                         </ul>
                         {% endif %}
 
-                        <h5>Viewing Project Details</h5>
-                        <p>Click on any project to view detailed statistics, time entries, and user breakdowns.</p>
+                        <h5>{{ _('Viewing Project Details') }}</h5>
+                        <p>{{ _('Click on any project to view detailed statistics, time entries, and user breakdowns.') }}</p>
                     </div>
                 </div>
             </section>
 
             <!-- Reports -->
             <section id="reports" class="mb-5">
-                <h2 class="h3 mb-3">Reports</h2>
+                <h2 class="h3 mb-3">{{ _('Reports') }}</h2>
                 <div class="card">
                     <div class="card-body">
-                        <h5>Available Reports</h5>
+                        <h5>{{ _('Available Reports') }}</h5>
                         <ul>
-                            <li><strong>Project Report:</strong> Time breakdown by project with filtering options</li>
-                            <li><strong>User Report:</strong> Time tracking statistics by user</li>
-                            <li><strong>Summary Report:</strong> Overview of key metrics and trends</li>
-                            <li><strong>CSV Export:</strong> Export time entries for external analysis</li>
+                            <li><strong>{{ _('Project Report') }}:</strong> {{ _('Time breakdown by project with filtering options') }}</li>
+                            <li><strong>{{ _('User Report') }}:</strong> {{ _('Time tracking statistics by user') }}</li>
+                            <li><strong>{{ _('Summary Report') }}:</strong> {{ _('Overview of key metrics and trends') }}</li>
+                            <li><strong>{{ _('CSV Export') }}:</strong> {{ _('Export time entries for external analysis') }}</li>
                         </ul>
 
-                        <h5>Filtering Options</h5>
+                        <h5>{{ _('Filtering Options') }}</h5>
                         <ul>
-                            <li><strong>Date Range:</strong> Filter by start and end dates</li>
-                            <li><strong>Project:</strong> Filter by specific project</li>
-                            <li><strong>User:</strong> Filter by specific user</li>
-                            <li><strong>Status:</strong> Filter by project status</li>
+                            <li><strong>{{ _('Date Range') }}:</strong> {{ _('Filter by start and end dates') }}</li>
+                            <li><strong>{{ _('Project') }}:</strong> {{ _('Filter by specific project') }}</li>
+                            <li><strong>{{ _('User') }}:</strong> {{ _('Filter by specific user') }}</li>
+                            <li><strong>{{ _('Status') }}:</strong> {{ _('Filter by project status') }}</li>
                         </ul>
 
-                        <h5>Exporting Data</h5>
-                        <p>Use the CSV export feature to download time entries for external tools. Find it on the Reports page.</p>
+                        <h5>{{ _('Exporting Data') }}</h5>
+                        <p>{{ _('Use the CSV export feature to download time entries for external tools. Find it on the Reports page.') }}</p>
                     </div>
                 </div>
             </section>
@@ -180,31 +183,32 @@
             {% if current_user.is_admin %}
             <!-- Admin Features -->
             <section id="admin" class="mb-5">
-                <h2 class="h3 mb-3">Admin Features</h2>
+                <h2 class="h3 mb-3">{{ _('Admin Features') }}</h2>
                 <div class="card">
                     <div class="card-body">
-                        <h5>User Management</h5>
+                        <h5>{{ _('User Management') }}</h5>
                         <ul>
-                            <li>Create new users with username-only authentication</li>
-                            <li>Assign user roles (user or admin)</li>
-                            <li>Activate/deactivate user accounts</li>
-                            <li>View user statistics and activity</li>
+                            <li>{{ _('Create new users with username-only authentication') }}</li>
+                            <li>{{ _('Assign user roles (user or admin)') }}</li>
+                            <li>{{ _('Activate/deactivate user accounts') }}</li>
+                            <li>{{ _('View user statistics and activity') }}</li>
                         </ul>
 
-                        <h5>System Settings</h5>
+                        <h5>{{ _('System Settings') }}</h5>
                         <ul>
-                            <li>Configure timezone and currency</li>
-                            <li>Set time rounding rules</li>
-                            <li>Enable/disable self-registration</li>
-                            <li>Configure backup settings</li>
+                            <li>{{ _('Configure timezone and currency') }}</li>
+                            <li>{{ _('Set time rounding rules') }}</li>
+                            <li>{{ _('Enable/disable self-registration') }}</li>
+                            <li>{{ _('Configure backup settings') }}</li>
                         </ul>
 
-                        <h5>System Maintenance</h5>
+                        <h5>{{ _('System Maintenance') }}</h5>
                         <ul>
-                            <li>Create manual database backups</li>
-                            <li>View system information and health</li>
-                            <li>Monitor system statistics</li>
-                            <li>Clean up old data</li>
+                            <li>{{ _('Create manual database backups') }}</li>
+                            <li>{{ _('View system information and health') }}</li>
+                            <li>{{ _('Monitor system statistics and metrics') }}</li>
+                            <li>{{ _('Review metrics server status and connectivity') }}</li>
+                            <li>{{ _('Clean up old data') }}</li>
                         </ul>
                     </div>
                 </div>
@@ -213,19 +217,19 @@
 
             <!-- FAQ -->
             <section id="faq" class="mb-5">
-                <h2 class="h3 mb-3">Frequently Asked Questions</h2>
+                <h2 class="h3 mb-3">{{ _('Frequently Asked Questions') }}</h2>
                 <div class="card">
                     <div class="card-body">
                         <div class="accordion" id="faqAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                        What happens if I forget to stop my timer?
+                                        {{ _('What happens if I forget to stop my timer?') }}
                                     </button>
                                 </h2>
                                 <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
                                     <div class="accordion-body">
-                                        The timer will continue running until you stop it. You can see your active timer on the dashboard and timer page. The timer persists even if you close your browser.
+                                        {{ _('The timer will continue running until you stop it. You can see your active timer on the dashboard and timer page. The timer persists even if you close your browser.') }}
                                     </div>
                                 </div>
                             </div>
@@ -233,12 +237,12 @@
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                        Can I edit time entries after they're created?
+                                        {{ _("Can I edit time entries after they're created?") }}
                                     </button>
                                 </h2>
                                 <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                     <div class="accordion-body">
-                                        Yes, you can edit any time entry by clicking the edit button. You can modify the project, start/end times, notes, tags, and billable status.
+                                        {{ _('Yes, you can edit any time entry by clicking the edit button. You can modify the project, start/end times, notes, tags, and billable status.') }}
                                     </div>
                                 </div>
                             </div>
@@ -246,12 +250,12 @@
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                        How do I track time for multiple projects?
+                                        {{ _('How do I track time for multiple projects?') }}
                                     </button>
                                 </h2>
                                 <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                     <div class="accordion-body">
-                                        You can only have one active timer at a time. To switch projects, stop your current timer and start a new one for the different project. You can also create manual time entries for past work.
+                                        {{ _('You can only have one active timer at a time. To switch projects, stop your current timer and start a new one for the different project. You can also create manual time entries for past work.') }}
                                     </div>
                                 </div>
                             </div>
@@ -259,12 +263,12 @@
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                        How do I export my time data?
+                                        {{ _('How do I export my time data?') }}
                                     </button>
                                 </h2>
                                 <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                     <div class="accordion-body">
-                                        Go to the Reports page and use the "Export CSV" feature. You can apply filters to export specific data, or export all time entries. The CSV file can be opened in Excel or other spreadsheet applications.
+                                        {{ _('Go to the Reports page and use the "Export CSV" feature. You can apply filters to export specific data, or export all time entries. The CSV file can be opened in Excel or other spreadsheet applications.') }}
                                     </div>
                                 </div>
                             </div>

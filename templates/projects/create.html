@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading state
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ _('Creating...') }}';
         submitBtn.disabled = true;
         
         // Re-enable after a delay (in case of validation errors)

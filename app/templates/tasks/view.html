@@ -7,7 +7,7 @@
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('tasks.list_tasks') }}">Tasks</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('tasks.list_tasks') }}">{{ _('Tasks') }}</a></li>
             <li class="breadcrumb-item active">{{ task.name }}</li>
         </ol>
     </nav>
@@ -49,23 +49,23 @@
                                 {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
                                 <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline">
                                     <button type="submit" class="btn btn-danger">
-                                        <i class="fas fa-stop me-2"></i>Stop Timer
+                                        <i class="fas fa-stop me-2"></i>{{ _('Stop Timer') }}
                                     </button>
                                 </form>
                                 {% elif not current_user.active_timer %}
                                 <a href="{{ url_for('timer.start_timer_for_project', project_id=task.project_id, task_id=task.id) }}" class="btn btn-success">
-                                    <i class="fas fa-play me-2"></i>Start Timer
+                                    <i class="fas fa-play me-2"></i>{{ _('Start Timer') }}
                                 </a>
                                 {% endif %}
                                 
                                 {% if current_user.is_admin or task.created_by == current_user.id %}
                                 <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-edit me-2"></i>Edit Task
+                                    <i class="fas fa-edit me-2"></i>{{ _('Edit Task') }}
                                 </a>
                                 {% endif %}
                                 
                                 <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i>Back to Tasks
+                                    <i class="fas fa-arrow-left me-2"></i>{{ _('Back to Tasks') }}
                                 </a>
                             </div>
                         </div>
@@ -84,7 +84,7 @@
             <div class="card mobile-card mb-4">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h6 class="mb-0">
-                        <i class="fas fa-align-left me-2 text-primary"></i>Description
+                        <i class="fas fa-align-left me-2 text-primary"></i>{{ _('Description') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -109,7 +109,7 @@
                         </div>
                         <div>
                             <h6 class="mb-1">{{ task.project.name }}</h6>
-                            <p class="text-muted mb-0">{{ task.project.description or 'No description available' }}</p>
+                            <p class="text-muted mb-0">{{ task.project.description or _('No description available') }}</p>
                         </div>
                     </div>
                 </div>
@@ -119,7 +119,7 @@
             <div class="card mobile-card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-clock me-2 text-warning"></i>Time Tracking
+                        <i class="fas fa-clock me-2 text-warning"></i>{{ _('Time Tracking') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -128,7 +128,7 @@
                         <div class="col-6 col-md-3">
                             <div class="text-center">
                                 <div class="h4 text-warning mb-1">{{ task.estimated_hours }}</div>
-                                <small class="text-muted">Estimated Hours</small>
+                                <small class="text-muted">{{ _('Estimated Hours') }}</small>
                             </div>
                         </div>
                         {% endif %}
@@ -137,7 +137,7 @@
                         <div class="col-6 col-md-3">
                             <div class="text-center">
                                 <div class="h4 text-success mb-1">{{ task.total_hours }}</div>
-                                <small class="text-muted">Actual Hours</small>
+                                <small class="text-muted">{{ _('Actual Hours') }}</small>
                             </div>
                         </div>
                         {% endif %}
@@ -146,7 +146,7 @@
                         <div class="col-6 col-md-3">
                             <div class="text-center">
                                 <div class="h4 text-info mb-1">{{ task.progress_percentage }}%</div>
-                                <small class="text-muted">Progress</small>
+                                <small class="text-muted">{{ _('Progress') }}</small>
                             </div>
                         </div>
                         {% endif %}
@@ -154,7 +154,7 @@
                         <div class="col-6 col-md-3">
                             <div class="text-center">
                                 <div class="h4 text-primary mb-1">{{ task.time_entries.count() }}</div>
-                                <small class="text-muted">Time Entries</small>
+                                <small class="text-muted">{{ _('Time Entries') }}</small>
                             </div>
                         </div>
                     </div>
@@ -162,8 +162,8 @@
                     {% if task.estimated_hours and task.total_hours > 0 %}
                     <div class="mt-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <small class="text-muted">Progress Overview</small>
-                            <small class="text-muted fw-bold">{{ task.progress_percentage }}% Complete</small>
+                            <small class="text-muted">{{ _('Progress Overview') }}</small>
+                            <small class="text-muted fw-bold">{{ task.progress_percentage }}% {{ _('Complete') }}</small>
                         </div>
                         <div class="progress" style="height: 8px;">
                             <div class="progress-bar bg-primary" role="progressbar" 
@@ -182,7 +182,7 @@
             <div class="card mobile-card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-history me-2 text-info"></i>Recent Time Entries
+                        <i class="fas fa-history me-2 text-info"></i>{{ _('Recent Time Entries') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -190,11 +190,11 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Duration</th>
-                                    <th>Notes</th>
-                                    <th>User</th>
-                                    <th class="text-end">Actions</th>
+                                    <th>{{ _('Date') }}</th>
+                                    <th>{{ _('Duration') }}</th>
+                                    <th>{{ _('Notes') }}</th>
+                                    <th>{{ _('User') }}</th>
+                                    <th class="text-end">{{ _('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="timeEntriesTableBody">
@@ -213,11 +213,11 @@
                                     <td class="text-end pe-4 actions-cell">
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}"
-                                               class="btn btn-sm btn-action btn-action--edit touch-target" title="Edit entry">
+                                               class="btn btn-sm btn-action btn-action--edit touch-target" title="{{ _('Edit entry') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                            <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="Delete entry"
+                                            <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="{{ _('Delete entry') }}"
                                                     onclick="showDeleteEntryModal('{{ entry.id }}', '{{ task.project.name }}', '{{ entry.duration_formatted }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -231,13 +231,13 @@
                     </div>
                     {% if task.time_entries.count() > 10 %}
                     <div class="d-flex justify-content-between align-items-center mt-3">
-                        <small class="text-muted" id="entriesInfo">Showing 10 of {{ task.time_entries.count() }} entries</small>
+                        <small class="text-muted" id="entriesInfo">{{ _('Showing') }} 10 {{ _('of') }} {{ task.time_entries.count() }} {{ _('entries') }}</small>
                         <div class="d-flex gap-2">
                             <button class="btn btn-sm btn-outline-secondary" id="showMoreBtn" onclick="showMoreEntries()">
-                                <i class="fas fa-chevron-down me-2"></i>Show more
+                                <i class="fas fa-chevron-down me-2"></i>{{ _('Show more') }}
                             </button>
                             <button class="btn btn-sm btn-outline-secondary d-none" id="showLessBtn" onclick="showLessEntries()">
-                                <i class="fas fa-chevron-up me-2"></i>Show less
+                                <i class="fas fa-chevron-up me-2"></i>{{ _('Show less') }}
                             </button>
                         </div>
                     </div>
@@ -253,19 +253,19 @@
             <div class="card mobile-card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-info-circle me-2 text-secondary"></i>Task Details
+                        <i class="fas fa-info-circle me-2 text-secondary"></i>{{ _('Task Details') }}
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="task-detail-item mb-3">
-                        <small class="text-muted d-block mb-1">Status</small>
+                        <small class="text-muted d-block mb-1">{{ _('Status') }}</small>
                         <span class="status-badge status-{{ task.status }}">
                             {{ task.status_display }}
                         </span>
                     </div>
                     
                     <div class="task-detail-item mb-3">
-                        <small class="text-muted d-block mb-1">Priority</small>
+                        <small class="text-muted d-block mb-1">{{ _('Priority') }}</small>
                         <span class="priority-badge priority-{{ task.priority }}">
                             {{ task.priority_display }}
                         </span>
@@ -273,7 +273,7 @@
                     
                     {% if task.assigned_user %}
                     <div class="task-detail-item mb-3">
-                        <small class="text-muted d-block mb-1">Assigned To</small>
+                        <small class="text-muted d-block mb-1">{{ _('Assigned To') }}</small>
                         <div class="d-flex align-items-center">
                             <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">
                                 <i class="fas fa-user text-info fa-xs"></i>
@@ -284,7 +284,7 @@
                     {% endif %}
                     
                     <div class="task-detail-item mb-3">
-                        <small class="text-muted d-block mb-1">Created By</small>
+                        <small class="text-muted d-block mb-1">{{ _('Created By') }}</small>
                         <div class="d-flex align-items-center">
                             <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">
                                 <i class="fas fa-user-plus text-secondary fa-xs"></i>
@@ -295,7 +295,7 @@
                     
                     {% if task.due_date %}
                     <div class="task-detail-item mb-3">
-                        <small class="text-muted d-block mb-1">Due Date</small>
+                        <small class="text-muted d-block mb-1">{{ _('Due Date') }}</small>
                         <div class="d-flex align-items-center">
                             <div class="bg-{% if task.is_overdue %}danger{% else %}secondary{% endif %} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">
                                 <i class="fas fa-calendar text-{% if task.is_overdue %}danger{% else %}secondary{% endif %} fa-xs"></i>
@@ -309,7 +309,7 @@
                     
                     {% if task.started_at %}
                     <div class="task-detail-item mb-3">
-                        <small class="text-muted d-block mb-1">Started</small>
+                        <small class="text-muted d-block mb-1">{{ _('Started') }}</small>
                         <div class="d-flex align-items-center">
                             <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">
                                 <i class="fas fa-play text-warning fa-xs"></i>
@@ -321,7 +321,7 @@
                     
                     {% if task.completed_at %}
                     <div class="task-detail-item mb-3">
-                        <small class="text-muted d-block mb-1">Completed</small>
+                        <small class="text-muted d-block mb-1">{{ _('Completed') }}</small>
                         <div class="d-flex align-items-center">
                             <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">
                                 <i class="fas fa-check text-success fa-xs"></i>
@@ -343,35 +343,35 @@
                 <div class="card-body">
                     <div class="quick-actions d-flex flex-wrap gap-2">
                         {% if task.status == 'todo' %}
-                        <button class="btn btn-sm btn-action btn-action--success" onclick="openStatusModal('in_progress')" title="Start Task" data-bs-toggle="tooltip">
+                        <button class="btn btn-sm btn-action btn-action--success" onclick="openStatusModal('in_progress')" title="{{ _('Start Task') }}" data-bs-toggle="tooltip">
                             <i class="fas fa-play"></i>
                         </button>
                         {% elif task.status == 'in_progress' %}
                         <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-action btn-action--view" onclick="openStatusModal('review')" title="Mark for Review" data-bs-toggle="tooltip">
+                            <button class="btn btn-sm btn-action btn-action--view" onclick="openStatusModal('review')" title="{{ _('Mark for Review') }}" data-bs-toggle="tooltip">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-action btn-action--warning" onclick="openStatusModal('todo')" title="Pause Task" data-bs-toggle="tooltip">
+                            <button class="btn btn-sm btn-action btn-action--warning" onclick="openStatusModal('todo')" title="{{ _('Pause Task') }}" data-bs-toggle="tooltip">
                                 <i class="fas fa-pause"></i>
                             </button>
                         </div>
                         {% elif task.status == 'review' %}
                         <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-action btn-action--success" onclick="openStatusModal('done')" title="Complete Task" data-bs-toggle="tooltip">
+                            <button class="btn btn-sm btn-action btn-action--success" onclick="openStatusModal('done')" title="{{ _('Complete Task') }}" data-bs-toggle="tooltip">
                                 <i class="fas fa-check"></i>
                             </button>
-                            <button class="btn btn-sm btn-action btn-action--edit" onclick="openStatusModal('in_progress')" title="Back to Progress" data-bs-toggle="tooltip">
+                            <button class="btn btn-sm btn-action btn-action--edit" onclick="openStatusModal('in_progress')" title="{{ _('Back to Progress') }}" data-bs-toggle="tooltip">
                                 <i class="fas fa-undo"></i>
                             </button>
                         </div>
                         {% elif task.status == 'done' %}
-                        <button class="btn btn-sm btn-action btn-action--warning" onclick="openStatusModal('todo')" title="Reopen Task" data-bs-toggle="tooltip">
+                        <button class="btn btn-sm btn-action btn-action--warning" onclick="openStatusModal('todo')" title="{{ _('Reopen Task') }}" data-bs-toggle="tooltip">
                             <i class="fas fa-undo"></i>
                         </button>
                         {% endif %}
                         
                         {% if task.status != 'done' and task.status != 'cancelled' %}
-                        <button class="btn btn-sm btn-action btn-action--danger" onclick="openStatusModal('cancelled')" title="Cancel Task" data-bs-toggle="tooltip">
+                        <button class="btn btn-sm btn-action btn-action--danger" onclick="openStatusModal('cancelled')" title="{{ _('Cancel Task') }}" data-bs-toggle="tooltip">
                             <i class="fas fa-times"></i>
                         </button>
                         {% endif %}
@@ -383,7 +383,7 @@
             <div class="card mobile-card">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-history me-2 text-info"></i>Task Timeline
+                        <i class="fas fa-history me-2 text-info"></i>{{ _('Task Timeline') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -392,7 +392,7 @@
                             <div class="timeline-marker bg-primary"></div>
                             <div class="timeline-content">
                                 <small class="text-muted">{{ task.created_at.strftime('%b %d, %Y') }}</small>
-                                <p class="mb-0">Task created</p>
+                                <p class="mb-0">{{ _('Task created') }}</p>
                             </div>
                         </div>
                         
@@ -401,7 +401,7 @@
                             <div class="timeline-marker bg-warning"></div>
                             <div class="timeline-content">
                                 <small class="text-muted">{{ task.started_at.strftime('%b %d, %Y') }}</small>
-                                <p class="mb-0">Task started</p>
+                                <p class="mb-0">{{ _('Task started') }}</p>
                             </div>
                         </div>
                         {% endif %}
@@ -411,7 +411,7 @@
                             <div class="timeline-marker bg-success"></div>
                             <div class="timeline-content">
                                 <small class="text-muted">{{ task.completed_at.strftime('%b %d, %Y') }}</small>
-                                <p class="mb-0">Task completed</p>
+                                <p class="mb-0">{{ _('Task completed') }}</p>
                             </div>
                         </div>
                         {% endif %}
@@ -420,7 +420,7 @@
                             <div class="timeline-marker bg-secondary"></div>
                             <div class="timeline-content">
                                 <small class="text-muted">{{ task.updated_at.strftime('%b %d, %Y') }}</small>
-                                <p class="mb-0">Last updated</p>
+                                <p class="mb-0">{{ _('Last updated') }}</p>
                             </div>
                         </div>
                     </div>
@@ -432,7 +432,7 @@
             <div class="card mobile-card mt-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-clipboard-list me-2 text-secondary"></i>Activity Log
+                        <i class="fas fa-clipboard-list me-2 text-secondary"></i>{{ _('Activity Log') }}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -440,10 +440,10 @@
                         <table class="table table-sm align-middle">
                             <thead>
                                 <tr>
-                                    <th>When</th>
-                                    <th>Event</th>
-                                    <th>User</th>
-                                    <th>Details</th>
+                                    <th>{{ _('When') }}</th>
+                                    <th>{{ _('Event') }}</th>
+                                    <th>{{ _('User') }}</th>
+                                    <th>{{ _('Details') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -777,18 +777,18 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Action</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">{{ _('Confirm Action') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
-                <p class="modal-body-text">Are you sure?</p>
+                <p class="modal-body-text">{{ _('Are you sure?') }}</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancel
+                    <i class="fas fa-times me-2"></i>{{ _('Cancel') }}
                 </button>
                 <button type="button" id="statusConfirmBtn" class="btn btn-primary" onclick="confirmStatusChange()">
-                    <i class="fas fa-check me-2"></i>Confirm
+                    <i class="fas fa-check me-2"></i>{{ _('Confirm') }}
                 </button>
             </div>
         </div>
@@ -801,25 +801,25 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-trash me-2 text-danger"></i>Delete Time Entry
+                    <i class="fas fa-trash me-2 text-danger"></i>{{ _('Delete Time Entry') }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone.
+                    <strong>{{ _('Warning:') }}</strong> {{ _('This action cannot be undone.') }}
                 </div>
-                <p>Are you sure you want to delete the time entry for <strong id="deleteEntryProjectName"></strong>?</p>
-                <p class="text-muted mb-0">Duration: <strong id="deleteEntryDuration"></strong></p>
+                <p>{{ _('Are you sure you want to delete the time entry for') }} <strong id="deleteEntryProjectName"></strong>?</p>
+                <p class="text-muted mb-0">{{ _('Duration:') }} <strong id="deleteEntryDuration"></strong></p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancel
+                    <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteEntryForm" class="d-inline">
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>Delete Entry
+                        <i class="fas fa-trash me-2"></i>{{ _('Delete Entry') }}
                     </button>
                 </form>
             </div>

@@ -358,7 +358,7 @@ function showDeleteEntryModal(entryId, projectName, duration) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('deleteEntryForm').addEventListener('submit', function(e) {
         const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
+        submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>{{ _('Deleting...') }}';
         submitBtn.disabled = true;
     });
 });

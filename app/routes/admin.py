@@ -82,6 +82,18 @@ def admin_dashboard():
         recent_entries=recent_entries
     )
 
+# Compatibility alias for code/templates that might reference 'admin.dashboard'
+@admin_bp.route('/admin/dashboard')
+@login_required
+@admin_required
+def admin_dashboard_alias():
+    """Alias endpoint so url_for('admin.dashboard') remains valid.
+
+    Some older references may use the endpoint name 'admin.dashboard'.
+    Redirect to the canonical admin dashboard endpoint.
+    """
+    return redirect(url_for('admin.admin_dashboard'))
+
 @admin_bp.route('/admin/users')
 @login_required
 @admin_required
@@ -445,7 +457,7 @@ def system_info():
 @login_required
 @admin_required
 def license_status():
-    """Show license server client status"""
+    """Show metrics server client status"""
     try:
         from app.utils.license_server import get_license_client
         client = get_license_client()
@@ -454,17 +466,17 @@ def license_status():
             settings = Settings.get_settings()
             return render_template('admin/license_status.html', status=status, settings=settings)
         else:
-            flash('License server client not initialized', 'warning')
-            return redirect(url_for('admin.dashboard'))
+            flash('Metrics server client not initialized', 'warning')
+            return redirect(url_for('admin.admin_dashboard'))
     except Exception as e:
-        flash(f'Error getting license status: {e}', 'error')
-        return redirect(url_for('admin.dashboard'))
+        flash(f'Error getting metrics status: {e}', 'error')
+        return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/license-test')
 @login_required
 @admin_required
 def license_test():
-    """Test license server communication"""
+    """Test metrics server communication"""
     try:
         from app.utils.license_server import get_license_client, send_usage_event
         client = get_license_client()
@@ -475,11 +487,11 @@ def license_test():
             # Test usage event
             usage_sent = send_usage_event("admin_test", {"admin": current_user.username})
             
-            flash(f'Server Health: {"✓ Healthy" if server_healthy else "✗ Not Responding"}, Usage Event: {"✓ Sent" if usage_sent else "✗ Failed"}', 'info')
+            flash(f'Metrics Server: {"✓ Healthy" if server_healthy else "✗ Not Responding"}, Usage Event: {"✓ Sent" if usage_sent else "✗ Failed"}', 'info')
         else:
-            flash('License server client not initialized', 'warning')
+            flash('Metrics server client not initialized', 'warning')
     except Exception as e:
-        flash(f'Error testing license server: {e}', 'error')
+        flash(f'Error testing metrics server: {e}', 'error')
     
     return redirect(url_for('admin.license_status'))
 
@@ -487,18 +499,18 @@ def license_test():
 @login_required
 @admin_required
 def license_restart():
-    """Restart the license server client"""
+    """Restart the metrics server client"""
     try:
         from app.utils.license_server import get_license_client, start_license_client
         client = get_license_client()
         if client:
             if start_license_client():
-                flash('License server client restarted successfully', 'success')
+                flash('Metrics server client restarted successfully', 'success')
             else:
-                flash('Failed to restart license server client', 'error')
+                flash('Failed to restart metrics server client', 'error')
         else:
-            flash('License server client not initialized', 'warning')
+            flash('Metrics server client not initialized', 'warning')
     except Exception as e:
-        flash(f'Error restarting license server client: {e}', 'error')
+        flash(f'Error restarting metrics server client: {e}', 'error')
     
     return redirect(url_for('admin.license_status'))
