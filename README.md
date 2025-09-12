@@ -398,6 +398,23 @@ See [Version Management Documentation](docs/VERSION_MANAGEMENT.md) for detailed 
 - **CLI & Admin Tools**: Database migrations, management scripts, and utilities
 - **Dockerized Deployment**: Local and remote compose files, public images on GitHub Container Registry
 
+### New: PDF Layout Editor (Admin)
+- **Visual editor** to customize the invoice PDF layout with HTML and CSS
+- **Local assets**: GrapesJS is served from `static/vendor` (no CDN dependency)
+- **Live preview** in the editor to validate changes before export
+- **Translations**: Fully supports Flask‑Babel strings like `{{ _('Invoice') }}`
+- **Company branding**: Uses values from Admin → System Settings (logo, address, etc.)
+- **Safe defaults**: One‑click “Load Defaults” provides a complete starter template
+
+Usage:
+1. Open `Admin → System Settings` and click “Edit PDF Layout”.
+2. Adjust HTML and CSS. Use `{{ format_date(...) }}`, `{{ format_money(...) }}`, `{{ _('...') }}`.
+3. Click “Save Layout”. Export any invoice to see the new design.
+
+Notes:
+- The editor stores custom template HTML/CSS in the `settings` table; leave blank to use built‑in defaults.
+- Preview sanitizes pasted content to avoid smart quotes and HTML entities breaking Jinja.
+
 ## 📚 Documentation
 
 Detailed documentation is available in the `docs/` directory:

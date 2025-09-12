@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('PDF Layout') }} - {{ app_name }}{% endblock %}
+
+{% block head_extra %}
+<link href="{{ url_for('static', filename='vendor/grapesjs/grapes.min.css') }}" rel="stylesheet">
+<style>
+#gjs { border: 1px solid #ddd; min-height: 520px; background: #fff; }
+#preview-frame { width: 100%; height: 520px; border: 1px solid #ddd; background: #fff; }
+.gjs-pn-panel.gjs-pn-views { display: none; }
+.editor-actions .btn { margin-right: .5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0"><i class="fas fa-file-pdf text-primary"></i> {{ _('PDF Layout Editor') }}</h1>
+            <div class="editor-actions">
+                <button id="btn-load-defaults" class="btn btn-outline-secondary"><i class="fas fa-rotate"></i> {{ _('Load Defaults') }}</button>
+                <button id="btn-save" class="btn btn-primary"><i class="fas fa-save"></i> {{ _('Save Layout') }}</button>
+                <form id="form-reset" method="POST" action="{{ url_for('admin.pdf_layout_reset') }}" class="d-inline" onsubmit="return confirm('{{ _('Reset to defaults? This will clear custom HTML and CSS.') }}')">
+                    <button type="submit" class="btn btn-outline-danger"><i class="fas fa-undo"></i> {{ _('Reset') }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7 mb-3">
+            <div id="gjs"></div>
+        </div>
+        <div class="col-lg-5 mb-3">
+            <iframe id="preview-frame"></iframe>
+        </div>
+    </div>
+
+    <form id="form-save" method="POST" class="d-none">
+        <textarea id="input-html" name="invoice_pdf_template_html"></textarea>
+        <textarea id="input-css" name="invoice_pdf_template_css"></textarea>
+    </form>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header"><strong>{{ _('Notes') }}</strong></div>
+                <div class="card-body small text-muted">
+                    <p>{{ _('Use the visual editor to drag-and-drop layout. You can switch to code view in the top-right of the editor.') }}</p>
+                    <p>{{ _('Variables (Jinja)') }}:</p>
+                    <ul>
+                        <li><code>{{ '{{ invoice.invoice_number }}' }}</code></li>
+                        <li><code>{{ '{{ format_date(invoice.issue_date) }}' }}</code></li>
+                        <li><code>{{ '{{ format_money(item.total_amount) }}' }}</code></li>
+                        <li><code>{{ '{{ settings.company_name }}' }}</code></li>
+                        <li><code>{{ "{{ _('<Label>') }}" }}</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='vendor/grapesjs/grapes.min.js') }}"></script>
+<script>
+// Pass server values for visual editor; keep next script block raw to avoid parsing issues
+const __INIT_HTML__ = {{ (initial_html or settings.invoice_pdf_template_html or '')|tojson }};
+const __INIT_CSS__ = {{ (initial_css or settings.invoice_pdf_template_css or '')|tojson }};
+const __DEFAULTS_URL__ = "{{ url_for('admin.pdf_layout_default') }}";
+const __PREVIEW_URL__ = "{{ url_for('admin.pdf_layout_preview') }}";
+</script>
+{% raw %}
+<script>
+(function(){
+  // Fallback to plaintext editor if GrapesJS is unavailable (CDN blocked)
+  if (!window.grapesjs) {
+    var g = document.getElementById('gjs');
+    if (g) {
+      g.innerHTML = '<div class="mb-2"><label><strong>HTML</strong></label><textarea id="fb-html" class="form-control" rows="14"></textarea></div>' +
+                    '<div class="mb-2"><label><strong>CSS</strong></label><textarea id="fb-css" class="form-control" rows="10"></textarea></div>';
+      var fbHtml = document.getElementById('fb-html');
+      var fbCss = document.getElementById('fb-css');
+      if (typeof __INIT_HTML__ !== 'undefined' && __INIT_HTML__) fbHtml.value = __INIT_HTML__;
+      if (typeof __INIT_CSS__ !== 'undefined' && __INIT_CSS__) fbCss.value = __INIT_CSS__;
+
+      var btnDefaults = document.getElementById('btn-load-defaults');
+      var btnSave = document.getElementById('btn-save');
+      var btnPreview = document.getElementById('btn-preview');
+
+      if (btnDefaults) btnDefaults.addEventListener('click', function(){
+        fetch(__DEFAULTS_URL__).then(function(r){return r.json();}).then(function(d){
+          fbHtml.value = d.html || '';
+          fbCss.value = d.css || '';
+        }).catch(function(){});
+      });
+      if (btnSave) btnSave.addEventListener('click', function(){
+        document.getElementById('input-html').value = fbHtml.value;
+        document.getElementById('input-css').value = fbCss.value;
+        document.getElementById('form-save').submit();
+      });
+      if (btnPreview) btnPreview.addEventListener('click', function(){
+        var fd = new FormData();
+        fd.append('html', fbHtml.value);
+        fd.append('css', fbCss.value);
+        fetch(__PREVIEW_URL__, { method:'POST', body: fd }).then(function(r){return r.text();}).then(function(html){
+          var frame = document.getElementById('preview-frame');
+          var doc = frame.contentDocument || frame.contentWindow.document;
+          doc.open(); doc.write(html); doc.close();
+        }).catch(function(){});
+      });
+
+      if ((!__INIT_HTML__ || __INIT_HTML__ === '') && (!__INIT_CSS__ || __INIT_CSS__ === '')) {
+        if (btnDefaults) btnDefaults.click();
+      }
+    }
+    return;
+  }
+
+  const editor = grapesjs.init({
+    container: '#gjs',
+    fromElement: false,
+    height: '520px',
+    storageManager: false,
+    components: __INIT_HTML__ || '<div class="wrapper"><h1>{{ _("INVOICE") }} {{ invoice.invoice_number }}</h1></div>',
+    style: __INIT_CSS__ || '',
+    plugins: [],
+  });
+
+  const snippets = {
+    invoice_header: '<h1>{{ _("INVOICE") }} {{ invoice.invoice_number }}</h1>',
+    items_table: '<table style="width:100%;border-collapse:collapse"><thead><tr><th>{{ _("Description") }}</th><th style="text-align:right">{{ _("Quantity (Hours)") }}</th><th style="text-align:right">{{ _("Unit Price") }}</th><th style="text-align:right">{{ _("Total Amount") }}</th></tr></thead><tbody>{% for item in invoice.items %}<tr><td>{{ item.description }}</td><td style="text-align:right">{{ "%.2f"|format(item.quantity) }}</td><td style="text-align:right">{{ format_money(item.unit_price) }}</td><td style="text-align:right">{{ format_money(item.total_amount) }}</td></tr>{% endfor %}</tbody></table>',
+    subtotal_row: '<div><strong>{{ _("Subtotal:") }}</strong> {{ format_money(invoice.subtotal) }}</div>',
+    terms: '<div><strong>{{ _("Terms & Conditions:") }}</strong> {{ settings.invoice_terms }}</div>'
+  };
+
+  function loadDefaults(){
+    fetch(__DEFAULTS_URL__).then(r=>r.json()).then(data=>{
+      editor.setComponents(data.html || '');
+      editor.setStyle(data.css || '');
+      renderPreview();
+    });
+  }
+
+  function getHtmlCss(){
+    const html = editor.getHtml();
+    const css = editor.getCss();
+    return { html, css };
+  }
+
+  function renderPreview(){
+    const { html, css } = getHtmlCss();
+    const formData = new FormData();
+    formData.append('html', html);
+    formData.append('css', css);
+    fetch(__PREVIEW_URL__, { method:'POST', body: formData })
+      .then(r=>r.text()).then(html => {
+        const frame = document.getElementById('preview-frame');
+        const doc = frame.contentDocument || frame.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+      });
+  }
+
+  document.getElementById('btn-preview').addEventListener('click', function(){ renderPreview(); });
+  document.getElementById('btn-load-defaults').addEventListener('click', function(){ loadDefaults(); });
+  document.getElementById('btn-save').addEventListener('click', function(){
+    const { html, css } = getHtmlCss();
+    document.getElementById('input-html').value = html;
+    document.getElementById('input-css').value = css;
+    document.getElementById('form-save').submit();
+  });
+  document.querySelectorAll('[data-key]').forEach(btn=>{
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      const comp = editor.getSelected() || editor.getWrapper();
+      const key = this.getAttribute('data-key');
+      const tpl = snippets[key] || '';
+      if (!tpl) return;
+      comp.append(tpl);
+      renderPreview();
+    });
+  });
+
+  document.getElementById('btn-insert-vars').addEventListener('click', function(){
+    const menu = `
+<div class="p-2">
+  <div class="mb-1"><code>{{ invoice.invoice_number }}</code></div>
+  <div class="mb-1"><code>{{ format_date(invoice.issue_date) }}</code></div>
+  <div class="mb-1"><code>{{ settings.company_name }}</code></div>
+  <div class="mb-1"><code>{{ _("Label") }}</code></div>
+</div>`;
+    alert(menu);
+  });
+
+  if (!__INIT_HTML__ && !__INIT_CSS__) {
+    loadDefaults();
+  } else {
+    renderPreview();
+  }
+})();
+</script>
+{% endraw %}
+{% endblock %}
+
+

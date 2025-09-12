@@ -391,51 +391,37 @@ def export_invoice_csv(invoice_id):
 def export_invoice_pdf(invoice_id):
     """Export invoice as PDF"""
     invoice = Invoice.query.get_or_404(invoice_id)
-    
-    # Check access permissions
     if not current_user.is_admin and invoice.created_by != current_user.id:
-        flash('You do not have permission to export this invoice', 'error')
+        flash(_('You do not have permission to export this invoice'), 'error')
         return redirect(request.referrer or url_for('invoices.list_invoices'))
-    
     try:
         from app.utils.pdf_generator import InvoicePDFGenerator
         settings = Settings.get_settings()
-        
-        # Generate PDF (primary: WeasyPrint)
         pdf_generator = InvoicePDFGenerator(invoice, settings=settings)
         pdf_bytes = pdf_generator.generate_pdf()
-        
         filename = f'invoice_{invoice.invoice_number}.pdf'
-        
         return send_file(
             io.BytesIO(pdf_bytes),
             mimetype='application/pdf',
             as_attachment=True,
             download_name=filename
         )
-        
     except Exception as e:
-        # Any failure (including ImportError) -> try ReportLab fallback
         try:
             from app.utils.pdf_generator_fallback import InvoicePDFGeneratorFallback
             settings = Settings.get_settings()
-            
-            flash('High-quality generator unavailable; using fallback PDF generator.', 'warning')
-            
+            flash(_('High-quality generator unavailable; using fallback PDF generator.'), 'warning')
             pdf_generator = InvoicePDFGeneratorFallback(invoice, settings=settings)
             pdf_bytes = pdf_generator.generate_pdf()
-            
             filename = f'invoice_{invoice.invoice_number}.pdf'
-            
             return send_file(
                 io.BytesIO(pdf_bytes),
                 mimetype='application/pdf',
                 as_attachment=True,
                 download_name=filename
             )
-            
         except Exception as fallback_error:
-            flash(f'PDF generation failed: {str(e)}. Fallback also failed: {str(fallback_error)}', 'error')
+            flash(_('PDF generation failed: %(err)s. Fallback also failed: %(fb)s', err=str(e), fb=str(fallback_error)), 'error')
             return redirect(request.referrer or url_for('invoices.view_invoice', invoice_id=invoice.id))
 
 @invoices_bp.route('/invoices/<int:invoice_id>/duplicate')
