@@ -398,6 +398,23 @@ See [Version Management Documentation](docs/VERSION_MANAGEMENT.md) for detailed 
 - **CLI & Admin Tools**: Database migrations, management scripts, and utilities
 - **Dockerized Deployment**: Local and remote compose files, public images on GitHub Container Registry
 
+### New: PDF Layout Editor (Admin)
+- **Visual editor** to customize the invoice PDF layout with HTML and CSS
+- **Local assets**: GrapesJS is served from `static/vendor` (no CDN dependency)
+- **Live preview** in the editor to validate changes before export
+- **Translations**: Fully supports Flask‑Babel strings like `{{ _('Invoice') }}`
+- **Company branding**: Uses values from Admin → System Settings (logo, address, etc.)
+- **Safe defaults**: One‑click “Load Defaults” provides a complete starter template
+
+Usage:
+1. Open `Admin → System Settings` and click “Edit PDF Layout”.
+2. Adjust HTML and CSS. Use `{{ format_date(...) }}`, `{{ format_money(...) }}`, `{{ _('...') }}`.
+3. Click “Save Layout”. Export any invoice to see the new design.
+
+Notes:
+- The editor stores custom template HTML/CSS in the `settings` table; leave blank to use built‑in defaults.
+- Preview sanitizes pasted content to avoid smart quotes and HTML entities breaking Jinja.
+
 ## 📚 Documentation
 
 Detailed documentation is available in the `docs/` directory:
@@ -406,6 +423,24 @@ Detailed documentation is available in the `docs/` directory:
 - **Feature Guides**: Detailed feature explanations
 - **Troubleshooting**: Common issues and solutions
 - **Deployment**: Setup and deployment instructions
+
+### Metrics Server and Privacy
+
+This application can optionally communicate with a metrics server to help improve reliability and features. No license is required and the app works without it.
+
+- What is sent:
+  - App identifier and version
+  - Anonymous instance ID (UUID)
+  - Basic system info: OS, version, architecture, hostname, local IP, Python version
+  - Aggregate usage events (e.g., feature used). No time entry data or personal content
+- Controls:
+  - Toggle analytics in Admin → System Settings → Privacy & Analytics
+  - View status in Admin → Metrics Status
+- Configuration (env vars are optional and have sensible defaults):
+  - `METRICS_SERVER_URL` (or legacy `LICENSE_SERVER_BASE_URL`)
+  - `METRICS_SERVER_API_KEY` (or legacy `LICENSE_SERVER_API_KEY`)
+  - `METRICS_HEARTBEAT_SECONDS` (or legacy `LICENSE_HEARTBEAT_SECONDS`)
+  - `METRICS_SERVER_TIMEOUT_SECONDS` (or legacy `LICENSE_SERVER_TIMEOUT_SECONDS`)
 
 ## 🚀 Deployment
 

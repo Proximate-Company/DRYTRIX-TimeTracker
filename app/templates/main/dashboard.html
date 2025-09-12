@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Dashboard') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -16,13 +16,13 @@
         <div class="col-12">
             {% set actions %}
             <a href="{{ url_for('timer.manual_entry') }}" class="btn-header btn-primary">
-                <i class="fas fa-plus"></i> Log Time
+                <i class="fas fa-plus"></i> {{ _('Log Time') }}
             </a>
             <a href="{{ url_for('reports.reports') }}" class="btn-header btn-outline-primary">
-                <i class="fas fa-chart-line"></i> Reports
+                <i class="fas fa-chart-line"></i> {{ _('Reports') }}
             </a>
             {% endset %}
-            {{ page_header('fas fa-tachometer-alt', 'Dashboard', 'Welcome back, ' ~ current_user.display_name ~ ' • ' ~ (today_hours|round(1)) ~ 'h today', actions) }}
+            {{ page_header('fas fa-tachometer-alt', _('Dashboard'), _('Welcome back,') ~ ' ' ~ current_user.display_name ~ ' • ' ~ (today_hours|round(1)) ~ _('h today'), actions) }}
         </div>
     </div>
 
@@ -32,7 +32,7 @@
         <div class="card mobile-card hover-lift">
             <div class="card-header">
                 <h5 class="mb-0 d-flex align-items-center">
-                    <i class="fas fa-clock me-3 text-primary"></i>Timer Status
+                    <i class="fas fa-clock me-3 text-primary"></i>{{ _('Timer Status') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -46,7 +46,7 @@
                                 </div>
                             </div>
                             <div class="text-center text-md-start">
-                                <h4 class="mb-2 text-success fw-bold">Timer Running</h4>
+                                <h4 class="mb-2 text-success fw-bold">{{ _('Timer Running') }}</h4>
                                 <p class="mb-3 text-muted fs-6">
                                     <i class="fas fa-project-diagram me-2"></i>{{ active_timer.project.name }}{% if active_timer.task %} <span class="text-muted">•</span> <i class="fas fa-tasks ms-2 me-1"></i>{{ active_timer.task.name }}{% endif %}
                                 </p>
@@ -54,7 +54,7 @@
                                     {{ active_timer.duration_formatted }}
                                 </div>
                                 <small class="text-muted fs-6">
-                                    Started at {{ active_timer.start_time.strftime('%H:%M') }}
+                                    {{ _('Started at') }} {{ active_timer.start_time.strftime('%H:%M') }}
                                 </small>
                             </div>
                         </div>
@@ -66,10 +66,10 @@
                                 </div>
                             </div>
                             <div class="text-center text-md-start">
-                                <h4 class="mb-2 text-muted fw-bold">No Active Timer</h4>
-                                <p class="text-muted mb-1 fs-6">Choose a project or one of its tasks to start tracking.</p>
+                                <h4 class="mb-2 text-muted fw-bold">{{ _('No Active Timer') }}</h4>
+                                <p class="text-muted mb-1 fs-6">{{ _('Choose a project or one of its tasks to start tracking.') }}</p>
                                 <div class="mt-2">
-                                    <span class="badge bg-light text-dark fs-6">Idle</span>
+                                    <span class="badge bg-light text-dark fs-6">{{ _('Idle') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -79,12 +79,12 @@
                         {% if active_timer %}
                         <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline w-100">
                             <button type="submit" class="btn btn-danger px-4 w-100 w-md-auto touch-target fw-bold">
-                                <i class="fas fa-stop me-2"></i>Stop Timer
+                                <i class="fas fa-stop me-2"></i>{{ _('Stop Timer') }}
                             </button>
                         </form>
                         {% else %}
                         <button type="button" class="btn btn-success px-4 w-100 w-md-auto touch-target fw-bold" data-bs-toggle="modal" data-bs-target="#startTimerModal">
-                            <i class="fas fa-play me-2"></i>Start Timer
+                            <i class="fas fa-play me-2"></i>{{ _('Start Timer') }}
                         </button>
                         {% endif %}
                     </div>
@@ -103,9 +103,9 @@
                     <i class="fas fa-calendar-day text-primary fa-2x"></i>
                 </div>
                 <h3 class="h1 text-primary mb-2 fw-bold">{{ "%.1f"|format(today_hours) }}</h3>
-                <p class="mb-2 fw-semibold fs-5">Hours Today</p>
+                <p class="mb-2 fw-semibold fs-5">{{ _('Hours Today') }}</p>
                 <small class="text-muted fs-6">
-                    {% if today_hours > 0 %}Active day{% else %}No activity yet{% endif %}
+                    {% if today_hours > 0 %}{{ _('Active day') }}{% else %}{{ _('No activity yet') }}{% endif %}
                 </small>
             </div>
         </div>
@@ -117,9 +117,9 @@
                     <i class="fas fa-calendar-week text-success fa-2x"></i>
                 </div>
                 <h3 class="h1 text-success mb-2 fw-bold">{{ "%.1f"|format(week_hours) }}</h3>
-                <p class="mb-2 fw-semibold fs-5">Hours This Week</p>
+                <p class="mb-2 fw-semibold fs-5">{{ _('Hours This Week') }}</p>
                 <small class="text-muted fs-6">
-                    {% if week_hours > 0 %}Good progress{% else %}Start tracking{% endif %}
+                    {% if week_hours > 0 %}{{ _('Good progress') }}{% else %}{{ _('Start tracking') }}{% endif %}
                 </small>
             </div>
         </div>
@@ -131,9 +131,9 @@
                     <i class="fas fa-calendar-alt text-info fa-2x"></i>
                 </div>
                 <h3 class="h1 text-info mb-2 fw-bold">{{ "%.1f"|format(month_hours) }}</h3>
-                <p class="mb-2 fw-semibold fs-5">Hours This Month</p>
+                <p class="mb-2 fw-semibold fs-5">{{ _('Hours This Month') }}</p>
                 <small class="text-muted fs-6">
-                    {% if month_hours > 0 %}Consistent work{% else %}New month{% endif %}
+                    {% if month_hours > 0 %}{{ _('Consistent work') }}{% else %}{{ _('New month') }}{% endif %}
                 </small>
             </div>
         </div>
@@ -146,7 +146,7 @@
         <div class="card mobile-card hover-lift">
             <div class="card-header">
                 <h5 class="mb-0 d-flex align-items-center">
-                    <i class="fas fa-bolt me-3 text-warning"></i>Quick Actions
+                    <i class="fas fa-bolt me-3 text-warning"></i>{{ _('Quick Actions') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -157,8 +157,8 @@
                                 <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
                                     <i class="fas fa-plus text-primary fa-lg"></i>
                                 </div>
-                                <h6 class="fw-semibold mb-2 fs-5">Log Time</h6>
-                                <small class="text-muted fs-6">Manual entry</small>
+                                <h6 class="fw-semibold mb-2 fs-5">{{ _('Log Time') }}</h6>
+                                <small class="text-muted fs-6">{{ _('Manual entry') }}</small>
                             </div>
                         </a>
                     </div>
@@ -168,8 +168,8 @@
                                 <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
                                     <i class="fas fa-project-diagram text-secondary fa-lg"></i>
                                 </div>
-                                <h6 class="fw-semibold mb-2 fs-5">Projects</h6>
-                                <small class="text-muted fs-6">Manage projects</small>
+                                <h6 class="fw-semibold mb-2 fs-5">{{ _('Projects') }}</h6>
+                                <small class="text-muted fs-6">{{ _('Manage projects') }}</small>
                             </div>
                         </a>
                     </div>
@@ -179,8 +179,8 @@
                                 <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
                                     <i class="fas fa-chart-bar text-info fa-lg"></i>
                                 </div>
-                                <h6 class="fw-semibold mb-2 fs-5">Reports</h6>
-                                <small class="text-muted fs-6">View analytics</small>
+                                <h6 class="fw-semibold mb-2 fs-5">{{ _('Reports') }}</h6>
+                                <small class="text-muted fs-6">{{ _('View analytics') }}</small>
                             </div>
                         </a>
                     </div>
@@ -190,8 +190,8 @@
                                 <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
                                     <i class="fas fa-search text-warning fa-lg"></i>
                                 </div>
-                                <h6 class="fw-semibold mb-2 fs-5">Search</h6>
-                                <small class="text-muted fs-6">Find entries</small>
+                                <h6 class="fw-semibold mb-2 fs-5">{{ _('Search') }}</h6>
+                                <small class="text-muted fs-6">{{ _('Find entries') }}</small>
                             </div>
                         </a>
                     </div>
@@ -207,10 +207,10 @@
         <div class="card mobile-card hover-lift">
             <div class="card-header d-flex justify-content-between align-items-center flex-column flex-md-row">
                 <h5 class="mb-0 mb-3 mb-md-0 d-flex align-items-center">
-                    <i class="fas fa-history me-3 text-primary"></i>Recent Entries
+                    <i class="fas fa-history me-3 text-primary"></i>{{ _('Recent Entries') }}
                 </h5>
                 <a href="{{ url_for('reports.reports') }}" class="btn btn-sm btn-outline-primary touch-target">
-                    <i class="fas fa-external-link-alt me-2"></i>View All
+                    <i class="fas fa-external-link-alt me-2"></i>{{ _('View All') }}
                 </a>
             </div>
             <div class="card-body p-0">
@@ -219,11 +219,11 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th class="ps-4">Project</th>
-                                <th>Duration</th>
-                                <th>Date</th>
-                                <th>Notes</th>
-                                <th class="text-end pe-4">Actions</th>
+                                <th class="ps-4">{{ _('Project') }}</th>
+                                <th>{{ _('Duration') }}</th>
+                                <th>{{ _('Date') }}</th>
+                                <th>{{ _('Notes') }}</th>
+                                <th class="text-end pe-4">{{ _('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -257,17 +257,17 @@
                                         {{ entry.notes[:50] }}{% if entry.notes|length > 50 %}...{% endif %}
                                     </div>
                                     {% else %}
-                                    <span class="text-muted fst-italic fs-6">No notes</span>
+                                    <span class="text-muted fst-italic fs-6">{{ _('No notes') }}</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-end pe-4 actions-cell" data-label="Actions">
                                     <div class="btn-group" role="group">
                                         <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
-                                           class="btn btn-sm btn-action btn-action--edit touch-target" title="Edit entry">
+                                           class="btn btn-sm btn-action btn-action--edit touch-target" title="{{ _('Edit entry') }}">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                        <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="Delete entry" 
+                                        <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="{{ _('Delete entry') }}" 
                                                 onclick="showDeleteEntryModal('{{ entry.id }}', '{{ entry.project.name }}', '{{ entry.duration_formatted }}')">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -283,10 +283,10 @@
                 {% from "_components.html" import empty_state %}
                 {% set actions %}
                 <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-primary touch-target fw-bold">
-                    <i class="fas fa-plus me-2"></i>Log Your First Entry
+                    <i class="fas fa-plus me-2"></i>{{ _('Log Your First Entry') }}
                 </a>
                 {% endset %}
-                {{ empty_state('fas fa-clock', 'No recent entries', 'Start tracking your time to see entries here', actions) }}
+                {{ empty_state('fas fa-clock', _('No recent entries'), _('Start tracking your time to see entries here'), actions) }}
                 {% endif %}
             </div>
         </div>
@@ -299,18 +299,18 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title d-flex align-items-center">
-                    <i class="fas fa-play me-3 text-success"></i>Start Timer
+                    <i class="fas fa-play me-3 text-success"></i>{{ _('Start Timer') }}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <form method="POST" action="{{ url_for('timer.start_timer') }}">
                 <div class="modal-body">
                     <div class="mb-4">
                         <label for="project_id" class="form-label fw-semibold d-flex align-items-center">
-                            <i class="fas fa-project-diagram me-2"></i>Select Project
+                            <i class="fas fa-project-diagram me-2"></i>{{ _('Select Project') }}
                         </label>
                         <select class="form-select form-select-lg" id="project_id" name="project_id" required>
-                            <option value="">Choose a project...</option>
+                            <option value="">{{ _('Choose a project...') }}</option>
                             {% for project in active_projects %}
                             <option value="{{ project.id }}">
                                 {{ project.name }} ({{ project.client }})
@@ -320,27 +320,27 @@
                     </div>
                     <div class="mb-4">
                         <label for="task_id" class="form-label fw-semibold d-flex align-items-center">
-                            <i class="fas fa-tasks me-2"></i>Select Task (Optional)
+                            <i class="fas fa-tasks me-2"></i>{{ _('Select Task (Optional)') }}
                         </label>
                         <select class="form-select" id="task_id" name="task_id" disabled>
-                            <option value="">Choose a task...</option>
+                            <option value="">{{ _('Choose a task...') }}</option>
                         </select>
-                        <small class="text-muted">Tasks list updates after choosing a project. Leave empty to log at project level.</small>
+                        <small class="text-muted">{{ _('Tasks list updates after choosing a project. Leave empty to log at project level.') }}</small>
                     </div>
                     <div class="mb-3">
                         <label for="timer_notes" class="form-label fw-semibold d-flex align-items-center">
-                            <i class="fas fa-sticky-note me-2"></i>Notes (Optional)
+                            <i class="fas fa-sticky-note me-2"></i>{{ _('Notes (Optional)') }}
                         </label>
                         <textarea class="form-control" id="timer_notes" name="notes" rows="3" 
-                                  placeholder="What are you working on?"></textarea>
+                                  placeholder="{{ _('What are you working on?') }}"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer d-flex flex-column flex-md-row">
                     <button type="button" class="btn btn-secondary mb-2 mb-md-0 me-md-2" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
+                        <i class="fas fa-times me-2"></i>{{ _('Cancel') }}
                     </button>
                     <button type="submit" class="btn btn-success fw-bold">
-                        <i class="fas fa-play me-2"></i>Start Timer
+                        <i class="fas fa-play me-2"></i>{{ _('Start Timer') }}
                     </button>
                 </div>
             </form>
@@ -354,25 +354,25 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title d-flex align-items-center">
-                    <i class="fas fa-trash me-3 text-danger"></i>Delete Time Entry
+                    <i class="fas fa-trash me-3 text-danger"></i>{{ _('Delete Time Entry') }}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone.
+                    <strong>{{ _('Warning:') }}</strong> {{ _('This action cannot be undone.') }}
                 </div>
-                <p class="mb-2">Are you sure you want to delete the time entry for <strong id="deleteEntryProjectName"></strong>?</p>
-                <p class="text-muted mb-0 fs-6">Duration: <strong id="deleteEntryDuration"></strong></p>
+                <p class="mb-2">{{ _('Are you sure you want to delete the time entry for') }} <strong id="deleteEntryProjectName"></strong>?</p>
+                <p class="text-muted mb-0 fs-6">{{ _('Duration:') }} <strong id="deleteEntryDuration"></strong></p>
             </div>
             <div class="modal-footer d-flex flex-column flex-md-row">
                 <button type="button" class="btn btn-secondary mb-2 mb-md-0 me-md-2" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Cancel
+                    <i class="fas fa-times me-2"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteEntryForm" class="d-inline">
                     <button type="submit" class="btn btn-danger fw-bold">
-                        <i class="fas fa-trash me-2"></i>Delete Entry
+                        <i class="fas fa-trash me-2"></i>{{ _('Delete Entry') }}
                     </button>
                 </form>
             </div>
@@ -382,7 +382,21 @@
 {% endblock %}
 
 {% block extra_js %}
+<script id="i18n-dashboard" type="application/json">{{ {
+    'choose_task': _('Choose a task...'),
+    'please_select_project': _('Please select a project'),
+    'starting': _('Starting...'),
+    'deleting': _('Deleting...')
+}|tojson }}</script>
 <script>
+    // Parse page i18n
+    var i18nDash = (function(){
+        try {
+            var el = document.getElementById('i18n-dashboard');
+            return el ? JSON.parse(el.textContent) : {};
+        } catch (e) { return {}; }
+    })();
+
     let timerInterval;
     const HAS_ACTIVE_TIMER = !!Number(document.getElementById('dashboard-meta')?.getAttribute('data-has-active-timer') || '0');
     if (HAS_ACTIVE_TIMER) {
@@ -433,7 +447,7 @@
     if (projectSelect && taskSelect) {
         projectSelect.addEventListener('change', async function() {
             const pid = this.value;
-            taskSelect.innerHTML = '<option value="">Choose a task...</option>';
+            taskSelect.innerHTML = `<option value="">${i18nDash.choose_task || 'Choose a task...'}</option>`;
             taskSelect.disabled = true;
             if (!pid) return;
             try {
@@ -461,12 +475,12 @@
             const pid = projectSelect.value;
             if (!pid) {
                 e.preventDefault();
-                showToast('Please select a project', 'warning');
+                showToast(i18nDash.please_select_project || 'Please select a project', 'warning');
                 return false;
             }
             const btn = this.querySelector('button[type="submit"]');
             if (btn) {
-                btn.innerHTML = '<div class="loading-spinner me-2"></div>Starting...';
+                btn.innerHTML = `<div class="loading-spinner me-2"></div>${i18nDash.starting || 'Starting...'}`;
                 btn.disabled = true;
             }
         });
@@ -486,7 +500,7 @@
         if (deleteForm) {
             deleteForm.addEventListener('submit', function(e) {
                 const submitBtn = this.querySelector('button[type="submit"]');
-                submitBtn.innerHTML = '<div class="loading-spinner me-2"></div>Deleting...';
+                submitBtn.innerHTML = `<div class="loading-spinner me-2"></div>${i18nDash.deleting || 'Deleting...'}`;
                 submitBtn.disabled = true;
             });
         }

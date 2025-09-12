@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Generate Invoice from Time - TimeTracker{% endblock %}
+{% block title %}{{ _('Generate Invoice from Time') }} - TimeTracker{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,12 +11,12 @@
                 <div class="d-flex align-items-center">
                     <h1 class="h3 mb-0 me-3">
                         <i class="fas fa-clock text-primary"></i>
-                        Generate Invoice Items from Time Entries
+                        {{ _('Generate Invoice Items from Time Entries') }}
                     </h1>
-                    <span class="badge bg-info fs-6">Invoice #{{ invoice.invoice_number }}</span>
+                    <span class="badge bg-info fs-6">{{ _('Invoice #') }}{{ invoice.invoice_number }}</span>
                 </div>
                 <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-1"></i> Back to Invoice
+                    <i class="fas fa-arrow-left me-1"></i> {{ _('Back to Invoice') }}
                 </a>
             </div>
 
@@ -28,25 +28,25 @@
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="summary-item">
-                                        <div class="summary-label">Client</div>
+                                        <div class="summary-label">{{ _('Client') }}</div>
                                         <div class="summary-value">{{ invoice.client_name }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="summary-item">
-                                        <div class="summary-label">Project</div>
+                                        <div class="summary-label">{{ _('Project') }}</div>
                                         <div class="summary-value">{{ invoice.project.name }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="summary-item">
-                                        <div class="summary-label">Hourly Rate</div>
+                                        <div class="summary-label">{{ _('Hourly Rate') }}</div>
                                         <div class="summary-value">{{ "%.2f"|format(invoice.project.hourly_rate or 0) }} {{ currency }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="summary-item">
-                                        <div class="summary-label">Available Hours</div>
+                                        <div class="summary-label">{{ _('Available Hours') }}</div>
                                         <div class="summary-value text-primary">{{ "%.2f"|format(total_available_hours) }}h</div>
                                     </div>
                                 </div>
@@ -62,14 +62,14 @@
                         <div class="card-header bg-white py-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 font-weight-bold text-primary">
-                                    <i class="fas fa-list me-2"></i>Select Time Entries
+                                    <i class="fas fa-list me-2"></i>{{ _('Select Time Entries') }}
                                 </h6>
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectRecentEntries()">
-                                        <i class="fas fa-calendar-week me-1"></i> Last 7 Days
+                                        <i class="fas fa-calendar-week me-1"></i> {{ _('Last 7 Days') }}
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectThisMonth()">
-                                        <i class="fas fa-calendar-alt me-1"></i> This Month
+                                        <i class="fas fa-calendar-alt me-1"></i> {{ _('This Month') }}
                                     </button>
                                 </div>
                             </div>
@@ -83,17 +83,17 @@
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleAllEntries()">
                                                 <label class="form-check-label fw-bold" for="selectAll">
-                                                    Select All Time Entries
+                                                    {{ _('Select All Time Entries') }}
                                                 </label>
                                             </div>
                                             <div class="selection-summary">
                                                 <span class="badge bg-primary me-2">
                                                     <i class="fas fa-check me-1"></i>
-                                                    <span id="selectedCount">0</span> selected
+                                                    <span id="selectedCount">0</span> {{ _('selected') }}
                                                 </span>
                                                 <span class="badge bg-success">
                                                     <i class="fas fa-clock me-1"></i>
-                                                    <span id="totalHours">0.00</span> hours
+                                                    <span id="totalHours">0.00</span> {{ _('hours') }}
                                                 </span>
                                             </div>
                                         </div>
@@ -104,12 +104,12 @@
                                         <table class="table table-hover">
                                             <thead class="table-light">
                                                 <tr>
-                                                    <th style="width: 5%">Select</th>
-                                                    <th style="width: 15%">Date</th>
-                                                    <th style="width: 20%">User</th>
-                                                    <th style="width: 25%">Task</th>
-                                                    <th style="width: 15%">Duration</th>
-                                                    <th style="width: 20%">Notes</th>
+                                                    <th style="width: 5%">{{ _('Select') }}</th>
+                                                    <th style="width: 15%">{{ _('Date') }}</th>
+                                                    <th style="width: 20%">{{ _('User') }}</th>
+                                                    <th style="width: 25%">{{ _('Task') }}</th>
+                                                    <th style="width: 15%">{{ _('Duration') }}</th>
+                                                    <th style="width: 20%">{{ _('Notes') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -150,11 +150,11 @@
                                                             <div class="notes-content">
                                                                 <div class="notes-text">{{ entry.notes[:50] }}{% if entry.notes|length > 50 %}...{% endif %}</div>
                                                                 {% if entry.notes|length > 50 %}
-                                                                <small class="text-muted">Click to view full notes</small>
+                                                                <small class="text-muted">{{ _('Click to view full notes') }}</small>
                                                                 {% endif %}
                                                             </div>
                                                         {% else %}
-                                                            <span class="text-muted">No notes</span>
+                                                            <span class="text-muted">{{ _('No notes') }}</span>
                                                         {% endif %}
                                                     </td>
                                                 </tr>
@@ -168,12 +168,12 @@
                                         <div class="d-flex align-items-center">
                                             <i class="fas fa-info-circle fa-lg me-3"></i>
                                             <div>
-                                                <strong>Summary:</strong> 
-                                                <span id="selectedCountText">0</span> entries selected, 
-                                                <span id="totalHoursText">0.00</span> hours total
+                                                <strong>{{ _('Summary:') }}</strong> 
+                                                <span id="selectedCountText">0</span> {{ _('entries selected,') }} 
+                                                <span id="totalHoursText">0.00</span> {{ _('hours total') }}
                                                 <div class="mt-2">
                                                     <small class="text-muted">
-                                                        Selected entries will be converted to invoice line items with the project's hourly rate.
+                                                        {{ _("Selected entries will be converted to invoice line items with the project's hourly rate.") }}
                                                     </small>
                                                 </div>
                                             </div>
@@ -183,10 +183,10 @@
                                     <!-- Action Buttons -->
                                     <div class="d-flex justify-content-between mt-4">
                                         <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="btn btn-outline-secondary">
-                                            <i class="fas fa-times me-1"></i> Cancel
+                                            <i class="fas fa-times me-1"></i> {{ _('Cancel') }}
                                         </a>
                                         <button type="submit" class="btn btn-primary btn-lg" id="generateBtn" disabled>
-                                            <i class="fas fa-magic me-2"></i> Generate Invoice Items
+                                            <i class="fas fa-magic me-2"></i> {{ _('Generate Invoice Items') }}
                                         </button>
                                     </div>
                                 </form>
@@ -194,16 +194,16 @@
                                 <div class="text-center py-5">
                                     <div class="empty-state">
                                         <i class="fas fa-clock fa-3x text-muted mb-3"></i>
-                                        <h5 class="text-muted">No time entries found</h5>
+                                        <h5 class="text-muted">{{ _('No time entries found') }}</h5>
                                         <p class="text-muted mb-4">
-                                            There are no time entries available for this project to generate invoice items from.
+                                            {{ _('There are no time entries available for this project to generate invoice items from.') }}
                                         </p>
                                         <div class="d-flex justify-content-center gap-2">
                                             <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="btn btn-secondary">
-                                                <i class="fas fa-arrow-left me-1"></i> Back to Invoice
+                                                <i class="fas fa-arrow-left me-1"></i> {{ _('Back to Invoice') }}
                                             </a>
                                             <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-primary">
-                                                <i class="fas fa-plus me-1"></i> Add Time Entry
+                                                <i class="fas fa-plus me-1"></i> {{ _('Add Time Entry') }}
                                             </a>
                                         </div>
                                     </div>
@@ -218,22 +218,22 @@
                     <div class="card shadow-sm border-0 mb-3">
                         <div class="card-header bg-light py-3">
                             <h6 class="m-0 font-weight-bold text-primary">
-                                <i class="fas fa-bolt me-2"></i>Quick Actions
+                                <i class="fas fa-bolt me-2"></i>{{ _('Quick Actions') }}
                             </h6>
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
                                 <button type="button" class="btn btn-outline-primary" onclick="selectRecentEntries()">
-                                    <i class="fas fa-calendar-week me-2"></i> Last 7 Days
+                                    <i class="fas fa-calendar-week me-2"></i> {{ _('Last 7 Days') }}
                                 </button>
                                 <button type="button" class="btn btn-outline-primary" onclick="selectThisMonth()">
-                                    <i class="fas fa-calendar-alt me-2"></i> This Month
+                                    <i class="fas fa-calendar-alt me-2"></i> {{ _('This Month') }}
                                 </button>
                                 <button type="button" class="btn btn-outline-primary" onclick="selectHighValueEntries()">
-                                    <i class="fas fa-star me-2"></i> High Value Tasks
+                                    <i class="fas fa-star me-2"></i> {{ _('High Value Tasks') }}
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" onclick="clearSelection()">
-                                    <i class="fas fa-times me-2"></i> Clear Selection
+                                    <i class="fas fa-times me-2"></i> {{ _('Clear Selection') }}
                                 </button>
                             </div>
                         </div>
@@ -243,7 +243,7 @@
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-light py-3">
                             <h6 class="m-0 font-weight-bold text-primary">
-                                <i class="fas fa-lightbulb me-2"></i>Tips
+                                <i class="fas fa-lightbulb me-2"></i>{{ _('Tips') }}
                             </h6>
                         </div>
                         <div class="card-body">
@@ -252,9 +252,9 @@
                                     <i class="fas fa-clock"></i>
                                 </div>
                                 <div class="tip-content">
-                                    <strong>Smart Selection</strong>
+                                    <strong>{{ _('Smart Selection') }}</strong>
                                     <p class="small text-muted mb-0">
-                                        Use quick actions to select time entries by date ranges or task types
+                                        {{ _('Use quick actions to select time entries by date ranges or task types') }}
                                     </p>
                                 </div>
                             </div>
@@ -264,9 +264,9 @@
                                     <i class="fas fa-calculator"></i>
                                 </div>
                                 <div class="tip-content">
-                                    <strong>Automatic Calculation</strong>
+                                    <strong>{{ _('Automatic Calculation') }}</strong>
                                     <p class="small text-muted mb-0">
-                                        Line items are automatically calculated using the project's hourly rate
+                                        {{ _("Line items are automatically calculated using the project's hourly rate") }}
                                     </p>
                                 </div>
                             </div>
@@ -276,9 +276,9 @@
                                     <i class="fas fa-edit"></i>
                                 </div>
                                 <div class="tip-content">
-                                    <strong>Review & Edit</strong>
+                                    <strong>{{ _('Review & Edit') }}</strong>
                                     <p class="small text-muted mb-0">
-                                        You can edit generated items before finalizing the invoice
+                                        {{ _('You can edit generated items before finalizing the invoice') }}
                                     </p>
                                 </div>
                             </div>
@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedCount = document.querySelectorAll('.time-entry-checkbox:checked').length;
             if (selectedCount === 0) {
                 e.preventDefault();
-                showAlert('Please select at least one time entry to generate invoice items.', 'warning');
+                showAlert('{{ _('Please select at least one time entry to generate invoice items.') }}', 'warning');
             }
         });
     }

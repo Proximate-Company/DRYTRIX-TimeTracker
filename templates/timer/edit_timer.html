@@ -378,10 +378,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         <div class="d-flex justify-content-between">
                             <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i>Back
+                                <i class="fas fa-arrow-left me-1"></i>{{ _('Back') }}
                             </a>
                             <button type="submit" class="btn btn-primary" id="adminEditSaveBtn">
-                                <i class="fas fa-save me-2"></i>Save Changes
+                                <i class="fas fa-save me-2"></i>{{ _('Save Changes') }}
                             </button>
                         </div>
                         </form>
@@ -390,19 +390,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         <form method="POST" action="{{ url_for('timer.edit_timer', timer_id=timer.id) }}">
                             <div class="mb-4">
                                 <label for="notes" class="form-label fw-semibold">
-                                    <i class="fas fa-sticky-note me-1"></i>Notes
+                                    <i class="fas fa-sticky-note me-1"></i>{{ _('Notes') }}
                                 </label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Describe what you worked on">{{ timer.notes or '' }}</textarea>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="{{ _('Describe what you worked on') }}">{{ timer.notes or '' }}</textarea>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-8">
                                     <div class="mb-4">
                                         <label for="tags" class="form-label fw-semibold">
-                                            <i class="fas fa-tags me-1"></i>Tags
+                                            <i class="fas fa-tags me-1"></i>{{ _('Tags') }}
                                         </label>
-                                        <input type="text" class="form-control" id="tags" name="tags" placeholder="tag1, tag2" value="{{ timer.tags or '' }}">
-                                        <div class="form-text">Separate tags with commas</div>
+                                        <input type="text" class="form-control" id="tags" name="tags" placeholder="{{ _('tag1, tag2') }}" value="{{ timer.tags or '' }}">
+                                        <div class="form-text">{{ _('Separate tags with commas') }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-4 d-flex align-items-center">
@@ -417,10 +417,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             <div class="d-flex justify-content-between">
                                 <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
-                                    <i class="fas fa-arrow-left me-1"></i>Back
+                                    <i class="fas fa-arrow-left me-1"></i>{{ _('Back') }}
                                 </a>
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save me-2"></i>Save Changes
+                                    <i class="fas fa-save me-2"></i>{{ _('Save Changes') }}
                                 </button>
                             </div>
                         </form>

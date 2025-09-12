@@ -1347,6 +1347,14 @@ main {
     gap: 0.75rem;
 }
 
+/* Prevent very long app names from breaking the layout */
+.navbar-brand span {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .navbar-brand img {
     transition: var(--transition);
 }
@@ -1620,6 +1628,7 @@ h6 { font-size: 1rem; }
     pointer-events: auto;
     background-clip: padding-box;
     min-width: 200px;
+    max-width: clamp(220px, 90vw, 360px);
     padding: 0.5rem 0;
 }
 
@@ -1653,6 +1662,10 @@ h6 { font-size: 1rem; }
     display: flex;
     align-items: center;
     font-weight: 500;
+    white-space: normal;            /* allow wrapping for long translations */
+    word-break: break-word;         /* break long words/URLs if needed */
+    hyphens: auto;                  /* hyphenate when possible */
+    line-height: 1.25;
 }
 
 .dropdown-item:hover {
@@ -1757,7 +1770,15 @@ h6 { font-size: 1rem; }
     gap: 0.5rem;
 }
 
-.dropdown-item i { width: 1rem; text-align: center; }
+.dropdown-item i { width: 1rem; text-align: center; flex: 0 0 auto; }
+
+/* Ensure user name in navbar doesn't overflow */
+.navbar .nav-item.dropdown .nav-link span {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 /* Enhanced Mobile Components */
 .mobile-stack {

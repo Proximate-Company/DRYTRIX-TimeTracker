@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Invoice {{ invoice.invoice_number }} - TimeTracker{% endblock %}
+{% block title %}{{ _('Edit Invoice') }} {{ invoice.invoice_number }} - TimeTracker{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,14 +9,14 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">
                     <i class="fas fa-edit text-primary"></i>
-                    Edit Invoice {{ invoice.invoice_number }}
+                    {{ _('Edit Invoice') }} {{ invoice.invoice_number }}
                 </h1>
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="btn btn-secondary">
-                        <i class="fas fa-eye"></i> View
+                        <i class="fas fa-eye"></i> {{ _('View') }}
                     </a>
                     <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Back
+                        <i class="fas fa-arrow-left"></i> {{ _('Back') }}
                     </a>
                 </div>
             </div>
@@ -27,20 +27,20 @@
                         <!-- Invoice Details -->
                         <div class="card shadow mb-4">
                             <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Invoice Details</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">{{ _('Invoice Details') }}</h6>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="client_name" class="form-label">Client Name *</label>
+                                            <label for="client_name" class="form-label">{{ _('Client Name *') }}</label>
                                             <input type="text" class="form-control" id="client_name" name="client_name" 
                                                    value="{{ invoice.client_name }}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="client_email" class="form-label">Client Email</label>
+                                            <label for="client_email" class="form-label">{{ _('Client Email') }}</label>
                                             <input type="email" class="form-control" id="client_email" name="client_email" 
                                                    value="{{ invoice.client_email or '' }}" placeholder="client@example.com">
                                         </div>
@@ -48,7 +48,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="client_address" class="form-label">Client Address</label>
+                                    <label for="client_address" class="form-label">{{ _('Client Address') }}</label>
                                     <textarea class="form-control" id="client_address" name="client_address" 
                                               rows="3" placeholder="Client billing address">{{ invoice.client_address or '' }}</textarea>
                                 </div>
@@ -56,14 +56,14 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="due_date" class="form-label">Due Date *</label>
+                                            <label for="due_date" class="form-label">{{ _('Due Date *') }}</label>
                                             <input type="date" class="form-control" id="due_date" name="due_date" 
                                                    value="{{ invoice.due_date.strftime('%Y-%m-%d') }}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="tax_rate" class="form-label">Tax Rate (%)</label>
+                                            <label for="tax_rate" class="form-label">{{ _('Tax Rate (%)') }}</label>
                                             <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
                                                    value="{{ "%.2f"|format(invoice.tax_rate) }}" min="0" max="100" step="0.01">
                                         </div>
@@ -71,13 +71,13 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="notes" class="form-label">Notes</label>
+                                    <label for="notes" class="form-label">{{ _('Notes') }}</label>
                                     <textarea class="form-control" id="notes" name="notes" 
                                               rows="3" placeholder="Additional notes for the client">{{ invoice.notes or '' }}</textarea>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="terms" class="form-label">Terms & Conditions</label>
+                                    <label for="terms" class="form-label">{{ _('Terms & Conditions') }}</label>
                                     <textarea class="form-control" id="terms" name="terms" 
                                               rows="3" placeholder="Payment terms and conditions">{{ invoice.terms or '' }}</textarea>
                                 </div>
@@ -87,9 +87,9 @@
                         <!-- Invoice Items -->
                         <div class="card shadow mb-4">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 font-weight-bold text-primary">Invoice Items</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">{{ _('Invoice Items') }}</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="addItemRow()">
-                                    <i class="fas fa-plus"></i> Add Item
+                                    <i class="fas fa-plus"></i> {{ _('Add Item') }}
                                 </button>
                             </div>
                             <div class="card-body">
@@ -97,11 +97,11 @@
                                     <table class="table table-bordered" id="itemsTable">
                                         <thead class="table-light">
                                             <tr>
-                                                <th style="width: 40%">Description *</th>
-                                                <th style="width: 20%">Quantity (Hours) *</th>
-                                                <th style="width: 20%">Unit Price *</th>
-                                                <th style="width: 20%">Total</th>
-                                                <th style="width: 10%">Actions</th>
+                                                <th style="width: 40%">{{ _('Description *') }}</th>
+                                                <th style="width: 20%">{{ _('Quantity (Hours) *') }}</th>
+                                                <th style="width: 20%">{{ _('Unit Price *') }}</th>
+                                                <th style="width: 20%">{{ _('Total') }}</th>
+                                                <th style="width: 10%">{{ _('Actions') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody id="itemsTableBody">
@@ -136,7 +136,7 @@
                                         </tbody>
                                         <tfoot class="table-light">
                                             <tr>
-                                                <td colspan="2" class="text-end"><strong>Subtotal:</strong></td>
+                                                <td colspan="2" class="text-end"><strong>{{ _('Subtotal:') }}</strong></td>
                                                 <td colspan="2">
                                                     <input type="text" class="form-control" id="subtotal" 
                                                            value="{{ "%.2f"|format(invoice.subtotal) }} {{ currency }}" readonly>
@@ -145,7 +145,7 @@
                                             </tr>
                                             <tr>
                                                 <td colspan="2" class="text-end">
-                                                    <strong>Tax ({{ "%.2f"|format(invoice.tax_rate) }}%):</strong>
+                                                    <strong>{{ _('Tax') }} ({{ "%.2f"|format(invoice.tax_rate) }}%):</strong>
                                                 </td>
                                                 <td colspan="2">
                                                     <input type="text" class="form-control" id="taxAmount" 
@@ -154,7 +154,7 @@
                                                 <td></td>
                                             </tr>
                                             <tr class="table-primary">
-                                                <td colspan="2" class="text-end"><strong>Total Amount:</strong></td>
+                                                <td colspan="2" class="text-end"><strong>{{ _('Total Amount:') }}</strong></td>
                                                 <td colspan="2">
                                                     <input type="text" class="form-control" id="totalAmount" 
                                                            value="{{ "%.2f"|format(invoice.total_amount) }} {{ currency }}" readonly>
@@ -172,29 +172,29 @@
                         <!-- Project Information -->
                         <div class="card shadow mb-4">
                             <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Project Information</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">{{ _('Project Information') }}</h6>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <strong>Project:</strong><br>
+                                    <strong>{{ _('Project:') }}</strong><br>
                                     <span class="text-muted">{{ invoice.project.name }}</span>
                                 </div>
                                 <div class="mb-3">
-                                    <strong>Client:</strong><br>
+                                    <strong>{{ _('Client:') }}</strong><br>
                                     <span class="text-muted">{{ invoice.project.client }}</span>
                                 </div>
                                 <div class="mb-3">
-                                    <strong>Hourly Rate:</strong><br>
+                                    <strong>{{ _('Hourly Rate:') }}</strong><br>
                                     <span class="text-muted">
                                         {% if invoice.project.hourly_rate %}
                                             {{ "%.2f"|format(invoice.project.hourly_rate) }} {{ currency }}
                                         {% else %}
-                                            Not set
+                                            {{ _('Not set') }}
                                         {% endif %}
                                     </span>
                                 </div>
                                 <div class="mb-3">
-                                    <strong>Billing Reference:</strong><br>
+                                    <strong>{{ _('Billing Reference:') }}</strong><br>
                                     <span class="text-muted">{{ invoice.project.billing_ref or 'None' }}</span>
                                 </div>
                             </div>
@@ -203,23 +203,23 @@
                         <!-- Quick Actions -->
                         <div class="card shadow mb-4">
                             <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">{{ _('Quick Actions') }}</h6>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
                                     <a href="{{ url_for('invoices.generate_from_time', invoice_id=invoice.id) }}" 
                                        class="btn btn-primary w-100">
-                                        <i class="fas fa-clock"></i> Generate from Time Entries
+                                        <i class="fas fa-clock"></i> {{ _('Generate from Time Entries') }}
                                     </a>
                                 </div>
                                 <div class="mb-3">
                                     <button type="button" class="btn btn-outline-secondary w-100" onclick="useProjectRate()">
-                                        <i class="fas fa-dollar-sign"></i> Use Project Hourly Rate
+                                        <i class="fas fa-dollar-sign"></i> {{ _('Use Project Hourly Rate') }}
                                     </button>
                                 </div>
                                 <div class="mb-3">
                                     <button type="button" class="btn btn-outline-info w-100" onclick="calculateTotals()">
-                                        <i class="fas fa-calculator"></i> Recalculate Totals
+                                        <i class="fas fa-calculator"></i> {{ _('Recalculate Totals') }}
                                     </button>
                                 </div>
                             </div>
@@ -228,24 +228,24 @@
                         <!-- Totals Summary -->
                         <div class="card shadow">
                             <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Totals Summary</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">{{ _('Totals Summary') }}</h6>
                             </div>
                             <div class="card-body">
                                 <div class="row mb-2">
-                                    <div class="col-6"><strong>Subtotal:</strong></div>
+                                    <div class="col-6"><strong>{{ _('Subtotal:') }}</strong></div>
                                     <div class="col-6 text-end" id="summarySubtotal">
                                         {{ "%.2f"|format(invoice.subtotal) }} {{ currency }}
                                     </div>
                                 </div>
                                 <div class="row mb-2">
-                                    <div class="col-6"><strong>Tax:</strong></div>
+                                    <div class="col-6"><strong>{{ _('Tax:') }}</strong></div>
                                     <div class="col-6 text-end" id="summaryTax">
                                         {{ "%.2f"|format(invoice.tax_amount) }} {{ currency }}
                                     </div>
                                 </div>
                                 <hr>
                                 <div class="row">
-                                    <div class="col-6"><strong>Total:</strong></div>
+                                    <div class="col-6"><strong>{{ _('Total:') }}</strong></div>
                                     <div class="col-6 text-end" id="summaryTotal">
                                         {{ "%.2f"|format(invoice.total_amount) }} {{ currency }}
                                     </div>
@@ -262,10 +262,10 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> Cancel
+                                        <i class="fas fa-times"></i> {{ _('Cancel') }}
                                     </a>
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> Update Invoice
+                                        <i class="fas fa-save"></i> {{ _('Update Invoice') }}
                                     </button>
                                 </div>
                             </div>
@@ -316,7 +316,7 @@ function removeItemRow(button) {
         $(button).closest('tr').remove();
         calculateTotals();
     } else {
-        alert('At least one item is required.');
+        alert('{{ _('At least one item is required.') }}');
     }
 }
 
@@ -362,7 +362,7 @@ function useProjectRate() {
             calculateRowTotal(this);
         });
     } else {
-        alert('No hourly rate set for this project.');
+        alert('{{ _('No hourly rate set for this project.') }}');
     }
 }
 

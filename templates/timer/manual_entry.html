@@ -249,7 +249,14 @@
 }
 </style>
 
+<script type="application/json" id="i18n-json-timer-manual">
+{
+  "no_task": {{ _('No task')|tojson }},
+  "failed_load": {{ _('Failed to load tasks')|tojson }}
+}
+</script>
 <script>
+var i18nTimerManual = (function(){ try{ var el=document.getElementById('i18n-json-timer-manual'); return el?JSON.parse(el.textContent):{}; }catch(e){ return {}; } })();
 document.addEventListener('DOMContentLoaded', function() {
     // Set default dates to today
     const today = new Date().toISOString().split('T')[0];
@@ -300,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const projectSelect = document.getElementById('project_id');
     const taskSelect = document.getElementById('task_id');
 
-    const L = { noTask: "{{ _('No task') }}", failedLoad: "{{ _('Failed to load tasks') }}" };
+    const L = { noTask: i18nTimerManual.no_task || 'No task', failedLoad: i18nTimerManual.failed_load || 'Failed to load tasks' };
 
     async function loadTasksForProject(projectId) {
         if (!projectId) {

@@ -1,9 +1,9 @@
 {# Reusable Kanban board for tasks. Expects `tasks` in context. #}
 {% set kanban_statuses = [
-  {'key': 'todo', 'label': 'To Do', 'icon': 'fas fa-list-check', 'accent': 'secondary'},
-  {'key': 'in_progress', 'label': 'In Progress', 'icon': 'fas fa-spinner', 'accent': 'warning'},
-  {'key': 'review', 'label': 'Review', 'icon': 'fas fa-user-check', 'accent': 'info'},
-  {'key': 'done', 'label': 'Done', 'icon': 'fas fa-check-circle', 'accent': 'success'}
+  {'key': 'todo', 'label': _('To Do'), 'icon': 'fas fa-list-check', 'accent': 'secondary'},
+  {'key': 'in_progress', 'label': _('In Progress'), 'icon': 'fas fa-spinner', 'accent': 'warning'},
+  {'key': 'review', 'label': _('Review'), 'icon': 'fas fa-user-check', 'accent': 'info'},
+  {'key': 'done', 'label': _('Done'), 'icon': 'fas fa-check-circle', 'accent': 'success'}
 ] %}
 
 <div class="kanban-board-wrapper">
@@ -12,7 +12,7 @@
       <div class="summary-icon bg-primary bg-opacity-10 text-primary" style="width:34px;height:34px;border-radius:8px;">
         <i class="fas fa-columns"></i>
       </div>
-      <span class="fw-semibold">Kanban Board</span>
+      <span class="fw-semibold">{{ _('Kanban Board') }}</span>
     </div>
     <div id="kanban-alert" class="d-none"></div>
   </div>
@@ -43,11 +43,11 @@
                 <span class="badge priority-badge priority-{{ task.priority }}">{{ task.priority_display }}</span>
                 {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
                 <span class="badge badge-soft-primary active-badge">
-                  <i class="fas fa-circle me-1" style="font-size:8px;"></i>Active
+                  <i class="fas fa-circle me-1" style="font-size:8px;"></i>{{ _('Active') }}
                 </span>
                 {% endif %}
                 {% if task.is_overdue %}
-                <span class="badge bg-danger-subtle text-danger"><i class="fas fa-exclamation-triangle me-1"></i>Overdue</span>
+                <span class="badge bg-danger-subtle text-danger"><i class="fas fa-exclamation-triangle me-1"></i>{{ _('Overdue') }}</span>
                 {% endif %}
               </div>
               <div class="d-flex align-items-center gap-2">
@@ -143,7 +143,13 @@
   const board = document.getElementById('kanbanBoard');
   if (!board) return;
 
-  const statusLabels = { todo: 'To Do', in_progress: 'In Progress', review: 'Review', done: 'Done', cancelled: 'Cancelled' };
+  const statusLabels = { 
+    todo: '{{ _('To Do') }}', 
+    in_progress: '{{ _('In Progress') }}', 
+    review: '{{ _('Review') }}', 
+    done: '{{ _('Done') }}', 
+    cancelled: '{{ _('Cancelled') }}' 
+  };
   const updateUrlTemplate = "{{ url_for('tasks.api_update_status', task_id=0) }}"; // will replace 0 with actual id
 
   function showAlert(kind, msg) {
@@ -220,13 +226,13 @@
           body: JSON.stringify({ status: targetStatus })
         });
         if (!resp.ok) {
-          throw new Error('Failed to update status');
+          throw new Error('{{ _('Failed to update status') }}');
         }
         const data = await resp.json();
         if (!data.success) {
           throw new Error(data.error || 'Update rejected');
         }
-        showAlert('success', 'Task moved to ' + (statusLabels[targetStatus] || targetStatus));
+        showAlert('success', '{{ _('Task moved to') }} ' + (statusLabels[targetStatus] || targetStatus));
       } catch (err) {
         // revert
         if (originalParent) originalParent.appendChild(card);
@@ -236,7 +242,7 @@
           statusBadge.textContent = statusLabels[originalStatus] || originalStatus;
         }
         updateCounts();
-        showAlert('error', err.message || 'Could not update task');
+        showAlert('error', err.message || '{{ _('Could not update task') }}');
       }
     });
   });

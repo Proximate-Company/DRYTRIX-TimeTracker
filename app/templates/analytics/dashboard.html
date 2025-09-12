@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Analytics Dashboard - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Analytics Dashboard') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,16 +9,16 @@
         <div class="col-12">
             {% set actions %}
             <select id="timeRange" class="form-select form-select-sm" style="width: auto;">
-                <option value="7">Last 7 days</option>
-                <option value="30" selected>Last 30 days</option>
-                <option value="90">Last 90 days</option>
-                <option value="365">Last year</option>
+                <option value="7">{{ _('Last 7 days') }}</option>
+                <option value="30" selected>{{ _('Last 30 days') }}</option>
+                <option value="90">{{ _('Last 90 days') }}</option>
+                <option value="365">{{ _('Last year') }}</option>
             </select>
             <button id="refreshCharts" class="btn btn-outline-light btn-sm">
-                <i class="fas fa-sync-alt"></i> Refresh
+                <i class="fas fa-sync-alt"></i> {{ _('Refresh') }}
             </button>
             {% endset %}
-            {{ page_header('fas fa-chart-line', 'Analytics Dashboard', 'Key metrics and insights', actions) }}
+            {{ page_header('fas fa-chart-line', _('Analytics Dashboard'), _('Key metrics and insights'), actions) }}
         </div>
     </div>
 
@@ -29,7 +29,7 @@
                 <div class="card-body">
                     <i class="fas fa-clock fa-2x text-primary mb-2"></i>
                     <h4 class="text-primary" id="totalHours">-</h4>
-                    <p class="text-muted mb-0">Total Hours</p>
+                    <p class="text-muted mb-0">{{ _('Total Hours') }}</p>
                 </div>
             </div>
         </div>
@@ -38,7 +38,7 @@
                 <div class="card-body">
                     <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
                     <h4 class="text-success" id="billableHours">-</h4>
-                    <p class="text-muted mb-0">Billable Hours</p>
+                    <p class="text-muted mb-0">{{ _('Billable Hours') }}</p>
                 </div>
             </div>
         </div>
@@ -47,7 +47,7 @@
                 <div class="card-body">
                     <i class="fas fa-project-diagram fa-2x text-info mb-2"></i>
                     <h4 class="text-info" id="activeProjects">-</h4>
-                    <p class="text-muted mb-0">Active Projects</p>
+                    <p class="text-muted mb-0">{{ _('Active Projects') }}</p>
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
                 <div class="card-body">
                     <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
                     <h4 class="text-warning" id="avgDailyHours">-</h4>
-                    <p class="text-muted mb-0">Avg Daily Hours</p>
+                    <p class="text-muted mb-0">{{ _('Avg Daily Hours') }}</p>
                 </div>
             </div>
         </div>
@@ -68,7 +68,7 @@
             <div class="card h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-area"></i> Daily Hours Trend
+                        <i class="fas fa-chart-area"></i> {{ _('Daily Hours Trend') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -82,7 +82,7 @@
             <div class="card h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-pie"></i> Billable vs Non-Billable
+                        <i class="fas fa-chart-pie"></i> {{ _('Billable vs Non-Billable') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -100,7 +100,7 @@
             <div class="card h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-bar"></i> Hours by Project
+                        <i class="fas fa-chart-bar"></i> {{ _('Hours by Project') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -114,7 +114,7 @@
             <div class="card h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-line"></i> Weekly Trends
+                        <i class="fas fa-chart-line"></i> {{ _('Weekly Trends') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -132,7 +132,7 @@
             <div class="card h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-clock"></i> Hours by Time of Day
+                        <i class="fas fa-clock"></i> {{ _('Hours by Time of Day') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -146,7 +146,7 @@
             <div class="card h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-chart-bar"></i> Project Efficiency
+                        <i class="fas fa-chart-bar"></i> {{ _('Project Efficiency') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -165,7 +165,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-users"></i> User Performance
+                        <i class="fas fa-users"></i> {{ _('User Performance') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -182,9 +182,30 @@
 <!-- Loading Spinner -->
 <div id="loadingSpinner" class="position-fixed top-50 start-50 translate-middle" style="display: none; z-index: 9999;">
     <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+        <span class="visually-hidden">{{ _('Loading...') }}</span>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_head %}
+<script type="application/json" id="i18n-json-analytics-dashboard">
+    {
+        "error_loading_charts": {{ _('Failed to load charts. Please try again.')|tojson }},
+        "error_refreshing_charts": {{ _('Failed to refresh charts. Please try again.')|tojson }},
+        "hours_label": {{ _('Hours')|tojson }},
+        "date_label": {{ _('Date')|tojson }},
+        "hour_of_day_label": {{ _('Hour of Day')|tojson }},
+        "revenue_label": {{ _('Revenue')|tojson }}
+    }
+  </script>
+  <script>
+    var i18n_analytics = (function(){
+        try {
+            var el = document.getElementById('i18n-json-analytics-dashboard');
+            return el ? JSON.parse(el.textContent) : {};
+        } catch (e) { return {}; }
+    })();
+  </script>
 {% endblock %}
 
 {% block extra_js %}
@@ -250,7 +271,7 @@ class AnalyticsDashboard {
             ]);
         } catch (error) {
             console.error('Error loading charts:', error);
-            this.showError('Failed to load charts. Please try again.');
+            this.showError(i18n_analytics.error_loading_charts || 'Failed to load charts. Please try again.');
         } finally {
             this.hideLoading();
         }
@@ -274,7 +295,7 @@ class AnalyticsDashboard {
             this.updateSummaryCards();
         } catch (error) {
             console.error('Error refreshing charts:', error);
-            this.showError('Failed to refresh charts. Please try again.');
+            this.showError(i18n_analytics.error_refreshing_charts || 'Failed to refresh charts. Please try again.');
         } finally {
             this.hideLoading();
         }
@@ -305,13 +326,13 @@ class AnalyticsDashboard {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Hours'
+                            text: (i18n_analytics.hours_label || 'Hours')
                         }
                     },
                     x: {
                         title: {
                             display: true,
-                            text: 'Date'
+                            text: (i18n_analytics.date_label || 'Date')
                         }
                     }
                 },
@@ -372,7 +393,7 @@ class AnalyticsDashboard {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Hours'
+                            text: (i18n_analytics.hours_label || 'Hours')
                         }
                     }
                 }
@@ -405,7 +426,7 @@ class AnalyticsDashboard {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Hours'
+                            text: (i18n_analytics.hours_label || 'Hours')
                         }
                     }
                 }
@@ -438,13 +459,13 @@ class AnalyticsDashboard {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Hours'
+                            text: (i18n_analytics.hours_label || 'Hours')
                         }
                     },
                     x: {
                         title: {
                             display: true,
-                            text: 'Hour of Day'
+                            text: (i18n_analytics.hour_of_day_label || 'Hour of Day')
                         }
                     }
                 }
@@ -479,7 +500,7 @@ class AnalyticsDashboard {
                         position: 'left',
                         title: {
                             display: true,
-                            text: 'Hours'
+                            text: (i18n_analytics.hours_label || 'Hours')
                         }
                     },
                     y1: {
@@ -488,7 +509,7 @@ class AnalyticsDashboard {
                         position: 'right',
                         title: {
                             display: true,
-                            text: 'Revenue'
+                            text: (i18n_analytics.revenue_label || 'Revenue')
                         },
                         grid: {
                             drawOnChartArea: false,
@@ -525,7 +546,7 @@ class AnalyticsDashboard {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Hours'
+                            text: (i18n_analytics.hours_label || 'Hours')
                         }
                     }
                 }

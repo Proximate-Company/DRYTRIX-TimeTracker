@@ -13,15 +13,15 @@ import socket
 logger = logging.getLogger(__name__)
 
 class LicenseServerClient:
-    """Client for communicating with the DryLicenseServer"""
+    """Client for communicating with the Metrics Server"""
     
     def __init__(self, app_identifier: str = "timetracker", app_version: str = "1.0.0"):
         # Server configuration (env-overridable)
-        # Defaults target the dev API port per docs (HTTP 8082). In prod, set HTTPS 8443 via env.
+        # Default targets the public metrics endpoint; override via environment if needed.
         default_server_url = "http://metrics.drytrix.com:58082"
-        configured_server_url = default_server_url
+        configured_server_url = os.getenv("METRICS_SERVER_URL", os.getenv("LICENSE_SERVER_BASE_URL", default_server_url))
         self.server_url = self._normalize_base_url(configured_server_url)
-        self.api_key = "no-license-required"
+        self.api_key = os.getenv("METRICS_SERVER_API_KEY", os.getenv("LICENSE_SERVER_API_KEY", "no-license-required"))
         self.app_identifier = app_identifier
         self.app_version = app_version
         
@@ -31,14 +31,14 @@ class LicenseServerClient:
         self.is_registered = False
         self.heartbeat_thread = None
         # Timing configuration
-        self.heartbeat_interval = int(os.getenv("LICENSE_HEARTBEAT_SECONDS", "3600"))  # default: 1 hour
-        self.request_timeout = int(os.getenv("LICENSE_SERVER_TIMEOUT_SECONDS", "30"))  # default: 30s per docs
+        self.heartbeat_interval = int(os.getenv("METRICS_HEARTBEAT_SECONDS", os.getenv("LICENSE_HEARTBEAT_SECONDS", "3600")))  # default: 1 hour
+        self.request_timeout = int(os.getenv("METRICS_SERVER_TIMEOUT_SECONDS", os.getenv("LICENSE_SERVER_TIMEOUT_SECONDS", "30")))  # default: 30s per docs
         self.running = False
         
         # System information
         self.system_info = self._collect_system_info()
 
-        logger.info(f"License server configured: base='{self.server_url}', app='{self.app_identifier}', version='{self.app_version}'")
+        logger.info(f"Metrics server configured: base='{self.server_url}', app='{self.app_identifier}', version='{self.app_version}'")
         if not self.api_key:
             logger.warning("X-API-Key is empty; server may reject requests. Set LICENSE_SERVER_API_KEY.")
 
@@ -340,7 +340,7 @@ class LicenseServerClient:
             logger.info(f"License validation headers: {validation_headers}")
             logger.info(f"License validation body: {validation_data}")
 
-        logger.info("Validating phone home token (no license required)")
+        logger.info("Validating metrics token (no license required)")
         response = self._make_request("/api/v1/validate", "POST", validation_data)
         
         if response and response.get("valid", False):
@@ -488,7 +488,7 @@ class LicenseServerClient:
         return response is not None
     
     def get_status(self) -> Dict[str, Any]:
-        """Get current status of the phone home client"""
+        """Get current status of the metrics client"""
         return {
             "is_registered": self.is_registered,
             "instance_id": self.instance_id,
@@ -496,7 +496,11 @@ class LicenseServerClient:
             "server_healthy": self.check_server_health(),
             "offline_data_count": len(self.offline_data),
             "app_identifier": self.app_identifier,
-            "app_version": self.app_version
+            "app_version": self.app_version,
+            "server_url": self.server_url,
+            "heartbeat_interval": self.heartbeat_interval,
+            "analytics_enabled": not bool(self.system_info.get("analytics_disabled", False)),
+            "system_info": self.system_info
         }
 
 # Global instance
@@ -544,7 +548,7 @@ def stop_license_client():
         license_client.stop()
 
 def send_usage_event(event_type: str, event_data: Dict[str, Any] = None):
-    """Send a usage event to the license server"""
+    """Send a usage event to the metrics server"""
     if not license_client:
         return False
         

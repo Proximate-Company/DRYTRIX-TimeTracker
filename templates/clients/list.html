@@ -84,7 +84,7 @@
                                     <td>
                                         <span class="badge badge-soft-primary badge-pill">{{ client.total_projects }}</span>
                                         {% if client.active_projects > 0 %}
-                                        <br><small class="text-muted">{{ client.active_projects }} active</small>
+                                        <br><small class="text-muted">{{ client.active_projects }} {{ _('active') }}</small>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -366,6 +366,16 @@
 </style>
 
 {% block extra_js %}
+<script type="application/json" id="i18n-json-clients-list">
+{
+  "confirm_archive": {{ _('Are you sure you want to archive "{name}"?')|tojson }},
+  "confirm_activate": {{ _('Are you sure you want to activate "{name}"?')|tojson }},
+  "confirm_delete": {{ _('Are you sure you want to delete "{name}"? This action cannot be undone.')|tojson }}
+}
+</script>
+<script>
+var i18nClientsList = (function(){ try{ var el=document.getElementById('i18n-json-clients-list'); return el?JSON.parse(el.textContent):{}; }catch(e){ return {}; } })();
+</script>
 <script>
 // Simple search (vanilla JS)
 (function() {
@@ -400,7 +410,8 @@
 
 // Client action confirmation functions
 function confirmArchiveClient(clientId, clientName) {
-    if (confirm(`Are you sure you want to archive "${clientName}"?`)) {
+    const msg = (i18nClientsList.confirm_archive || 'Are you sure you want to archive "{name}"?').replace('{name}', clientName);
+    if (confirm(msg)) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/archive`;
@@ -410,7 +421,8 @@ function confirmArchiveClient(clientId, clientName) {
 }
 
 function confirmActivateClient(clientId, clientName) {
-    if (confirm(`Are you sure you want to activate "${clientName}"?`)) {
+    const msg = (i18nClientsList.confirm_activate || 'Are you sure you want to activate "{name}"?').replace('{name}', clientName);
+    if (confirm(msg)) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/activate`;
@@ -420,7 +432,8 @@ function confirmActivateClient(clientId, clientName) {
 }
 
 function confirmDeleteClient(clientId, clientName) {
-    if (confirm(`Are you sure you want to delete "${clientName}"? This action cannot be undone.`)) {
+    const msg = (i18nClientsList.confirm_delete || 'Are you sure you want to delete "{name}"? This action cannot be undone.').replace('{name}', clientName);
+    if (confirm(msg)) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/delete`;

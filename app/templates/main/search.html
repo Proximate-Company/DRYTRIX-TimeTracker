@@ -8,10 +8,10 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">
-                    <i class="fas fa-search text-primary"></i> Search Results
+                    <i class="fas fa-search text-primary"></i> {{ _('Search Results') }}
                 </h1>
                 <form method="GET" class="d-flex" action="{{ url_for('main.search') }}">
-                    <input type="text" class="form-control me-2" name="q" placeholder="Search notes or tags" value="{{ query }}">
+                    <input type="text" class="form-control me-2" name="q" placeholder="{{ _('Search notes or tags') }}" value="{{ query }}">
                     <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
                 </form>
             </div>
@@ -22,7 +22,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-list me-1"></i> Results</h5>
+                    <h5 class="mb-0"><i class="fas fa-list me-1"></i> {{ _('Results') }}</h5>
                 </div>
                 <div class="card-body">
                     {% if entries and entries.items %}
@@ -30,13 +30,13 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Project</th>
-                                    <th>Start</th>
-                                    <th>End</th>
-                                    <th>Duration</th>
-                                    <th>Notes</th>
-                                    <th>Tags</th>
-                                    <th class="text-end">Actions</th>
+                                    <th>{{ _('Project') }}</th>
+                                    <th>{{ _('Start') }}</th>
+                                    <th>{{ _('End') }}</th>
+                                    <th>{{ _('Duration') }}</th>
+                                    <th>{{ _('Notes') }}</th>
+                                    <th>{{ _('Tags') }}</th>
+                                    <th class="text-end">{{ _('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -57,13 +57,13 @@
                                     <td class="text-end">
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
-                                               class="btn btn-sm btn-outline-secondary" title="Edit entry">
+                                               class="btn btn-sm btn-outline-secondary" title="{{ _('Edit entry') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% if current_user.is_admin or entry.user_id == current_user.id %}
                                             <form method="POST" action="{{ url_for('timer.delete_timer', timer_id=entry.id) }}" 
-                                                  class="d-inline" onsubmit="return confirm('Are you sure you want to delete this time entry? This action cannot be undone.')">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete entry">
+                                                  class="d-inline" data-confirm="{{ _('Are you sure you want to delete this time entry? This action cannot be undone.') }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Delete entry') }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -81,17 +81,17 @@
                         <ul class="pagination">
                             {% if entries.has_prev %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('main.search', q=query, page=entries.prev_num) }}">Previous</a>
+                                <a class="page-link" href="{{ url_for('main.search', q=query, page=entries.prev_num) }}">{{ _('Previous') }}</a>
                             </li>
                             {% else %}
                             <li class="page-item disabled"><span class="page-link">Previous</span></li>
                             {% endif %}
 
-                            <li class="page-item disabled"><span class="page-link">Page {{ entries.page }} of {{ entries.pages }}</span></li>
+                            <li class="page-item disabled"><span class="page-link">{{ _('Page') }} {{ entries.page }} {{ _('of') }} {{ entries.pages }}</span></li>
 
                             {% if entries.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('main.search', q=query, page=entries.next_num) }}">Next</a>
+                                <a class="page-link" href="{{ url_for('main.search', q=query, page=entries.next_num) }}">{{ _('Next') }}</a>
                             </li>
                             {% else %}
                             <li class="page-item disabled"><span class="page-link">Next</span></li>
@@ -101,8 +101,8 @@
                     {% else %}
                     <div class="text-center py-5">
                         <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No results found</h4>
-                        <p class="text-muted">Try a different query or check your spelling.</p>
+                        <h4 class="text-muted">{{ _('No results found') }}</h4>
+                        <p class="text-muted">{{ _('Try a different query or check your spelling.') }}</p>
                     </div>
                     {% endif %}
                 </div>
@@ -110,6 +110,17 @@
         </div>
     </div>
 </div>
+<script>
+// Generic data-confirm handler
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('form[data-confirm]').forEach(function(f){
+    f.addEventListener('submit', function(e){
+      var msg = f.getAttribute('data-confirm') || '';
+      if (msg && !confirm(msg)) { e.preventDefault(); return false; }
+    });
+  });
+});
+</script>
 {% endblock %}
 
 

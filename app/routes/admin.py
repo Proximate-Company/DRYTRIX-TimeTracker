@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, send_file, jsonify, render_template_string
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Project, TimeEntry, Settings
+from app.models import User, Project, TimeEntry, Settings, Invoice
 from datetime import datetime
 from sqlalchemy import text
 import os
@@ -81,6 +81,18 @@ def admin_dashboard():
         active_timers=active_timers,
         recent_entries=recent_entries
     )
+
+# Compatibility alias for code/templates that might reference 'admin.dashboard'
+@admin_bp.route('/admin/dashboard')
+@login_required
+@admin_required
+def admin_dashboard_alias():
+    """Alias endpoint so url_for('admin.dashboard') remains valid.
+
+    Some older references may use the endpoint name 'admin.dashboard'.
+    Redirect to the canonical admin dashboard endpoint.
+    """
+    return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/admin/users')
 @login_required
@@ -245,6 +257,226 @@ def settings():
         return redirect(url_for('admin.settings'))
     
     return render_template('admin/settings.html', settings=settings_obj)
+
+
+@admin_bp.route('/admin/pdf-layout', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def pdf_layout():
+    """Edit PDF invoice layout template (HTML and CSS)."""
+    settings_obj = Settings.get_settings()
+    if request.method == 'POST':
+        html_template = request.form.get('invoice_pdf_template_html', '')
+        css_template = request.form.get('invoice_pdf_template_css', '')
+        settings_obj.invoice_pdf_template_html = html_template
+        settings_obj.invoice_pdf_template_css = css_template
+        if not safe_commit('admin_update_pdf_layout'):
+            from flask_babel import gettext as _
+            flash(_('Could not update PDF layout due to a database error.'), 'error')
+        else:
+            from flask_babel import gettext as _
+            flash(_('PDF layout updated successfully'), 'success')
+        return redirect(url_for('admin.pdf_layout'))
+    # Provide initial defaults to the template if no custom HTML/CSS saved
+    initial_html = settings_obj.invoice_pdf_template_html or ''
+    initial_css = settings_obj.invoice_pdf_template_css or ''
+    try:
+        if not initial_html:
+            env = current_app.jinja_env
+            html_src, _, _ = env.loader.get_source(env, 'invoices/pdf_default.html')
+            # Extract body only for editor
+            try:
+                import re as _re
+                m = _re.search(r'<body[^>]*>([\s\S]*?)</body>', html_src, _re.IGNORECASE)
+                initial_html = (m.group(1).strip() if m else html_src)
+            except Exception:
+                pass
+        if not initial_css:
+            env = current_app.jinja_env
+            css_src, _, _ = env.loader.get_source(env, 'invoices/pdf_styles_default.css')
+            initial_css = css_src
+    except Exception:
+        pass
+    return render_template('admin/pdf_layout.html', settings=settings_obj, initial_html=initial_html, initial_css=initial_css)
+
+
+@admin_bp.route('/admin/pdf-layout/reset', methods=['POST'])
+@login_required
+@admin_required
+def pdf_layout_reset():
+    """Reset PDF layout to defaults (clear custom templates)."""
+    settings_obj = Settings.get_settings()
+    settings_obj.invoice_pdf_template_html = ''
+    settings_obj.invoice_pdf_template_css = ''
+    if not safe_commit('admin_reset_pdf_layout'):
+        flash(_('Could not reset PDF layout due to a database error.'), 'error')
+    else:
+        flash(_('PDF layout reset to defaults'), 'success')
+    return redirect(url_for('admin.pdf_layout'))
+
+
+@admin_bp.route('/admin/pdf-layout/default', methods=['GET'])
+@login_required
+@admin_required
+def pdf_layout_default():
+    """Return default HTML and CSS template sources for the PDF layout editor."""
+    try:
+        env = current_app.jinja_env
+        # Get raw template sources, not rendered
+        html_src, _, _ = env.loader.get_source(env, 'invoices/pdf_default.html')
+        # Extract only the body content for GrapesJS
+        try:
+            import re as _re
+            match = _re.search(r'<body[^>]*>([\s\S]*?)</body>', html_src, _re.IGNORECASE)
+            if match:
+                html_src = match.group(1).strip()
+        except Exception:
+            pass
+    except Exception:
+        html_src = '<div class="wrapper"><h1>{{ _(\'INVOICE\') }} {{ invoice.invoice_number }}</h1></div>'
+    try:
+        css_src, _, _ = env.loader.get_source(env, 'invoices/pdf_styles_default.css')
+    except Exception:
+        css_src = ''
+    return jsonify({
+        'html': html_src,
+        'css': css_src,
+    })
+
+
+@admin_bp.route('/admin/pdf-layout/preview', methods=['POST'])
+@login_required
+@admin_required
+def pdf_layout_preview():
+    """Render a live preview of the provided HTML/CSS using an invoice context."""
+    html = request.form.get('html', '')
+    css = request.form.get('css', '')
+    invoice_id = request.form.get('invoice_id', type=int)
+    invoice = None
+    if invoice_id:
+        invoice = Invoice.query.get(invoice_id)
+    if invoice is None:
+        invoice = Invoice.query.order_by(Invoice.id.desc()).first()
+    settings_obj = Settings.get_settings()
+    
+    # Provide a minimal mock invoice if none exists to avoid template errors
+    from types import SimpleNamespace
+    if invoice is None:
+        from datetime import date
+        invoice = SimpleNamespace(
+            invoice_number='0000',
+            issue_date=date.today(),
+            due_date=date.today(),
+            status='draft',
+            client_name='Sample Client',
+            client_email='',
+            client_address='',
+            project=SimpleNamespace(name='Sample Project', description=''),
+            items=[],
+            subtotal=0.0,
+            tax_rate=0.0,
+            tax_amount=0.0,
+            total_amount=0.0,
+            notes='',
+            terms='',
+        )
+    # Ensure at least one sample item to avoid undefined 'item' in templates that reference it outside loops
+    sample_item = SimpleNamespace(description='Sample item', quantity=1.0, unit_price=0.0, total_amount=0.0, time_entry_ids='')
+    try:
+        if not getattr(invoice, 'items', None):
+            invoice.items = [sample_item]
+    except Exception:
+        try:
+            invoice.items = [sample_item]
+        except Exception:
+            pass
+    # Helper: sanitize Jinja blocks to fix entities/smart quotes inserted by editor
+    def _sanitize_jinja_blocks(raw: str) -> str:
+        try:
+            import re as _re
+            import html as _html
+            smart_map = {
+                '\u201c': '"', '\u201d': '"',  # “ ” -> "
+                '\u2018': "'", '\u2019': "'",  # ‘ ’ -> '
+                '\u00a0': ' ',                   # nbsp
+                '\u200b': '', '\u200c': '', '\u200d': '',  # zero-width
+            }
+            def _fix_quotes(s: str) -> str:
+                for k, v in smart_map.items():
+                    s = s.replace(k, v)
+                return s
+            def _clean(match):
+                open_tag = match.group(1)
+                inner = match.group(2)
+                # Remove any HTML tags GrapesJS may have inserted inside Jinja braces
+                inner = _re.sub(r'</?[^>]+?>', '', inner)
+                # Decode HTML entities
+                inner = _html.unescape(inner)
+                # Fix smart quotes and nbsp
+                inner = _fix_quotes(inner)
+                # Trim excessive whitespace around pipes and parentheses
+                inner = _re.sub(r'\s+\|\s+', ' | ', inner)
+                inner = _re.sub(r'\(\s+', '(', inner)
+                inner = _re.sub(r'\s+\)', ')', inner)
+                # Normalize _("...") -> _('...')
+                inner = inner.replace('_("', "_('").replace('")', "')")
+                return f"{open_tag}{inner}{' }}' if open_tag == '{{ ' else ' %}'}"
+            pattern = _re.compile(r'({{\s|{%\s)([\s\S]*?)(?:}}|%})')
+            return _re.sub(pattern, _clean, raw)
+        except Exception:
+            return raw
+
+    sanitized = _sanitize_jinja_blocks(html)
+
+    # Wrap provided HTML with a minimal page and CSS
+    try:
+        from pathlib import Path as _Path
+        # Provide helpers as callables since templates may use function-style helpers
+        try:
+            from babel.dates import format_date as _babel_format_date
+        except Exception:
+            _babel_format_date = None
+        def _format_date(value, format='medium'):
+            try:
+                if _babel_format_date:
+                    if format == 'full':
+                        return _babel_format_date(value, format='full')
+                    if format == 'long':
+                        return _babel_format_date(value, format='long')
+                    if format == 'short':
+                        return _babel_format_date(value, format='short')
+                    return _babel_format_date(value, format='medium')
+                return value.strftime('%Y-%m-%d')
+            except Exception:
+                return str(value)
+        def _format_money(value):
+            try:
+                return f"{float(value):,.2f} {settings_obj.currency}"
+            except Exception:
+                return f"{value} {settings_obj.currency}"
+        body_html = render_template_string(
+            sanitized,
+            invoice=invoice,
+            settings=settings_obj,
+            Path=_Path,
+            format_date=_format_date,
+            format_money=_format_money,
+            item=sample_item,
+        )
+    except Exception as e:
+        body_html = f"<div style='color:red'>Template error: {str(e)}</div>" + sanitized
+    page_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>PDF Preview</title>
+        <style>{css}</style>
+    </head>
+    <body>{body_html}</body>
+    </html>
+    """
+    return page_html
 
 @admin_bp.route('/admin/upload-logo', methods=['POST'])
 @login_required
@@ -445,7 +677,7 @@ def system_info():
 @login_required
 @admin_required
 def license_status():
-    """Show license server client status"""
+    """Show metrics server client status"""
     try:
         from app.utils.license_server import get_license_client
         client = get_license_client()
@@ -454,17 +686,17 @@ def license_status():
             settings = Settings.get_settings()
             return render_template('admin/license_status.html', status=status, settings=settings)
         else:
-            flash('License server client not initialized', 'warning')
-            return redirect(url_for('admin.dashboard'))
+            flash('Metrics server client not initialized', 'warning')
+            return redirect(url_for('admin.admin_dashboard'))
     except Exception as e:
-        flash(f'Error getting license status: {e}', 'error')
-        return redirect(url_for('admin.dashboard'))
+        flash(f'Error getting metrics status: {e}', 'error')
+        return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/license-test')
 @login_required
 @admin_required
 def license_test():
-    """Test license server communication"""
+    """Test metrics server communication"""
     try:
         from app.utils.license_server import get_license_client, send_usage_event
         client = get_license_client()
@@ -475,11 +707,11 @@ def license_test():
             # Test usage event
             usage_sent = send_usage_event("admin_test", {"admin": current_user.username})
             
-            flash(f'Server Health: {"✓ Healthy" if server_healthy else "✗ Not Responding"}, Usage Event: {"✓ Sent" if usage_sent else "✗ Failed"}', 'info')
+            flash(f'Metrics Server: {"✓ Healthy" if server_healthy else "✗ Not Responding"}, Usage Event: {"✓ Sent" if usage_sent else "✗ Failed"}', 'info')
         else:
-            flash('License server client not initialized', 'warning')
+            flash('Metrics server client not initialized', 'warning')
     except Exception as e:
-        flash(f'Error testing license server: {e}', 'error')
+        flash(f'Error testing metrics server: {e}', 'error')
     
     return redirect(url_for('admin.license_status'))
 
@@ -487,18 +719,18 @@ def license_test():
 @login_required
 @admin_required
 def license_restart():
-    """Restart the license server client"""
+    """Restart the metrics server client"""
     try:
         from app.utils.license_server import get_license_client, start_license_client
         client = get_license_client()
         if client:
             if start_license_client():
-                flash('License server client restarted successfully', 'success')
+                flash('Metrics server client restarted successfully', 'success')
             else:
-                flash('Failed to restart license server client', 'error')
+                flash('Failed to restart metrics server client', 'error')
         else:
-            flash('License server client not initialized', 'warning')
+            flash('Metrics server client not initialized', 'warning')
     except Exception as e:
-        flash(f'Error restarting license server client: {e}', 'error')
+        flash(f'Error restarting metrics server client: {e}', 'error')
     
     return redirect(url_for('admin.license_status'))

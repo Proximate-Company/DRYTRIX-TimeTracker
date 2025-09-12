@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Create Invoice - TimeTracker{% endblock %}
+{% block title %}{{ _('Create Invoice') }} - TimeTracker{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,14 +11,14 @@
                 <div class="d-flex align-items-center">
                     <h1 class="h3 mb-0 me-3">
                         <i class="fas fa-plus text-primary"></i>
-                        Create New Invoice
+                        {{ _('Create New Invoice') }}
                     </h1>
                     <div class="progress" style="width: 200px; height: 8px;">
                         <div class="progress-bar" role="progressbar" style="width: 25%" id="progressBar"></div>
                     </div>
                 </div>
                 <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Invoices
+                    <i class="fas fa-arrow-left"></i> {{ _('Back to Invoices') }}
                 </a>
             </div>
 
@@ -30,22 +30,22 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center step-indicator active" data-step="1">
                                     <div class="step-number">1</div>
-                                    <span class="step-label ms-2">Basic Info</span>
+                                    <span class="step-label ms-2">{{ _('Basic Info') }}</span>
                                 </div>
                                 <div class="step-line"></div>
                                 <div class="d-flex align-items-center step-indicator" data-step="2">
                                     <div class="step-number">2</div>
-                                    <span class="step-label ms-2">Client Details</span>
+                                    <span class="step-label ms-2">{{ _('Client Details') }}</span>
                                 </div>
                                 <div class="step-line"></div>
                                 <div class="d-flex align-items-center step-indicator" data-step="3">
                                     <div class="step-number">3</div>
-                                    <span class="step-label ms-2">Settings</span>
+                                    <span class="step-label ms-2">{{ _('Settings') }}</span>
                                 </div>
                                 <div class="step-line"></div>
                                 <div class="d-flex align-items-center step-indicator" data-step="4">
                                     <div class="step-number">4</div>
-                                    <span class="step-label ms-2">Review</span>
+                                    <span class="step-label ms-2">{{ _('Review') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -60,7 +60,7 @@
                         <div class="card shadow step-card active" id="step1">
                             <div class="card-header py-3 bg-primary text-white">
                                 <h6 class="m-0 font-weight-bold">
-                                    <i class="fas fa-info-circle me-2"></i>Step 1: Basic Information
+                                    <i class="fas fa-info-circle me-2"></i>{{ _('Step 1: Basic Information') }}
                                 </h6>
                             </div>
                             <div class="card-body">
@@ -68,7 +68,7 @@
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
                                             <select class="form-select" id="project_id" name="project_id" required>
-                                                <option value="">Select a project...</option>
+                                                <option value="">{{ _('Select a project...') }}</option>
                                                 {% for project in projects %}
                                                 <option value="{{ project.id }}" 
                                                         data-client="{{ project.client }}"
@@ -77,10 +77,10 @@
                                                 </option>
                                                 {% endfor %}
                                             </select>
-                                            <label for="project_id">Project *</label>
+                                            <label for="project_id">{{ _('Project *') }}</label>
                                             <div class="form-text">
                                                 <i class="fas fa-lightbulb text-warning me-1"></i>
-                                                Select the project this invoice is for
+                                                {{ _('Select the project this invoice is for') }}
                                             </div>
                                         </div>
                                     </div>
@@ -88,10 +88,10 @@
                                         <div class="form-floating mb-3">
                                             <input type="date" class="form-control" id="due_date" name="due_date" 
                                                    value="{{ default_due_date }}" required>
-                                            <label for="due_date">Due Date *</label>
+                                            <label for="due_date">{{ _('Due Date *') }}</label>
                                             <div class="form-text">
                                                 <i class="fas fa-calendar text-info me-1"></i>
-                                                When payment is due
+                                                {{ _('When payment is due') }}
                                             </div>
                                         </div>
                                     </div>
@@ -99,7 +99,7 @@
                                 
                                 <div class="d-flex justify-content-end">
                                     <button type="button" class="btn btn-primary" onclick="nextStep()">
-                                        Next: Client Details <i class="fas fa-arrow-right ms-1"></i>
+                                        {{ _('Next: Client Details') }} <i class="fas fa-arrow-right ms-1"></i>
                                     </button>
                                 </div>
                             </div>
@@ -109,7 +109,7 @@
                         <div class="card shadow step-card" id="step2" style="display: none;">
                             <div class="card-header py-3 bg-info text-white">
                                 <h6 class="m-0 font-weight-bold">
-                                    <i class="fas fa-user me-2"></i>Step 2: Client Details
+                                    <i class="fas fa-user me-2"></i>{{ _('Step 2: Client Details') }}
                                 </h6>
                             </div>
                             <div class="card-body">
@@ -117,22 +117,22 @@
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
                                             <input type="text" class="form-control" id="client_name" name="client_name" 
-                                                   placeholder="Client or company name" required>
-                                            <label for="client_name">Client Name *</label>
+                                                   placeholder="{{ _('Client or company name') }}" required>
+                                            <label for="client_name">{{ _('Client Name *') }}</label>
                                             <div class="form-text">
                                                 <i class="fas fa-building text-primary me-1"></i>
-                                                Who to bill
+                                                {{ _('Who to bill') }}
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
                                             <input type="email" class="form-control" id="client_email" name="client_email" 
-                                                   placeholder="client@example.com">
-                                            <label for="client_email">Client Email</label>
+                                                   placeholder="{{ _('client@example.com') }}">
+                                            <label for="client_email">{{ _('Client Email') }}</label>
                                             <div class="form-text">
                                                 <i class="fas fa-envelope text-muted me-1"></i>
-                                                Optional email for sending invoices
+                                                {{ _('Optional email for sending invoices') }}
                                             </div>
                                         </div>
                                     </div>
@@ -140,20 +140,20 @@
 
                                 <div class="form-floating mb-3">
                                     <textarea class="form-control" id="client_address" name="client_address" 
-                                              style="height: 100px" placeholder="Client billing address (optional)"></textarea>
-                                    <label for="client_address">Client Address</label>
+                                              style="height: 100px" placeholder="{{ _('Client billing address (optional)') }}"></textarea>
+                                    <label for="client_address">{{ _('Client Address') }}</label>
                                     <div class="form-text">
                                         <i class="fas fa-map-marker-alt text-muted me-1"></i>
-                                        Optional billing address
+                                        {{ _('Optional billing address') }}
                                     </div>
                                 </div>
                                 
                                 <div class="d-flex justify-content-between">
                                     <button type="button" class="btn btn-outline-secondary" onclick="previousStep()">
-                                        <i class="fas fa-arrow-left me-1"></i> Previous
+                                        <i class="fas fa-arrow-left me-1"></i> {{ _('Previous') }}
                                     </button>
                                     <button type="button" class="btn btn-primary" onclick="nextStep()">
-                                        Next: Settings <i class="fas fa-arrow-right ms-1"></i>
+                                        {{ _('Next: Settings') }} <i class="fas fa-arrow-right ms-1"></i>
                                     </button>
                                 </div>
                             </div>
@@ -163,7 +163,7 @@
                         <div class="card shadow step-card" id="step3" style="display: none;">
                             <div class="card-header py-3 bg-warning text-dark">
                                 <h6 class="m-0 font-weight-bold">
-                                    <i class="fas fa-cog me-2"></i>Step 3: Settings
+                                    <i class="fas fa-cog me-2"></i>{{ _('Step 3: Settings') }}
                                 </h6>
                             </div>
                             <div class="card-body">
@@ -172,10 +172,10 @@
                                         <div class="form-floating mb-3">
                                             <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
                                                    value="0" min="0" max="100" step="0.01">
-                                            <label for="tax_rate">Tax Rate (%)</label>
+                                            <label for="tax_rate">{{ _('Tax Rate (%)') }}</label>
                                             <div class="form-text">
                                                 <i class="fas fa-percentage text-success me-1"></i>
-                                                Tax rate as percentage (e.g., 20 for 20%)
+                                                {{ _('Tax rate as percentage (e.g., 20 for 20%)') }}
                                             </div>
                                         </div>
                                     </div>
@@ -183,10 +183,10 @@
                                         <div class="form-floating mb-3">
                                             <input type="text" class="form-control" id="currency" 
                                                    value="{{ settings.currency or 'EUR' }}" readonly>
-                                            <label for="currency">Currency</label>
+                                            <label for="currency">{{ _('Currency') }}</label>
                                             <div class="form-text">
                                                 <i class="fas fa-coins text-warning me-1"></i>
-                                                System default currency
+                                                {{ _('System default currency') }}
                                             </div>
                                         </div>
                                     </div>
@@ -194,30 +194,30 @@
 
                                 <div class="form-floating mb-3">
                                     <textarea class="form-control" id="notes" name="notes" 
-                                              style="height: 100px" placeholder="Additional notes for the client"></textarea>
-                                    <label for="notes">Notes</label>
+                                              style="height: 100px" placeholder="{{ _('Additional notes for the client') }}"></textarea>
+                                    <label for="notes">{{ _('Notes') }}</label>
                                     <div class="form-text">
                                         <i class="fas fa-sticky-note text-info me-1"></i>
-                                        Optional notes to include on the invoice
+                                        {{ _('Optional notes to include on the invoice') }}
                                     </div>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <textarea class="form-control" id="terms" name="terms" 
-                                              style="height: 100px" placeholder="Payment terms and conditions"></textarea>
-                                    <label for="terms">Terms & Conditions</label>
+                                              style="height: 100px" placeholder="{{ _('Payment terms and conditions') }}"></textarea>
+                                    <label for="terms">{{ _('Terms & Conditions') }}</label>
                                     <div class="form-text">
                                         <i class="fas fa-file-contract text-primary me-1"></i>
-                                        Payment terms and conditions
+                                        {{ _('Payment terms and conditions') }}
                                     </div>
                                 </div>
                                 
                                 <div class="d-flex justify-content-between">
                                     <button type="button" class="btn btn-outline-secondary" onclick="previousStep()">
-                                        <i class="fas fa-arrow-left me-1"></i> Previous
+                                        <i class="fas fa-arrow-left me-1"></i> {{ _('Previous') }}
                                     </button>
                                     <button type="button" class="btn btn-primary" onclick="nextStep()">
-                                        Next: Review <i class="fas fa-arrow-right ms-1"></i>
+                                        {{ _('Next: Review') }} <i class="fas fa-arrow-right ms-1"></i>
                                     </button>
                                 </div>
                             </div>
@@ -227,48 +227,48 @@
                         <div class="card shadow step-card" id="step4" style="display: none;">
                             <div class="card-header py-3 bg-success text-white">
                                 <h6 class="m-0 font-weight-bold">
-                                    <i class="fas fa-check-circle me-2"></i>Step 4: Review & Create
+                                    <i class="fas fa-check-circle me-2"></i>{{ _('Step 4: Review & Create') }}
                                 </h6>
                             </div>
                             <div class="card-body">
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    <strong>Review your invoice details below before creating:</strong>
+                                    <strong>{{ _('Review your invoice details below before creating:') }}</strong>
                                 </div>
                                 
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h6 class="text-primary mb-3">Invoice Summary</h6>
+                                        <h6 class="text-primary mb-3">{{ _('Invoice Summary') }}</h6>
                                         <div class="mb-2">
-                                            <strong>Project:</strong> <span id="review-project">-</span>
+                                            <strong>{{ _('Project:') }}</strong> <span id="review-project">-</span>
                                         </div>
                                         <div class="mb-2">
-                                            <strong>Client:</strong> <span id="review-client">-</span>
+                                            <strong>{{ _('Client:') }}</strong> <span id="review-client">-</span>
                                         </div>
                                         <div class="mb-2">
-                                            <strong>Due Date:</strong> <span id="review-due-date">-</span>
+                                            <strong>{{ _('Due Date:') }}</strong> <span id="review-due-date">-</span>
                                         </div>
                                         <div class="mb-2">
-                                            <strong>Tax Rate:</strong> <span id="review-tax">-</span>
+                                            <strong>{{ _('Tax Rate:') }}</strong> <span id="review-tax">-</span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <h6 class="text-primary mb-3">Additional Details</h6>
+                                        <h6 class="text-primary mb-3">{{ _('Additional Details') }}</h6>
                                         <div class="mb-2">
-                                            <strong>Notes:</strong> <span id="review-notes">-</span>
+                                            <strong>{{ _('Notes:') }}</strong> <span id="review-notes">-</span>
                                         </div>
                                         <div class="mb-2">
-                                            <strong>Terms:</strong> <span id="review-terms">-</span>
+                                            <strong>{{ _('Terms:') }}</strong> <span id="review-terms">-</span>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div class="d-flex justify-content-between mt-4">
                                     <button type="button" class="btn btn-outline-secondary" onclick="previousStep()">
-                                        <i class="fas fa-arrow-left me-1"></i> Previous
+                                        <i class="fas fa-arrow-left me-1"></i> {{ _('Previous') }}
                                     </button>
                                     <button type="submit" class="btn btn-success btn-lg">
-                                        <i class="fas fa-save me-2"></i>Create Invoice
+                                        <i class="fas fa-save me-2"></i>{{ _('Create Invoice') }}
                                     </button>
                                 </div>
                             </div>
@@ -300,7 +300,7 @@
                                 </div>
                                 <div id="no-project-info" class="text-center text-muted py-3">
                                     <i class="fas fa-info-circle fa-2x mb-2"></i>
-                                    <div>Select a project to see details</div>
+                                    <div>{{ _('Select a project to see details') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -309,7 +309,7 @@
                         <div class="card shadow">
                             <div class="card-header py-3 bg-light">
                                 <h6 class="m-0 font-weight-bold text-primary">
-                                    <i class="fas fa-lightbulb me-2"></i>Quick Tips
+                                    <i class="fas fa-lightbulb me-2"></i>{{ _('Quick Tips') }}
                                 </h6>
                             </div>
                             <div class="card-body">
@@ -318,9 +318,9 @@
                                         <i class="fas fa-clock"></i>
                                     </div>
                                     <div class="tip-content">
-                                        <strong>Time Integration</strong>
+                                        <strong>{{ _('Time Integration') }}</strong>
                                         <p class="small text-muted mb-0">
-                                            Generate line items from tracked time entries after creation
+                                            {{ _('Generate line items from tracked time entries after creation') }}
                                         </p>
                                     </div>
                                 </div>
@@ -330,9 +330,9 @@
                                         <i class="fas fa-calculator"></i>
                                     </div>
                                     <div class="tip-content">
-                                        <strong>Auto Calculations</strong>
+                                        <strong>{{ _('Auto Calculations') }}</strong>
                                         <p class="small text-muted mb-0">
-                                            Tax and totals computed automatically
+                                            {{ _('Tax and totals computed automatically') }}
                                         </p>
                                     </div>
                                 </div>
@@ -342,9 +342,9 @@
                                         <i class="fas fa-file-export"></i>
                                     </div>
                                     <div class="tip-content">
-                                        <strong>Export Options</strong>
+                                        <strong>{{ _('Export Options') }}</strong>
                                         <p class="small text-muted mb-0">
-                                            CSV export and PDF generation available
+                                            {{ _('CSV export and PDF generation available') }}
                                         </p>
                                     </div>
                                 </div>
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
             noProjectInfo.classList.add('d-none');
             projectClient.textContent = clientName;
             projectRate.textContent = '{{ settings.currency or "EUR" }}' + hourlyRate.toFixed(2);
-            projectBillable.textContent = hourlyRate > 0 ? 'Yes' : 'No';
+            projectBillable.textContent = hourlyRate > 0 ? '{{ _('Yes') }}' : '{{ _('No') }}';
         } else {
             projectInfo.classList.add('d-none');
             noProjectInfo.classList.remove('d-none');
@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
     invoiceForm.addEventListener('submit', function(e) {
         if (!validateForm()) {
             e.preventDefault();
-            showAlert('Please fill in all required fields and complete all steps.', 'warning');
+            showAlert('{{ _('Please fill in all required fields and complete all steps.') }}', 'warning');
         }
     });
 });
@@ -601,7 +601,7 @@ function validateCurrentStep() {
     }
 
     if (!isValid) {
-        showAlert('Please fill in all required fields before proceeding.', 'warning');
+        showAlert('{{ _('Please fill in all required fields before proceeding.') }}', 'warning');
     }
 
     return isValid;

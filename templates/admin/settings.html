@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Settings - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Settings') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -8,10 +8,10 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">
-                    <i class="fas fa-sliders-h text-primary"></i> System Settings
+                    <i class="fas fa-sliders-h text-primary"></i> {{ _('System Settings') }}
                 </h1>
                 <a href="{{ url_for('admin.admin_dashboard') }}" class="btn-header btn-outline-primary">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    <i class="fas fa-arrow-left"></i> {{ _('Back to Dashboard') }}
                 </a>
             </div>
         </div>
@@ -21,13 +21,18 @@
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-cog me-1"></i> Configuration</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-cog me-1"></i> {{ _('Configuration') }}</h5>
+                        <a href="{{ url_for('admin.pdf_layout') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-file-pdf"></i> {{ _('Edit PDF Layout') }}
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <form method="POST">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label" for="timezone">Timezone</label>
+                                <label class="form-label" for="timezone">{{ _('Timezone') }}</label>
 
                                 <select class="form-select" id="timezone" name="timezone">
                                     <optgroup label="UTC">
@@ -148,52 +153,52 @@
                                         <option value="Antarctica/Palmer" {% if settings and settings.timezone == 'Antarctica/Palmer' %}selected{% endif %}>Antarctica/Palmer (UTC-3)</option>
                                     </optgroup>
                                 </select>
-                                <small class="form-text text-muted">Select your local timezone for proper time display. Times shown include DST adjustments.</small>
+                                <small class="form-text text-muted">{{ _('Select your local timezone for proper time display. Times shown include DST adjustments.') }}</small>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label" for="currency">Currency</label>
+                                <label class="form-label" for="currency">{{ _('Currency') }}</label>
                                 <input type="text" class="form-control" id="currency" name="currency" value="{{ settings.currency if settings else 'EUR' }}" placeholder="e.g. EUR">
                             </div>
 
                             
 
                             <div class="col-md-6">
-                                <label class="form-label" for="rounding_minutes">Rounding (minutes)</label>
+                                <label class="form-label" for="rounding_minutes">{{ _('Rounding (minutes)') }}</label>
                                 <input type="number" min="0" step="1" class="form-control" id="rounding_minutes" name="rounding_minutes" value="{{ settings.rounding_minutes if settings else 1 }}">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label" for="idle_timeout_minutes">Idle Timeout (minutes)</label>
+                                <label class="form-label" for="idle_timeout_minutes">{{ _('Idle Timeout (minutes)') }}</label>
                                 <input type="number" min="0" step="1" class="form-control" id="idle_timeout_minutes" name="idle_timeout_minutes" value="{{ settings.idle_timeout_minutes if settings else 30 }}">
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label" for="backup_retention_days">Backup Retention (days)</label>
+                                <label class="form-label" for="backup_retention_days">{{ _('Backup Retention (days)') }}</label>
                                 <input type="number" min="0" step="1" class="form-control" id="backup_retention_days" name="backup_retention_days" value="{{ settings.backup_retention_days if settings else 30 }}">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label" for="backup_time">Backup Time (HH:MM)</label>
+                                <label class="form-label" for="backup_time">{{ _('Backup Time (HH:MM)') }}</label>
                                 <input type="time" class="form-control" id="backup_time" name="backup_time" value="{{ settings.backup_time if settings else '02:00' }}">
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label" for="export_delimiter">Export Delimiter</label>
+                                <label class="form-label" for="export_delimiter">{{ _('Export Delimiter') }}</label>
                                 <select class="form-select" id="export_delimiter" name="export_delimiter">
                                     {% set delim = (settings.export_delimiter if settings else ',') %}
-                                    <option value="," {% if delim == ',' %}selected{% endif %}>, (comma)</option>
-                                    <option value=";" {% if delim == ';' %}selected{% endif %}>; (semicolon)</option>
-                                    <option value="\t" {% if delim == '\t' %}selected{% endif %}>Tab</option>
-                                    <option value="|" {% if delim == '|' %}selected{% endif %}>| (pipe)</option>
+                                    <option value="," {% if delim == ',' %}selected{% endif %}>{{ _(', (comma)') }}</option>
+                                    <option value=";" {% if delim == ';' %}selected{% endif %}>{{ _('; (semicolon)') }}</option>
+                                    <option value="\t" {% if delim == '\t' %}selected{% endif %}>{{ _('Tab') }}</option>
+                                    <option value="|" {% if delim == '|' %}selected{% endif %}>{{ _('| (pipe)') }}</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6 d-flex align-items-end">
                                 <div class="form-check me-4">
                                     <input class="form-check-input" type="checkbox" id="single_active_timer" name="single_active_timer" {% if settings and settings.single_active_timer %}checked{% endif %}>
-                                    <label class="form-check-label" for="single_active_timer">Single Active Timer</label>
+                                    <label class="form-check-label" for="single_active_timer">{{ _('Single Active Timer') }}</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="allow_self_register" name="allow_self_register" {% if settings and settings.allow_self_register %}checked{% endif %}>
-                                    <label class="form-check-label" for="allow_self_register">Allow Self Register</label>
+                                    <label class="form-check-label" for="allow_self_register">{{ _('Allow Self Register') }}</label>
                                 </div>
                             </div>
 
@@ -212,53 +217,54 @@
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="company_name">Company Name</label>
+                                    <label class="form-label" for="company_name">{{ _('Company Name') }}</label>
                                     <input type="text" class="form-control" id="company_name" name="company_name" 
                                            value="{{ settings.company_name if settings else 'Your Company Name' }}" required>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="company_email">Company Email</label>
+                                    <label class="form-label" for="company_email">{{ _('Company Email') }}</label>
                                     <input type="email" class="form-control" id="company_email" name="company_email" 
                                            value="{{ settings.company_email if settings else 'info@yourcompany.com' }}" required>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="company_phone">Company Phone</label>
+                                    <label class="form-label" for="company_phone">{{ _('Company Phone') }}</label>
                                     <input type="text" class="form-control" id="company_phone" name="company_phone" 
                                            value="{{ settings.company_phone if settings else '+1 (555) 123-4567' }}" required>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="company_website">Company Website</label>
+                                    <label class="form-label" for="company_website">{{ _('Company Website') }}</label>
                                     <input type="url" class="form-control" id="company_website" name="company_website" 
                                            value="{{ settings.company_website if settings else 'www.yourcompany.com' }}" required>
                                 </div>
                                 
                                 <div class="col-12">
-                                    <label class="form-label" for="company_address">Company Address</label>
+                                    <label class="form-label" for="company_address">{{ _('Company Address') }}</label>
                                     <textarea class="form-control" id="company_address" name="company_address" rows="3" required>{{ settings.company_address if settings else 'Your Company Address' }}</textarea>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="company_tax_id">Tax ID / VAT Number</label>
+                                    <label class="form-label" for="company_tax_id">{{ _('Tax ID / VAT Number') }}</label>
                                     <input type="text" class="form-control" id="company_tax_id" name="company_tax_id" 
                                            value="{{ settings.company_tax_id if settings else '' }}" placeholder="Optional">
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="company_logo">Company Logo</label>
+                                    <label class="form-label" for="company_logo">{{ _('Company Logo') }}</label>
                                     <div class="logo-upload-section">
                                         {% if settings and settings.has_logo() %}
                                         <div class="current-logo mb-3">
-                                            <img src="{{ settings.get_logo_url() }}" alt="Current Company Logo" 
+                                            <img src="{{ settings.get_logo_url() }}" alt="{{ _('Current Company Logo') }}" 
                                                  class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
                                             <div class="mt-2">
                                                 <form method="POST" action="{{ url_for('admin.remove_logo') }}" 
-                                                      class="d-inline" 
-                                                      onsubmit="return confirm('Are you sure you want to remove the current logo?')">
+                                                      class="d-inline"
+                                                      data-confirm="{{ _('Are you sure you want to remove the current logo?') }}"
+                                                      onsubmit="return confirm(this.getAttribute('data-confirm'))">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                        <i class="fas fa-trash me-1"></i> Remove Logo
+                                                        <i class="fas fa-trash me-1"></i> {{ _('Remove Logo') }}
                                                     </button>
                                                 </form>
                                             </div>
@@ -270,27 +276,27 @@
                                                    accept=".png,.jpg,.jpeg,.gif,.svg,.webp" 
                                                    onchange="previewLogo(this)">
                                             <small class="form-text text-muted">
-                                                Supported formats: PNG, JPG, JPEG, GIF, SVG, WEBP (Max size: 5MB)
+                                                {{ _('Supported formats: PNG, JPG, JPEG, GIF, SVG, WEBP (Max size: 5MB)') }}
                                             </small>
                                             
                                             <div class="mt-3">
                                                 <button type="button" class="btn btn-primary" onclick="uploadLogo()">
-                                                    <i class="fas fa-upload me-1"></i> Upload Logo
+                                                    <i class="fas fa-upload me-1"></i> {{ _('Upload Logo') }}
                                                 </button>
                                             </div>
                                         </div>
                                         
                                         <div id="logo-preview" class="mt-3" style="display: none;">
-                                            <h6>Logo Preview:</h6>
+                                            <h6>{{ _('Logo Preview:') }}</h6>
                                             <img id="preview-image" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div class="col-12">
-                                    <label class="form-label" for="company_bank_info">Bank/Payment Information</label>
+                                    <label class="form-label" for="company_bank_info">{{ _('Bank/Payment Information') }}</label>
                                     <textarea class="form-control" id="company_bank_info" name="company_bank_info" rows="3" placeholder="Bank account details, payment instructions, etc.">{{ settings.company_bank_info if settings else '' }}</textarea>
-                                    <small class="form-text text-muted">This will appear on invoices for payment instructions</small>
+                                    <small class="form-text text-muted">{{ _('This will appear on invoices for payment instructions') }}</small>
                                 </div>
                             </div>
                             
@@ -298,29 +304,29 @@
                             <div class="row g-3 mt-4">
                                 <div class="col-12">
                                     <h5 class="text-primary border-bottom pb-2">
-                                        <i class="fas fa-file-invoice-dollar me-2"></i>Invoice Defaults
+                                        <i class="fas fa-file-invoice-dollar me-2"></i>{{ _('Invoice Defaults') }}
                                     </h5>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="invoice_prefix">Invoice Number Prefix</label>
+                                    <label class="form-label" for="invoice_prefix">{{ _('Invoice Number Prefix') }}</label>
                                     <input type="text" class="form-control" id="invoice_prefix" name="invoice_prefix" 
                                            value="{{ settings.invoice_prefix if settings else 'INV' }}" required>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="invoice_start_number">Starting Invoice Number</label>
+                                    <label class="form-label" for="invoice_start_number">{{ _('Starting Invoice Number') }}</label>
                                     <input type="number" class="form-control" id="invoice_start_number" name="invoice_start_number" 
                                            value="{{ settings.invoice_start_number if settings else 1000 }}" min="1" required>
                                 </div>
                                 
                                 <div class="col-12">
-                                    <label class="form-label" for="invoice_terms">Default Terms & Conditions</label>
+                                    <label class="form-label" for="invoice_terms">{{ _('Default Terms & Conditions') }}</label>
                                     <textarea class="form-control" id="invoice_terms" name="invoice_terms" rows="3" required>{{ settings.invoice_terms if settings else 'Payment is due within 30 days of invoice date.' }}</textarea>
                                 </div>
                                 
                                 <div class="col-12">
-                                    <label class="form-label" for="invoice_notes">Default Invoice Notes</label>
+                                    <label class="form-label" for="invoice_notes">{{ _('Default Invoice Notes') }}</label>
                                     <textarea class="form-control" id="invoice_notes" name="invoice_notes" rows="2" required>{{ settings.invoice_notes if settings else 'Thank you for your business!' }}</textarea>
                                 </div>
                             </div>
@@ -329,7 +335,7 @@
                             <div class="row g-3 mt-4">
                                 <div class="col-12">
                                     <h5 class="text-primary border-bottom pb-2">
-                                        <i class="fas fa-shield-alt me-2"></i>Privacy & Analytics
+                                        <i class="fas fa-shield-alt me-2"></i>{{ _('Privacy & Analytics') }}
                                     </h5>
                                 </div>
                                 
@@ -338,13 +344,13 @@
                                         <input class="form-check-input" type="checkbox" id="allow_analytics" name="allow_analytics" 
                                                {% if settings and settings.allow_analytics %}checked{% endif %}>
                                         <label class="form-check-label" for="allow_analytics">
-                                            <strong>Allow Analytics Information</strong>
+                                            <strong>{{ _('Allow Analytics Information') }}</strong>
                                         </label>
                                         <div class="form-text">
                                             <i class="fas fa-info-circle me-1"></i>
-                                            When enabled, basic system information (OS, version, etc.) may be shared with the license server for monitoring purposes. 
-                                            <strong>License validation will continue to work regardless of this setting.</strong>
-                                            <br><small class="text-muted">This helps improve the application and monitor system health.</small>
+                                            {{ _('When enabled, basic system information (OS, version, etc.) may be shared with the metrics server for monitoring purposes.') }} 
+                                            <strong>{{ _('Core functionality will continue to work regardless of this setting.') }}</strong>
+                                            <br><small class="text-muted">{{ _('This helps improve the application and monitor system health.') }}</small>
                                         </div>
                                     </div>
                                 </div>
@@ -355,12 +361,12 @@
                                     <div class="row align-items-center">
                                         <div class="col-md-8">
                                             <i class="fas fa-clock me-2"></i>
-                                            <strong>Current Time:</strong> 
-                                            <span id="current-time-display" class="h5 mb-0 ms-2">Loading...</span>
+                                            <strong>{{ _('Current Time:') }}</strong> 
+                                            <span id="current-time-display" class="h5 mb-0 ms-2">{{ _('Loading...') }}</span>
                                         </div>
                                         <div class="col-md-4 text-md-end">
                                             <small class="text-muted">
-                                                in <strong>{{ settings.timezone if settings else 'Europe/Rome' }}</strong> timezone
+                                                {{ _('in') }} <strong>{{ settings.timezone if settings else 'Europe/Rome' }}</strong> {{ _('timezone') }}
                                             </small>
                                         </div>
                                     </div>
@@ -369,13 +375,13 @@
                                             <div class="col-md-6">
                                                 <small class="text-muted">
                                                     <i class="fas fa-info-circle me-1"></i>
-                                                    This time updates every second and shows the current time in your selected timezone
+                                                    {{ _('This time updates every second and shows the current time in your selected timezone') }}
                                                 </small>
                                             </div>
                                             <div class="col-md-6 text-md-end">
                                                 <small class="text-muted">
                                                     <i class="fas fa-globe me-1"></i>
-                                                    Current offset: <span id="timezone-offset">--</span>
+                                                    {{ _('Current offset:') }} <span id="timezone-offset">--</span>
                                                 </small>
                                             </div>
                                         </div>
@@ -391,18 +397,18 @@
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-info-circle me-1"></i> Help</h5>
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-1"></i> {{ _('Help') }}</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Configure application-wide settings such as timezone, currency, timer behavior, data export options, and company branding for invoices.</p>
+                    <p class="text-muted">{{ _('Configure application-wide settings such as timezone, currency, timer behavior, data export options, and company branding for invoices.') }}</p>
                     <ul class="text-muted mb-0">
-                        <li>Rounding affects how durations are rounded when displayed.</li>
-                        <li>Single Active Timer stops any running timer when a new one is started.</li>
-                        <li>Self Register allows new usernames to be created on login.</li>
-                        <li>Company branding settings are used for PDF invoice generation.</li>
-                        <li>Company logos can be uploaded directly through the interface (PNG, JPG, JPEG, GIF, SVG, WEBP formats supported).</li>
-                        <li>Analytics setting controls whether system information is shared with the license server for monitoring purposes.</li>
-                        <li><strong>License validation will continue to work regardless of the analytics setting.</strong></li>
+                        <li>{{ _('Rounding affects how durations are rounded when displayed.') }}</li>
+                        <li>{{ _('Single Active Timer stops any running timer when a new one is started.') }}</li>
+                        <li>{{ _('Self Register allows new usernames to be created on login.') }}</li>
+                        <li>{{ _('Company branding settings are used for PDF invoice generation.') }}</li>
+                        <li>{{ _('Company logos can be uploaded directly through the interface (PNG, JPG, JPEG, GIF, SVG, WEBP formats supported).') }}</li>
+                        <li>{{ _('Analytics setting controls whether system information is shared with the metrics server for monitoring purposes.') }}</li>
+                        <li><strong>{{ _('Core functionality will continue to work regardless of the analytics setting.') }}</strong></li>
                     </ul>
                 </div>
             </div>
@@ -410,7 +416,23 @@
     </div>
 </div>
 
+<script type="application/json" id="i18n-json-admin-settings">
+{
+    "file_size_less_than_5mb": {{ _('File size must be less than 5MB')|tojson }},
+    "invalid_file_type": {{ _('Invalid file type. Please select a valid image file.')|tojson }},
+    "select_logo_file": {{ _('Please select a logo file to upload')|tojson }},
+    "uploading": {{ _('Uploading...')|tojson }},
+    "logo_upload_failed": {{ _('Logo upload failed. Please try again.')|tojson }},
+    "no_timezone_selected": {{ _('No timezone selected')|tojson }},
+    "invalid_timezone": {{ _('Invalid timezone')|tojson }}
+}
+</script>
 <script>
+var i18nSettings = (function(){
+    try { var el = document.getElementById('i18n-json-admin-settings'); return el ? JSON.parse(el.textContent) : {}; }
+    catch(e) { return {}; }
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     const timezoneSelect = document.getElementById('timezone');
     const currentTimeDisplay = document.getElementById('current-time-display');
@@ -420,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const timezone = timezoneSelect.value;
         
         if (!timezone) {
-            currentTimeDisplay.textContent = 'No timezone selected';
+            currentTimeDisplay.textContent = (i18nSettings.no_timezone_selected || 'No timezone selected');
             document.getElementById('timezone-offset').textContent = '--';
             return;
         }
@@ -450,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('timezone-offset').textContent = offsetText;
             
         } catch (e) {
-            currentTimeDisplay.textContent = 'Invalid timezone';
+            currentTimeDisplay.textContent = (i18nSettings.invalid_timezone || 'Invalid timezone');
             document.getElementById('timezone-offset').textContent = '--';
         }
     }
@@ -475,7 +497,7 @@ function previewLogo(input) {
         
         // Validate file size (5MB limit)
         if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
+            alert(i18nSettings.file_size_less_than_5mb || 'File size must be less than 5MB');
             input.value = '';
             return;
         }
@@ -483,7 +505,7 @@ function previewLogo(input) {
         // Validate file type
         const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-            alert('Invalid file type. Please select a valid image file.');
+            alert(i18nSettings.invalid_file_type || 'Invalid file type. Please select a valid image file.');
             input.value = '';
             return;
         }
@@ -504,20 +526,20 @@ function uploadLogo() {
     const file = fileInput.files[0];
     
     if (!file) {
-        alert('Please select a logo file to upload');
+        alert(i18nSettings.select_logo_file || 'Please select a logo file to upload');
         return;
     }
     
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+        alert(i18nSettings.file_size_less_than_5mb || 'File size must be less than 5MB');
         return;
     }
     
     // Validate file type
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-        alert('Invalid file type. Please select a valid image file.');
+        alert(i18nSettings.invalid_file_type || 'Invalid file type. Please select a valid image file.');
         return;
     }
     
@@ -528,7 +550,7 @@ function uploadLogo() {
     // Show loading state
     const uploadBtn = document.querySelector('button[onclick="uploadLogo()"]');
     const originalText = uploadBtn.innerHTML;
-    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> ' + (i18nSettings.uploading || 'Uploading...');
     uploadBtn.disabled = true;
     
     fetch('{{ url_for("admin.upload_logo") }}', {
@@ -545,7 +567,7 @@ function uploadLogo() {
     })
     .catch(error => {
         console.error('Upload error:', error);
-        alert('Logo upload failed. Please try again.');
+        alert(i18nSettings.logo_upload_failed || 'Logo upload failed. Please try again.');
         
         // Reset button state
         uploadBtn.innerHTML = originalText;

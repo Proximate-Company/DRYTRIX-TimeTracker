@@ -10,7 +10,13 @@ from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 from app.models import Settings
 from flask import current_app
+from flask_babel import gettext as _
+try:
+    from babel.dates import format_date as babel_format_date
+except Exception:
+    babel_format_date = None
 from pathlib import Path
+from flask import render_template
 
 class InvoicePDFGenerator:
     """Generate PDF invoices with company branding"""
@@ -21,8 +27,13 @@ class InvoicePDFGenerator:
     
     def generate_pdf(self):
         """Generate PDF content and return as bytes"""
-        html_content = self._generate_html()
-        css_content = self._generate_css()
+        use_custom_html = bool((self.settings.invoice_pdf_template_html or '').strip())
+        use_custom_css = bool((self.settings.invoice_pdf_template_css or '').strip())
+        if use_custom_html or use_custom_css:
+            html_content, css_content = self._render_from_custom_template()
+        else:
+            html_content = self._generate_html()
+            css_content = self._generate_css()
         
         # Configure fonts
         font_config = FontConfiguration()
@@ -38,6 +49,32 @@ class InvoicePDFGenerator:
         pdf_bytes = html_doc.write_pdf(stylesheets=[css_doc], font_config=font_config)
         
         return pdf_bytes
+    def _render_from_custom_template(self):
+        """Render HTML and CSS from custom templates stored in settings, with fallback to default template."""
+        html_template = (self.settings.invoice_pdf_template_html or '').strip()
+        css_template = (self.settings.invoice_pdf_template_css or '').strip()
+        html = ''
+        if css_template:
+            css = css_template
+        else:
+            try:
+                from flask import render_template as _render_tpl
+                css = _render_tpl('invoices/pdf_styles_default.css')
+            except Exception:
+                css = self._generate_css()
+        try:
+            # Render using Flask's Jinja environment to include app filters and _()
+            if html_template:
+                from flask import render_template_string
+                html = render_template_string(html_template, invoice=self.invoice, settings=self.settings, Path=Path)
+        except Exception:
+            html = ''
+        if not html:
+            try:
+                html = render_template('invoices/pdf_default.html', invoice=self.invoice, settings=self.settings, Path=Path)
+            except Exception:
+                html = f"<html><body><h1>{_('Invoice')} {self.invoice.invoice_number}</h1></body></html>"
+        return html, css
     
     def _generate_html(self):
         """Generate HTML content for the invoice"""
@@ -46,7 +83,7 @@ class InvoicePDFGenerator:
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>Invoice {self.invoice.invoice_number}</title>
+            <title>{_('Invoice')} {self.invoice.invoice_number}</title>
             <style>
             :root {{
                 --primary: #2563eb;
@@ -121,19 +158,19 @@ class InvoicePDFGenerator:
                             <h1 class="company-name">{self._escape(self.settings.company_name)}</h1>
                             <div class="company-meta small">
                                 <span>{self._nl2br(self.settings.company_address)}</span>
-                                <span>Email: {self._escape(self.settings.company_email)}  ·  Phone: {self._escape(self.settings.company_phone)}</span>
-                                <span>Website: {self._escape(self.settings.company_website)}</span>
+                                <span>{_('Email')}: {self._escape(self.settings.company_email)}  ·  {_('Phone')}: {self._escape(self.settings.company_phone)}</span>
+                                <span>{_('Website')}: {self._escape(self.settings.company_website)}</span>
                                 {self._get_company_tax_info()}
                             </div>
                         </div>
                     </div>
                     <div class="invoice-meta">
-                        <div class="invoice-title">INVOICE</div>
+                        <div class="invoice-title">{_('INVOICE')}</div>
                         <div class="meta-grid">
-                            <div class="label">Invoice #</div><div class="value">{self.invoice.invoice_number}</div>
-                            <div class="label">Issue Date</div><div class="value">{self.invoice.issue_date.strftime('%b %d, %Y')}</div>
-                            <div class="label">Due Date</div><div class="value">{self.invoice.due_date.strftime('%b %d, %Y')}</div>
-                            <div class="label">Status</div><div class="value">{self.invoice.status.title()}</div>
+                            <div class="label">{_('Invoice #')}</div><div class="value">{self.invoice.invoice_number}</div>
+                            <div class="label">{_('Issue Date')}</div><div class="value">{(babel_format_date(self.invoice.issue_date) if babel_format_date else self.invoice.issue_date.strftime('%Y-%m-%d'))}</div>
+                            <div class="label">{_('Due Date')}</div><div class="value">{(babel_format_date(self.invoice.due_date) if babel_format_date else self.invoice.due_date.strftime('%Y-%m-%d'))}</div>
+                            <div class="label">{_('Status')}</div><div class="value">{_(self.invoice.status.title())}</div>
                         </div>
                     </div>
                 </div>
@@ -141,13 +178,13 @@ class InvoicePDFGenerator:
                 <!-- Client Information -->
                 <div class="two-col">
                     <div class="card">
-                        <div class="section-title">Bill To</div>
+                        <div class="section-title">{_('Bill To')}</div>
                         <div><strong>{self._escape(self.invoice.client_name)}</strong></div>
                         {self._get_client_email_html()}
                         {self._get_client_address_html()}
                     </div>
                     <div class="card">
-                        <div class="section-title">Project</div>
+                        <div class="section-title">{_('Project')}</div>
                         <div><strong>{self._escape(self.invoice.project.name)}</strong></div>
                         {self._get_project_description_html()}
                     </div>
@@ -158,10 +195,10 @@ class InvoicePDFGenerator:
                     <table>
                         <thead>
                             <tr>
-                                <th class="desc">Description</th>
-                                <th class="num">Quantity (Hours)</th>
-                                <th class="num">Unit Price</th>
-                                <th class="num">Total Amount</th>
+                                <th class="desc">{_('Description')}</th>
+                                <th class="num">{_('Quantity (Hours)')}</th>
+                                <th class="num">{_('Unit Price')}</th>
+                                <th class="num">{_('Total Amount')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -179,7 +216,7 @@ class InvoicePDFGenerator:
                 <!-- Footer -->
                 <div class="footer">
                     {self._get_payment_info_html()}
-                    <div><strong>Terms & Conditions:</strong> {self._escape(self.settings.invoice_terms)}</div>
+                    <div><strong>{_('Terms & Conditions:')}</strong> {self._escape(self.settings.invoice_terms)}</div>
                 </div>
             </div>
         </body>
@@ -296,7 +333,7 @@ class InvoicePDFGenerator:
         if self.invoice.notes:
             html_parts.append(f"""
             <div class="notes-section">
-                <h4>Notes:</h4>
+                <h4>{_('Notes:')}</h4>
                 <p>{self.invoice.notes}</p>
             </div>
             """)
@@ -304,7 +341,7 @@ class InvoicePDFGenerator:
         if self.invoice.terms:
             html_parts.append(f"""
             <div class="terms-section">
-                <h4>Terms:</h4>
+                <h4>{_('Terms:')}</h4>
                 <p>{self.invoice.terms}</p>
             </div>
             """)
@@ -324,7 +361,7 @@ class InvoicePDFGenerator:
         """Generate HTML for payment information"""
         if self.settings.company_bank_info:
             return f"""
-            <h4>Payment Information:</h4>
+            <h4>{_('Payment Information:')}</h4>
             <div class="bank-info">{self.settings.company_bank_info}</div>
             """
         return ''

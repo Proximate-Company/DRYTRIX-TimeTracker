@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Profile - {{ app_name }}{% endblock %}
+{% block title %}{{ _('Edit Profile') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 {% from "_components.html" import page_header %}
@@ -8,49 +8,49 @@
 	<div class="col-12">
 		{% set actions %}
 		<a href="{{ url_for('auth.profile') }}" class="btn btn-outline-light btn-sm">
-			<i class="fas fa-arrow-left"></i> Back to Profile
+			<i class="fas fa-arrow-left"></i> {{ _('Back to Profile') }}
 		</a>
 		{% endset %}
-		{{ page_header('fas fa-user-cog', 'Edit Profile', 'Update your personal information', actions) }}
+		{{ page_header('fas fa-user-cog', _('Edit Profile'), _('Update your personal information'), actions) }}
 	</div>
 </div>
 <div class="row justify-content-center">
 	<div class="col-md-6">
 		<div class="card">
-			<div class="card-header"><i class="fas fa-id-card me-2"></i> Profile Details</div>
+			<div class="card-header"><i class="fas fa-id-card me-2"></i> {{ _('Profile Details') }}</div>
 			<div class="card-body">
 				<form method="POST">
 					<div class="mb-3">
-						<label class="form-label">Username</label>
+						<label class="form-label">{{ _('Username') }}</label>
 						<input type="text" class="form-control" value="{{ current_user.username }}" disabled>
-						<div class="form-text">Usernames cannot be changed.</div>
+						<div class="form-text">{{ _('Usernames cannot be changed.') }}</div>
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label">Full name</label>
-						<input type="text" name="full_name" class="form-control" value="{{ current_user.full_name or '' }}" placeholder="Enter your real name">
-						<div class="form-text">Shown in tasks and reports when provided.</div>
+						<label class="form-label">{{ _('Full name') }}</label>
+						<input type="text" name="full_name" class="form-control" value="{{ current_user.full_name or '' }}" placeholder="{{ _('Enter your real name') }}">
+						<div class="form-text">{{ _('Shown in tasks and reports when provided.') }}</div>
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label">Language</label>
+						<label class="form-label">{{ _('Language') }}</label>
 						<select name="preferred_language" class="form-select">
 							{% for code, label in config['LANGUAGES'].items() %}
 							<option value="{{ code }}" {% if (current_user.preferred_language or current_language_code) == code %}selected{% endif %}>{{ label }}</option>
 							{% endfor %}
 						</select>
-						<div class="form-text">Choose your interface language.</div>
+						<div class="form-text">{{ _('Choose your interface language.') }}</div>
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label">Role</label>
+						<label class="form-label">{{ _('Role') }}</label>
 						<input type="text" class="form-control" value="{{ current_user.role|capitalize }}" disabled>
 					</div>
 
 					<button type="submit" class="btn btn-primary">
-						<i class="fas fa-save me-1"></i>Save Changes
+						<i class="fas fa-save me-1"></i>{{ _('Save Changes') }}
 					</button>
-					<a href="{{ url_for('auth.profile') }}" class="btn btn-outline-primary ms-2">Cancel</a>
+					<a href="{{ url_for('auth.profile') }}" class="btn btn-outline-primary ms-2">{{ _('Cancel') }}</a>
 				</form>
 			</div>
 		</div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if user %}Edit{% else %}New{% endif %} User - {{ app_name }}{% endblock %}
+{% block title %}{{ (user and _('Edit') or _('New')) }} {{ _('User') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,10 +9,10 @@
         <div class="col-12">
             {% set actions %}
             <a href="{{ url_for('admin.list_users') }}" class="btn-header btn-outline-primary">
-                <i class="fas fa-arrow-left"></i> Back to Users
+                <i class="fas fa-arrow-left"></i> {{ _('Back to Users') }}
             </a>
             {% endset %}
-            {{ page_header('fas fa-user', (user and 'Edit User' or 'New User'), 'Create or update user accounts', actions) }}
+            {{ page_header('fas fa-user', (user and _('Edit User') or _('New User')), _('Create or update user accounts'), actions) }}
         </div>
     </div>
 
@@ -21,7 +21,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-edit"></i> User Information
+                        <i class="fas fa-edit"></i> {{ _('User Information') }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -29,7 +29,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="username" class="form-label">Username</label>
+                                    <label for="username" class="form-label">{{ _('Username') }}</label>
                                     {% if user %}
                                     <input type="text" id="username" class="form-control" value="{{ user.username }}" disabled>
                                     {% else %}
@@ -39,11 +39,11 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="role" class="form-label">Role</label>
+                                    <label for="role" class="form-label">{{ _('Role') }}</label>
                                     <select id="role" name="role" class="form-select">
                                         {% set selected_role = (user.role if user else request.form.get('role', 'user')) %}
-                                        <option value="user" {% if selected_role == 'user' %}selected{% endif %}>User</option>
-                                        <option value="admin" {% if selected_role == 'admin' %}selected{% endif %}>Admin</option>
+                                        <option value="user" {% if selected_role == 'user' %}selected{% endif %}>{{ _('User') }}</option>
+                                        <option value="admin" {% if selected_role == 'admin' %}selected{% endif %}>{{ _('Admin') }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -53,17 +53,17 @@
                             <div class="form-check">
                                 {% set active_checked = (user.is_active if user else (request.form.get('is_active', 'on') in ['on','true','1'])) %}
                                 <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if active_checked %}checked{% endif %}>
-                                <label class="form-check-label" for="is_active">Active</label>
+                                <label class="form-check-label" for="is_active">{{ _('Active') }}</label>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-between">
                             <a href="{{ url_for('admin.list_users') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancel
+                                <i class="fas fa-times"></i> {{ _('Cancel') }}
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> 
-                                {% if user %}Update User{% else %}Create User{% endif %}
+                                {% if user %}{{ _('Update User') }}{% else %}{{ _('Create User') }}{% endif %}
                             </button>
                         </div>
                     </form>
@@ -75,44 +75,44 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Help
+                        <i class="fas fa-info-circle"></i> {{ _('Help') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <h6>Username</h6>
-                    <p class="text-muted small">Choose a unique username for the user. This will be used for login.</p>
+                    <h6>{{ _('Username') }}</h6>
+                    <p class="text-muted small">{{ _('Choose a unique username for the user. This will be used for login.') }}</p>
                     
-                    <h6>Role</h6>
+                    <h6>{{ _('Role') }}</h6>
                     <p class="text-muted small">
-                        <strong>User:</strong> Can track time, view projects, and generate reports.<br>
-                        <strong>Admin:</strong> Can manage users, projects, and system settings.
+                        <strong>{{ _('User:') }}</strong> {{ _('Can track time, view projects, and generate reports.') }}<br>
+                        <strong>{{ _('Admin:') }}</strong> {{ _('Can manage users, projects, and system settings.') }}
                     </p>
                     
-                    <h6>Active Status</h6>
-                    <p class="text-muted small">Inactive users cannot log in or access the system.</p>
+                    <h6>{{ _('Active Status') }}</h6>
+                    <p class="text-muted small">{{ _('Inactive users cannot log in or access the system.') }}</p>
                     
                     {% if user %}
                     <hr>
-                    <h6>User Statistics</h6>
+                    <h6>{{ _('User Statistics') }}</h6>
                     <div class="row text-center">
                         <div class="col-6">
                             <div class="h5 text-primary">{{ "%.1f"|format(user.total_hours) }}</div>
-                            <small class="text-muted">Total Hours</small>
+                            <small class="text-muted">{{ _('Total Hours') }}</small>
                         </div>
                         <div class="col-6">
                             <div class="h5 text-success">{{ user.time_entries.count() }}</div>
-                            <small class="text-muted">Time Entries</small>
+                            <small class="text-muted">{{ _('Time Entries') }}</small>
                         </div>
                     </div>
                     
                     <div class="mt-3">
-                        <h6>Account Information</h6>
+                        <h6>{{ _('Account Information') }}</h6>
                         <small class="text-muted">
-                            <div>Created: {{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                            <div>{{ _('Created:') }} {{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
                             {% if user.last_login %}
-                            <div>Last Login: {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}</div>
+                            <div>{{ _('Last Login:') }} {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}</div>
                             {% else %}
-                            <div>Last Login: Never</div>
+                            <div>{{ _('Last Login: Never') }}</div>
                             {% endif %}
                         </small>
                     </div>
@@ -124,14 +124,14 @@
             <div class="card mt-3 border-danger">
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                        <i class="fas fa-exclamation-triangle"></i> {{ _('Danger Zone') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted small">These actions cannot be undone.</p>
+                    <p class="text-muted small">{{ _('These actions cannot be undone.') }}</p>
                     <button type="button" class="btn btn-danger btn-sm" 
                             onclick="showDeleteUserModal('{{ user.id }}', '{{ user.username }}')">
-                        <i class="fas fa-trash"></i> Delete User
+                        <i class="fas fa-trash"></i> {{ _('Delete User') }}
                     </button>
                 </div>
             </div>
@@ -146,25 +146,25 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-trash me-2 text-danger"></i>Delete User
+                    <i class="fas fa-trash me-2 text-danger"></i>{{ _('Delete User') }}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone.
+                    <strong>{{ _('Warning:') }}</strong> {{ _('This action cannot be undone.') }}
                 </div>
-                <p>Are you sure you want to delete the user <strong id="deleteUserName"></strong>?</p>
-                <p class="text-muted mb-0">This will permanently remove the user and all their data cannot be recovered.</p>
+                <p>{{ _('Are you sure you want to delete the user') }} <strong id="deleteUserName"></strong>?</p>
+                <p class="text-muted mb-0">{{ _('This will permanently remove the user and all their data cannot be recovered.') }}</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancel
+                    <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteUserForm" class="d-inline">
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>Delete User
+                        <i class="fas fa-trash me-2"></i>{{ _('Delete User') }}
                     </button>
                 </form>
             </div>

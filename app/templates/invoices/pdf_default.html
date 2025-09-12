@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ _('Invoice') }} {{ invoice.invoice_number }}</title>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="invoice-header">
+            <div class="brand">
+                {% if settings.has_logo() %}
+                    {% set logo_path = settings.get_logo_path() %}
+                    {% if logo_path %}
+                        <img src="{{ Path(logo_path).resolve().as_uri() if Path and logo_path else 'file://' ~ logo_path }}" alt="{{ _('Company Logo') }}" class="company-logo">
+                    {% endif %}
+                {% endif %}
+                <div>
+                    <h1 class="company-name">{{ settings.company_name|e }}</h1>
+                    <div class="company-meta small">
+                        <span>{{ settings.company_address|e|replace('\n', '<br>')|safe }}</span>
+                        <span>{{ _('Email') }}: {{ settings.company_email|e }} · {{ _('Phone') }}: {{ settings.company_phone|e }}</span>
+                        <span>{{ _('Website') }}: {{ settings.company_website|e }}</span>
+                        {% if settings.company_tax_id %}
+                            <div class="company-tax">{{ _('Tax ID') }}: {{ settings.company_tax_id|e }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="invoice-meta">
+                <div class="invoice-title">{{ _('INVOICE') }}</div>
+                <div class="meta-grid">
+                    <div class="label">{{ _('Invoice #') }}</div><div class="value">{{ invoice.invoice_number }}</div>
+                    <div class="label">{{ _('Issue Date') }}</div><div class="value">{{ format_date(invoice.issue_date) }}</div>
+                    <div class="label">{{ _('Due Date') }}</div><div class="value">{{ format_date(invoice.due_date) }}</div>
+                    <div class="label">{{ _('Status') }}</div><div class="value">{{ _(invoice.status|title) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="card">
+                <div class="section-title">{{ _('Bill To') }}</div>
+                <div><strong>{{ invoice.client_name|e }}</strong></div>
+                {% if invoice.client_email %}
+                    <div class="client-email">{{ invoice.client_email|e }}</div>
+                {% endif %}
+                {% if invoice.client_address %}
+                    <div class="client-address">{{ invoice.client_address|e }}</div>
+                {% endif %}
+            </div>
+            <div class="card">
+                <div class="section-title">{{ _('Project') }}</div>
+                <div><strong>{{ invoice.project.name|e }}</strong></div>
+                {% if invoice.project.description %}
+                    <div class="project-description">{{ invoice.project.description|e }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="desc">{{ _('Description') }}</th>
+                        <th class="num">{{ _('Quantity (Hours)') }}</th>
+                        <th class="num">{{ _('Unit Price') }}</th>
+                        <th class="num">{{ _('Total Amount') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items %}
+                    <tr>
+                        <td>
+                            {{ item.description|e }}
+                            {% if item.time_entry_ids %}
+                                {% set count = item.time_entry_ids.split(',')|length %}
+                                <br><small class="time-entry-info">{{ _('Generated from %(num)d time entries', num=count) }}</small>
+                            {% endif %}
+                        </td>
+                        <td class="num">{{ '%.2f' % item.quantity }}</td>
+                        <td class="num">{{ format_money(item.unit_price) }}</td>
+                        <td class="num">{{ format_money(item.total_amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="num">{{ _('Subtotal:') }}</td>
+                        <td class="num">{{ format_money(invoice.subtotal) }}</td>
+                    </tr>
+                    {% if invoice.tax_rate > 0 %}
+                    <tr>
+                        <td colspan="3" class="num">{{ _('Tax (%(rate).2f%%):', rate=invoice.tax_rate) }}</td>
+                        <td class="num">{{ format_money(invoice.tax_amount) }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td colspan="3" class="num">{{ _('Total Amount:') }}</td>
+                        <td class="num">{{ format_money(invoice.total_amount) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        {% if invoice.notes or invoice.terms %}
+        <div class="additional-info">
+            {% if invoice.notes %}
+            <div class="notes-section">
+                <h4>{{ _('Notes:') }}</h4>
+                <p>{{ invoice.notes|e }}</p>
+            </div>
+            {% endif %}
+            {% if invoice.terms %}
+            <div class="terms-section">
+                <h4>{{ _('Terms:') }}</h4>
+                <p>{{ invoice.terms|e }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="footer">
+            {% if settings.company_bank_info %}
+                <h4>{{ _('Payment Information:') }}</h4>
+                <div class="bank-info">{{ settings.company_bank_info|e|replace('\n', '<br>')|safe }}</div>
+            {% endif %}
+            <div><strong>{{ _('Terms & Conditions:') }}</strong> {{ settings.invoice_terms|e }}</div>
+        </div>
+    </div>
+</body>
+</html>
+
+

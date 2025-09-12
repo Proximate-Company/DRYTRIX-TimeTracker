@@ -14,6 +14,7 @@ from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
 from reportlab.pdfgen import canvas
 from app.models import Settings
 from flask import current_app
+from flask_babel import gettext as _
 
 class InvoicePDFGeneratorFallback:
     """Generate PDF invoices with company branding using ReportLab"""
@@ -158,10 +159,17 @@ class InvoicePDFGeneratorFallback:
                     # Fallback to text if image fails
                     invoice_info.append(Paragraph("[Company Logo]", self.styles['NormalText']))
         
-        invoice_info.append(Paragraph("INVOICE", self.styles['InvoiceTitle']))
-        invoice_info.append(Paragraph(f"Invoice #: {self.invoice.invoice_number}", self.styles['NormalText']))
-        invoice_info.append(Paragraph(f"Issue Date: {self.invoice.issue_date.strftime('%B %d, %Y')}", self.styles['NormalText']))
-        invoice_info.append(Paragraph(f"Due Date: {self.invoice.due_date.strftime('%B %d, %Y')}", self.styles['NormalText']))
+        invoice_info.append(Paragraph(_("INVOICE"), self.styles['InvoiceTitle']))
+        invoice_info.append(Paragraph(_("Invoice #: %(num)s", num=self.invoice.invoice_number), self.styles['NormalText']))
+        try:
+            from babel.dates import format_date as babel_format_date
+            issue_label = _("Issue Date: %(date)s", date=babel_format_date(self.invoice.issue_date))
+            due_label = _("Due Date: %(date)s", date=babel_format_date(self.invoice.due_date))
+        except Exception:
+            issue_label = _("Issue Date: %(date)s", date=self.invoice.issue_date.strftime('%Y-%m-%d'))
+            due_label = _("Due Date: %(date)s", date=self.invoice.due_date.strftime('%Y-%m-%d'))
+        invoice_info.append(Paragraph(issue_label, self.styles['NormalText']))
+        invoice_info.append(Paragraph(due_label, self.styles['NormalText']))
         invoice_info.append(Paragraph(f"Status: {self.invoice.status.title()}", self.styles['NormalText']))
         
         # Create a table to layout company info and invoice info side by side
@@ -205,10 +213,10 @@ class InvoicePDFGeneratorFallback:
         """Build the invoice items table"""
         story = []
         
-        story.append(Paragraph("Invoice Items", self.styles['SectionHeader']))
+        story.append(Paragraph(_("Invoice Items"), self.styles['SectionHeader']))
         
         # Table headers
-        headers = ['Description', 'Quantity (Hours)', 'Unit Price', 'Total Amount']
+        headers = [_("Description"), _("Quantity (Hours)"), _("Unit Price"), _("Total Amount")]
         
         # Table data
         data = [headers]
@@ -222,12 +230,12 @@ class InvoicePDFGeneratorFallback:
             data.append(row)
         
         # Add totals
-        data.append(['', '', 'Subtotal:', self._format_currency(self.invoice.subtotal)])
+        data.append(['', '', _('Subtotal:'), self._format_currency(self.invoice.subtotal)])
         
         if self.invoice.tax_rate > 0:
-            data.append(['', '', f'Tax ({self.invoice.tax_rate:.2f}%):', self._format_currency(self.invoice.tax_amount)])
+            data.append(['', '', _('Tax (%(rate).2f%%):', rate=self.invoice.tax_rate), self._format_currency(self.invoice.tax_amount)])
         
-        data.append(['', '', 'Total Amount:', self._format_currency(self.invoice.total_amount)])
+        data.append(['', '', _('Total Amount:'), self._format_currency(self.invoice.total_amount)])
         
         # Create table
         table = Table(data, colWidths=[9*cm, 3*cm, 3*cm, 3*cm], repeatRows=1)
@@ -273,12 +281,12 @@ class InvoicePDFGeneratorFallback:
         story = []
         
         if self.invoice.notes:
-            story.append(Paragraph("Notes:", self.styles['SectionHeader']))
+            story.append(Paragraph(_("Notes:"), self.styles['SectionHeader']))
             story.append(Paragraph(self.invoice.notes, self.styles['NormalText']))
             story.append(Spacer(1, 12))
         
         if self.invoice.terms:
-            story.append(Paragraph("Terms:", self.styles['SectionHeader']))
+            story.append(Paragraph(_("Terms:"), self.styles['SectionHeader']))
             story.append(Paragraph(self.invoice.terms, self.styles['NormalText']))
             story.append(Spacer(1, 12))
         
@@ -290,12 +298,12 @@ class InvoicePDFGeneratorFallback:
         
         # Payment information
         if self.settings.company_bank_info:
-            story.append(Paragraph("Payment Information:", self.styles['SectionHeader']))
+            story.append(Paragraph(_("Payment Information:"), self.styles['SectionHeader']))
             story.append(Paragraph(self.settings.company_bank_info, self.styles['NormalText']))
             story.append(Spacer(1, 12))
         
         # Terms and conditions
-        story.append(Paragraph("Terms & Conditions:", self.styles['SectionHeader']))
+        story.append(Paragraph(_("Terms & Conditions:"), self.styles['SectionHeader']))
         story.append(Paragraph(self.settings.invoice_terms, self.styles['NormalText']))
         
         return story
