@@ -103,11 +103,16 @@
     <!-- Filters -->
     <div class="card mobile-card mb-4">
         <div class="card-header">
-            <h6 class="mb-0">
-                <i class="fas fa-filter me-2 text-muted"></i>{{ _('Filter Tasks') }}
-            </h6>
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter me-2 text-muted"></i>{{ _('Filter Tasks') }}
+                </h6>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="toggleFilters" onclick="toggleFilterVisibility()" title="{{ _('Toggle Filters') }}">
+                    <i class="fas fa-chevron-up" id="filterToggleIcon"></i>
+                </button>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body" id="filterBody">
             <form method="GET" class="row g-3">
                 <div class="col-md-4 col-sm-6">
                     <label for="search" class="form-label">{{ _('Search') }}</label>
@@ -226,18 +231,18 @@
                     <td class="text-end">
                         <div class="btn-group" role="group">
                             {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
-                            <form method="POST" action="{{ url_for('timer.stop_timer') }}">
-                                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-stop"></i></button>
+                            <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-action btn-action--danger touch-target" title="{{ _('Stop Timer') }}"><i class="fas fa-stop"></i></button>
                             </form>
                             {% else %}
-                            <form method="POST" action="{{ url_for('timer.start_timer') }}">
+                            <form method="POST" action="{{ url_for('timer.start_timer') }}" class="d-inline">
                                 <input type="hidden" name="project_id" value="{{ task.project_id }}">
                                 <input type="hidden" name="task_id" value="{{ task.id }}">
-                                <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-play"></i></button>
+                                <button type="submit" class="btn btn-sm btn-action btn-action--success touch-target" title="{{ _('Start Timer') }}"><i class="fas fa-play"></i></button>
                             </form>
                             {% endif %}
-                            <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye"></i></a>
-                            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-pen"></i></a>
+                            <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="btn btn-sm btn-action btn-action--view touch-target" title="{{ _('View Task') }}"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-sm btn-action btn-action--edit touch-target" title="{{ _('Edit Task') }}"><i class="fas fa-pen"></i></a>
                         </div>
                     </td>
                 </tr>
@@ -792,6 +797,57 @@
         font-size: 0.9rem;
     }
 }
+
+/* Filter toggle styles */
+.filter-collapsed {
+    display: none !important;
+}
+
+.filter-toggle-transition {
+    transition: all 0.3s ease-in-out;
+}
 </style>
+
+<script>
+function toggleFilterVisibility() {
+    const filterBody = document.getElementById('filterBody');
+    const toggleIcon = document.getElementById('filterToggleIcon');
+    const toggleButton = document.getElementById('toggleFilters');
+    
+    if (filterBody.classList.contains('filter-collapsed')) {
+        // Show filters
+        filterBody.classList.remove('filter-collapsed');
+        toggleIcon.className = 'fas fa-chevron-up';
+        toggleButton.title = '{{ _('Hide Filters') }}';
+        localStorage.setItem('taskFiltersVisible', 'true');
+    } else {
+        // Hide filters
+        filterBody.classList.add('filter-collapsed');
+        toggleIcon.className = 'fas fa-chevron-down';
+        toggleButton.title = '{{ _('Show Filters') }}';
+        localStorage.setItem('taskFiltersVisible', 'false');
+    }
+}
+
+// Initialize filter visibility based on localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const filterBody = document.getElementById('filterBody');
+    const toggleIcon = document.getElementById('filterToggleIcon');
+    const toggleButton = document.getElementById('toggleFilters');
+    
+    // Check if user previously hid filters
+    const filtersVisible = localStorage.getItem('taskFiltersVisible');
+    if (filtersVisible === 'false') {
+        filterBody.classList.add('filter-collapsed');
+        toggleIcon.className = 'fas fa-chevron-down';
+        toggleButton.title = '{{ _('Show Filters') }}';
+    }
+    
+    // Add transition class after initial setup
+    setTimeout(() => {
+        filterBody.classList.add('filter-toggle-transition');
+    }, 100);
+});
+</script>
 </div>
 {% endblock %}

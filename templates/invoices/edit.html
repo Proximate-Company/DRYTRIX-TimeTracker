@@ -262,10 +262,10 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> {{ _('Cancel') }}
+                                        <i class="fas fa-times me-2"></i>{{ _('Cancel') }}
                                     </a>
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> {{ _('Update Invoice') }}
+                                        <i class="fas fa-save me-2"></i>{{ _('Update Invoice') }}
                                     </button>
                                 </div>
                             </div>
@@ -278,7 +278,7 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 let itemCounter = {{ invoice.items.count() }};
 
@@ -308,12 +308,13 @@ function addItemRow() {
             </td>
         </tr>
     `;
-    $('#itemsTableBody').append(newRow);
+    document.getElementById('itemsTableBody').insertAdjacentHTML('beforeend', newRow);
 }
 
 function removeItemRow(button) {
-    if ($('.item-row').length > 1) {
-        $(button).closest('tr').remove();
+    const itemRows = document.querySelectorAll('.item-row');
+    if (itemRows.length > 1) {
+        button.closest('tr').remove();
         calculateTotals();
     } else {
         alert('{{ _('At least one item is required.') }}');
@@ -321,45 +322,45 @@ function removeItemRow(button) {
 }
 
 function calculateRowTotal(input) {
-    const row = $(input).closest('tr');
-    const quantity = parseFloat(row.find('.quantity-input').val()) || 0;
-    const price = parseFloat(row.find('.price-input').val()) || 0;
+    const row = input.closest('tr');
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const price = parseFloat(row.querySelector('.price-input').value) || 0;
     const total = quantity * price;
     
-    row.find('.row-total').val(total.toFixed(2) + ' {{ currency }}');
+    row.querySelector('.row-total').value = total.toFixed(2) + ' {{ currency }}';
     calculateTotals();
 }
 
 function calculateTotals() {
     let subtotal = 0;
     
-    $('.item-row').each(function() {
-        const quantity = parseFloat($(this).find('.quantity-input').val()) || 0;
-        const price = parseFloat($(this).find('.price-input').val()) || 0;
+    document.querySelectorAll('.item-row').forEach(function(row) {
+        const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+        const price = parseFloat(row.querySelector('.price-input').value) || 0;
         subtotal += quantity * price;
     });
     
-    const taxRate = parseFloat($('#tax_rate').val()) || 0;
+    const taxRate = parseFloat(document.getElementById('tax_rate').value) || 0;
     const taxAmount = subtotal * (taxRate / 100);
     const total = subtotal + taxAmount;
     
     // Update summary fields
-    $('#subtotal').val(subtotal.toFixed(2) + ' {{ currency }}');
-    $('#taxAmount').val(taxAmount.toFixed(2) + ' {{ currency }}');
-    $('#totalAmount').val(total.toFixed(2) + ' {{ currency }}');
+    document.getElementById('subtotal').value = subtotal.toFixed(2) + ' {{ currency }}';
+    document.getElementById('taxAmount').value = taxAmount.toFixed(2) + ' {{ currency }}';
+    document.getElementById('totalAmount').value = total.toFixed(2) + ' {{ currency }}';
     
     // Update summary display
-    $('#summarySubtotal').text(subtotal.toFixed(2) + ' {{ currency }}');
-    $('#summaryTax').text(taxAmount.toFixed(2) + ' {{ currency }}');
-    $('#summaryTotal').text(total.toFixed(2) + ' {{ currency }}');
+    document.getElementById('summarySubtotal').textContent = subtotal.toFixed(2) + ' {{ currency }}';
+    document.getElementById('summaryTax').textContent = taxAmount.toFixed(2) + ' {{ currency }}';
+    document.getElementById('summaryTotal').textContent = total.toFixed(2) + ' {{ currency }}';
 }
 
 function useProjectRate() {
     const projectRate = {{ invoice.project.hourly_rate or 0 }};
     if (projectRate > 0) {
-        $('.price-input').val(projectRate.toFixed(2));
-        $('.price-input').each(function() {
-            calculateRowTotal(this);
+        document.querySelectorAll('.price-input').forEach(function(input) {
+            input.value = projectRate.toFixed(2);
+            calculateRowTotal(input);
         });
     } else {
         alert('{{ _('No hourly rate set for this project.') }}');
@@ -367,12 +368,12 @@ function useProjectRate() {
 }
 
 // Initialize calculations on page load
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     calculateTotals();
     
     // Set minimum due date to today
     const today = new Date().toISOString().split('T')[0];
-    $('#due_date').attr('min', today);
+    document.getElementById('due_date').setAttribute('min', today);
 });
 </script>
 {% endblock %}

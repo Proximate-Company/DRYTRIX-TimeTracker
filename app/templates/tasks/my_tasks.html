@@ -93,11 +93,16 @@
     <!-- Filters -->
     <div class="card mobile-card mb-4">
         <div class="card-header">
-            <h6 class="mb-0">
-                <i class="fas fa-filter me-2 text-muted"></i>{{ _('Filter My Tasks') }}
-            </h6>
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter me-2 text-muted"></i>{{ _('Filter My Tasks') }}
+                </h6>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="toggleFilters" onclick="toggleFilterVisibility()" title="{{ _('Toggle Filters') }}">
+                    <i class="fas fa-chevron-up" id="filterToggleIcon"></i>
+                </button>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body" id="filterBody">
             <form method="GET" class="row g-3">
                 <div class="col-md-4 col-sm-6">
                     <label for="search" class="form-label">{{ _('Search') }}</label>
@@ -559,5 +564,56 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
+
+/* Filter toggle styles */
+.filter-collapsed {
+    display: none !important;
+}
+
+.filter-toggle-transition {
+    transition: all 0.3s ease-in-out;
+}
 </style>
+
+<script>
+function toggleFilterVisibility() {
+    const filterBody = document.getElementById('filterBody');
+    const toggleIcon = document.getElementById('filterToggleIcon');
+    const toggleButton = document.getElementById('toggleFilters');
+    
+    if (filterBody.classList.contains('filter-collapsed')) {
+        // Show filters
+        filterBody.classList.remove('filter-collapsed');
+        toggleIcon.className = 'fas fa-chevron-up';
+        toggleButton.title = '{{ _('Hide Filters') }}';
+        localStorage.setItem('myTaskFiltersVisible', 'true');
+    } else {
+        // Hide filters
+        filterBody.classList.add('filter-collapsed');
+        toggleIcon.className = 'fas fa-chevron-down';
+        toggleButton.title = '{{ _('Show Filters') }}';
+        localStorage.setItem('myTaskFiltersVisible', 'false');
+    }
+}
+
+// Initialize filter visibility based on localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const filterBody = document.getElementById('filterBody');
+    const toggleIcon = document.getElementById('filterToggleIcon');
+    const toggleButton = document.getElementById('toggleFilters');
+    
+    // Check if user previously hid filters
+    const filtersVisible = localStorage.getItem('myTaskFiltersVisible');
+    if (filtersVisible === 'false') {
+        filterBody.classList.add('filter-collapsed');
+        toggleIcon.className = 'fas fa-chevron-down';
+        toggleButton.title = '{{ _('Show Filters') }}';
+    }
+    
+    // Add transition class after initial setup
+    setTimeout(() => {
+        filterBody.classList.add('filter-toggle-transition');
+    }, 100);
+});
+</script>
 {% endblock %}

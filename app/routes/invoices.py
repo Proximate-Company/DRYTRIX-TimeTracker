@@ -410,7 +410,6 @@ def export_invoice_pdf(invoice_id):
         try:
             from app.utils.pdf_generator_fallback import InvoicePDFGeneratorFallback
             settings = Settings.get_settings()
-            flash(_('High-quality generator unavailable; using fallback PDF generator.'), 'warning')
             pdf_generator = InvoicePDFGeneratorFallback(invoice, settings=settings)
             pdf_bytes = pdf_generator.generate_pdf()
             filename = f'invoice_{invoice.invoice_number}.pdf'
