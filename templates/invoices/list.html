@@ -298,10 +298,65 @@
     color: var(--text-primary);
 }
 
-/* Ensure dropdown menus work properly */
+/* Force table containers to allow overflow for dropdowns */
+.table-responsive {
+    overflow: visible !important;
+    position: relative !important;
+}
+
+.card-body {
+    overflow: visible !important;
+}
+
+/* Ensure dropdown menus work properly with maximum z-index */
 .dropdown-menu {
-    z-index: 1050;
+    z-index: 9999 !important;
     min-width: 160px;
+    position: absolute !important;
+    transform: none !important;
+}
+
+/* Ensure dropdowns in table cells stack above ALL other content */
+.table .dropdown {
+    position: relative !important;
+    z-index: 9998 !important;
+}
+
+.table .dropdown.show {
+    z-index: 9999 !important;
+}
+
+.table .dropdown-menu {
+    z-index: 9999 !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: auto !important;
+    right: 0 !important;
+    transform: none !important;
+    margin-top: 0.25rem !important;
+}
+
+/* Ensure table and its containers don't clip dropdowns */
+.table {
+    overflow: visible !important;
+    position: relative !important;
+}
+
+.table tbody tr {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.table tbody tr:hover {
+    z-index: 2 !important;
+}
+
+/* Force dropdown visibility */
+.btn-group .dropdown-menu.show,
+.dropdown.show .dropdown-menu {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .dropdown-toggle::after {

@@ -14,7 +14,6 @@
       </div>
       <span class="fw-semibold">{{ _('Kanban Board') }}</span>
     </div>
-    <div id="kanban-alert" class="d-none"></div>
   </div>
 
   <div id="kanbanBoard" class="kanban-board">
@@ -128,8 +127,6 @@
 .kanban-card.dragging { opacity: 0.6; cursor: grabbing; }
 .kanban-column-body.drag-over { outline: 2px dashed var(--primary-color); outline-offset: -6px; background: rgba(59, 130, 246, 0.05); }
 .icon-circle { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
-#kanban-alert { width: 100%; }
-.alert-inline { margin: 0; padding: 6px 10px; }
 @media (max-width: 768px) { .kanban-board { grid-template-columns: repeat(1, minmax(260px, 1fr)); } }
 [data-theme="dark"] .kanban-column { background: #0f172a; border-color: var(--border-color); box-shadow: var(--card-shadow); }
 [data-theme="dark"] .kanban-column-header { background: #0f172a; border-color: var(--border-color); color: var(--text-secondary); box-shadow: 0 1px 0 rgba(255,255,255,0.04); }
@@ -152,16 +149,6 @@
   };
   const updateUrlTemplate = "{{ url_for('tasks.api_update_status', task_id=0) }}"; // will replace 0 with actual id
 
-  function showAlert(kind, msg) {
-    const holder = document.getElementById('kanban-alert');
-    if (!holder) return;
-    holder.className = '';
-    holder.classList.add('alert', 'alert-' + (kind === 'error' ? 'danger' : (kind === 'info' ? 'info' : 'success')), 'alert-inline');
-    holder.textContent = msg;
-    holder.classList.remove('d-none');
-    window.clearTimeout(holder._t);
-    holder._t = window.setTimeout(() => { holder.classList.add('d-none'); }, 2500);
-  }
 
   function updateCounts() {
     document.querySelectorAll('.kanban-column').forEach(col => {
@@ -232,7 +219,6 @@
         if (!data.success) {
           throw new Error(data.error || 'Update rejected');
         }
-        showAlert('success', '{{ _('Task moved to') }} ' + (statusLabels[targetStatus] || targetStatus));
       } catch (err) {
         // revert
         if (originalParent) originalParent.appendChild(card);
@@ -242,7 +228,6 @@
           statusBadge.textContent = statusLabels[originalStatus] || originalStatus;
         }
         updateCounts();
-        showAlert('error', err.message || '{{ _('Could not update task') }}');
       }
     });
   });

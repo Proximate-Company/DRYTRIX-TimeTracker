@@ -568,37 +568,42 @@
 </style>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Add hover effects to item rows
-    $('.item-row').hover(
-        function() {
-            $(this).addClass('table-active');
-        },
-        function() {
-            $(this).removeClass('table-active');
-        }
-    );
+    const itemRows = document.querySelectorAll('.item-row');
+    itemRows.forEach(function(row) {
+        row.addEventListener('mouseenter', function() {
+            this.classList.add('table-active');
+        });
+        row.addEventListener('mouseleave', function() {
+            this.classList.remove('table-active');
+        });
+    });
     
     // Status change confirmation
-    $('#statusModal form').on('submit', function(e) {
-        const newStatus = $('#new_status').val();
-        const currentStatus = '{{ invoice.status }}';
-        
-        if (newStatus === currentStatus) {
-            e.preventDefault();
-            alert('{{ _('The selected status is the same as the current status.') }}');
-            return false;
-        }
-        
-        if (newStatus === 'cancelled') {
-            if (!confirm('{{ _('Are you sure you want to cancel this invoice? This action cannot be undone.') }}')) {
+    const statusForm = document.querySelector('#statusModal form');
+    if (statusForm) {
+        statusForm.addEventListener('submit', function(e) {
+            const newStatusField = document.getElementById('new_status');
+            const newStatus = newStatusField ? newStatusField.value : '';
+            const currentStatus = '{{ invoice.status }}';
+            
+            if (newStatus === currentStatus) {
                 e.preventDefault();
+                alert('{{ _('The selected status is the same as the current status.') }}');
                 return false;
             }
-        }
-    });
+            
+            if (newStatus === 'cancelled') {
+                if (!confirm('{{ _('Are you sure you want to cancel this invoice? This action cannot be undone.') }}')) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

@@ -16,10 +16,10 @@
         <div class="col-12">
             {% set actions %}
             <a href="{{ url_for('timer.manual_entry') }}" class="btn-header btn-primary">
-                <i class="fas fa-plus"></i> {{ _('Log Time') }}
+                <i class="fas fa-plus me-2"></i>{{ _('Log Time') }}
             </a>
             <a href="{{ url_for('reports.reports') }}" class="btn-header btn-outline-primary">
-                <i class="fas fa-chart-line"></i> {{ _('Reports') }}
+                <i class="fas fa-chart-line me-2"></i>{{ _('Reports') }}
             </a>
             {% endset %}
             {{ page_header('fas fa-tachometer-alt', _('Dashboard'), _('Welcome back,') ~ ' ' ~ current_user.display_name ~ ' • ' ~ (today_hours|round(1)) ~ _('h today'), actions) }}
