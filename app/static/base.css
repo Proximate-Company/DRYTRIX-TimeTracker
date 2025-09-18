@@ -1542,7 +1542,7 @@ main {
 .navbar-nav.ms-auto { flex: 0 0 auto; }
 
 /* Allow wrapping to a second row on tighter widths (desktop too) */
-.navbar-nav { flex-wrap: wrap; row-gap: 0.25rem; column-gap: 0.25rem; }
+.navbar-nav { flex-wrap: wrap; row-gap: 0.25rem; column-gap: 0.25rem; background-color: white; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px;}
 .navbar-nav .nav-item { flex: 0 1 auto; min-width: 0; }
 
 /* body attribute now handled by CSS vars above */

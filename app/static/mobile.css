@@ -568,7 +568,7 @@
     }
     
     .mobile-btn {
-        width: 100%;
+        width: auto;
         margin-bottom: 0.75rem;
         padding: 1rem 1.5rem;
         font-size: 1rem;
