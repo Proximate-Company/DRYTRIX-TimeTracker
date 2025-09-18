@@ -107,7 +107,7 @@
                 <h6 class="mb-0">
                     <i class="fas fa-filter me-2 text-muted"></i>{{ _('Filter Tasks') }}
                 </h6>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="toggleFilters" onclick="toggleFilterVisibility()" title="{{ _('Toggle Filters') }}">
+                <button type="button" class="btn btn-sm" id="toggleFilters" onclick="toggleFilterVisibility()" title="{{ _('Toggle Filters') }}">
                     <i class="fas fa-chevron-up" id="filterToggleIcon"></i>
                 </button>
             </div>
@@ -327,6 +327,12 @@
     position: relative;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Prevent text wrapping and ensure badge fits content */
+    white-space: nowrap;
+    display: inline-block;
+    flex-shrink: 0;
+    min-width: fit-content;
+    max-width: none;
 }
 
 .status-badge::before {
@@ -394,7 +400,6 @@
 
 .priority-badge::before {
     content: '';
-    position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
@@ -772,6 +777,10 @@
     .status-badge, .priority-badge {
         font-size: 0.7rem;
         padding: 0.2rem 0.6rem;
+        /* Ensure badges don't wrap text on medium screens */
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: fit-content;
     }
     
     .task-description {
@@ -791,6 +800,14 @@
     .status-badge, .priority-badge {
         font-size: 0.65rem;
         padding: 0.15rem 0.5rem;
+        /* Ensure badges don't wrap text on small screens */
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: fit-content;
+        /* Slightly reduce font size for very long text */
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .task-title-link {

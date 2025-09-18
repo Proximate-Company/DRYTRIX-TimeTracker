@@ -346,6 +346,21 @@
 .filter-toggle-transition {
     transition: all 0.3s ease-in-out;
 }
+
+/* Table sorting styles */
+thead th[style*="cursor: pointer"]:hover {
+    background-color: var(--bs-gray-100);
+}
+
+thead th.sorted-asc::after {
+    content: " ▲";
+    color: var(--bs-primary);
+}
+
+thead th.sorted-desc::after {
+    content: " ▼";
+    color: var(--bs-primary);
+}
 </style>
 
 <script type="application/json" id="i18n-json-projects-list">
@@ -403,31 +418,8 @@ document.addEventListener('DOMContentLoaded', function() {
         filterBody.classList.add('filter-toggle-transition');
     }, 100);
     
-    // Initialize DataTable
-    const table = $('#projectsTable').DataTable({
-        order: [[0, 'asc']],
-        pageLength: 25,
-        language: {
-            search: i18nProjects.search_projects || 'Search projects:',
-            lengthMenu: i18nProjects.length_menu || 'Show _MENU_ projects per page',
-            info: i18nProjects.info || 'Showing _START_ to _END_ of _TOTAL_ projects'
-        },
-        responsive: true,
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12"tr>>' +
-             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-        columnDefs: [
-            { orderable: false, targets: -1 }
-        ]
-    });
-
-    // Custom search
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('keyup', function() {
-            table.search(this.value).draw();
-        });
-    }
+    // Initialize vanilla JavaScript table functionality
+    initializeProjectsTable();
 
     // Fill progress bars
     document.querySelectorAll('#projectsTable .progress-bar').forEach(el => {
@@ -436,18 +428,109 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function filterByStatus(status) {
-    const table = $('#projectsTable').DataTable();
-    if (status === 'all') {
-        table.column(2).search('').draw();
-    } else {
-        // Match the rendered localized badge text
-        const activeLabel = i18nProjects.status_active || 'Active';
-        const archivedLabel = i18nProjects.status_archived || 'Archived';
-        const label = status === 'active' ? activeLabel : archivedLabel;
-        const regex = `^${label}$`;
-        table.column(2).search(regex, true, false).draw();
+// Vanilla JavaScript table functionality
+function initializeProjectsTable() {
+    const table = document.getElementById('projectsTable');
+    const searchInput = document.getElementById('searchInput');
+    
+    if (!table) return;
+    
+    // Store original rows for filtering
+    const tbody = table.querySelector('tbody');
+    const originalRows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Search functionality
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            filterTable(searchTerm, 'all');
+        });
     }
+    
+    // Table sorting functionality
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach((header, index) => {
+        // Skip the actions column (last column)
+        if (index === headers.length - 1) return;
+        
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', () => sortTable(index));
+    });
+    
+    function filterTable(searchTerm, statusFilter) {
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            let textMatch = false;
+            let statusMatch = true;
+            
+            // Check text match in project name and description
+            if (cells[0]) {
+                const projectText = cells[0].textContent.toLowerCase();
+                textMatch = searchTerm === '' || projectText.includes(searchTerm);
+            }
+            
+            // Check status match
+            if (statusFilter !== 'all' && cells[2]) {
+                const statusText = cells[2].textContent.toLowerCase();
+                const activeLabel = (i18nProjects.status_active || 'Active').toLowerCase();
+                const archivedLabel = (i18nProjects.status_archived || 'Archived').toLowerCase();
+                
+                if (statusFilter === 'active') {
+                    statusMatch = statusText.includes(activeLabel);
+                } else if (statusFilter === 'archived') {
+                    statusMatch = statusText.includes(archivedLabel);
+                }
+            }
+            
+            row.style.display = (textMatch && statusMatch) ? '' : 'none';
+        });
+    }
+    
+    function sortTable(columnIndex) {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const isAscending = !table.dataset.sortAsc || table.dataset.sortAsc === 'false';
+        
+        rows.sort((a, b) => {
+            const aText = a.cells[columnIndex].textContent.trim();
+            const bText = b.cells[columnIndex].textContent.trim();
+            
+            // Try to parse as numbers for numeric columns
+            const aNum = parseFloat(aText.replace(/[^\d.-]/g, ''));
+            const bNum = parseFloat(bText.replace(/[^\d.-]/g, ''));
+            
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return isAscending ? aNum - bNum : bNum - aNum;
+            } else {
+                return isAscending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            }
+        });
+        
+        // Clear and re-append sorted rows
+        tbody.innerHTML = '';
+        rows.forEach(row => tbody.appendChild(row));
+        
+        // Update sort indicator
+        table.dataset.sortAsc = isAscending.toString();
+        
+        // Update header indicators
+        headers.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
+        headers[columnIndex].classList.add(isAscending ? 'sorted-asc' : 'sorted-desc');
+    }
+    
+    // Store the filter function for external use
+    window.filterProjectsTable = filterTable;
+}
+
+function filterByStatus(status) {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    
+    if (window.filterProjectsTable) {
+        window.filterProjectsTable(searchTerm, status);
+    }
+    
     document.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
     const active = document.querySelector(`[onclick="filterByStatus('${status}')"]`);
     if (active) active.classList.add('active');
