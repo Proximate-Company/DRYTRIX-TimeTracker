@@ -95,7 +95,9 @@
                             <li><a class="dropdown-item" href="{{ url_for('projects.list_projects') }}"><i class="fas fa-project-diagram me-2"></i>{{ _('Projects') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('clients.list_clients') }}"><i class="fas fa-building me-2"></i>{{ _('Clients') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('tasks.list_tasks') }}"><i class="fas fa-tasks me-2"></i>{{ _('Tasks') }}</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('timer.manual_entry') }}"><i class="fas fa-plus me-2"></i>{{ _('Log Time') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('timer.bulk_entry') }}"><i class="fas fa-calendar-plus me-2"></i>{{ _('Bulk Time Entry') }}</a></li>
                         </ul>
                     </li>
 
