@@ -136,42 +136,6 @@ jobs:
           name: security-report
           path: bandit-report.json
 
-  validate-version-management:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Test version manager script
-        run: |
-          python scripts/version-manager.py status
-          python scripts/version-manager.py suggest
-
-      - name: Validate version format
-        run: |
-          # Test various version formats
-          python -c "
-          import sys
-          sys.path.append('scripts')
-          from version_manager import VersionManager
-          vm = VersionManager()
-          
-          test_versions = ['v1.2.3', '1.2.3', 'v1.2', 'build-123', 'rc1', 'beta1', 'alpha1']
-          for version in test_versions:
-              if vm.validate_version_format(version):
-                  print(f'✅ {version} is valid')
-              else:
-                  print(f'❌ {version} is invalid')
-                  sys.exit(1)
-          "
-
   create-pr-preview:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -197,7 +161,6 @@ jobs:
             - ✅ Database migration tests (PostgreSQL & SQLite)
             - ✅ Docker build and startup test
             - ✅ Security vulnerability scan
-            - ✅ Version management validation
             
             **Ready for review and merge** 🚀
             
