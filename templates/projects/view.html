@@ -180,6 +180,22 @@
         </div>
     </div>
 
+    <!-- Comments -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-comments me-2"></i>{{ _('Project Comments') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% include 'comments/_comments_section.html' with context %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Time Entries -->
     <div class="row">
         <div class="col-12">
@@ -338,6 +354,41 @@
                 <form method="POST" id="deleteEntryForm" class="d-inline">
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash me-2"></i>{{ _('Delete Entry') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Comment Modal -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2 text-danger"></i>{{ _('Delete Comment') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>{{ _('Warning:') }}</strong> {{ _('This action cannot be undone.') }}
+                </div>
+                <p>{{ _('Are you sure you want to delete this comment?') }}</p>
+                <div id="comment-preview" class="bg-light p-3 rounded mt-3" style="display: none;">
+                    <div class="text-muted small mb-1">{{ _('Comment preview:') }}</div>
+                    <div id="comment-preview-text"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
+                </button>
+                <form method="POST" id="deleteCommentForm" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>{{ _('Delete Comment') }}
                     </button>
                 </form>
             </div>

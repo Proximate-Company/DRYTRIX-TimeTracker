@@ -170,7 +170,11 @@ def view_task(task_id):
     # Recent activity entries
     activities = task.activities.order_by(TaskActivity.created_at.desc()).limit(20).all()
     
-    return render_template('tasks/view.html', task=task, time_entries=time_entries, activities=activities)
+    # Get comments for this task
+    from app.models import Comment
+    comments = Comment.get_task_comments(task_id, include_replies=True)
+    
+    return render_template('tasks/view.html', task=task, time_entries=time_entries, activities=activities, comments=comments)
 
 @tasks_bp.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
 @login_required

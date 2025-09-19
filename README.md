@@ -106,6 +106,32 @@ A comprehensive web-based time tracking application built with Flask, featuring 
 - **Cost Estimation**: Estimated total cost based on billable hours and rates
 - **Performance Metrics**: Client-specific productivity and billing insights
 
+## 💬 Enhanced Comments System
+
+### Project & Task Discussions
+- **Contextual Comments**: Add comments directly to projects and tasks for better collaboration
+- **Threaded Conversations**: Reply to comments with nested discussions and visual hierarchy
+- **User Attribution**: Clear identification with user avatars and timestamps
+- **Real-time Interactions**: Inline editing and replying without page reloads
+
+### Comment Management
+- **Inline Editing**: Click to edit comments directly in the interface
+- **Permission System**: Users can edit/delete their own comments, admins manage all
+- **Soft Delete**: Comments with replies are preserved to maintain conversation structure
+- **Rich Formatting**: Support for line breaks and formatted text in comments
+
+### User Experience
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **Dark Theme Support**: Seamless integration with the application's theme system
+- **Loading States**: Visual feedback during comment operations
+- **Accessibility**: Proper ARIA labels and semantic HTML structure
+
+### Technical Features
+- **Database Integration**: Comments stored with proper relationships and indexing
+- **API Endpoints**: RESTful API for comment operations and retrieval
+- **Internationalization**: Full support for multi-language applications
+- **Migration Support**: Alembic migration for seamless database updates
+
 ## 📁 Data Standards & Import/Export
 
 ### Export Formats
@@ -155,10 +181,14 @@ The project has been organized for better maintainability:
 ```
 TimeTracker/
 ├── app/                    # Main Flask application
-│   ├── models/            # Database models
-│   ├── routes/            # Route handlers
+│   ├── models/            # Database models (User, Project, Task, Comment, etc.)
+│   ├── routes/            # Route handlers (auth, projects, tasks, comments, etc.)
 │   ├── static/            # Static assets (CSS, JS, images)
 │   ├── templates/         # HTML templates
+│   │   ├── comments/      # Comment system templates
+│   │   ├── projects/      # Project management templates
+│   │   ├── tasks/         # Task management templates
+│   │   └── ...            # Other feature templates
 │   └── utils/             # Utility functions
 ├── docs/                  # Documentation and README files
 ├── docker/                # Docker-related scripts and utilities
@@ -239,6 +269,8 @@ flask db current
 # View migration history
 flask db history
 ```
+
+**Note**: The Enhanced Comments System includes migration `013_add_comments_table.py` which creates the comments table with proper relationships and indexes. This migration will be automatically applied when running `flask db upgrade`.
 
 #### Quick Migration Setup
 ```bash
@@ -390,6 +422,7 @@ See [Version Management Documentation](docs/VERSION_MANAGEMENT.md) for detailed 
 - **Time Tracking**: Start/stop timer with project and task association; idle detection; single-active-timer mode; manual and automatic entry sources; rounding rules
 - **Client & Project Management**: Client organizations with contacts and default rates; project relationships; status management; error-preventing dropdowns; auto-populated rates
 - **Task Management**: Per-project tasks, categories, and task-level time tracking
+- **Enhanced Comments System**: Project and task discussions with threaded replies, inline editing, user attribution, and real-time interactions
 - **Invoicing**: Generate branded PDF invoices; billable hours, company branding/logo, currency, and rounding support
 - **Analytics & Reports**: Real-time stats, period analysis, project/user summaries, CSV export, visual analytics
 - **User & Roles**: Multi-user with role-based access control and admin panel
@@ -498,6 +531,7 @@ This project is licensed under the GNU General Public License v3.0 — see `LICE
 
 ## 🔄 Recent Updates
 
+- **Enhanced Comments System**: Added comprehensive commenting system for projects and tasks with threaded replies, inline editing, and real-time interactions
 - **Project Cleanup**: Reorganized project structure for better maintainability
 - **Docker Organization**: Consolidated Docker configurations and scripts
 - **Documentation**: Moved all documentation to dedicated `docs/` directory

@@ -27,6 +27,7 @@ class Task(db.Model):
     assigned_user = db.relationship('User', foreign_keys=[assigned_to], backref='assigned_tasks')
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_tasks')
     time_entries = db.relationship('TimeEntry', backref='task', lazy='dynamic', cascade='all, delete-orphan')
+    # comments relationship is defined via backref in Comment model
     
     def __init__(self, project_id, name, description=None, priority='medium', estimated_hours=None, 
                  due_date=None, assigned_to=None, created_by=None):
