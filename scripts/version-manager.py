@@ -179,8 +179,9 @@ class VersionManager:
             for commit in commits_since.split('\n')[:10]:  # Show last 10 commits
                 if commit.strip():
                     print(f"  {commit}")
-            if len(commits_since.split('\n')) > 10:
-                print(f"  ... and {len(commits_since.split('\n')) - 10} more")
+            commit_lines = commits_since.split('\n')
+            if len(commit_lines) > 10:
+                print(f"  ... and {len(commit_lines) - 10} more")
 
     def show_status(self):
         """Show current version status"""

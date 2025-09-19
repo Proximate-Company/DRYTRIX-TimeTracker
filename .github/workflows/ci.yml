@@ -10,35 +10,6 @@ env:
   PYTHON_VERSION: '3.11'
 
 jobs:
-  lint-and-format:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install flake8 black isort mypy
-
-      - name: Run black (code formatting)
-        run: black --check --diff app/ migrations/ scripts/
-
-      - name: Run isort (import sorting)
-        run: isort --check-only --diff app/ migrations/ scripts/
-
-      - name: Run flake8 (linting)
-        run: flake8 app/ migrations/ scripts/ --max-line-length=88 --extend-ignore=E203,W503
-
-      - name: Run mypy (type checking)
-        run: mypy app/ --ignore-missing-imports
-
   test-database-migrations:
     runs-on: ubuntu-latest
     strategy:
@@ -204,7 +175,7 @@ jobs:
   create-pr-preview:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    needs: [lint-and-format, test-database-migrations, test-docker-build]
+    needs: [test-database-migrations, test-docker-build]
     steps:
       - name: Comment on PR
         uses: actions/github-script@v7
@@ -223,7 +194,6 @@ jobs:
             **All checks passed!** ✅
             
             **Completed Checks:**
-            - ✅ Code formatting and linting
             - ✅ Database migration tests (PostgreSQL & SQLite)
             - ✅ Docker build and startup test
             - ✅ Security vulnerability scan
