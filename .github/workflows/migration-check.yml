@@ -15,6 +15,8 @@ on:
 jobs:
   validate-migrations:
     runs-on: ubuntu-latest
+    outputs:
+      migration_changes: ${{ steps.migration_check.outputs.migration_changes }}
     services:
       postgres:
         image: postgres:16-alpine
@@ -220,10 +222,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate-migrations
     if: github.event_name == 'pull_request' && always()
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
       - name: Comment migration status on PR
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const success = '${{ needs.validate-migrations.result }}' === 'success';
             const migrationChanges = '${{ needs.validate-migrations.outputs.migration_changes }}' === 'true';
