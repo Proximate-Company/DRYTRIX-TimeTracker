@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Bulk Time Entry') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+{% block extra_css %}
+<style>
+/* Bulk Entry alignment tweaks (light/dark consistent) */
+.bulk-entry .form-label { color: var(--text-primary); }
+.bulk-entry .card { border: 1px solid var(--border-color); }
+.bulk-entry .card-body .form-control,
+.bulk-entry .card-body .form-select { background: #ffffff; }
+[data-theme="dark"] .bulk-entry .card-body .form-control,
+[data-theme="dark"] .bulk-entry .card-body .form-select { background: #0f172a; color: var(--text-primary); border-color: var(--border-color); }
+.bulk-entry .form-control::placeholder { color: var(--text-muted); }
+[data-theme="dark"] .bulk-entry .form-control::placeholder { color: #64748b; }
+.bulk-entry .form-check-input { cursor: pointer; }
+
+/* Date range preview */
+.date-range-preview {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.date-range-preview.show {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.preview-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.preview-stat {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.preview-stat.secondary {
+    background: var(--secondary-color);
+}
+
+.preview-dates {
+    margin-top: 0.5rem;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+</style>
+{% endblock %}
+<div class="container-fluid bulk-entry">
+    {% from "_components.html" import page_header %}
+    <div class="row g-3">
+        <div class="col-12">
+            {% set actions %}
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-arrow-left"></i> {{ _('Back') }}
+            </a>
+            <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-clock"></i> {{ _('Single Entry') }}
+            </a>
+            {% endset %}
+            {{ page_header('fas fa-calendar-plus', _('Bulk Time Entry'), _('Create multiple time entries for consecutive days'), actions) }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0">
+                        <i class="fas fa-calendar-plus me-2 text-primary"></i>{{ _('Bulk Entry Form') }}
+                    </h6>
+                    <div class="d-none d-md-flex gap-2">
+                        <a href="{{ url_for('timer.bulk_entry') }}" class="btn-header btn-outline-primary">
+                            <i class="fas fa-rotate-right me-1"></i> {{ _('Reset') }}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('timer.bulk_entry') }}" id="bulkEntryForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="project_id" class="form-label fw-semibold">
+                                        <i class="fas fa-project-diagram me-1"></i>{{ _('Project') }} *
+                                    </label>
+                                    <select class="form-select" id="project_id" name="project_id" required>
+                                        <option value=""></option>
+                                        {% set selected_project_id = (request.form.get('project_id') or selected_project_id or '')|int %}
+                                        {% for project in projects %}
+                                            <option value="{{ project.id }}" {% if project.id == selected_project_id %}selected{% endif %}>{{ project.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{{ _('Select the project to log time for') }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {% set preselected_task_id = request.form.get('task_id') or selected_task_id %}
+                                <div class="mb-3">
+                                    <label for="task_id" class="form-label fw-semibold">
+                                        <i class="fas fa-tasks me-1"></i>{{ _('Task (optional)') }}
+                                    </label>
+                                    <select class="form-select" id="task_id" name="task_id" data-selected-task-id="{{ preselected_task_id or '' }}" disabled>
+                                        <option value=""></option>
+                                    </select>
+                                    <div class="form-text">{{ _('Tasks load after selecting a project') }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date Range Selection -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="mb-3 fw-semibold text-primary">
+                                            <i class="fas fa-calendar-alt me-1"></i>{{ _('Date Range') }} *
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-md-6">
+                                                <label for="start_date" class="form-label fw-semibold">{{ _('Start Date') }}</label>
+                                                <input type="date" class="form-control" name="start_date" id="start_date" required value="{{ request.form.get('start_date','') }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="end_date" class="form-label fw-semibold">{{ _('End Date') }}</label>
+                                                <input type="date" class="form-control" name="end_date" id="end_date" required value="{{ request.form.get('end_date','') }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input" type="checkbox" id="skip_weekends" name="skip_weekends" {% if request.form.get('skip_weekends') %}checked{% endif %}>
+                                            <label class="form-check-label" for="skip_weekends">
+                                                {{ _('Skip weekends (Saturday & Sunday)') }}
+                                            </label>
+                                        </div>
+                                        <!-- Date Range Preview -->
+                                        <div id="dateRangePreview" class="date-range-preview" style="display: none;">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <strong>{{ _('Preview') }}</strong>
+                                                <small class="text-muted">{{ _('Entries will be created for these dates') }}</small>
+                                            </div>
+                                            <div class="preview-stats" id="previewStats"></div>
+                                            <div class="preview-dates" id="previewDates"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time Range -->
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="mb-2 fw-semibold text-primary"><i class="fas fa-play me-1"></i>{{ _('Start Time') }} *</div>
+                                        <input type="time" class="form-control" name="start_time" id="start_time" required value="{{ request.form.get('start_time','') }}">
+                                        <div class="form-text">{{ _('Same start time for all days') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="mb-2 fw-semibold text-primary"><i class="fas fa-stop me-1"></i>{{ _('End Time') }} *</div>
+                                        <input type="time" class="form-control" name="end_time" id="end_time" required value="{{ request.form.get('end_time','') }}">
+                                        <div class="form-text">{{ _('Same end time for all days') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="my-3">
+                            <label for="notes" class="form-label fw-semibold">
+                                <i class="fas fa-sticky-note me-1"></i>{{ _('Notes') }}
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" style="height: 100px" placeholder="{{ _('What did you work on? (same notes for all entries)') }}">{{ request.form.get('notes','') }}</textarea>
+                        </div>
+
+                        <div class="row g-3 align-items-center">
+                            <div class="col-12 col-md-8">
+                                <div class="mb-3 mb-md-0">
+                                    <label for="tags" class="form-label fw-semibold">
+                                        <i class="fas fa-tags me-1"></i>{{ _('Tags') }}
+                                    </label>
+                                    <input type="text" class="form-control" id="tags" name="tags" placeholder="{{ _('tag1, tag2, tag3') }}" value="{{ request.form.get('tags','') }}">
+                                    <div class="form-text">{{ _('Separate tags with commas (same for all entries)') }}</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <div class="mb-3 mb-md-0">
+                                    <label class="form-label fw-semibold d-block" for="billable">
+                                        <i class="fas fa-dollar-sign me-1"></i>{{ _('Billable') }}
+                                    </label>
+                                    <div class="form-check form-switch d-flex align-items-center">
+                                        <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if request.form.get('billable') %}checked{% else %}checked{% endif %}>
+                                        <span class="ms-2 text-muted small">{{ _('Include in invoices') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between flex-column flex-md-row mt-3">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary mb-2 mb-md-0">
+                                <i class="fas fa-arrow-left me-1"></i> {{ _('Back') }}
+                            </a>
+                            <div class="btn-group" role="group">
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-save me-2"></i><span id="submitText">{{ _('Create Entries') }}</span>
+                                </button>
+                                <button type="reset" class="btn btn-outline-primary">
+                                    <i class="fas fa-broom me-2"></i>{{ _('Clear') }}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header">
+                    <h6 class="m-0">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>{{ _('Bulk Entry Tips') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="tip-item mb-3 d-flex gap-3">
+                        <div class="tip-icon text-primary"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="tip-content">
+                            <strong>{{ _('Date Range') }}</strong>
+                            <p class="small text-muted mb-0">{{ _('Select start and end dates. Entries will be created for each day in the range.') }}</p>
+                        </div>
+                    </div>
+                    <div class="tip-item mb-3 d-flex gap-3">
+                        <div class="tip-icon text-info"><i class="fas fa-calendar-times"></i></div>
+                        <div class="tip-content">
+                            <strong>{{ _('Skip Weekends') }}</strong>
+                            <p class="small text-muted mb-0">{{ _('Enable to automatically skip Saturdays and Sundays from the date range.') }}</p>
+                        </div>
+                    </div>
+                    <div class="tip-item mb-3 d-flex gap-3">
+                        <div class="tip-icon text-success"><i class="fas fa-clock"></i></div>
+                        <div class="tip-content">
+                            <strong>{{ _('Same Time Daily') }}</strong>
+                            <p class="small text-muted mb-0">{{ _('All entries will use the same start and end time each day.') }}</p>
+                        </div>
+                    </div>
+                    <div class="tip-item d-flex gap-3">
+                        <div class="tip-icon text-warning"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="tip-content">
+                            <strong>{{ _('Conflict Check') }}</strong>
+                            <p class="small text-muted mb-0">{{ _('System will check for existing time entries and prevent overlaps.') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-floating > label {
+    background-color: transparent;
+    color: var(--text-secondary);
+}
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select:focus ~ label,
+.form-floating > .form-select:not([value=""]) ~ label {
+    color: var(--primary-color);
+}
+
+/* Ensure task field label gets proper dark mode styling */
+#task_id:focus ~ label,
+#task_id:not([value=""]) ~ label {
+    color: var(--primary-color) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+}
+
+/* Fix form-text visibility in both light and dark modes */
+.form-text {
+    color: var(--text-muted) !important;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+
+[data-theme="dark"] .form-text {
+    color: var(--text-muted) !important;
+}
+
+.tip-icon { font-size: 18px; }
+
+/* Match invoices page look-and-feel */
+.card-header {
+    border-bottom: 1px solid var(--border-color);
+}
+.card.shadow-sm {
+    border: 1px solid var(--border-color);
+}
+.btn-outline-primary {
+    border-width: 1px;
+}
+.btn-outline-primary:hover {
+    color: #fff;
+}
+</style>
+
+<script type="application/json" id="i18n-json-timer-bulk">
+{
+  "no_task": {{ _('No task')|tojson }},
+  "failed_load": {{ _('Failed to load tasks')|tojson }},
+  "total_days": {{ _('Total days')|tojson }},
+  "weekdays_only": {{ _('Weekdays only')|tojson }},
+  "total_hours": {{ _('Total hours')|tojson }},
+  "entries_for": {{ _('Entries will be created for')|tojson }}
+}
+</script>
+<script>
+var i18nTimerBulk = (function(){ try{ var el=document.getElementById('i18n-json-timer-bulk'); return el?JSON.parse(el.textContent):{}; }catch(e){ return {}; } })();
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates to today
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toTimeString().slice(0, 5);
+    
+    if (!document.getElementById('start_date').value) {
+        document.getElementById('start_date').value = today;
+    }
+    if (!document.getElementById('end_date').value) {
+        document.getElementById('end_date').value = today;
+    }
+    if (!document.getElementById('start_time').value) {
+        document.getElementById('start_time').value = '09:00';
+    }
+    if (!document.getElementById('end_time').value) {
+        document.getElementById('end_time').value = '17:00';
+    }
+    
+    // Mobile-specific improvements
+    if (window.innerWidth <= 768) {
+        // Add mobile-specific classes
+        const form = document.querySelector('form');
+        form.classList.add('mobile-form');
+        
+        // Improve touch targets
+        const inputs = document.querySelectorAll('.form-control, .form-select');
+        inputs.forEach(input => {
+            input.classList.add('touch-target');
+        });
+        
+        // Improve buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(btn => {
+            btn.classList.add('touch-target');
+        });
+    }
+    
+    // Handle mobile viewport changes
+    window.addEventListener('resize', function() {
+        if (window.innerWidth <= 768) {
+            document.body.classList.add('mobile-view');
+        } else {
+            document.body.classList.remove('mobile-view');
+        }
+    });
+
+    // Dynamic task loading based on project selection
+    const projectSelect = document.getElementById('project_id');
+    const taskSelect = document.getElementById('task_id');
+
+    const L = { 
+        noTask: i18nTimerBulk.no_task || 'No task', 
+        failedLoad: i18nTimerBulk.failed_load || 'Failed to load tasks',
+        totalDays: i18nTimerBulk.total_days || 'Total days',
+        weekdaysOnly: i18nTimerBulk.weekdays_only || 'Weekdays only',
+        totalHours: i18nTimerBulk.total_hours || 'Total hours',
+        entriesFor: i18nTimerBulk.entries_for || 'Entries will be created for'
+    };
+
+    async function loadTasksForProject(projectId) {
+        if (!projectId) {
+            taskSelect.innerHTML = '<option value="">' + L.noTask + '</option>';
+            taskSelect.disabled = true;
+            return;
+        }
+        try {
+            const resp = await fetch(`/api/tasks?project_id=${projectId}`);
+            if (!resp.ok) throw new Error(L.failedLoad);
+            const data = await resp.json();
+            const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+            taskSelect.innerHTML = '<option value="">' + L.noTask + '</option>';
+            tasks.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = String(t.id);
+                opt.textContent = t.name;
+                taskSelect.appendChild(opt);
+            });
+            // Preselect if provided
+            const preId = taskSelect.getAttribute('data-selected-task-id');
+            if (preId) {
+                const found = Array.from(taskSelect.options).some(o => o.value === preId);
+                if (found) taskSelect.value = preId;
+                // Clear after first use
+                taskSelect.setAttribute('data-selected-task-id', '');
+            }
+            taskSelect.disabled = false;
+        } catch (e) {
+            // On error, keep disabled
+            taskSelect.innerHTML = '<option value="">' + L.noTask + '</option>';
+            taskSelect.disabled = true;
+        }
+    }
+
+    // Initial load if project is already selected (from query/form)
+    if (projectSelect && projectSelect.value) {
+        loadTasksForProject(projectSelect.value);
+    }
+
+    // Reload tasks when project changes
+    projectSelect.addEventListener('change', function() {
+        // Clear any previous selection
+        taskSelect.value = '';
+        taskSelect.setAttribute('data-selected-task-id', '');
+        loadTasksForProject(this.value);
+    });
+
+    // Date range preview functionality
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    const skipWeekendsInput = document.getElementById('skip_weekends');
+    const startTimeInput = document.getElementById('start_time');
+    const endTimeInput = document.getElementById('end_time');
+    const previewDiv = document.getElementById('dateRangePreview');
+    const previewStats = document.getElementById('previewStats');
+    const previewDates = document.getElementById('previewDates');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+
+    function updatePreview() {
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        const skipWeekends = skipWeekendsInput.checked;
+        const startTime = startTimeInput.value;
+        const endTime = endTimeInput.value;
+
+        if (!startDate || !endDate) {
+            previewDiv.style.display = 'none';
+            return;
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (end < start) {
+            previewDiv.style.display = 'none';
+            return;
+        }
+
+        // Generate date list
+        const dates = [];
+        const current = new Date(start);
+        
+        while (current <= end) {
+            if (!skipWeekends || (current.getDay() !== 0 && current.getDay() !== 6)) {
+                dates.push(new Date(current));
+            }
+            current.setDate(current.getDate() + 1);
+        }
+
+        if (dates.length === 0) {
+            previewDiv.style.display = 'none';
+            return;
+        }
+
+        // Calculate total hours if times are provided
+        let totalHours = 0;
+        if (startTime && endTime) {
+            const startTimeDate = new Date(`2000-01-01T${startTime}:00`);
+            const endTimeDate = new Date(`2000-01-01T${endTime}:00`);
+            const diffMs = endTimeDate - startTimeDate;
+            const hoursPerDay = diffMs / (1000 * 60 * 60);
+            totalHours = hoursPerDay * dates.length;
+        }
+
+        // Update stats
+        previewStats.innerHTML = '';
+        
+        const totalDaysStat = document.createElement('span');
+        totalDaysStat.className = 'preview-stat';
+        totalDaysStat.textContent = `${dates.length} ${L.totalDays}`;
+        previewStats.appendChild(totalDaysStat);
+
+        if (skipWeekends) {
+            const weekdaysStat = document.createElement('span');
+            weekdaysStat.className = 'preview-stat secondary';
+            weekdaysStat.textContent = L.weekdaysOnly;
+            previewStats.appendChild(weekdaysStat);
+        }
+
+        if (totalHours > 0) {
+            const hoursStat = document.createElement('span');
+            hoursStat.className = 'preview-stat';
+            hoursStat.textContent = `${totalHours.toFixed(1)}h ${L.totalHours}`;
+            previewStats.appendChild(hoursStat);
+        }
+
+        // Update dates list
+        const dateStrings = dates.map(d => d.toLocaleDateString()).join(', ');
+        previewDates.textContent = `${L.entriesFor}: ${dateStrings}`;
+
+        // Update submit button text
+        submitText.textContent = `Create ${dates.length} Entries`;
+
+        // Show preview
+        previewDiv.style.display = 'block';
+        previewDiv.classList.add('show');
+    }
+
+    // Add event listeners for preview updates
+    [startDateInput, endDateInput, skipWeekendsInput, startTimeInput, endTimeInput].forEach(input => {
+        input.addEventListener('change', updatePreview);
+        input.addEventListener('input', updatePreview);
+    });
+
+    // Initial preview update
+    updatePreview();
+
+    // Form submission handling
+    document.getElementById('bulkEntryForm').addEventListener('submit', function(e) {
+        submitBtn.disabled = true;
+        submitText.textContent = 'Creating...';
+    });
+});
+</script>
+{% endblock %}
+
+

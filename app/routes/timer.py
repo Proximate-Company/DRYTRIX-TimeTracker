@@ -447,3 +447,188 @@ def manual_entry_for_project(project_id):
     
     return render_template('timer/manual_entry.html', projects=active_projects, 
                          selected_project_id=project_id, selected_task_id=task_id)
+
+@timer_bp.route('/timer/bulk', methods=['GET', 'POST'])
+@login_required
+def bulk_entry():
+    """Create bulk time entries for multiple days"""
+    # Get active projects for dropdown
+    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    
+    # Get project_id and task_id from query parameters for pre-filling
+    project_id = request.args.get('project_id', type=int)
+    task_id = request.args.get('task_id', type=int)
+    
+    if request.method == 'POST':
+        project_id = request.form.get('project_id', type=int)
+        task_id = request.form.get('task_id', type=int)
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        start_time = request.form.get('start_time')
+        end_time = request.form.get('end_time')
+        notes = request.form.get('notes', '').strip()
+        tags = request.form.get('tags', '').strip()
+        billable = request.form.get('billable') == 'on'
+        skip_weekends = request.form.get('skip_weekends') == 'on'
+        
+        # Validate required fields
+        if not all([project_id, start_date, end_date, start_time, end_time]):
+            flash('All fields are required', 'error')
+            return render_template('timer/bulk_entry.html', projects=active_projects, 
+                                selected_project_id=project_id, selected_task_id=task_id)
+        
+        # Check if project exists and is active
+        project = Project.query.filter_by(id=project_id, status='active').first()
+        if not project:
+            flash('Invalid project selected', 'error')
+            return render_template('timer/bulk_entry.html', projects=active_projects,
+                                selected_project_id=project_id, selected_task_id=task_id)
+        
+        # Validate task if provided
+        if task_id:
+            task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+            if not task:
+                flash('Invalid task selected', 'error')
+                return render_template('timer/bulk_entry.html', projects=active_projects,
+                                    selected_project_id=project_id, selected_task_id=task_id)
+        
+        # Parse and validate dates
+        try:
+            from datetime import datetime, timedelta
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            
+            if end_date_obj < start_date_obj:
+                flash('End date must be after or equal to start date', 'error')
+                return render_template('timer/bulk_entry.html', projects=active_projects,
+                                    selected_project_id=project_id, selected_task_id=task_id)
+            
+            # Check for reasonable date range (max 31 days)
+            if (end_date_obj - start_date_obj).days > 31:
+                flash('Date range cannot exceed 31 days', 'error')
+                return render_template('timer/bulk_entry.html', projects=active_projects,
+                                    selected_project_id=project_id, selected_task_id=task_id)
+        except ValueError:
+            flash('Invalid date format', 'error')
+            return render_template('timer/bulk_entry.html', projects=active_projects,
+                                selected_project_id=project_id, selected_task_id=task_id)
+        
+        # Parse and validate times
+        try:
+            start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+            end_time_obj = datetime.strptime(end_time, '%H:%M').time()
+            
+            if end_time_obj <= start_time_obj:
+                flash('End time must be after start time', 'error')
+                return render_template('timer/bulk_entry.html', projects=active_projects,
+                                    selected_project_id=project_id, selected_task_id=task_id)
+        except ValueError:
+            flash('Invalid time format', 'error')
+            return render_template('timer/bulk_entry.html', projects=active_projects,
+                                selected_project_id=project_id, selected_task_id=task_id)
+        
+        # Generate date range
+        current_date = start_date_obj
+        dates_to_create = []
+        
+        while current_date <= end_date_obj:
+            # Skip weekends if requested
+            if skip_weekends and current_date.weekday() >= 5:  # Saturday = 5, Sunday = 6
+                current_date += timedelta(days=1)
+                continue
+            
+            dates_to_create.append(current_date)
+            current_date += timedelta(days=1)
+        
+        if not dates_to_create:
+            flash('No valid dates found in the selected range', 'error')
+            return render_template('timer/bulk_entry.html', projects=active_projects,
+                                selected_project_id=project_id, selected_task_id=task_id)
+        
+        # Check for existing entries on the same dates/times
+        from app.models.time_entry import local_now
+        existing_entries = []
+        
+        for date_obj in dates_to_create:
+            start_datetime = datetime.combine(date_obj, start_time_obj)
+            end_datetime = datetime.combine(date_obj, end_time_obj)
+            
+            # Check for overlapping entries
+            overlapping = TimeEntry.query.filter(
+                TimeEntry.user_id == current_user.id,
+                TimeEntry.start_time <= end_datetime,
+                TimeEntry.end_time >= start_datetime,
+                TimeEntry.end_time.isnot(None)
+            ).first()
+            
+            if overlapping:
+                existing_entries.append(date_obj.strftime('%Y-%m-%d'))
+        
+        if existing_entries:
+            flash(f'Time entries already exist for these dates: {", ".join(existing_entries[:5])}{"..." if len(existing_entries) > 5 else ""}', 'error')
+            return render_template('timer/bulk_entry.html', projects=active_projects,
+                                selected_project_id=project_id, selected_task_id=task_id)
+        
+        # Create bulk entries
+        created_entries = []
+        
+        try:
+            for date_obj in dates_to_create:
+                start_datetime = datetime.combine(date_obj, start_time_obj)
+                end_datetime = datetime.combine(date_obj, end_time_obj)
+                
+                entry = TimeEntry(
+                    user_id=current_user.id,
+                    project_id=project_id,
+                    task_id=task_id,
+                    start_time=start_datetime,
+                    end_time=end_datetime,
+                    notes=notes,
+                    tags=tags,
+                    source='manual',
+                    billable=billable
+                )
+                
+                db.session.add(entry)
+                created_entries.append(entry)
+            
+            if not safe_commit('bulk_entry', {'user_id': current_user.id, 'project_id': project_id, 'count': len(created_entries)}):
+                flash('Could not create bulk entries due to a database error. Please check server logs.', 'error')
+                return render_template('timer/bulk_entry.html', projects=active_projects, 
+                                    selected_project_id=project_id, selected_task_id=task_id)
+            
+            task_name = ""
+            if task_id:
+                task = Task.query.get(task_id)
+                task_name = f" - {task.name}" if task else ""
+            
+            flash(f'Successfully created {len(created_entries)} time entries for {project.name}{task_name}', 'success')
+            return redirect(url_for('main.dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.exception("Error creating bulk entries: %s", e)
+            flash('An error occurred while creating bulk entries. Please try again.', 'error')
+            return render_template('timer/bulk_entry.html', projects=active_projects, 
+                                selected_project_id=project_id, selected_task_id=task_id)
+    
+    return render_template('timer/bulk_entry.html', projects=active_projects, 
+                         selected_project_id=project_id, selected_task_id=task_id)
+
+@timer_bp.route('/timer/bulk/<int:project_id>')
+@login_required
+def bulk_entry_for_project(project_id):
+    """Create bulk time entries for a specific project"""
+    task_id = request.args.get('task_id', type=int)
+    
+    # Check if project exists and is active
+    project = Project.query.filter_by(id=project_id, status='active').first()
+    if not project:
+        flash('Invalid project selected', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    # Get active projects for dropdown
+    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    
+    return render_template('timer/bulk_entry.html', projects=active_projects, 
+                         selected_project_id=project_id, selected_task_id=task_id)

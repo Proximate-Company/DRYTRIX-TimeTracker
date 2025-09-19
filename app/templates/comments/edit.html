@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Edit Comment') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-edit text-primary me-2"></i>
+                    {{ _('Edit Comment') }}
+                </h1>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>{{ _('Back') }}
+                </a>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <!-- Comment context -->
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <div>
+                                <strong>{{ _('Editing comment on:') }}</strong>
+                                {% if comment.project %}
+                                <a href="{{ url_for('projects.view_project', project_id=comment.project.id) }}" class="ms-2">
+                                    <i class="fas fa-project-diagram me-1"></i>{{ comment.project.name }}
+                                </a>
+                                {% elif comment.task %}
+                                <a href="{{ url_for('tasks.view_task', task_id=comment.task.id) }}" class="ms-2">
+                                    <i class="fas fa-tasks me-1"></i>{{ comment.task.name }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Original comment info -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="avatar-circle me-2">
+                                {{ (comment.author.full_name or comment.author.username)[0].upper() }}
+                            </div>
+                            <div>
+                                <strong>{{ comment.author.full_name or comment.author.username }}</strong>
+                                <div class="text-muted small">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ _('Originally posted on') }} {{ comment.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                    {% if comment.created_at != comment.updated_at %}
+                                    <br>
+                                    <i class="fas fa-edit me-1"></i>
+                                    {{ _('Last edited on') }} {{ comment.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Edit form -->
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="content" class="form-label">
+                                <i class="fas fa-comment me-1"></i>{{ _('Comment Content') }}
+                            </label>
+                            <textarea name="content" id="content" class="form-control" rows="6" required>{{ comment.content }}</textarea>
+                            <div class="form-text">
+                                {{ _('You can use line breaks to format your comment.') }}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>{{ _('Save Changes') }}
+                            </button>
+                            <a href="javascript:history.back()" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize textarea
+    const textarea = document.getElementById('content');
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+    
+    // Initial resize
+    textarea.style.height = 'auto';
+    textarea.style.height = (textarea.scrollHeight) + 'px';
+    
+    // Focus on textarea
+    textarea.focus();
+    
+    // Add loading state to form
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"></div>{{ _('Saving...') }}';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+</style>
+{% endblock %}

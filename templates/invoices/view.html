@@ -30,6 +30,13 @@
                     <a href="{{ url_for('invoices.edit_invoice', invoice_id=invoice.id) }}" class="btn btn-secondary">
                         <i class="fas fa-edit me-1"></i> {{ _('Edit') }}
                     </a>
+                    
+                    {% if invoice.payment_status != 'fully_paid' %}
+                    <a href="{{ url_for('invoices.record_payment', invoice_id=invoice.id) }}" 
+                       class="btn btn-success">
+                        <i class="fas fa-money-bill-wave me-1"></i> {{ _('Record Payment') }}
+                    </a>
+                    {% endif %}
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-info dropdown-toggle dropdown-toggle-split" 
                                 data-bs-toggle="dropdown" aria-expanded="false">
@@ -208,6 +215,148 @@
                 </div>
             </div>
 
+            <!-- Payment Status Summary -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card summary-card border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="summary-icon bg-success text-white me-3"><i class="fas fa-money-bill-wave"></i></div>
+                            <div>
+                                <div class="summary-label">{{ _('Amount Paid') }}</div>
+                                <div class="summary-value text-success">{{ "%.2f"|format(invoice.amount_paid or 0) }} {{ currency }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card summary-card border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="summary-icon bg-warning text-white me-3"><i class="fas fa-exclamation-circle"></i></div>
+                            <div>
+                                <div class="summary-label">{{ _('Outstanding') }}</div>
+                                <div class="summary-value text-warning">{{ "%.2f"|format(invoice.outstanding_amount) }} {{ currency }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card summary-card border-0 shadow-sm">
+                        <div class="card-body d-flex align-items-center">
+                            {% if invoice.payment_status == 'unpaid' %}
+                                <div class="summary-icon bg-danger text-white me-3"><i class="fas fa-times-circle"></i></div>
+                            {% elif invoice.payment_status == 'partially_paid' %}
+                                <div class="summary-icon bg-warning text-white me-3"><i class="fas fa-clock"></i></div>
+                            {% elif invoice.payment_status == 'fully_paid' %}
+                                <div class="summary-icon bg-success text-white me-3"><i class="fas fa-check-circle"></i></div>
+                            {% elif invoice.payment_status == 'overpaid' %}
+                                <div class="summary-icon bg-info text-white me-3"><i class="fas fa-plus-circle"></i></div>
+                            {% endif %}
+                            <div>
+                                <div class="summary-label">{{ _('Payment Status') }}</div>
+                                <div class="summary-value">
+                                    {% if invoice.payment_status == 'unpaid' %}
+                                        <span class="text-danger">{{ _('Unpaid') }}</span>
+                                    {% elif invoice.payment_status == 'partially_paid' %}
+                                        <span class="text-warning">{{ _('Partially Paid') }}</span>
+                                    {% elif invoice.payment_status == 'fully_paid' %}
+                                        <span class="text-success">{{ _('Fully Paid') }}</span>
+                                    {% elif invoice.payment_status == 'overpaid' %}
+                                        <span class="text-info">{{ _('Overpaid') }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card summary-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="summary-label mb-2">{{ _('Payment Progress') }}</div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" 
+                                     role="progressbar" 
+                                     style="width: {{ invoice.payment_percentage }}%"
+                                     aria-valuenow="{{ invoice.payment_percentage }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ "%.1f"|format(invoice.payment_percentage) }}% {{ _('paid') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Details -->
+            {% if invoice.payment_date or invoice.payment_method or invoice.payment_reference or invoice.payment_notes %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-receipt me-2"></i>
+                                {{ _('Payment Details') }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% if invoice.payment_date %}
+                                <div class="col-md-3">
+                                    <div class="payment-detail">
+                                        <span class="detail-label">{{ _('Payment Date:') }}</span>
+                                        <span class="detail-value">{{ invoice.payment_date.strftime('%B %d, %Y') }}</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if invoice.payment_method %}
+                                <div class="col-md-3">
+                                    <div class="payment-detail">
+                                        <span class="detail-label">{{ _('Payment Method:') }}</span>
+                                        <span class="detail-value">
+                                            {% if invoice.payment_method == 'cash' %}{{ _('Cash') }}
+                                            {% elif invoice.payment_method == 'check' %}{{ _('Check') }}
+                                            {% elif invoice.payment_method == 'bank_transfer' %}{{ _('Bank Transfer') }}
+                                            {% elif invoice.payment_method == 'credit_card' %}{{ _('Credit Card') }}
+                                            {% elif invoice.payment_method == 'debit_card' %}{{ _('Debit Card') }}
+                                            {% elif invoice.payment_method == 'paypal' %}{{ _('PayPal') }}
+                                            {% elif invoice.payment_method == 'stripe' %}{{ _('Stripe') }}
+                                            {% elif invoice.payment_method == 'wire_transfer' %}{{ _('Wire Transfer') }}
+                                            {% else %}{{ invoice.payment_method|title }}{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if invoice.payment_reference %}
+                                <div class="col-md-3">
+                                    <div class="payment-detail">
+                                        <span class="detail-label">{{ _('Payment Reference:') }}</span>
+                                        <span class="detail-value">{{ invoice.payment_reference }}</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if invoice.payment_notes %}
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="payment-detail">
+                                        <span class="detail-label">{{ _('Payment Notes:') }}</span>
+                                        <div class="detail-value">{{ invoice.payment_notes|nl2br }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Enhanced Invoice Items -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -383,6 +532,21 @@
 </div>
 
 <style>
+.payment-detail {
+    margin-bottom: 1rem;
+}
+
+.payment-detail .detail-label {
+    font-weight: 600;
+    color: #6c757d;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.payment-detail .detail-value {
+    font-weight: 500;
+    color: #495057;
+}
 .status-badge-large {
     padding: 8px 16px;
     border-radius: 25px;

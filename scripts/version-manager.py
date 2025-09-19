@@ -179,8 +179,9 @@ class VersionManager:
             for commit in commits_since.split('\n')[:10]:  # Show last 10 commits
                 if commit.strip():
                     print(f"  {commit}")
-            if len(commits_since.split('\n')) > 10:
-                print(f"  ... and {len(commits_since.split('\n')) - 10} more")
+            commit_lines = commits_since.split('\n')
+            if len(commit_lines) > 10:
+                print(f"  ... and {len(commit_lines) - 10} more")
 
     def show_status(self):
         """Show current version status"""
@@ -199,13 +200,16 @@ class VersionManager:
 
 def main():
     parser = argparse.ArgumentParser(description='Version Manager for TimeTracker')
-    parser.add_argument('action', choices=['tag', 'build', 'list', 'info', 'status', 'suggest'], 
+    parser.add_argument('action', choices=['tag', 'build', 'list', 'info', 'status', 'suggest', 'release', 'changelog'], 
                        help='Action to perform')
     parser.add_argument('--version', '-v', help='Version string (e.g., v1.2.3, build-123)')
     parser.add_argument('--message', '-m', help='Tag message')
     parser.add_argument('--build-number', '-b', type=int, help='Build number for build tags')
     parser.add_argument('--no-push', action='store_true', help='Don\'t push tag to remote')
     parser.add_argument('--tag', '-t', help='Tag to show info for (for info action)')
+    parser.add_argument('--pre-release', action='store_true', help='Mark as pre-release')
+    parser.add_argument('--changelog', action='store_true', help='Generate changelog')
+    parser.add_argument('--github-release', action='store_true', help='Create GitHub release')
     
     args = parser.parse_args()
     
@@ -240,6 +244,57 @@ def main():
         else:
             print("No current version found")
             print("Suggested first version: v1.0.0")
+    
+    elif args.action == 'release':
+        if not args.version:
+            print("Error: Version required for release action")
+            print("Use --version or -v to specify version")
+            sys.exit(1)
+        
+        print(f"🚀 Creating release {args.version}...")
+        
+        # Create tag
+        if vm.create_tag(args.version, args.message, push=not args.no_push):
+            print(f"✅ Tag {args.version} created successfully")
+            
+            # Generate changelog if requested
+            if args.changelog:
+                print("📋 Generating changelog...")
+                changelog_cmd = f"python scripts/generate-changelog.py {args.version}"
+                if vm.run_command(changelog_cmd, capture_output=False):
+                    print("✅ Changelog generated successfully")
+                else:
+                    print("⚠️ Changelog generation failed")
+            
+            # Create GitHub release if requested
+            if args.github_release:
+                print("🐙 Creating GitHub release...")
+                github_cmd = f"gh release create {args.version}"
+                if args.pre_release:
+                    github_cmd += " --prerelease"
+                if args.changelog and os.path.exists("CHANGELOG.md"):
+                    github_cmd += " --notes-file CHANGELOG.md"
+                elif args.message:
+                    github_cmd += f" --notes '{args.message}'"
+                
+                if vm.run_command(github_cmd, capture_output=False):
+                    print("✅ GitHub release created successfully")
+                else:
+                    print("⚠️ GitHub release creation failed (make sure 'gh' CLI is installed and authenticated)")
+        else:
+            print("❌ Failed to create tag")
+            sys.exit(1)
+    
+    elif args.action == 'changelog':
+        current_tag = vm.get_latest_tag()
+        version = args.version or vm.suggest_next_version(current_tag)
+        
+        print(f"📋 Generating changelog for {version}...")
+        changelog_cmd = f"python scripts/generate-changelog.py {version}"
+        if vm.run_command(changelog_cmd, capture_output=False):
+            print("✅ Changelog generated successfully")
+        else:
+            print("❌ Changelog generation failed")
 
 if __name__ == '__main__':
     main()

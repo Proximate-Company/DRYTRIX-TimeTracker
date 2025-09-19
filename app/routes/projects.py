@@ -166,12 +166,17 @@ def view_project(project_id):
     # Get user totals
     user_totals = project.get_user_totals()
     
+    # Get comments for this project
+    from app.models import Comment
+    comments = Comment.get_project_comments(project_id, include_replies=True)
+    
     return render_template('projects/view.html', 
                          project=project, 
                          entries=entries_pagination.items,
                          pagination=entries_pagination,
                          tasks=tasks,
-                         user_totals=user_totals)
+                         user_totals=user_totals,
+                         comments=comments)
 
 @projects_bp.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
 @login_required

@@ -1,0 +1,260 @@
+name: Release Management
+
+on:
+  release:
+    types: [published, edited]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.2.3)'
+        required: true
+        type: string
+      pre_release:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+      generate_changelog:
+        description: 'Auto-generate changelog'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: drytrix/timetracker
+
+jobs:
+  validate-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      is_prerelease: ${{ steps.validate.outputs.is_prerelease }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release version
+        id: validate
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            IS_PRERELEASE="${{ github.event.inputs.pre_release }}"
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+            IS_PRERELEASE="${{ github.event.release.prerelease }}"
+          fi
+          
+          # Validate semantic version format
+          if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: v1.2.3 or v1.2.3-alpha.1"
+            exit 1
+          fi
+          
+          echo "✅ Version validated: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+  run-tests:
+    runs-on: ubuntu-latest
+    needs: validate-release
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run database migrations test
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          FLASK_APP: app.py
+        run: |
+          flask db upgrade
+          python -c "from app import create_app, db; app = create_app(); app.app_context().push(); print('✅ Database connection successful')"
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: |
+          if [ -d "tests" ]; then
+            pytest tests/ -v --cov=app --cov-report=xml
+          else
+            echo "⚠️ No tests directory found, skipping tests"
+          fi
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: [validate-release, run-tests]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ needs.validate-release.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  generate-changelog:
+    runs-on: ubuntu-latest
+    needs: validate-release
+    if: github.event.inputs.generate_changelog == 'true' || github.event_name == 'release'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous release tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          CURRENT_TAG="${{ needs.validate-release.outputs.version }}"
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## Changes since $PREVIOUS_TAG" > changelog.md
+            echo "" >> changelog.md
+            
+            # Get commits since last tag
+            git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> changelog.md
+          else
+            echo "## Initial Release" > changelog.md
+            echo "" >> changelog.md
+            echo "- Initial release of TimeTracker" >> changelog.md
+          fi
+          
+          # Upload changelog as artifact
+          cat changelog.md
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: changelog.md
+
+  update-documentation:
+    runs-on: ubuntu-latest
+    needs: [validate-release, build-and-push]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update version in documentation
+        run: |
+          VERSION="${{ needs.validate-release.outputs.version }}"
+          
+          # Update README.md with new version
+          if grep -q "Version:" README.md; then
+            sed -i "s/Version: .*/Version: $VERSION/" README.md
+          else
+            echo "Version: $VERSION" >> README.md
+          fi
+          
+          # Update docker-compose examples with new version
+          find . -name "docker-compose*.yml" -exec sed -i "s|ghcr.io/drytrix/timetracker:.*|ghcr.io/drytrix/timetracker:$VERSION|g" {} \;
+
+      - name: Commit version updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: update version references to ${{ needs.validate-release.outputs.version }}"
+            git push
+          fi
+
+  notify-deployment:
+    runs-on: ubuntu-latest
+    needs: [validate-release, build-and-push, update-documentation]
+    if: always() && needs.build-and-push.result == 'success'
+    steps:
+      - name: Create deployment summary
+        run: |
+          echo "# 🚀 Release Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.validate-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Pre-release:** ${{ needs.validate-release.outputs.is_prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.validate-release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Deployment Commands" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Run" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -d -p 8080:8080 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.validate-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Compose" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`yaml" >> $GITHUB_STEP_SUMMARY
+          echo "services:" >> $GITHUB_STEP_SUMMARY
+          echo "  app:" >> $GITHUB_STEP_SUMMARY
+          echo "    image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.validate-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "    ports:" >> $GITHUB_STEP_SUMMARY
+          echo "      - \"8080:8080\"" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
