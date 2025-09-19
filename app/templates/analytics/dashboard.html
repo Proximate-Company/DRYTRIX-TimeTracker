@@ -199,12 +199,32 @@
     }
   </script>
   <script>
-    var i18n_analytics = (function(){
+    // Ensure i18n_analytics is always defined globally
+    window.i18n_analytics = (function(){
         try {
             var el = document.getElementById('i18n-json-analytics-dashboard');
-            return el ? JSON.parse(el.textContent) : {};
-        } catch (e) { return {}; }
+            return el ? JSON.parse(el.textContent) : {
+                "error_loading_charts": "Failed to load charts. Please try again.",
+                "error_refreshing_charts": "Failed to refresh charts. Please try again.",
+                "hours_label": "Hours",
+                "date_label": "Date",
+                "hour_of_day_label": "Hour of Day",
+                "revenue_label": "Revenue"
+            };
+        } catch (e) { 
+            return {
+                "error_loading_charts": "Failed to load charts. Please try again.",
+                "error_refreshing_charts": "Failed to refresh charts. Please try again.",
+                "hours_label": "Hours",
+                "date_label": "Date",
+                "hour_of_day_label": "Hour of Day",
+                "revenue_label": "Revenue"
+            };
+        }
     })();
+    
+    // Also make it available as a local variable for backward compatibility
+    var i18n_analytics = window.i18n_analytics;
   </script>
 {% endblock %}
 

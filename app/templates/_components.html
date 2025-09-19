@@ -1,11 +1,20 @@
 {% macro page_header(icon_class, title_text, subtitle_text=None, actions_html=None) %}
-<div class="card stats-card hover-lift mb-4">
-    <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+<div class="card hover-lift mb-4 border-0" style="background: linear-gradient(135deg, var(--surface-color) 0%, var(--surface-variant) 100%);">
+    <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center py-4">
         <div class="mb-3 mb-md-0">
-            <h1 class="h3 mb-1">{% if icon_class %}<i class="{{ icon_class }} me-2"></i>{% endif %}{{ _(title_text) }}</h1>
-            {% if subtitle_text %}
-            <p class="mb-0 text-muted">{{ _(subtitle_text) }}</p>
-            {% endif %}
+            <div class="d-flex align-items-center mb-2">
+                {% if icon_class %}
+                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
+                    <i class="{{ icon_class }} text-primary fa-lg"></i>
+                </div>
+                {% endif %}
+                <div>
+                    <h1 class="h2 mb-1 fw-bold" style="background: linear-gradient(135deg, var(--text-primary), var(--primary-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">{{ _(title_text) }}</h1>
+                    {% if subtitle_text %}
+                    <p class="mb-0 text-muted fs-6">{{ _(subtitle_text) }}</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
         <div class="d-flex flex-wrap gap-2 align-items-center">
             {{ actions_html|safe if actions_html }}
@@ -14,36 +23,116 @@
 </div>
 {% endmacro %}
 
-{% macro summary_card(icon_class, icon_color, label, value) %}
-<div class="card border-0 shadow-sm h-100 summary-card">
-    <div class="card-body p-3">
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0">
-                <div class="summary-icon bg-{{ icon_color }} bg-opacity-10 text-{{ icon_color }}">
-                    <i class="{{ icon_class }}"></i>
-                </div>
+{% macro summary_card(icon_class, icon_color, label, value, trend=None) %}
+<div class="card h-100 hover-lift border-0 position-relative overflow-hidden">
+    <div class="position-absolute top-0 start-0 w-100 h-1" style="background: linear-gradient(90deg, var(--{{ icon_color }}-color), var(--{{ icon_color }}-light));"></div>
+    <div class="card-body text-center py-4">
+        <div class="bg-{{ icon_color }} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 72px; height: 72px; backdrop-filter: blur(8px);">
+            <i class="{{ icon_class }} text-{{ icon_color }} fa-2x"></i>
+        </div>
+        <h3 class="h2 text-{{ icon_color }} mb-2 fw-bold" style="font-family: var(--font-family-mono);">{{ value }}</h3>
+        <p class="mb-0 text-muted fw-medium text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.5px;">{{ _(label) }}</p>
+        {% if trend %}
+        <div class="mt-2">
+            <small class="text-{{ 'success' if trend > 0 else 'danger' if trend < 0 else 'muted' }}">
+                <i class="fas fa-{{ 'arrow-up' if trend > 0 else 'arrow-down' if trend < 0 else 'minus' }} me-1"></i>
+                {{ trend }}%
+            </small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro empty_state(icon_class, title, message, actions_html=None) %}
+<div class="text-center py-5 px-3">
+    <div class="position-relative mx-auto mb-4" style="width: 120px; height: 120px;">
+        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center w-100 h-100 shadow-sm" style="backdrop-filter: blur(8px);">
+            <i class="{{ icon_class }} fa-3x text-muted opacity-75"></i>
+        </div>
+        <div class="position-absolute top-0 start-0 w-100 h-100 rounded-circle" style="background: linear-gradient(135deg, transparent, rgba(59, 130, 246, 0.05)); pointer-events: none;"></div>
+    </div>
+    <h4 class="mb-3 fw-semibold text-dark">{{ _(title) }}</h4>
+    <p class="text-muted mb-4 fs-6 lh-relaxed" style="max-width: 400px; margin-left: auto; margin-right: auto;">{{ _(message) }}</p>
+    {% if actions_html %}
+    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center align-items-center">
+        {{ actions_html|safe }}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro modern_button(text, url, icon_class=None, variant="primary", size="md", attributes="") %}
+<a href="{{ url }}" class="btn btn-{{ variant }}{% if size == 'sm' %} btn-sm{% elif size == 'lg' %} btn-lg{% endif %} shadow-sm" {{ attributes|safe }} style="backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+    {% if icon_class %}<i class="{{ icon_class }} me-2"></i>{% endif %}
+    {{ _(text) }}
+</a>
+{% endmacro %}
+
+{% macro status_badge(status, text=None) %}
+{% set status_map = {
+    'active': {'color': 'success', 'icon': 'fas fa-check-circle', 'bg': 'rgba(16, 185, 129, 0.1)'},
+    'inactive': {'color': 'secondary', 'icon': 'fas fa-pause-circle', 'bg': 'rgba(100, 116, 139, 0.1)'},
+    'pending': {'color': 'warning', 'icon': 'fas fa-clock', 'bg': 'rgba(245, 158, 11, 0.1)'},
+    'completed': {'color': 'success', 'icon': 'fas fa-check-circle', 'bg': 'rgba(16, 185, 129, 0.1)'},
+    'cancelled': {'color': 'danger', 'icon': 'fas fa-times-circle', 'bg': 'rgba(239, 68, 68, 0.1)'},
+    'draft': {'color': 'secondary', 'icon': 'fas fa-edit', 'bg': 'rgba(100, 116, 139, 0.1)'},
+    'published': {'color': 'primary', 'icon': 'fas fa-globe', 'bg': 'rgba(59, 130, 246, 0.1)'}
+} %}
+{% set config = status_map.get(status, {'color': 'secondary', 'icon': 'fas fa-circle', 'bg': 'rgba(100, 116, 139, 0.1)'}) %}
+<span class="badge text-{{ config.color }} px-3 py-2 fw-medium border-0 shadow-sm" style="background: {{ config.bg }}; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-size: 0.8rem; letter-spacing: 0.025em;">
+    <i class="{{ config.icon }} me-1 opacity-75"></i>
+    {{ _(text or status.title()) }}
+</span>
+{% endmacro %}
+
+{% macro info_card(title, content, icon_class=None, color="primary") %}
+<div class="card border-0 shadow-sm position-relative overflow-hidden">
+    <div class="position-absolute top-0 start-0 w-100" style="height: 3px; background: linear-gradient(90deg, var(--{{ color }}-color), var(--{{ color }}-light));"></div>
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start">
+            {% if icon_class %}
+            <div class="bg-{{ color }} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0 shadow-sm" style="width: 48px; height: 48px; backdrop-filter: blur(8px);">
+                <i class="{{ icon_class }} text-{{ color }}"></i>
             </div>
-            <div class="flex-grow-1 ms-3">
-                <div class="summary-label">{{ _(label) }}</div>
-                <div class="summary-value">{{ value }}</div>
+            {% endif %}
+            <div class="flex-grow-1">
+                <h6 class="fw-semibold mb-2 text-dark">{{ _(title) }}</h6>
+                <p class="mb-0 text-muted fs-6 lh-relaxed">{{ _(content) }}</p>
             </div>
         </div>
     </div>
 </div>
 {% endmacro %}
 
-{% macro empty_state(icon_class, title, message, actions_html=None) %}
-<div class="text-center py-5">
-    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-        <i class="{{ icon_class }} fa-2x text-muted"></i>
+{% macro progress_card(title, current, total, color="primary", show_percentage=True) %}
+{% set percentage = (current / total * 100) if total > 0 else 0 %}
+<div class="card h-100 hover-lift border-0 shadow-sm position-relative overflow-hidden">
+    <div class="position-absolute top-0 start-0 w-100" style="height: 2px; background: linear-gradient(90deg, var(--{{ color }}-color), var(--{{ color }}-light));"></div>
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-semibold mb-0 text-dark">{{ _(title) }}</h6>
+            {% if show_percentage %}
+            <span class="text-{{ color }} fw-bold fs-5" style="font-family: var(--font-family-mono);">{{ "%.0f%%"|format(percentage) }}</span>
+            {% endif %}
+        </div>
+        <div class="progress mb-3 shadow-sm" style="height: 10px; border-radius: var(--border-radius-full);">
+            <div class="progress-bar bg-{{ color }} position-relative overflow-hidden" role="progressbar" style="width: {{ percentage }}%; border-radius: var(--border-radius-full);">
+                <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent); animation: shimmer 2s infinite;"></div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted fw-medium">{{ current }} / {{ total }}</small>
+            <small class="text-muted">{{ total - current }} {{ _('remaining') }}</small>
+        </div>
     </div>
-    <h4 class="text-muted mb-2">{{ _(title) }}</h4>
-    <p class="text-muted mb-4">{{ _(message) }}</p>
-    {% if actions_html %}
-    <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
-        {{ actions_html|safe }}
-    </div>
-    {% endif %}
-    </div>
+</div>
+
+<style>
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+</style>
 {% endmacro %}
 

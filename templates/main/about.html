@@ -3,157 +3,187 @@
 {% block title %}{{ _('About') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
-{% from "_components.html" import page_header %}
+{% from "_components.html" import page_header, info_card, summary_card %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            {{ page_header('fas fa-info-circle', _('About'), _('Learn more about ') ~ app_name, None) }}
+            {{ page_header('fas fa-info-circle', _('About'), _('Professional time tracking and project management'), None) }}
         </div>
     </div>
+    
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-10">
+            <!-- Hero Section -->
             <div class="text-center mb-5">
                 {% if settings and settings.has_logo() %}
-            <img src="{{ settings.get_logo_url() }}" alt="{{ _('Company Logo') }}" class="mb-4" width="80" height="80">
-            {% else %}
-            <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="{{ _('DryTrix Logo') }}" class="mb-4" width="80" height="80">
-            {% endif %}
-                <h1 class="h2 mb-3">{{ _('About TimeTracker') }}</h1>
-                <p class="lead text-muted">
-                    {{ _('A simple, efficient time tracking solution for teams and individuals.') }}
-                </p>
-                <p class="text-muted">
-                    <strong>{{ _('Developed by DryTrix') }}</strong>
-                </p>
-            </div>
-
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> {{ _('What is') }} {{ app_name }}?
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p>
-                        {{ _('%(app)s is a web-based time tracking application designed for internal use within organizations.', app=app_name) }}
-                        {{ _('It provides a simple and intuitive interface for tracking time spent on various projects and tasks.') }}
-                    </p>
-                    <p>
-                        Built with modern web technologies, it offers real-time timer functionality, comprehensive reporting, 
-                        and user management features while maintaining simplicity and ease of use.
-                    </p>
-                </div>
-            </div>
-
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0">
-                                <i class="fas fa-star"></i> {{ _('Key Features') }}
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    {{ _('Real-time timer tracking') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    {{ _('Project and client management') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    {{ _('Comprehensive reporting') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    {{ _('User role management') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    {{ _('Billable time tracking') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    {{ _('Data export capabilities') }}
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0">
-                                <i class="fas fa-cogs"></i> {{ _('Technology') }}
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i class="fas fa-code text-primary me-2"></i>
-                                    {{ _('Python 3.11+') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-code text-primary me-2"></i>
-                                    {{ _('Flask web framework') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-code text-primary me-2"></i>
-                                    {{ _('SQLAlchemy ORM') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-code text-primary me-2"></i>
-                                    {{ _('Bootstrap 5 UI') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-code text-primary me-2"></i>
-                                    {{ _('WebSocket support') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-code text-primary me-2"></i>
-                                    {{ _('Docker deployment') }}
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-building"></i> {{ _('About DryTrix') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <p>
-                                <strong>DryTrix</strong> is a software development company specializing in creating efficient, 
-                                user-friendly business applications. Our focus is on delivering solutions that streamline 
-                                workflows and improve productivity.
-                            </p>
-                            <p>
-                                TimeTracker represents our commitment to building software that is both powerful and 
-                                accessible, designed with the end-user in mind. We believe in creating tools that 
-                                teams actually want to use.
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            {% if settings and settings.has_logo() %}
-                <img src="{{ settings.get_logo_url() }}" alt="{{ _('Company Logo') }}" width="64" height="64">
+                <img src="{{ settings.get_logo_url() }}" alt="{{ _('Company Logo') }}" class="mb-4" width="80" height="80">
                 {% else %}
-                <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="{{ _('DryTrix Logo') }}" width="64" height="64">
+                <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="{{ _('DryTrix Logo') }}" class="mb-4" width="80" height="80">
                 {% endif %}
+                <h1 class="h2 mb-3">{{ _('TimeTracker') }}</h1>
+                <p class="lead text-muted mb-4">
+                    {{ _('A comprehensive web-based time tracking application built with Flask, featuring project management, client organization, task management, invoicing, and advanced analytics.') }}
+                </p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2">
+                        <i class="fas fa-clock me-1"></i> {{ _('Time Tracking') }}
+                    </span>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2">
+                        <i class="fas fa-project-diagram me-1"></i> {{ _('Project Management') }}
+                    </span>
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2">
+                        <i class="fas fa-file-invoice-dollar me-1"></i> {{ _('Invoicing') }}
+                    </span>
+                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2">
+                        <i class="fas fa-chart-line me-1"></i> {{ _('Analytics') }}
+                    </span>
+                </div>
+                <p class="text-muted mt-3">
+                    <strong>{{ _('Developed by DryTrix') }}</strong> • {{ _('Open Source') }} • {{ _('GPL v3.0 License') }}
+                </p>
+            </div>
+
+            <!-- Key Features Overview -->
+            <div class="row mb-5">
+                <div class="col-md-3 col-sm-6 mb-4">
+                    {{ summary_card('fas fa-stopwatch', 'primary', _('Smart Timers'), _('Real-time tracking with idle detection and WebSocket updates')) }}
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    {{ summary_card('fas fa-building', 'success', _('Client Management'), _('Organize clients with contacts, rates, and project relationships')) }}
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    {{ summary_card('fas fa-tasks', 'info', _('Task System'), _('Break down projects into manageable tasks with progress tracking')) }}
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    {{ summary_card('fas fa-file-pdf', 'warning', _('PDF Invoices'), _('Generate professional branded invoices from tracked time')) }}
+                </div>
+            </div>
+
+            <!-- Main Feature Sections -->
+            <div class="row">
+                <!-- Core Features -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-star text-warning"></i> {{ _('Core Features') }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ info_card(_('Time Tracking'), _('Start/stop timers with project association, idle detection, and real-time WebSocket updates'), 'fas fa-play-circle', 'primary') }}
+                            </div>
+                            <div class="mb-3">
+                                {{ info_card(_('Project Management'), _('Create and manage projects with client relationships, billing rates, and status tracking'), 'fas fa-project-diagram', 'success') }}
+                            </div>
+                            <div class="mb-3">
+                                {{ info_card(_('Client Organization'), _('Manage client contacts, default rates, and project relationships with error prevention'), 'fas fa-building', 'info') }}
+                            </div>
+                            <div class="mb-0">
+                                {{ info_card(_('Task Management'), _('Break projects into tasks with priorities, due dates, and progress tracking'), 'fas fa-tasks', 'warning') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Features -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-rocket text-primary"></i> {{ _('Advanced Features') }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ info_card(_('Professional Invoicing'), _('Generate branded PDF invoices with company logos, tax calculations, and payment tracking'), 'fas fa-file-invoice-dollar', 'primary') }}
+                            </div>
+                            <div class="mb-3">
+                                {{ info_card(_('Visual Analytics'), _('Comprehensive reporting with charts, trends, and export capabilities'), 'fas fa-chart-line', 'success') }}
+                            </div>
+                            <div class="mb-3">
+                                {{ info_card(_('Multi-User System'), _('Role-based access control with admin panel and user management'), 'fas fa-users', 'info') }}
+                            </div>
+                            <div class="mb-0">
+                                {{ info_card(_('API Integration'), _('RESTful API endpoints with JSON responses for third-party integrations'), 'fas fa-plug', 'warning') }}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Platform Support -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-globe"></i> {{ _('Platform Support') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <h6 class="fw-semibold">{{ _('Web Application') }}</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Desktop browsers (Chrome, Firefox, Safari, Edge)') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Mobile responsive design') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Progressive Web App (PWA) capabilities') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Touch-friendly tablet interface') }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <h6 class="fw-semibold">{{ _('Operating Systems') }}</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Windows, macOS, Linux') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Android and iOS (web browser)') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Raspberry Pi support') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Docker containerized deployment') }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <h6 class="fw-semibold">{{ _('Database Support') }}</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('PostgreSQL (recommended)') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('SQLite (development/testing)') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Automatic migrations with Flask-Migrate') }}</li>
+                                <li><i class="fas fa-check text-success me-2"></i>{{ _('Backup and restoration tools') }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical Specifications -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs"></i> {{ _('Technical Specifications') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="fw-semibold">{{ _('Technology Stack') }}</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-code text-primary me-2"></i><strong>{{ _('Backend') }}:</strong> Python 3.8+, Flask, SQLAlchemy</li>
+                                <li><i class="fas fa-palette text-success me-2"></i><strong>{{ _('Frontend') }}:</strong> Bootstrap 5, jQuery, Chart.js</li>
+                                <li><i class="fas fa-database text-info me-2"></i><strong>{{ _('Database') }}:</strong> PostgreSQL, SQLite</li>
+                                <li><i class="fas fa-server text-warning me-2"></i><strong>{{ _('Deployment') }}:</strong> Docker, Docker Compose</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="fw-semibold">{{ _('Key Capabilities') }}</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-bolt text-primary me-2"></i><strong>{{ _('Real-time') }}:</strong> WebSocket updates, live timers</li>
+                                <li><i class="fas fa-language text-success me-2"></i><strong>{{ _('i18n') }}:</strong> Multi-language support (Flask-Babel)</li>
+                                <li><i class="fas fa-shield-alt text-info me-2"></i><strong>{{ _('Security') }}:</strong> Session management, CSRF protection</li>
+                                <li><i class="fas fa-mobile-alt text-warning me-2"></i><strong>{{ _('Mobile') }}:</strong> Responsive design, touch optimized</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security & Privacy -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -161,51 +191,125 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p>
-                        {{ _('%(app)s is designed for internal use and prioritizes data security and privacy:', app=app_name) }}
+                    <p class="mb-4">
+                        {{ _('TimeTracker is designed with security and privacy as core principles:') }}
                     </p>
-                    <ul>
-                        <li>{{ _('Username-only authentication for simplicity') }}</li>
-                        <li>{{ _('Role-based access control') }}</li>
-                        <li>{{ _('Secure session management') }}</li>
-                        <li>{{ _('Data stored locally on your infrastructure') }}</li>
-                        <li>{{ _('No external data sharing or tracking') }}</li>
-                    </ul>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="fw-semibold">{{ _('Authentication & Access') }}</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-user-shield text-success me-2"></i>{{ _('Username-only authentication (no password required)') }}</li>
+                                <li><i class="fas fa-users-cog text-success me-2"></i>{{ _('Role-based access control (user/admin)') }}</li>
+                                <li><i class="fas fa-key text-success me-2"></i>{{ _('Secure session management with CSRF protection') }}</li>
+                                <li><i class="fas fa-lock text-success me-2"></i>{{ _('Configurable secure cookie settings') }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="fw-semibold">{{ _('Data Protection') }}</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-database text-info me-2"></i>{{ _('Data stored locally on your infrastructure') }}</li>
+                                <li><i class="fas fa-user-secret text-info me-2"></i>{{ _('No external data sharing or tracking') }}</li>
+                                <li><i class="fas fa-backup text-info me-2"></i>{{ _('Built-in backup and restoration capabilities') }}</li>
+                                <li><i class="fas fa-eye-slash text-info me-2"></i>{{ _('Optional metrics collection (fully configurable)') }}</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="card">
+            <!-- Open Source & Community -->
+            <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-question-circle"></i> {{ _('Getting Help') }}
+                        <i class="fas fa-code-branch"></i> {{ _('Open Source & Community') }}
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p>
-                        {{ _('Need help using %(app)s? Here are some resources:', app=app_name) }}
-                    </p>
                     <div class="row">
-                        <div class="col-md-6">
-                            <h6>{{ _('Documentation') }}</h6>
-                            <p class="text-muted small">
-                                {{ _('Check the help section for detailed instructions on using all features.') }}
-                            </p>
-                            <a href="{{ url_for('main.help') }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-book"></i> {{ _('View Help') }}
-                            </a>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="fw-semibold">{{ _('Open Source Benefits') }}</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-code text-primary me-2"></i>{{ _('Full source code available on GitHub') }}</li>
+                                <li><i class="fas fa-balance-scale text-primary me-2"></i>{{ _('Licensed under GPL v3.0') }}</li>
+                                <li><i class="fas fa-users text-primary me-2"></i>{{ _('Community-driven development') }}</li>
+                                <li><i class="fas fa-bug text-primary me-2"></i>{{ _('Transparent issue tracking and bug reports') }}</li>
+                            </ul>
                         </div>
-                        <div class="col-md-6">
-                            <h6>{{ _('System Information') }}</h6>
-                            <p class="text-muted small">
-                                {{ _('View system status and configuration details.') }}
-                            </p>
-                            {% if current_user.is_admin %}
-                            <a href="{{ url_for('admin.system_info') }}" class="btn btn-sm btn-outline-info">
-                                <i class="fas fa-info-circle"></i> {{ _('System Info') }}
-                            </a>
-                            {% else %}
-                            <span class="text-muted">{{ _('Admin access required') }}</span>
-                            {% endif %}
+                        <div class="col-md-6 mb-3">
+                            <h6 class="fw-semibold">{{ _('Deployment Options') }}</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-docker text-info me-2"></i>{{ _('Docker images available on GitHub Container Registry') }}</li>
+                                <li><i class="fas fa-server text-info me-2"></i>{{ _('Self-hosted deployment with full control') }}</li>
+                                <li><i class="fas fa-raspberry-pi text-info me-2"></i>{{ _('Raspberry Pi compatible for edge deployment') }}</li>
+                                <li><i class="fas fa-cloud text-info me-2"></i>{{ _('Cloud-ready with Docker Compose configurations') }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="https://github.com/drytrix/TimeTracker" target="_blank" rel="noopener" class="btn btn-outline-primary me-2">
+                            <i class="fab fa-github me-2"></i>{{ _('View on GitHub') }}
+                        </a>
+                        <a href="https://buymeacoffee.com/DryTrix" target="_blank" rel="noopener" class="btn btn-outline-warning">
+                            <i class="fas fa-mug-hot me-2"></i>{{ _('Support Development') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Getting Help -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle"></i> {{ _('Getting Help & Resources') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-book text-primary fa-2x"></i>
+                                </div>
+                                <h6 class="fw-semibold">{{ _('Documentation') }}</h6>
+                                <p class="text-muted small mb-3">
+                                    {{ _('Comprehensive help documentation with step-by-step guides for all features.') }}
+                                </p>
+                                <a href="{{ url_for('main.help') }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-book me-1"></i>{{ _('View Help') }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-info-circle text-success fa-2x"></i>
+                                </div>
+                                <h6 class="fw-semibold">{{ _('System Information') }}</h6>
+                                <p class="text-muted small mb-3">
+                                    {{ _('View system status, version information, and configuration details.') }}
+                                </p>
+                                {% if current_user.is_admin %}
+                                <a href="{{ url_for('admin.system_info') }}" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-info-circle me-1"></i>{{ _('System Info') }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted small">{{ _('Admin access required') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                    <i class="fab fa-github text-warning fa-2x"></i>
+                                </div>
+                                <h6 class="fw-semibold">{{ _('Community Support') }}</h6>
+                                <p class="text-muted small mb-3">
+                                    {{ _('Report issues, request features, and contribute to the project on GitHub.') }}
+                                </p>
+                                <a href="https://github.com/drytrix/TimeTracker/issues" target="_blank" rel="noopener" class="btn btn-outline-warning btn-sm">
+                                    <i class="fab fa-github me-1"></i>{{ _('GitHub Issues') }}
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -227,11 +227,11 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
-                                               class="btn btn-sm btn-outline-primary" title="{{ _('View Project') }}">
+                                               class="btn btn-sm btn-action btn-action--view" title="{{ _('View Project') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <a href="{{ url_for('reports.project_report') }}?project_id={{ project.id }}&{{ request.query_string.decode() }}" 
-                                               class="btn btn-sm btn-outline-secondary" title="{{ _('Filter by Project') }}">
+                                               class="btn btn-sm btn-action btn-action--more" title="{{ _('Filter by Project') }}">
                                                 <i class="fas fa-filter"></i>
                                             </a>
                                         </div>
