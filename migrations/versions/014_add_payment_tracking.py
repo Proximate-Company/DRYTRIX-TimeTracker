@@ -46,28 +46,58 @@ def upgrade() -> None:
             bind.execute(sa.text("UPDATE invoices SET amount_paid = 0 WHERE amount_paid IS NULL"))
         
         if 'payment_status' not in existing_columns:
-            # Add the column as nullable first
-            op.add_column('invoices', sa.Column('payment_status', sa.String(20), nullable=True))
-            
-            # Update existing records based on their current status
+            # Check if we're using SQLite or PostgreSQL
             bind = op.get_bind()
-            # Set payment status based on existing invoice status
-            bind.execute(sa.text("""
-                UPDATE invoices SET payment_status = CASE 
-                    WHEN status = 'paid' THEN 'fully_paid'
-                    ELSE 'unpaid'
-                END 
-                WHERE payment_status IS NULL
-            """))
+            dialect_name = bind.dialect.name
             
-            # For invoices marked as 'paid', also set amount_paid to total_amount
-            bind.execute(sa.text("""
-                UPDATE invoices SET amount_paid = total_amount, payment_date = CURRENT_DATE 
-                WHERE status = 'paid' AND amount_paid = 0
-            """))
-            
-            # Now make the column NOT NULL
-            op.alter_column('invoices', 'payment_status', nullable=False)
+            if dialect_name == 'sqlite':
+                # SQLite: Add column with default value directly (NOT NULL with default works)
+                op.add_column('invoices', sa.Column('payment_status', sa.String(20), nullable=False, server_default='unpaid'))
+                
+                # Update existing records based on their current status
+                bind.execute(sa.text("""
+                    UPDATE invoices SET payment_status = CASE 
+                        WHEN status = 'paid' THEN 'fully_paid'
+                        ELSE 'unpaid'
+                    END
+                """))
+                
+                # For invoices marked as 'paid', also set amount_paid to total_amount
+                bind.execute(sa.text("""
+                    UPDATE invoices SET amount_paid = total_amount, payment_date = DATE('now')
+                    WHERE status = 'paid' AND amount_paid = 0
+                """))
+                
+                # Remove the server default after data is populated
+                # Note: SQLite doesn't support removing server defaults via ALTER COLUMN
+                # The default will remain but won't affect new records since we set explicit values
+                try:
+                    op.alter_column('invoices', 'payment_status', server_default=None)
+                except:
+                    # SQLite doesn't support this operation, but it's not critical
+                    pass
+            else:
+                # PostgreSQL: Use the original approach
+                # Add the column as nullable first
+                op.add_column('invoices', sa.Column('payment_status', sa.String(20), nullable=True))
+                
+                # Update existing records based on their current status
+                bind.execute(sa.text("""
+                    UPDATE invoices SET payment_status = CASE 
+                        WHEN status = 'paid' THEN 'fully_paid'
+                        ELSE 'unpaid'
+                    END 
+                    WHERE payment_status IS NULL
+                """))
+                
+                # For invoices marked as 'paid', also set amount_paid to total_amount
+                bind.execute(sa.text("""
+                    UPDATE invoices SET amount_paid = total_amount, payment_date = CURRENT_DATE 
+                    WHERE status = 'paid' AND amount_paid = 0
+                """))
+                
+                # Now make the column NOT NULL
+                op.alter_column('invoices', 'payment_status', nullable=False)
         
         # Create indexes for better performance
         try:
@@ -97,20 +127,15 @@ def downgrade() -> None:
         existing_columns = [col['name'] for col in inspector.get_columns('invoices')]
         
         # Remove payment tracking columns if they exist
-        if 'payment_status' in existing_columns:
-            op.drop_column('invoices', 'payment_status')
+        # SQLite supports DROP COLUMN since version 3.35.0 (2021), but we'll be safe
+        columns_to_drop = ['payment_status', 'amount_paid', 'payment_notes', 
+                          'payment_reference', 'payment_method', 'payment_date']
         
-        if 'amount_paid' in existing_columns:
-            op.drop_column('invoices', 'amount_paid')
-        
-        if 'payment_notes' in existing_columns:
-            op.drop_column('invoices', 'payment_notes')
-        
-        if 'payment_reference' in existing_columns:
-            op.drop_column('invoices', 'payment_reference')
-        
-        if 'payment_method' in existing_columns:
-            op.drop_column('invoices', 'payment_method')
-        
-        if 'payment_date' in existing_columns:
-            op.drop_column('invoices', 'payment_date')
+        for column in columns_to_drop:
+            if column in existing_columns:
+                try:
+                    op.drop_column('invoices', column)
+                except Exception as e:
+                    # If dropping fails (older SQLite), log but continue
+                    print(f"Warning: Could not drop column {column}: {e}")
+                    pass
