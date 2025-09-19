@@ -223,13 +223,13 @@ jobs:
     needs: validate-migrations
     if: github.event_name == 'pull_request' && always()
     permissions:
-      issues: write
+      contents: read
       pull-requests: write
+      issues: write
     steps:
       - name: Comment migration status on PR
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const success = '${{ needs.validate-migrations.result }}' === 'success';
             const migrationChanges = '${{ needs.validate-migrations.outputs.migration_changes }}' === 'true';
