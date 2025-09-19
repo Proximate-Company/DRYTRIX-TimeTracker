@@ -1,6 +1,17 @@
 # TimeTracker - Professional Time Tracking Application
 
-A comprehensive web-based time tracking application built with Flask, featuring project management, time tracking, invoicing, and analytics.
+A comprehensive web-based time tracking application built with Flask, featuring complete project lifecycle management from time tracking to invoicing. Perfect for freelancers, teams, and businesses who need professional time tracking with client billing capabilities.
+
+## 🌟 Key Features Overview
+
+- **⏱️ Smart Time Tracking** - Automatic timers with idle detection, manual entry, and real-time updates
+- **👥 Client & Project Management** - Complete client database with project organization and billing rates
+- **📋 Task Management** - Break down projects into manageable tasks with progress tracking
+- **🧾 Professional Invoicing** - Generate branded PDF invoices with customizable layouts
+- **📊 Analytics & Reporting** - Comprehensive reports with visual analytics and data export
+- **🔐 Multi-User Support** - Role-based access control with admin and user roles
+- **🐳 Docker Ready** - Multiple deployment options with automatic database migration
+- **📱 Mobile Optimized** - Responsive design that works perfectly on all devices
 
 ## 📸 Screenshots
 
@@ -161,18 +172,209 @@ A comprehensive web-based time tracking application built with Flask, featuring 
 - **Authentication**: Secure API access with user authentication
 - **Real-time Updates**: WebSocket support for live data synchronization
 
-## 🚀 Quick Start
+## 🚀 Quick Start Guide
 
-### Prerequisites
-- Python 3.8+
-- Docker (optional)
-- PostgreSQL (recommended) or SQLite
+### 🐳 Docker Deployment (Recommended)
 
-### Installation
-1. Clone the repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Set up environment variables (see `env.example`)
-4. Run the application: `python app.py`
+#### Option 1: Local Development with PostgreSQL
+```bash
+# Clone the repository
+git clone https://github.com/drytrix/TimeTracker.git
+cd TimeTracker
+
+# Copy and configure environment
+cp env.example .env
+# Edit .env with your settings (optional - defaults work for testing)
+
+# Start with Docker Compose
+docker-compose up -d
+
+# Access the application
+open http://localhost:8080
+```
+
+#### Option 2: Quick Testing with SQLite
+```bash
+# Clone the repository
+git clone https://github.com/drytrix/TimeTracker.git
+cd TimeTracker
+
+# Start with SQLite (no database setup needed)
+docker-compose -f docker-compose.local-test.yml up --build
+
+# Access the application
+open http://localhost:8080
+```
+
+#### Option 3: Production Deployment with Pre-built Images
+```bash
+# Use production-ready images from GitHub Container Registry
+docker-compose -f docker-compose.remote.yml up -d
+
+# Or development version for testing
+docker-compose -f docker-compose.remote-dev.yml up -d
+```
+
+### 💻 Manual Installation
+
+#### Prerequisites
+- **Python 3.8+** (3.9+ recommended)
+- **PostgreSQL 12+** (recommended) or SQLite
+- **Git** for cloning the repository
+
+#### Step-by-Step Installation
+```bash
+# 1. Clone the repository
+git clone https://github.com/drytrix/TimeTracker.git
+cd TimeTracker
+
+# 2. Create virtual environment (recommended)
+python -m venv timetracker-env
+source timetracker-env/bin/activate  # Linux/macOS
+# or
+timetracker-env\Scripts\activate     # Windows
+
+# 3. Install Python dependencies
+pip install -r requirements.txt
+
+# 4. Set up environment variables
+cp env.example .env
+# Edit .env with your database and application settings
+
+# 5. Initialize the database
+python -c "from app import create_app; app = create_app(); app.app_context().push(); app.initialize_database()"
+
+# 6. Run the application
+python app.py
+```
+
+#### Database Setup
+
+**PostgreSQL (Recommended for production):**
+```bash
+# Install PostgreSQL and create database
+sudo apt-get install postgresql postgresql-contrib  # Ubuntu/Debian
+# or
+brew install postgresql                              # macOS
+
+# Create database and user
+sudo -u postgres createdb timetracker
+sudo -u postgres createuser --interactive timetracker
+
+# Set connection in .env file
+DATABASE_URL=postgresql+psycopg2://timetracker:password@localhost:5432/timetracker
+```
+
+**SQLite (Good for development):**
+```bash
+# SQLite requires no setup - just set in .env file
+DATABASE_URL=sqlite:///timetracker.db
+```
+
+### 🎯 First Time Setup
+
+#### 1. Access the Application
+- Open your browser and navigate to `http://localhost:8080`
+- You'll be redirected to the login page
+
+#### 2. Create Admin User
+- Enter username: `admin` (or any username you prefer)
+- The first user is automatically granted admin privileges
+- Admin usernames can be configured via `ADMIN_USERNAMES` environment variable
+
+#### 3. Configure System Settings
+1. Go to **Admin → System Settings**
+2. Set your company information (name, address, logo)
+3. Configure currency and timezone
+4. Adjust timer behavior (idle timeout, single active timer)
+5. Set default invoice terms and tax rates
+
+#### 4. Create Your First Client
+1. Navigate to **Clients → Create Client**
+2. Enter client name and contact information
+3. Set default hourly rate for automatic project setup
+
+#### 5. Create Your First Project
+1. Go to **Projects → Create Project**
+2. Select the client from dropdown
+3. Set project details and billing information
+4. Mark as billable if you plan to invoice
+
+#### 6. Start Tracking Time
+1. Use the dashboard timer to start tracking
+2. Select project (and task if available)
+3. Timer continues running even if you close the browser
+4. Stop timer when finished or let idle detection handle it
+
+### 🔧 Environment Configuration Examples
+
+#### Development Setup
+```bash
+# .env for development
+SECRET_KEY=dev-secret-key
+FLASK_ENV=development
+FLASK_DEBUG=true
+DATABASE_URL=sqlite:///timetracker.db
+TZ=America/New_York
+CURRENCY=USD
+ALLOW_SELF_REGISTER=true
+```
+
+#### Production Setup
+```bash
+# .env for production
+SECRET_KEY=your-very-secure-random-key-here
+FLASK_ENV=production
+FLASK_DEBUG=false
+DATABASE_URL=postgresql+psycopg2://timetracker:secure-password@db:5432/timetracker
+SESSION_COOKIE_SECURE=true
+REMEMBER_COOKIE_SECURE=true
+TZ=Europe/London
+CURRENCY=GBP
+ADMIN_USERNAMES=admin,manager
+ALLOW_SELF_REGISTER=false
+```
+
+### 🆘 Troubleshooting Quick Start
+
+#### Common Issues
+
+**Port Already in Use:**
+```bash
+# Check what's using port 8080
+lsof -i :8080
+
+# Use different port
+docker-compose up -d -e PORT=8081
+```
+
+**Database Connection Issues:**
+```bash
+# Check PostgreSQL status
+sudo systemctl status postgresql
+
+# Reset database (⚠️ destroys data)
+docker-compose down -v
+docker-compose up -d
+```
+
+**Permission Issues:**
+```bash
+# Fix Docker permissions (Linux)
+sudo chown -R $USER:$USER .
+```
+
+**Migration Issues:**
+```bash
+# Force database recreation
+python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.drop_all(); app.initialize_database()"
+```
+
+#### Getting Help
+- Check application logs: `docker-compose logs -f app`
+- Review documentation in the `docs/` directory
+- Open an issue on GitHub with error details
+- Verify all prerequisites are installed and up to date
 
 ## 📁 Project Structure
 
@@ -386,10 +588,18 @@ All docker-compose files support the following environment variables (set in `.e
 - **`POSTGRES_USER`** - Database user (default: timetracker)
 - **`POSTGRES_PASSWORD`** - Database password (default: timetracker)
 
-#### Useful Commands
+#### Useful Docker Commands
+
+**Basic Operations:**
 ```bash
-# View logs
+# View application logs
 docker-compose logs -f app
+
+# View database logs
+docker-compose logs -f db
+
+# View all services logs
+docker-compose logs -f
 
 # Stop all services
 docker-compose down
@@ -403,8 +613,249 @@ docker-compose up -d --build
 # Check service status
 docker-compose ps
 
+# Restart specific service
+docker-compose restart app
+```
+
+**Database Operations:**
+```bash
 # Access database directly
 docker-compose exec db psql -U timetracker -d timetracker
+
+# Create database backup
+docker-compose exec db pg_dump -U timetracker timetracker > backup.sql
+
+# Restore database backup
+docker-compose exec -T db psql -U timetracker -d timetracker < backup.sql
+
+# Check database connection
+docker-compose exec app python -c "from app import db; print('Database connected:', db.engine.execute('SELECT 1').scalar())"
+```
+
+**Troubleshooting Commands:**
+```bash
+# Check container health
+docker-compose exec app curl -f http://localhost:8080/_health
+
+# View container resource usage
+docker stats
+
+# Execute shell in container
+docker-compose exec app /bin/bash
+
+# Check environment variables
+docker-compose exec app env | grep -E "(DATABASE|SECRET|TZ)"
+
+# Test database migration
+docker-compose exec app python -c "from app import create_app; app = create_app(); app.app_context().push(); print('Migration test passed')"
+```
+
+### 🐳 Docker Troubleshooting Guide
+
+#### Common Docker Issues
+
+**1. Port Already in Use (Port 8080 Conflict)**
+```bash
+# Check what's using port 8080
+lsof -i :8080          # macOS/Linux
+netstat -ano | findstr :8080  # Windows
+
+# Solution 1: Use different port
+PORT=8081 docker-compose up -d
+
+# Solution 2: Stop conflicting service
+sudo kill -9 $(lsof -t -i:8080)  # macOS/Linux
+```
+
+**2. Database Connection Issues**
+```bash
+# Check database container status
+docker-compose ps db
+
+# Check database logs
+docker-compose logs db
+
+# Reset database (⚠️ destroys data)
+docker-compose down -v
+docker-compose up -d
+
+# Manual database initialization
+docker-compose exec app python -c "
+from app import create_app, db
+app = create_app()
+app.app_context().push()
+app.initialize_database()
+print('Database initialized successfully')
+"
+```
+
+**3. Permission Issues (Linux)**
+```bash
+# Fix file ownership
+sudo chown -R $USER:$USER .
+
+# Fix Docker socket permissions
+sudo chmod 666 /var/run/docker.sock
+
+# Fix data directory permissions
+sudo chmod -R 755 ./data
+```
+
+**4. Container Won't Start**
+```bash
+# Check container logs
+docker-compose logs app
+
+# Check for syntax errors in docker-compose.yml
+docker-compose config
+
+# Rebuild without cache
+docker-compose build --no-cache app
+docker-compose up -d
+```
+
+**5. Database Migration Failures**
+```bash
+# Manual migration reset
+docker-compose exec app python -c "
+from app import create_app, db
+from flask_migrate import stamp
+app = create_app()
+app.app_context().push()
+db.drop_all()
+db.create_all()
+stamp()
+print('Database reset complete')
+"
+
+# Check migration status
+docker-compose exec app flask db current
+
+# Force migration
+docker-compose exec app flask db upgrade
+```
+
+**6. SSL/HTTPS Issues**
+```bash
+# For development with self-signed certificates
+export PYTHONHTTPSVERIFY=0
+
+# Check SSL certificate
+openssl s_client -connect localhost:443 -servername localhost
+
+# Disable SSL verification (development only)
+curl -k https://localhost/
+```
+
+#### Docker Performance Optimization
+
+**Resource Allocation:**
+```yaml
+# docker-compose.override.yml
+services:
+  app:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+  
+  db:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+```
+
+**Volume Optimization:**
+```bash
+# Use named volumes for better performance
+docker volume create timetracker_data
+docker volume create timetracker_db
+
+# Check volume usage
+docker system df -v
+```
+
+#### Production Docker Deployment
+
+**Security Hardening:**
+```bash
+# Use non-root user in production
+USER_ID=$(id -u) GROUP_ID=$(id -g) docker-compose -f docker-compose.remote.yml up -d
+
+# Enable Docker secrets (Swarm mode)
+echo "your-secret-key" | docker secret create timetracker_secret -
+
+# Use environment file with restricted permissions
+chmod 600 .env
+```
+
+**Monitoring Setup:**
+```yaml
+# docker-compose.monitoring.yml
+services:
+  app:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  
+  db:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+```
+
+**Backup Strategy:**
+```bash
+# Automated backup script
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+docker-compose exec -T db pg_dump -U timetracker timetracker | gzip > "backup_${DATE}.sql.gz"
+
+# Automated cleanup (keep last 7 days)
+find . -name "backup_*.sql.gz" -mtime +7 -delete
+```
+
+#### Multi-Environment Setup
+
+**Development Environment:**
+```bash
+# docker-compose.dev.yml
+cp docker-compose.yml docker-compose.dev.yml
+# Edit for development settings
+
+# Use development compose
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+**Staging Environment:**
+```bash
+# docker-compose.staging.yml
+cp docker-compose.remote-dev.yml docker-compose.staging.yml
+# Edit for staging settings
+
+# Deploy to staging
+docker-compose -f docker-compose.staging.yml up -d
+```
+
+**Production Environment:**
+```bash
+# Use production compose with secrets
+docker-compose -f docker-compose.remote.yml up -d
+
+# With external database
+DATABASE_URL=postgresql://user:pass@external-db:5432/timetracker \
+docker-compose -f docker-compose.remote.yml up -d
 ```
 
 ### Version Management
@@ -416,37 +867,6 @@ A comprehensive version management system provides flexible versioning:
 - **Local Tools** - Command-line version management scripts
 
 See [Version Management Documentation](docs/VERSION_MANAGEMENT.md) for detailed information.
-
-## 🔧 Features
-
-- **Time Tracking**: Start/stop timer with project and task association; idle detection; single-active-timer mode; manual and automatic entry sources; rounding rules
-- **Client & Project Management**: Client organizations with contacts and default rates; project relationships; status management; error-preventing dropdowns; auto-populated rates
-- **Task Management**: Per-project tasks, categories, and task-level time tracking
-- **Enhanced Comments System**: Project and task discussions with threaded replies, inline editing, user attribution, and real-time interactions
-- **Invoicing**: Generate branded PDF invoices; billable hours, company branding/logo, currency, and rounding support
-- **Analytics & Reports**: Real-time stats, period analysis, project/user summaries, CSV export, visual analytics
-- **User & Roles**: Multi-user with role-based access control and admin panel
-- **Mobile-Optimized UI**: Responsive layout and mobile-friendly charts
-- **API & Integrations**: RESTful endpoints with JSON responses
-- **CLI & Admin Tools**: Database migrations, management scripts, and utilities
-- **Dockerized Deployment**: Local and remote compose files, public images on GitHub Container Registry
-
-### New: PDF Layout Editor (Admin)
-- **Visual editor** to customize the invoice PDF layout with HTML and CSS
-- **Local assets**: GrapesJS is served from `static/vendor` (no CDN dependency)
-- **Live preview** in the editor to validate changes before export
-- **Translations**: Fully supports Flask‑Babel strings like `{{ _('Invoice') }}`
-- **Company branding**: Uses values from Admin → System Settings (logo, address, etc.)
-- **Safe defaults**: One‑click “Load Defaults” provides a complete starter template
-
-Usage:
-1. Open `Admin → System Settings` and click “Edit PDF Layout”.
-2. Adjust HTML and CSS. Use `{{ format_date(...) }}`, `{{ format_money(...) }}`, `{{ _('...') }}`.
-3. Click “Save Layout”. Export any invoice to see the new design.
-
-Notes:
-- The editor stores custom template HTML/CSS in the `settings` table; leave blank to use built‑in defaults.
-- Preview sanitizes pasted content to avoid smart quotes and HTML entities breaking Jinja.
 
 ## 📚 Documentation
 
