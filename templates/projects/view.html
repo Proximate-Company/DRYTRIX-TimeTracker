@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ project.name }} - {{ app_name }}{% endblock %}
+{% block title %}{{ project.name }} - {{ app_name }{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -266,11 +266,11 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ url_for('timer.edit_timer', timer_id=entry.id) }}" 
-                                               class="btn btn-sm btn-outline-primary" title="{{ _('Edit') }}">
+                                               class="btn btn-sm btn-action btn-action--edit" title="{{ _('Edit') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% if current_user.is_admin or entry.user_id == current_user.id %}
-                                            <button type="button" class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}" 
+                                            <button type="button" class="btn btn-sm btn-action btn-action--danger" title="{{ _('Delete') }}" 
                                                     onclick="showDeleteEntryModal('{{ entry.id }}', '{{ entry.project.name }}', '{{ entry.duration_formatted }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -415,11 +415,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-/* ===== PROJECT VIEW TASK CARD STYLES ===== */
-
-/* Task Card System */
-.task-card {
+<!-- Modern styling now handled by global CSS in base.css -->
+{% endblock %}
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid var(--border-color);
     border-radius: 12px;

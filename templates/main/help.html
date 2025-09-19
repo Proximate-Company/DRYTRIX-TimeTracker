@@ -3,292 +3,867 @@
 {% block title %}{{ _('Help') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
-{% from "_components.html" import page_header %}
+{% from "_components.html" import page_header, info_card, summary_card %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            {{ page_header('fas fa-question-circle', _('Help'), _('Documentation and guidance'), None) }}
+            {{ page_header('fas fa-question-circle', _('Help'), _('Complete documentation and user guide'), None) }}
         </div>
     </div>
+    
     <div class="row">
         <div class="col-lg-3">
-            <!-- Navigation -->
+            <!-- Enhanced Navigation -->
             <div class="card sticky-top" style="top: 1rem;">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-list"></i> {{ _('Contents') }}
+                        <i class="fas fa-list"></i> {{ _('Quick Navigation') }}
                     </h5>
                 </div>
                 <div class="card-body">
                     <nav class="nav flex-column">
-                        <a class="nav-link" href="#getting-started">{{ _('Getting Started') }}</a>
-                        <a class="nav-link" href="#timer">{{ _('Using the Timer') }}</a>
-                        <a class="nav-link" href="#projects">{{ _('Managing Projects') }}</a>
-                        <a class="nav-link" href="#reports">{{ _('Reports') }}</a>
+                        <a class="nav-link" href="#quick-start">
+                            <i class="fas fa-rocket me-2"></i>{{ _('Quick Start') }}
+                        </a>
+                        <a class="nav-link" href="#time-tracking">
+                            <i class="fas fa-stopwatch me-2"></i>{{ _('Time Tracking') }}
+                        </a>
+                        <a class="nav-link" href="#project-management">
+                            <i class="fas fa-project-diagram me-2"></i>{{ _('Project Management') }}
+                        </a>
+                        <a class="nav-link" href="#client-management">
+                            <i class="fas fa-building me-2"></i>{{ _('Client Management') }}
+                        </a>
+                        <a class="nav-link" href="#task-management">
+                            <i class="fas fa-tasks me-2"></i>{{ _('Task Management') }}
+                        </a>
+                        <a class="nav-link" href="#invoicing">
+                            <i class="fas fa-file-invoice-dollar me-2"></i>{{ _('Invoicing') }}
+                        </a>
+                        <a class="nav-link" href="#reports-analytics">
+                            <i class="fas fa-chart-line me-2"></i>{{ _('Reports & Analytics') }}
+                        </a>
                         {% if current_user.is_admin %}
-                        <a class="nav-link" href="#admin">{{ _('Admin Features') }}</a>
+                        <a class="nav-link" href="#admin-features">
+                            <i class="fas fa-cog me-2"></i>{{ _('Admin Features') }}
+                        </a>
                         {% endif %}
-                        <a class="nav-link" href="#faq">{{ _('FAQ') }}</a>
+                        <a class="nav-link" href="#mobile-usage">
+                            <i class="fas fa-mobile-alt me-2"></i>{{ _('Mobile Usage') }}
+                        </a>
+                        <a class="nav-link" href="#troubleshooting">
+                            <i class="fas fa-tools me-2"></i>{{ _('Troubleshooting') }}
+                        </a>
                     </nav>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-9">
-            <div class="text-center mb-4">
+            <!-- Hero Section -->
+            <div class="text-center mb-5">
                 {% if settings and settings.has_logo() %}
                 <img src="{{ settings.get_logo_url() }}" alt="{{ _('Company Logo') }}" class="mb-3" width="48" height="48">
                 {% else %}
                 <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" class="mb-3" width="48" height="48">
                 {% endif %}
-                <h1 class="h2 mb-2">{{ _('Help & Documentation') }}</h1>
-                <p class="text-muted">{{ _('TimeTracker by') }} <strong>DryTrix</strong></p>
-                <div class="d-flex justify-content-center gap-2 mt-2">
+                <h1 class="h2 mb-2">{{ _('TimeTracker Help Center') }}</h1>
+                <p class="text-muted mb-4">{{ _('Everything you need to know to get the most out of TimeTracker') }}</p>
+                
+                <!-- Quick Action Buttons -->
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
                     <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> {{ _('Log Time') }}
+                        <i class="fas fa-play me-1"></i>{{ _('Start Tracking Time') }}
                     </a>
-                    <a href="{{ url_for('reports.reports') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-chart-bar"></i> {{ _('View Reports') }}
+                    <a href="{{ url_for('projects.list_projects') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-project-diagram me-1"></i>{{ _('View Projects') }}
+                    </a>
+                    <a href="{{ url_for('reports.reports') }}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-chart-bar me-1"></i>{{ _('Generate Reports') }}
                     </a>
                     {% if current_user.is_admin %}
-                    <a href="{{ url_for('admin.settings') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-sliders-h"></i> {{ _('System Settings') }}
-                    </a>
-                    <a href="{{ url_for('admin.license_status') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-chart-line"></i> {{ _('Metrics Status') }}
+                    <a href="{{ url_for('admin.settings') }}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-cog me-1"></i>{{ _('System Settings') }}
                     </a>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Getting Started -->
-            <section id="getting-started" class="mb-5">
-                <h2 class="h3 mb-3">{{ _('Getting Started') }}</h2>
+            <!-- Quick Start Guide -->
+            <section id="quick-start" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-rocket text-primary me-2"></i>{{ _('Quick Start Guide') }}
+                </h2>
                 <div class="card">
                     <div class="card-body">
-                        <h5>{{ _('First Time Setup') }}</h5>
-                        <ol>
-                            <li>{{ _('Log in with your username (no password required)') }}</li>
-                            <li>{{ _("If you're an admin, create projects for your team") }}</li>
-                            <li>{{ _('Start tracking time on your first project') }}</li>
-                        </ol>
-
-                        <h5>{{ _('Navigation') }}</h5>
-                        <ul>
-                            <li><strong>{{ _('Dashboard') }}:</strong> {{ _('Overview of your current timer and recent activity') }}</li>
-                            <li><strong>{{ _('Timer') }}:</strong> {{ _('Start, stop, and manage time tracking') }} (<a href="{{ url_for('timer.manual_entry') }}">{{ _('Log Time') }}</a>)</li>
-                            <li><strong>{{ _('Projects') }}:</strong> {{ _('View and manage projects') }}{% if current_user.is_admin %} (<a href="{{ url_for('projects.list_projects') }}">{{ _('Open Projects') }}</a>){% endif %}</li>
-                            <li><strong>{{ _('Reports') }}:</strong> {{ _('Generate time reports and export data') }} (<a href="{{ url_for('reports.reports') }}">{{ _('Open Reports') }}</a>)</li>
-                            {% if current_user.is_admin %}
-                            <li><strong>{{ _('Admin') }}:</strong> {{ _('Manage users and system settings') }}</li>
-                            {% endif %}
-                        </ul>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <h5>{{ _('For New Users') }}</h5>
+                                <ol class="list-group list-group-numbered list-group-flush">
+                                    <li class="list-group-item border-0 px-0">{{ _('Log in with your username (no password required)') }}</li>
+                                    <li class="list-group-item border-0 px-0">{{ _('Explore the dashboard to see your overview') }}</li>
+                                    <li class="list-group-item border-0 px-0">{{ _('Start your first timer on an existing project') }}</li>
+                                    <li class="list-group-item border-0 px-0">{{ _('View your time entries in reports') }}</li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <h5>{{ _('For Administrators') }}</h5>
+                                <ol class="list-group list-group-numbered list-group-flush">
+                                    <li class="list-group-item border-0 px-0">{{ _('Set up clients in the Client Management section') }}</li>
+                                    <li class="list-group-item border-0 px-0">{{ _('Create projects and assign them to clients') }}</li>
+                                    <li class="list-group-item border-0 px-0">{{ _('Configure system settings (timezone, currency, etc.)') }}</li>
+                                    <li class="list-group-item border-0 px-0">{{ _('Manage users and permissions') }}</li>
+                                </ol>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info d-flex align-items-center mt-4">
+                            <i class="fas fa-lightbulb me-3"></i>
+                            <div>
+                                <strong>{{ _('Pro Tip:') }}</strong> {{ _('Use the mobile-friendly interface to track time on the go. The timer continues running even if you close your browser!') }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Timer -->
-            <section id="timer" class="mb-5">
-                <h2 class="h3 mb-3">{{ _('Using the Timer') }}</h2>
-                <div class="card">
+            <!-- Time Tracking -->
+            <section id="time-tracking" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-stopwatch text-success me-2"></i>{{ _('Time Tracking') }}
+                </h2>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        {{ info_card(_('Smart Timers'), _('Real-time tracking with automatic idle detection and WebSocket updates'), 'fas fa-play-circle', 'primary') }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ info_card(_('Manual Entry'), _('Log time manually with custom start and end times'), 'fas fa-edit', 'success') }}
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Using the Timer') }}</h5>
+                    </div>
                     <div class="card-body">
-                        <h5>{{ _('Starting a Timer') }}</h5>
-                        <ol>
-                            <li>{{ _('Go to the Timer page or use the "Start Timer" button on the dashboard') }}</li>
-                            <li>{{ _('Select a project from the dropdown') }}</li>
-                            <li>{{ _('Add optional notes about what you\'re working on') }}</li>
-                            <li>{{ _('Add optional tags (separated by commas)') }}</li>
-                            <li>{{ _('Click "Start Timer"') }}</li>
-                        </ol>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Starting a Timer') }}</h6>
+                                <ol>
+                                    <li>{{ _('Navigate to the Timer page or dashboard') }}</li>
+                                    <li>{{ _('Select a project from the dropdown') }}</li>
+                                    <li>{{ _('Optionally select a task for more detailed tracking') }}</li>
+                                    <li>{{ _('Add notes about what you\'re working on (optional)') }}</li>
+                                    <li>{{ _('Add tags separated by commas (optional)') }}</li>
+                                    <li>{{ _('Click "Start Timer"') }}</li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Timer Features') }}</h6>
+                                <ul>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('Real-time duration display') }}</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('Continues running if browser closes') }}</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('Automatic idle detection (configurable)') }}</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('One active timer per user (configurable)') }}</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('WebSocket live updates') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                        <h5>{{ _('Active Timer') }}</h5>
-                        <ul>
-                            <li>{{ _('The timer runs continuously until you stop it') }}</li>
-                            <li>{{ _('You can see the current duration in real-time') }}</li>
-                            <li>{{ _('The timer persists even if you close your browser') }}</li>
-                            <li>{{ _('Only one timer can be active at a time per user') }}</li>
-                        </ul>
-
-                        <h5>{{ _('Stopping a Timer') }}</h5>
-                        <ul>
-                            <li>{{ _('Click the "Stop Timer" button to end the current session') }}</li>
-                            <li>{{ _('The time entry will be saved automatically') }}</li>
-                            <li>{{ _('You can edit the entry later if needed') }}</li>
-                        </ul>
-
-                        <h5>{{ _('Manual Time Entries') }}</h5>
-                        <p>{{ _('You can also create time entries manually by specifying start and end times, useful for recording time spent away from the computer.') }}</p>
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Manual Time Entry') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ _('Create time entries manually when you need to record time spent away from the computer or adjust existing entries.') }}</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Required Information') }}</h6>
+                                <ul>
+                                    <li>{{ _('Project selection') }}</li>
+                                    <li>{{ _('Start date and time') }}</li>
+                                    <li>{{ _('End date and time') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Optional Information') }}</h6>
+                                <ul>
+                                    <li>{{ _('Task assignment') }}</li>
+                                    <li>{{ _('Description/notes') }}</li>
+                                    <li>{{ _('Tags for categorization') }}</li>
+                                    <li>{{ _('Billable status override') }}</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Projects -->
-            <section id="projects" class="mb-5">
-                <h2 class="h3 mb-3">{{ _('Managing Projects') }}</h2>
-                <div class="card">
+            <!-- Project Management -->
+            <section id="project-management" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-project-diagram text-info me-2"></i>{{ _('Project Management') }}
+                </h2>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Project Structure') }}</h5>
+                    </div>
                     <div class="card-body">
-                        <h5>{{ _('Project Structure') }}</h5>
-                        <ul>
-                            <li><strong>{{ _('Name') }}:</strong> {{ _('Descriptive project name') }}</li>
-                            <li><strong>{{ _('Client') }}:</strong> {{ _('Optional client name for organization') }}</li>
-                            <li><strong>{{ _('Description') }}:</strong> {{ _('Project details and scope') }}</li>
-                            <li><strong>{{ _('Billable') }}:</strong> {{ _('Whether time should be tracked for billing') }}</li>
-                            <li><strong>{{ _('Hourly Rate') }}:</strong> {{ _('Rate for billable time calculations') }}</li>
-                            <li><strong>{{ _('Status') }}:</strong> {{ _('Active or archived') }}</li>
-                        </ul>
-
-                        {% if current_user.is_admin %}
-                        <h5>{{ _('Admin Project Management') }}</h5>
-                        <ul>
-                            <li>{{ _('Create new projects with the "New Project" button') }}</li>
-                            <li>{{ _('Edit existing projects to update details') }}</li>
-                            <li>{{ _('Archive projects to hide them from timers (data is preserved)') }}</li>
-                            <li>{{ _('Delete projects (use with caution - this removes all associated time entries)') }}</li>
-                        </ul>
-                        {% endif %}
-
-                        <h5>{{ _('Viewing Project Details') }}</h5>
-                        <p>{{ _('Click on any project to view detailed statistics, time entries, and user breakdowns.') }}</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Project Information') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-tag text-primary me-2"></i><strong>{{ _('Name') }}:</strong> {{ _('Descriptive project name') }}</li>
+                                    <li><i class="fas fa-building text-success me-2"></i><strong>{{ _('Client') }}:</strong> {{ _('Associated client organization') }}</li>
+                                    <li><i class="fas fa-align-left text-info me-2"></i><strong>{{ _('Description') }}:</strong> {{ _('Project details and scope') }}</li>
+                                    <li><i class="fas fa-calendar text-warning me-2"></i><strong>{{ _('Status') }}:</strong> {{ _('Active, completed, or archived') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Billing Information') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-dollar-sign text-success me-2"></i><strong>{{ _('Billable') }}:</strong> {{ _('Whether time should be tracked for billing') }}</li>
+                                    <li><i class="fas fa-money-bill text-info me-2"></i><strong>{{ _('Hourly Rate') }}:</strong> {{ _('Rate for billable time calculations') }}</li>
+                                    <li><i class="fas fa-hashtag text-warning me-2"></i><strong>{{ _('Billing Reference') }}:</strong> {{ _('PO number or billing code') }}</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- Reports -->
-            <section id="reports" class="mb-5">
-                <h2 class="h3 mb-3">{{ _('Reports') }}</h2>
+                {% if current_user.is_admin %}
                 <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Admin Project Management') }}</h5>
+                    </div>
                     <div class="card-body">
-                        <h5>{{ _('Available Reports') }}</h5>
-                        <ul>
-                            <li><strong>{{ _('Project Report') }}:</strong> {{ _('Time breakdown by project with filtering options') }}</li>
-                            <li><strong>{{ _('User Report') }}:</strong> {{ _('Time tracking statistics by user') }}</li>
-                            <li><strong>{{ _('Summary Report') }}:</strong> {{ _('Overview of key metrics and trends') }}</li>
-                            <li><strong>{{ _('CSV Export') }}:</strong> {{ _('Export time entries for external analysis') }}</li>
-                        </ul>
-
-                        <h5>{{ _('Filtering Options') }}</h5>
-                        <ul>
-                            <li><strong>{{ _('Date Range') }}:</strong> {{ _('Filter by start and end dates') }}</li>
-                            <li><strong>{{ _('Project') }}:</strong> {{ _('Filter by specific project') }}</li>
-                            <li><strong>{{ _('User') }}:</strong> {{ _('Filter by specific user') }}</li>
-                            <li><strong>{{ _('Status') }}:</strong> {{ _('Filter by project status') }}</li>
-                        </ul>
-
-                        <h5>{{ _('Exporting Data') }}</h5>
-                        <p>{{ _('Use the CSV export feature to download time entries for external tools. Find it on the Reports page.') }}</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Project Operations') }}</h6>
+                                <ul>
+                                    <li>{{ _('Create new projects with client relationships') }}</li>
+                                    <li>{{ _('Edit existing projects to update details') }}</li>
+                                    <li>{{ _('Archive projects to hide from timers (preserves data)') }}</li>
+                                    <li>{{ _('Delete projects (removes all associated time entries)') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Best Practices') }}</h6>
+                                <ul>
+                                    <li>{{ _('Use descriptive project names') }}</li>
+                                    <li>{{ _('Set accurate hourly rates for billing') }}</li>
+                                    <li>{{ _('Archive instead of delete when possible') }}</li>
+                                    <li>{{ _('Use billing references for external tracking') }}</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                {% endif %}
             </section>
 
-            {% if current_user.is_admin %}
-            <!-- Admin Features -->
-            <section id="admin" class="mb-5">
-                <h2 class="h3 mb-3">{{ _('Admin Features') }}</h2>
-                <div class="card">
+            <!-- Client Management -->
+            <section id="client-management" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-building text-warning me-2"></i>{{ _('Client Management') }}
+                </h2>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Client Organization') }}</h5>
+                    </div>
                     <div class="card-body">
-                        <h5>{{ _('User Management') }}</h5>
-                        <ul>
-                            <li>{{ _('Create new users with username-only authentication') }}</li>
-                            <li>{{ _('Assign user roles (user or admin)') }}</li>
-                            <li>{{ _('Activate/deactivate user accounts') }}</li>
-                            <li>{{ _('View user statistics and activity') }}</li>
-                        </ul>
-
-                        <h5>{{ _('System Settings') }}</h5>
-                        <ul>
-                            <li>{{ _('Configure timezone and currency') }}</li>
-                            <li>{{ _('Set time rounding rules') }}</li>
-                            <li>{{ _('Enable/disable self-registration') }}</li>
-                            <li>{{ _('Configure backup settings') }}</li>
-                        </ul>
-
-                        <h5>{{ _('System Maintenance') }}</h5>
-                        <ul>
-                            <li>{{ _('Create manual database backups') }}</li>
-                            <li>{{ _('View system information and health') }}</li>
-                            <li>{{ _('Monitor system statistics and metrics') }}</li>
-                            <li>{{ _('Review metrics server status and connectivity') }}</li>
-                            <li>{{ _('Clean up old data') }}</li>
-                        </ul>
+                        <p>{{ _('The client management system helps organize your work by client organizations, preventing errors and streamlining project creation.') }}</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Client Information') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-building text-primary me-2"></i><strong>{{ _('Organization Name') }}:</strong> {{ _('Company or client name') }}</li>
+                                    <li><i class="fas fa-user text-success me-2"></i><strong>{{ _('Contact Person') }}:</strong> {{ _('Primary contact details') }}</li>
+                                    <li><i class="fas fa-envelope text-info me-2"></i><strong>{{ _('Email & Phone') }}:</strong> {{ _('Contact information') }}</li>
+                                    <li><i class="fas fa-map-marker-alt text-warning me-2"></i><strong>{{ _('Address') }}:</strong> {{ _('Business address') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Benefits') }}</h6>
+                                <ul>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('Dropdown selection prevents typos') }}</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('Default rates auto-populate projects') }}</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('Consistent client naming') }}</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>{{ _('Easier project organization') }}</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </section>
-            {% endif %}
 
-            <!-- FAQ -->
-            <section id="faq" class="mb-5">
-                <h2 class="h3 mb-3">{{ _('Frequently Asked Questions') }}</h2>
                 <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Client Analytics') }}</h5>
+                    </div>
                     <div class="card-body">
-                        <div class="accordion" id="faqAccordion">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                        {{ _('What happens if I forget to stop my timer?') }}
-                                    </button>
-                                </h2>
-                                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        {{ _('The timer will continue running until you stop it. You can see your active timer on the dashboard and timer page. The timer persists even if you close your browser.') }}
-                                    </div>
+                        <p>{{ _('Track performance and billing metrics for each client:') }}</p>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="fas fa-project-diagram fa-2x text-primary mb-2"></i>
+                                    <h6>{{ _('Project Count') }}</h6>
+                                    <small class="text-muted">{{ _('Total and active projects') }}</small>
                                 </div>
                             </div>
-
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                        {{ _("Can I edit time entries after they're created?") }}
-                                    </button>
-                                </h2>
-                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        {{ _('Yes, you can edit any time entry by clicking the edit button. You can modify the project, start/end times, notes, tags, and billable status.') }}
-                                    </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="fas fa-clock fa-2x text-success mb-2"></i>
+                                    <h6>{{ _('Time Tracking') }}</h6>
+                                    <small class="text-muted">{{ _('Total hours worked') }}</small>
                                 </div>
                             </div>
-
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                        {{ _('How do I track time for multiple projects?') }}
-                                    </button>
-                                </h2>
-                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        {{ _('You can only have one active timer at a time. To switch projects, stop your current timer and start a new one for the different project. You can also create manual time entries for past work.') }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                        {{ _('How do I export my time data?') }}
-                                    </button>
-                                </h2>
-                                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        {{ _('Go to the Reports page and use the "Export CSV" feature. You can apply filters to export specific data, or export all time entries. The CSV file can be opened in Excel or other spreadsheet applications.') }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
-                                        What's the difference between billable and non-billable time?
-                                    </button>
-                                </h2>
-                                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        Billable time is tracked for client billing purposes and can have an hourly rate associated with it. Non-billable time is for internal work that doesn't get charged to clients. You can mark individual time entries as billable or non-billable.
-                                    </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
+                                    <h6>{{ _('Cost Estimation') }}</h6>
+                                    <small class="text-muted">{{ _('Estimated billing amounts') }}</small>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
+
+            <!-- Task Management -->
+            <section id="task-management" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-tasks text-danger me-2"></i>{{ _('Task Management') }}
+                </h2>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Task Organization') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ _('Break down projects into manageable tasks with detailed tracking and progress monitoring.') }}</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Task Properties') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-tag text-primary me-2"></i><strong>{{ _('Name & Description') }}:</strong> {{ _('Clear task identification') }}</li>
+                                    <li><i class="fas fa-flag text-warning me-2"></i><strong>{{ _('Priority Levels') }}:</strong> {{ _('Low, Medium, High, Urgent') }}</li>
+                                    <li><i class="fas fa-calendar text-info me-2"></i><strong>{{ _('Due Dates') }}:</strong> {{ _('Deadline tracking') }}</li>
+                                    <li><i class="fas fa-user text-success me-2"></i><strong>{{ _('Assignment') }}:</strong> {{ _('Task ownership') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Status Tracking') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-circle text-secondary me-2"></i>{{ _('To Do - Not started') }}</li>
+                                    <li><i class="fas fa-circle text-primary me-2"></i>{{ _('In Progress - Currently working') }}</li>
+                                    <li><i class="fas fa-circle text-warning me-2"></i>{{ _('Review - Ready for review') }}</li>
+                                    <li><i class="fas fa-circle text-success me-2"></i>{{ _('Done - Completed') }}</li>
+                                    <li><i class="fas fa-circle text-danger me-2"></i>{{ _('Cancelled - Not needed') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Time Integration') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Time Tracking Features') }}</h6>
+                                <ul>
+                                    <li>{{ _('Start timers directly from tasks') }}</li>
+                                    <li>{{ _('Link time entries to specific tasks') }}</li>
+                                    <li>{{ _('Track estimated vs actual hours') }}</li>
+                                    <li>{{ _('Monitor task progress automatically') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Task Views') }}</h6>
+                                <ul>
+                                    <li>{{ _('My Tasks - Your assigned tasks') }}</li>
+                                    <li>{{ _('All Tasks - Complete task list') }}</li>
+                                    <li>{{ _('Overdue Tasks - Past due items') }}</li>
+                                    <li>{{ _('Project Tasks - Tasks within projects') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Invoicing -->
+            <section id="invoicing" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-file-invoice-dollar text-success me-2"></i>{{ _('Professional Invoicing') }}
+                </h2>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Invoice Features') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Core Features') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-file-pdf text-danger me-2"></i>{{ _('Professional PDF generation') }}</li>
+                                    <li><i class="fas fa-palette text-primary me-2"></i>{{ _('Company branding and logos') }}</li>
+                                    <li><i class="fas fa-hashtag text-info me-2"></i>{{ _('Automatic invoice numbering') }}</li>
+                                    <li><i class="fas fa-calculator text-success me-2"></i>{{ _('Tax calculations') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Time Integration') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-clock text-warning me-2"></i>{{ _('Generate from time entries') }}</li>
+                                    <li><i class="fas fa-layer-group text-info me-2"></i>{{ _('Smart grouping by task/project') }}</li>
+                                    <li><i class="fas fa-shield-alt text-success me-2"></i>{{ _('Prevent double-billing') }}</li>
+                                    <li><i class="fas fa-money-bill text-primary me-2"></i>{{ _('Use project hourly rates') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Invoice Workflow') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                        <span class="fw-bold text-primary">1</span>
+                                    </div>
+                                    <h6>{{ _('Create Invoice') }}</h6>
+                                    <small class="text-muted">{{ _('Set up client and project details') }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center">
+                                    <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                        <span class="fw-bold text-success">2</span>
+                                    </div>
+                                    <h6>{{ _('Add Items') }}</h6>
+                                    <small class="text-muted">{{ _('Generate from time or add manually') }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center">
+                                    <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                        <span class="fw-bold text-info">3</span>
+                                    </div>
+                                    <h6>{{ _('Review & Send') }}</h6>
+                                    <small class="text-muted">{{ _('Export PDF and update status') }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center">
+                                    <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                        <span class="fw-bold text-warning">4</span>
+                                    </div>
+                                    <h6>{{ _('Track Payment') }}</h6>
+                                    <small class="text-muted">{{ _('Monitor status and payments') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports & Analytics -->
+            <section id="reports-analytics" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-chart-line text-info me-2"></i>{{ _('Reports & Analytics') }}
+                </h2>
+                
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3">
+                        {{ info_card(_('Project Reports'), _('Time breakdown by project with filtering options'), 'fas fa-project-diagram', 'primary') }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ info_card(_('User Analytics'), _('Individual and team performance metrics'), 'fas fa-users', 'success') }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ info_card(_('Visual Charts'), _('Interactive charts and trend analysis'), 'fas fa-chart-bar', 'info') }}
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Available Reports') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Standard Reports') }}</h6>
+                                <ul>
+                                    <li>{{ _('Project Report - Time breakdown by project') }}</li>
+                                    <li>{{ _('User Report - Individual performance metrics') }}</li>
+                                    <li>{{ _('Summary Report - Key metrics and trends') }}</li>
+                                    <li>{{ _('Time Entry Report - Detailed time logs') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Export Options') }}</h6>
+                                <ul>
+                                    <li>{{ _('CSV Export - For external analysis') }}</li>
+                                    <li>{{ _('Configurable delimiters') }}</li>
+                                    <li>{{ _('Custom date ranges') }}</li>
+                                    <li>{{ _('Filtered data export') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Filtering & Analysis') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Filter Options') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-calendar text-primary me-2"></i>{{ _('Date Range - Custom start and end dates') }}</li>
+                                    <li><i class="fas fa-project-diagram text-success me-2"></i>{{ _('Project - Filter by specific projects') }}</li>
+                                    <li><i class="fas fa-user text-info me-2"></i>{{ _('User - Filter by team members') }}</li>
+                                    <li><i class="fas fa-building text-warning me-2"></i>{{ _('Client - Filter by client organization') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Visual Analytics') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-chart-bar text-primary me-2"></i>{{ _('Interactive bar charts') }}</li>
+                                    <li><i class="fas fa-chart-pie text-success me-2"></i>{{ _('Time distribution pie charts') }}</li>
+                                    <li><i class="fas fa-chart-line text-info me-2"></i>{{ _('Trend analysis over time') }}</li>
+                                    <li><i class="fas fa-mobile-alt text-warning me-2"></i>{{ _('Mobile-optimized charts') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {% if current_user.is_admin %}
+            <!-- Admin Features -->
+            <section id="admin-features" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-cog text-warning me-2"></i>{{ _('Administrator Features') }}
+                </h2>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('User Management') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('User Operations') }}</h6>
+                                <ul>
+                                    <li>{{ _('Create new users with username-only authentication') }}</li>
+                                    <li>{{ _('Assign user roles (user or admin)') }}</li>
+                                    <li>{{ _('Activate/deactivate user accounts') }}</li>
+                                    <li>{{ _('View user statistics and activity') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Access Control') }}</h6>
+                                <ul>
+                                    <li>{{ _('Role-based permissions') }}</li>
+                                    <li>{{ _('Admin-only system settings') }}</li>
+                                    <li>{{ _('User data access controls') }}</li>
+                                    <li>{{ _('Audit trail for admin actions') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('System Configuration') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('General Settings') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-globe text-primary me-2"></i>{{ _('Timezone and locale settings') }}</li>
+                                    <li><i class="fas fa-dollar-sign text-success me-2"></i>{{ _('Currency configuration') }}</li>
+                                    <li><i class="fas fa-clock text-info me-2"></i>{{ _('Time rounding rules') }}</li>
+                                    <li><i class="fas fa-user-plus text-warning me-2"></i>{{ _('Self-registration settings') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Timer Settings') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-pause text-primary me-2"></i>{{ _('Idle timeout configuration') }}</li>
+                                    <li><i class="fas fa-play text-success me-2"></i>{{ _('Single active timer mode') }}</li>
+                                    <li><i class="fas fa-stopwatch text-info me-2"></i>{{ _('Timer display preferences') }}</li>
+                                    <li><i class="fas fa-bell text-warning me-2"></i>{{ _('Notification settings') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('System Maintenance') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Database Management') }}</h6>
+                                <ul>
+                                    <li>{{ _('Create manual database backups') }}</li>
+                                    <li>{{ _('View database migration status') }}</li>
+                                    <li>{{ _('Monitor database performance') }}</li>
+                                    <li>{{ _('Clean up old data and logs') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('System Monitoring') }}</h6>
+                                <ul>
+                                    <li>{{ _('View system information and health') }}</li>
+                                    <li>{{ _('Monitor application performance') }}</li>
+                                    <li>{{ _('Review system logs and errors') }}</li>
+                                    <li>{{ _('Track metrics server status') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Mobile Usage -->
+            <section id="mobile-usage" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-mobile-alt text-primary me-2"></i>{{ _('Mobile Usage') }}
+                </h2>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Mobile-Friendly Features') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Responsive Design') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-mobile-alt text-primary me-2"></i>{{ _('Optimized for phones and tablets') }}</li>
+                                    <li><i class="fas fa-hand-pointer text-success me-2"></i>{{ _('Touch-friendly interface') }}</li>
+                                    <li><i class="fas fa-expand-arrows-alt text-info me-2"></i>{{ _('Adaptive layouts for all screen sizes') }}</li>
+                                    <li><i class="fas fa-eye text-warning me-2"></i>{{ _('High contrast for outdoor visibility') }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('Mobile Navigation') }}</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-bars text-primary me-2"></i>{{ _('Bottom tab bar for easy access') }}</li>
+                                    <li><i class="fas fa-home text-success me-2"></i>{{ _('Quick access to dashboard') }}</li>
+                                    <li><i class="fas fa-plus text-info me-2"></i>{{ _('One-tap time logging') }}</li>
+                                    <li><i class="fas fa-chart-bar text-warning me-2"></i>{{ _('Mobile-optimized reports') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ _('Progressive Web App (PWA)') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ _('TimeTracker can be installed as a Progressive Web App for a native-like experience:') }}</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>{{ _('Installation') }}</h6>
+                                <ol>
+                                    <li>{{ _('Open TimeTracker in your mobile browser') }}</li>
+                                    <li>{{ _('Look for "Add to Home Screen" option') }}</li>
+                                    <li>{{ _('Follow browser-specific installation prompts') }}</li>
+                                    <li>{{ _('Launch from your home screen like a native app') }}</li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>{{ _('PWA Benefits') }}</h6>
+                                <ul>
+                                    <li>{{ _('Offline capability for basic functions') }}</li>
+                                    <li>{{ _('Faster loading times') }}</li>
+                                    <li>{{ _('Native app-like experience') }}</li>
+                                    <li>{{ _('Push notifications (where supported)') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Troubleshooting -->
+            <section id="troubleshooting" class="mb-5">
+                <h2 class="h3 mb-4">
+                    <i class="fas fa-tools text-danger me-2"></i>{{ _('Troubleshooting & FAQ') }}
+                </h2>
+                
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                <i class="fas fa-stopwatch me-2"></i>{{ _('What happens if I forget to stop my timer?') }}
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ _('The timer will continue running until you stop it manually. You can see your active timer on the dashboard and timer page. The timer persists even if you close your browser or restart your device. If idle detection is enabled, the timer may pause automatically after the configured timeout period.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                <i class="fas fa-edit me-2"></i>{{ _("Can I edit time entries after they're created?") }}
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ _('Yes, you can edit any time entry by clicking the edit button in the time entry list. You can modify the project, start/end times, notes, tags, billable status, and task assignment. Admins can edit all time entries, while regular users can only edit their own entries.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                <i class="fas fa-project-diagram me-2"></i>{{ _('How do I track time for multiple projects?') }}
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ _('By default, you can only have one active timer at a time. To switch projects, stop your current timer and start a new one for the different project. Alternatively, you can create manual time entries for past work or configure the system to allow multiple active timers (admin setting).') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                <i class="fas fa-download me-2"></i>{{ _('How do I export my time data?') }}
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ _('Go to the Reports page and use the "Export CSV" feature. You can apply filters to export specific data, or export all time entries. The CSV file includes all time entry details and can be opened in Excel or other spreadsheet applications. You can also configure the delimiter for different regional standards.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                <i class="fas fa-dollar-sign me-2"></i>{{ _("What's the difference between billable and non-billable time?") }}
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ _('Billable time is tracked for client billing purposes and can have an hourly rate associated with it. Non-billable time is for internal work that doesn\'t get charged to clients. You can mark individual time entries as billable or non-billable, and projects can have default billable settings. This distinction is crucial for accurate invoicing and profitability analysis.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>{{ _('How do I create an invoice from my time entries?') }}
+                            </button>
+                        </h2>
+                        <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ _('Navigate to Invoices → Create Invoice, set up the client and project details, then use "Generate from Time Entries" to automatically create invoice items from your tracked time. You can filter by date range and project, and the system will group time entries intelligently. Review the generated items and export as a professional PDF.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                <i class="fas fa-mobile-alt me-2"></i>{{ _('Can I use TimeTracker on my mobile device?') }}
+                            </button>
+                        </h2>
+                        <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ _('Yes! TimeTracker is fully responsive and works great on mobile devices. You can install it as a Progressive Web App (PWA) for a native-like experience. The mobile interface includes a bottom tab bar for easy navigation and touch-optimized controls for time tracking on the go.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                                <i class="fas fa-question-circle me-2"></i>{{ _('Where can I get additional help?') }}
+                            </button>
+                        </h2>
+                        <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>{{ _('Documentation') }}</h6>
+                                        <p>{{ _('This help page covers most common questions and features.') }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>{{ _('Community Support') }}</h6>
+                                        <p>{{ _('Report issues and request features on') }} <a href="https://github.com/drytrix/TimeTracker/issues" target="_blank">GitHub Issues</a>.</p>
+                                    </div>
+                                </div>
+                                {% if current_user.is_admin %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle me-2"></i>{{ _('As an admin, you can access additional system information and diagnostics in the') }} <a href="{{ url_for('admin.system_info') }}">{{ _('System Info') }}</a> {{ _('section.') }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer Help -->
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h5>{{ _('Still Need Help?') }}</h5>
+                    <p class="text-muted mb-4">{{ _('Can\'t find what you\'re looking for? Here are additional resources:') }}</p>
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.system_info') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-info-circle me-1"></i>{{ _('System Info') }}
+                        </a>
+                        {% endif %}
+                        <a href="https://github.com/drytrix/TimeTracker" target="_blank" rel="noopener" class="btn btn-outline-secondary">
+                            <i class="fab fa-github me-1"></i>{{ _('GitHub Repository') }}
+                        </a>
+                        <a href="https://github.com/drytrix/TimeTracker/issues" target="_blank" rel="noopener" class="btn btn-outline-warning">
+                            <i class="fas fa-bug me-1"></i>{{ _('Report Issue') }}
+                        </a>
+                        <a href="https://buymeacoffee.com/DryTrix" target="_blank" rel="noopener" class="btn btn-outline-success">
+                            <i class="fas fa-mug-hot me-1"></i>{{ _('Support Development') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

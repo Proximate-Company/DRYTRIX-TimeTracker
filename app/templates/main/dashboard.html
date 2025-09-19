@@ -15,10 +15,10 @@
     <div class="row">
         <div class="col-12">
             {% set actions %}
-            <a href="{{ url_for('timer.manual_entry') }}" class="btn-header btn-primary">
+            <a href="{{ url_for('timer.manual_entry') }}" class="btn btn-primary me-2">
                 <i class="fas fa-plus me-2"></i>{{ _('Log Time') }}
             </a>
-            <a href="{{ url_for('reports.reports') }}" class="btn-header btn-outline-primary">
+            <a href="{{ url_for('reports.reports') }}" class="btn btn-outline-primary">
                 <i class="fas fa-chart-line me-2"></i>{{ _('Reports') }}
             </a>
             {% endset %}
@@ -26,13 +26,13 @@
         </div>
     </div>
 
-<!-- Enhanced Timer Section -->
+<!-- Timer Section -->
 <div class="row section-spacing">
     <div class="col-12">
-        <div class="card mobile-card hover-lift">
+        <div class="card hover-lift">
             <div class="card-header">
                 <h5 class="mb-0 d-flex align-items-center">
-                    <i class="fas fa-clock me-3 text-primary"></i>{{ _('Timer Status') }}
+                    <i class="fas fa-clock me-2 text-primary"></i>{{ _('Timer Status') }}
                 </h5>
             </div>
             <div class="card-body">
@@ -41,19 +41,19 @@
                         {% if active_timer %}
                         <div class="d-flex align-items-center flex-column flex-md-row">
                             <div class="me-0 me-md-4 mb-4 mb-md-0">
-                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center timer-status-icon shadow-sm" style="backdrop-filter: blur(8px);">
                                     <i class="fas fa-play text-success fa-2x"></i>
                                 </div>
                             </div>
                             <div class="text-center text-md-start">
-                                <h4 class="mb-2 text-success fw-bold">{{ _('Timer Running') }}</h4>
-                                <p class="mb-3 text-muted fs-6">
+                                <h4 class="mb-2 text-success">{{ _('Timer Running') }}</h4>
+                                <p class="mb-3 text-muted">
                                     <i class="fas fa-project-diagram me-2"></i>{{ active_timer.project.name }}{% if active_timer.task %} <span class="text-muted">•</span> <i class="fas fa-tasks ms-2 me-1"></i>{{ active_timer.task.name }}{% endif %}
                                 </p>
                                 <div class="timer-display mb-2" id="timer-display">
                                     {{ active_timer.duration_formatted }}
                                 </div>
-                                <small class="text-muted fs-6">
+                                <small class="text-muted">
                                     {{ _('Started at') }} {{ active_timer.start_time.strftime('%H:%M') }}
                                 </small>
                             </div>
@@ -61,15 +61,15 @@
                         {% else %}
                         <div class="d-flex align-items-center flex-column flex-md-row">
                             <div class="me-0 me-md-4 mb-4 mb-md-0">
-                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center timer-status-icon shadow-sm" style="backdrop-filter: blur(8px);">
                                     <i class="fas fa-stop text-muted fa-2x"></i>
                                 </div>
                             </div>
                             <div class="text-center text-md-start">
-                                <h4 class="mb-2 text-muted fw-bold">{{ _('No Active Timer') }}</h4>
-                                <p class="text-muted mb-1 fs-6">{{ _('Choose a project or one of its tasks to start tracking.') }}</p>
+                                <h4 class="mb-2 text-muted">{{ _('No Active Timer') }}</h4>
+                                <p class="text-muted mb-1">{{ _('Choose a project or one of its tasks to start tracking.') }}</p>
                                 <div class="mt-2">
-                                    <span class="badge bg-light text-dark fs-6">{{ _('Idle') }}</span>
+                                    <span class="status-badge bg-light text-dark">{{ _('Idle') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -78,12 +78,12 @@
                     <div class="col-lg-4 col-md-5 text-center">
                         {% if active_timer %}
                         <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline w-100">
-                            <button type="submit" class="btn btn-danger px-4 w-100 w-md-auto touch-target fw-bold">
+                            <button type="submit" class="btn btn-danger px-4 w-100 w-md-auto">
                                 <i class="fas fa-stop me-2"></i>{{ _('Stop Timer') }}
                             </button>
                         </form>
                         {% else %}
-                        <button type="button" class="btn btn-success px-4 w-100 w-md-auto touch-target fw-bold" data-bs-toggle="modal" data-bs-target="#startTimerModal">
+                        <button type="button" class="btn btn-success px-4 w-100 w-md-auto" data-bs-toggle="modal" data-bs-target="#startTimerModal">
                             <i class="fas fa-play me-2"></i>{{ _('Start Timer') }}
                         </button>
                         {% endif %}
@@ -94,49 +94,18 @@
     </div>
 </div>
 
-<!-- Enhanced Statistics Cards -->
+<!-- Statistics Cards -->
 <div class="row section-spacing">
     <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card h-100 mobile-card hover-lift">
-            <div class="card-body text-center py-4">
-                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 72px; height: 72px;">
-                    <i class="fas fa-calendar-day text-primary fa-2x"></i>
-                </div>
-                <h3 class="h1 text-primary mb-2 fw-bold">{{ "%.1f"|format(today_hours) }}</h3>
-                <p class="mb-2 fw-semibold fs-5">{{ _('Hours Today') }}</p>
-                <small class="text-muted fs-6">
-                    {% if today_hours > 0 %}{{ _('Active day') }}{% else %}{{ _('No activity yet') }}{% endif %}
-                </small>
-            </div>
-        </div>
+        {% from "_components.html" import summary_card %}
+        {{ summary_card('fas fa-calendar-day', 'primary', 'Hours Today', "%.1f"|format(today_hours)) }}
     </div>
     <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card h-100 mobile-card hover-lift">
-            <div class="card-body text-center py-4">
-                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 72px; height: 72px;">
-                    <i class="fas fa-calendar-week text-success fa-2x"></i>
-                </div>
-                <h3 class="h1 text-success mb-2 fw-bold">{{ "%.1f"|format(week_hours) }}</h3>
-                <p class="mb-2 fw-semibold fs-5">{{ _('Hours This Week') }}</p>
-                <small class="text-muted fs-6">
-                    {% if week_hours > 0 %}{{ _('Good progress') }}{% else %}{{ _('Start tracking') }}{% endif %}
-                </small>
-            </div>
-        </div>
+        {{ summary_card('fas fa-calendar-week', 'success', 'Hours This Week', "%.1f"|format(week_hours)) }}
     </div>
     <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card h-100 mobile-card hover-lift">
-            <div class="card-body text-center py-4">
-                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 72px; height: 72px;">
-                    <i class="fas fa-calendar-alt text-info fa-2x"></i>
-                </div>
-                <h3 class="h1 text-info mb-2 fw-bold">{{ "%.1f"|format(month_hours) }}</h3>
-                <p class="mb-2 fw-semibold fs-5">{{ _('Hours This Month') }}</p>
-                <small class="text-muted fs-6">
-                    {% if month_hours > 0 %}{{ _('Consistent work') }}{% else %}{{ _('New month') }}{% endif %}
-                </small>
-            </div>
-        </div>
+        {% from "_components.html" import summary_card %}
+        {{ summary_card('fas fa-calendar-alt', 'info', 'Hours This Month', "%.1f"|format(month_hours)) }}
     </div>
 </div>
 
@@ -152,9 +121,9 @@
             <div class="card-body">
                 <div class="row g-4">
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('timer.manual_entry') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
+                        <a href="{{ url_for('timer.manual_entry') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-plus text-primary fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Log Time') }}</h6>
@@ -163,9 +132,9 @@
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('timer.bulk_entry') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
+                        <a href="{{ url_for('timer.bulk_entry') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-calendar-plus text-success fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Bulk Entry') }}</h6>
@@ -174,9 +143,9 @@
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('projects.list_projects') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
+                        <a href="{{ url_for('projects.list_projects') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
+                                <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-project-diagram text-secondary fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Projects') }}</h6>
@@ -185,9 +154,9 @@
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('reports.reports') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
+                        <a href="{{ url_for('reports.reports') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
+                                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-chart-bar text-info fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Reports') }}</h6>
@@ -196,9 +165,9 @@
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('main.search') }}" class="card h-100 text-decoration-none mobile-card hover-lift">
+                        <a href="{{ url_for('main.search') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
+                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-search text-warning fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Search') }}</h6>
@@ -254,7 +223,7 @@
                                     </div>
                                 </td>
                                 <td data-label="Duration">
-                                    <span class="badge bg-primary fs-6">{{ entry.duration_formatted }}</span>
+                                    <span class="status-badge bg-primary text-white">{{ entry.duration_formatted }}</span>
                                 </td>
                                 <td data-label="Date">
                                     <div class="d-flex flex-column">

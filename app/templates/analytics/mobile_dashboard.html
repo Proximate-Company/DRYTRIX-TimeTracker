@@ -150,18 +150,49 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_head %}
+<script type="application/json" id="i18n-json-analytics-mobile">
+    {
+        "error_loading_charts": {{ _('Failed to load charts. Please try again.')|tojson }},
+        "error_refreshing_charts": {{ _('Failed to refresh charts. Please try again.')|tojson }},
+        "hours_label": {{ _('Hours')|tojson }},
+        "date_label": {{ _('Date')|tojson }},
+        "hour_of_day_label": {{ _('Hour of Day')|tojson }},
+        "revenue_label": {{ _('Revenue')|tojson }}
+    }
+</script>
 <script>
-// i18n for mobile analytics
-try {
-  var i18n_mobile_analytics = (function(){
-    var obj = {
-      error_loading_charts: {{ _('Failed to load charts. Please try again.')|tojson }},
-      error_refreshing_charts: {{ _('Failed to refresh charts. Please try again.')|tojson }}
-    };
-    return obj;
-  })();
-} catch (e) { var i18n_mobile_analytics = {}; }
+    // Ensure i18n_analytics is always defined globally
+    window.i18n_analytics = (function(){
+        try {
+            var el = document.getElementById('i18n-json-analytics-mobile');
+            return el ? JSON.parse(el.textContent) : {
+                "error_loading_charts": "Failed to load charts. Please try again.",
+                "error_refreshing_charts": "Failed to refresh charts. Please try again.",
+                "hours_label": "Hours",
+                "date_label": "Date", 
+                "hour_of_day_label": "Hour of Day",
+                "revenue_label": "Revenue"
+            };
+        } catch (e) { 
+            return {
+                "error_loading_charts": "Failed to load charts. Please try again.",
+                "error_refreshing_charts": "Failed to refresh charts. Please try again.", 
+                "hours_label": "Hours",
+                "date_label": "Date",
+                "hour_of_day_label": "Hour of Day", 
+                "revenue_label": "Revenue"
+            };
+        }
+    })();
+    
+    // Also make it available as a local variable for backward compatibility
+    var i18n_analytics = window.i18n_analytics;
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
 // Mobile-optimized chart defaults
 Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 Chart.defaults.font.size = 11;
@@ -219,7 +250,7 @@ class MobileAnalyticsDashboard {
             ]);
         } catch (error) {
             console.error('Error loading charts:', error);
-            this.showError(i18n_mobile_analytics.error_loading_charts || 'Failed to load charts. Please try again.');
+            this.showError(i18n_analytics.error_loading_charts || 'Failed to load charts. Please try again.');
         } finally {
             this.hideLoading();
         }
@@ -241,7 +272,7 @@ class MobileAnalyticsDashboard {
             this.updateSummaryCards();
         } catch (error) {
             console.error('Error refreshing charts:', error);
-            this.showError(i18n_mobile_analytics.error_refreshing_charts || 'Failed to refresh charts. Please try again.');
+            this.showError(i18n_analytics.error_refreshing_charts || 'Failed to refresh charts. Please try again.');
         } finally {
             this.hideLoading();
         }
