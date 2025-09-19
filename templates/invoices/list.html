@@ -122,6 +122,7 @@
 								<th class="border-0">{{ _('Due Date') }}</th>
 								<th class="border-0">{{ _('Amount') }}</th>
 								<th class="border-0">{{ _('Status') }}</th>
+								<th class="border-0">{{ _('Payment') }}</th>
 								<th class="border-0 text-center">{{ _('Actions') }}</th>
 							</tr>
 						</thead>
@@ -189,6 +190,39 @@
 										{{ config.label }}
 									</span>
 								</td>
+								<td class="align-middle">
+									<div class="payment-status-info">
+										{% if invoice.payment_status == 'unpaid' %}
+											<span class="payment-badge bg-danger text-white">
+												<i class="fas fa-times-circle me-1"></i>{{ _('Unpaid') }}
+											</span>
+										{% elif invoice.payment_status == 'partially_paid' %}
+											<span class="payment-badge bg-warning text-white">
+												<i class="fas fa-clock me-1"></i>{{ _('Partial') }}
+											</span>
+											<div class="payment-progress mt-1">
+												<div class="progress" style="height: 4px;">
+													<div class="progress-bar bg-warning" 
+														 style="width: {{ invoice.payment_percentage }}%"></div>
+												</div>
+												<small class="text-muted">{{ "%.0f"|format(invoice.payment_percentage) }}%</small>
+											</div>
+										{% elif invoice.payment_status == 'fully_paid' %}
+											<span class="payment-badge bg-success text-white">
+												<i class="fas fa-check-circle me-1"></i>{{ _('Paid') }}
+											</span>
+											{% if invoice.payment_date %}
+											<div class="payment-date">
+												<small class="text-muted">{{ invoice.payment_date.strftime('%b %d') }}</small>
+											</div>
+											{% endif %}
+										{% elif invoice.payment_status == 'overpaid' %}
+											<span class="payment-badge bg-info text-white">
+												<i class="fas fa-plus-circle me-1"></i>{{ _('Overpaid') }}
+											</span>
+										{% endif %}
+									</div>
+								</td>
 								<td class="align-middle text-center">
 									<div class="btn-group btn-group-sm" role="group">
 										<a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" 
@@ -226,6 +260,14 @@
 													<i class="fas fa-clock me-2"></i> {{ _('Generate from Time') }}
 													</a>
 											</li>
+											{% if invoice.payment_status != 'fully_paid' %}
+											<li>
+												<a class="dropdown-item text-success" 
+												   href="{{ url_for('invoices.record_payment', invoice_id=invoice.id) }}">
+													<i class="fas fa-money-bill-wave me-2"></i> {{ _('Record Payment') }}
+												</a>
+											</li>
+											{% endif %}
 											<li><hr class="dropdown-divider"></li>
 											<li>
 												<form method="POST" 
@@ -419,6 +461,27 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.payment-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.payment-status-info {
+    min-width: 80px;
+}
+
+.payment-progress {
+    width: 60px;
+}
+
+.payment-date {
+    margin-top: 2px;
 }
 
 .btn-group .btn { border-radius: 0 !important; margin-right: 0 !important; }

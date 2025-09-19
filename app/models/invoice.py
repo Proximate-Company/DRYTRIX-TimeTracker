@@ -31,6 +31,14 @@ class Invoice(db.Model):
     notes = db.Column(db.Text, nullable=True)
     terms = db.Column(db.Text, nullable=True)
     
+    # Payment tracking
+    payment_date = db.Column(db.Date, nullable=True)
+    payment_method = db.Column(db.String(50), nullable=True)  # 'cash', 'check', 'bank_transfer', 'credit_card', 'paypal', etc.
+    payment_reference = db.Column(db.String(100), nullable=True)  # Transaction ID, check number, etc.
+    payment_notes = db.Column(db.Text, nullable=True)
+    amount_paid = db.Column(db.Numeric(10, 2), nullable=True, default=0)
+    payment_status = db.Column(db.String(20), nullable=False, default='unpaid')  # 'unpaid', 'partially_paid', 'fully_paid', 'overpaid'
+    
     # Metadata
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -57,6 +65,14 @@ class Invoice(db.Model):
         self.notes = kwargs.get('notes')
         self.terms = kwargs.get('terms')
         self.tax_rate = Decimal(str(kwargs.get('tax_rate', 0)))
+        
+        # Set payment tracking fields
+        self.payment_date = kwargs.get('payment_date')
+        self.payment_method = kwargs.get('payment_method')
+        self.payment_reference = kwargs.get('payment_reference')
+        self.payment_notes = kwargs.get('payment_notes')
+        self.amount_paid = Decimal(str(kwargs.get('amount_paid', 0)))
+        self.payment_status = kwargs.get('payment_status', 'unpaid')
     
     def __repr__(self):
         return f'<Invoice {self.invoice_number} ({self.client_name})>'
@@ -72,6 +88,61 @@ class Invoice(db.Model):
         if not self.is_overdue:
             return 0
         return (datetime.utcnow().date() - self.due_date).days
+    
+    @property
+    def is_paid(self):
+        """Check if invoice is fully paid"""
+        return self.payment_status == 'fully_paid'
+    
+    @property
+    def is_partially_paid(self):
+        """Check if invoice is partially paid"""
+        return self.payment_status == 'partially_paid'
+    
+    @property
+    def outstanding_amount(self):
+        """Calculate outstanding amount"""
+        return self.total_amount - (self.amount_paid or 0)
+    
+    @property
+    def payment_percentage(self):
+        """Calculate payment percentage"""
+        if self.total_amount == 0:
+            return 0
+        return float((self.amount_paid or 0) / self.total_amount * 100)
+    
+    def update_payment_status(self):
+        """Update payment status based on amount paid"""
+        if not self.amount_paid or self.amount_paid == 0:
+            self.payment_status = 'unpaid'
+        elif self.amount_paid >= self.total_amount:
+            if self.amount_paid > self.total_amount:
+                self.payment_status = 'overpaid'
+            else:
+                self.payment_status = 'fully_paid'
+        else:
+            self.payment_status = 'partially_paid'
+    
+    def record_payment(self, amount, payment_date=None, payment_method=None, payment_reference=None, payment_notes=None):
+        """Record a payment for this invoice"""
+        self.amount_paid = (self.amount_paid or 0) + Decimal(str(amount))
+        self.payment_date = payment_date or datetime.utcnow().date()
+        if payment_method:
+            self.payment_method = payment_method
+        if payment_reference:
+            self.payment_reference = payment_reference
+        if payment_notes:
+            self.payment_notes = payment_notes
+        
+        self.update_payment_status()
+        
+        # Update invoice status based on payment
+        if self.payment_status == 'fully_paid':
+            self.status = 'paid'
+        elif self.payment_status in ['partially_paid', 'overpaid']:
+            # Keep current status but ensure it's not 'paid' if only partially paid
+            if self.payment_status == 'partially_paid' and self.status == 'paid':
+                self.status = 'sent'
     
     def calculate_totals(self):
         """Calculate invoice totals from items"""
@@ -107,7 +178,18 @@ class Invoice(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'is_overdue': self.is_overdue,
-            'days_overdue': self.days_overdue
+            'days_overdue': self.days_overdue,
+            # Payment tracking fields
+            'payment_date': self.payment_date.isoformat() if self.payment_date else None,
+            'payment_method': self.payment_method,
+            'payment_reference': self.payment_reference,
+            'payment_notes': self.payment_notes,
+            'amount_paid': float(self.amount_paid) if self.amount_paid else 0,
+            'payment_status': self.payment_status,
+            'is_paid': self.is_paid,
+            'is_partially_paid': self.is_partially_paid,
+            'outstanding_amount': float(self.outstanding_amount),
+            'payment_percentage': self.payment_percentage
         }
     
     @classmethod
