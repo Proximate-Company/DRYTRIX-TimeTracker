@@ -51,12 +51,23 @@ def sample_project(app):
 @pytest.fixture
 def sample_invoice(app, sample_user, sample_project):
     """Create a sample invoice for testing."""
+    # Create a client first
+    from app.models import Client
+    client = Client(
+        name='Test Client',
+        email='client@test.com',
+        created_by=sample_user.id
+    )
+    db.session.add(client)
+    db.session.commit()
+    
     invoice = Invoice(
         invoice_number='INV-20241201-001',
         project_id=sample_project.id,
         client_name='Test Client',
         due_date=date.today() + timedelta(days=30),
-        created_by=sample_user.id
+        created_by=sample_user.id,
+        client_id=client.id
     )
     db.session.add(invoice)
     db.session.commit()
@@ -64,12 +75,23 @@ def sample_invoice(app, sample_user, sample_project):
 
 def test_invoice_creation(app, sample_user, sample_project):
     """Test that invoices can be created correctly."""
+    # Create a client first
+    from app.models import Client
+    client = Client(
+        name='Test Client',
+        email='client@test.com',
+        created_by=sample_user.id
+    )
+    db.session.add(client)
+    db.session.commit()
+    
     invoice = Invoice(
         invoice_number='INV-20241201-002',
         project_id=sample_project.id,
         client_name='Test Client',
         due_date=date.today() + timedelta(days=30),
         created_by=sample_user.id,
+        client_id=client.id,
         tax_rate=Decimal('20.00')
     )
     
@@ -127,12 +149,23 @@ def test_invoice_totals_calculation(app, sample_invoice):
 
 def test_invoice_with_tax(app, sample_user, sample_project):
     """Test invoice calculation with tax."""
+    # Create a client first
+    from app.models import Client
+    client = Client(
+        name='Test Client',
+        email='client@test.com',
+        created_by=sample_user.id
+    )
+    db.session.add(client)
+    db.session.commit()
+    
     invoice = Invoice(
         invoice_number='INV-20241201-003',
         project_id=sample_project.id,
         client_name='Test Client',
         due_date=date.today() + timedelta(days=30),
         created_by=sample_user.id,
+        client_id=client.id,
         tax_rate=Decimal('20.00')
     )
     
@@ -246,3 +279,252 @@ def test_invoice_item_to_dict(app, sample_invoice):
     assert 'quantity' in item_dict
     assert 'unit_price' in item_dict
     assert 'total_amount' in item_dict
+
+# Payment Status Tracking Tests
+
+def test_invoice_payment_status_initialization(app, sample_user, sample_project):
+    """Test that invoices initialize with correct payment status."""
+    # Create a client first
+    from app.models import Client
+    client = Client(
+        name='Test Client',
+        email='client@test.com',
+        created_by=sample_user.id
+    )
+    db.session.add(client)
+    db.session.commit()
+    
+    invoice = Invoice(
+        invoice_number='INV-20241201-005',
+        project_id=sample_project.id,
+        client_name='Test Client',
+        due_date=date.today() + timedelta(days=30),
+        created_by=sample_user.id,
+        client_id=client.id
+    )
+    
+    db.session.add(invoice)
+    db.session.commit()
+    
+    # Check default payment status values
+    assert invoice.payment_status == 'unpaid'
+    assert invoice.amount_paid == Decimal('0')
+    assert invoice.payment_date is None
+    assert invoice.payment_method is None
+    assert invoice.payment_reference is None
+    assert invoice.payment_notes is None
+    
+    # Check payment properties
+    assert invoice.is_paid == False
+    assert invoice.is_partially_paid == False
+
+def test_record_full_payment(app, sample_invoice):
+    """Test recording a full payment."""
+    # Set up invoice with items
+    item = InvoiceItem(
+        invoice_id=sample_invoice.id,
+        description='Development work',
+        quantity=Decimal('10.00'),
+        unit_price=Decimal('75.00')
+    )
+    db.session.add(item)
+    db.session.commit()
+    
+    sample_invoice.calculate_totals()
+    total_amount = sample_invoice.total_amount
+    
+    # Record full payment
+    payment_date = date.today()
+    sample_invoice.record_payment(
+        amount=total_amount,
+        payment_date=payment_date,
+        payment_method='bank_transfer',
+        payment_reference='TXN123456',
+        payment_notes='Payment received via bank transfer'
+    )
+    
+    # Check payment tracking
+    assert sample_invoice.amount_paid == total_amount
+    assert sample_invoice.payment_status == 'fully_paid'
+    assert sample_invoice.payment_date == payment_date
+    assert sample_invoice.payment_method == 'bank_transfer'
+    assert sample_invoice.payment_reference == 'TXN123456'
+    assert sample_invoice.payment_notes == 'Payment received via bank transfer'
+    
+    # Check properties
+    assert sample_invoice.is_paid == True
+    assert sample_invoice.is_partially_paid == False
+    assert sample_invoice.outstanding_amount == Decimal('0')
+    assert sample_invoice.payment_percentage == 100.0
+    
+    # Check that invoice status was updated
+    assert sample_invoice.status == 'paid'
+
+def test_record_partial_payment(app, sample_invoice):
+    """Test recording a partial payment."""
+    # Set up invoice with items
+    item = InvoiceItem(
+        invoice_id=sample_invoice.id,
+        description='Development work',
+        quantity=Decimal('10.00'),
+        unit_price=Decimal('100.00')
+    )
+    db.session.add(item)
+    db.session.commit()
+    
+    sample_invoice.calculate_totals()
+    total_amount = sample_invoice.total_amount  # 1000.00
+    
+    # Record partial payment (50%)
+    partial_amount = total_amount / 2
+    sample_invoice.record_payment(
+        amount=partial_amount,
+        payment_method='credit_card',
+        payment_reference='CC-789'
+    )
+    
+    # Check payment tracking
+    assert sample_invoice.amount_paid == partial_amount
+    assert sample_invoice.payment_status == 'partially_paid'
+    assert sample_invoice.payment_method == 'credit_card'
+    assert sample_invoice.payment_reference == 'CC-789'
+    
+    # Check properties
+    assert sample_invoice.is_paid == False
+    assert sample_invoice.is_partially_paid == True
+    assert sample_invoice.outstanding_amount == partial_amount
+    assert sample_invoice.payment_percentage == 50.0
+
+def test_record_overpayment(app, sample_invoice):
+    """Test recording an overpayment."""
+    # Set up invoice with items
+    item = InvoiceItem(
+        invoice_id=sample_invoice.id,
+        description='Development work',
+        quantity=Decimal('5.00'),
+        unit_price=Decimal('100.00')
+    )
+    db.session.add(item)
+    db.session.commit()
+    
+    sample_invoice.calculate_totals()
+    total_amount = sample_invoice.total_amount  # 500.00
+    
+    # Record overpayment
+    overpayment_amount = total_amount + Decimal('50.00')  # 550.00
+    sample_invoice.record_payment(
+        amount=overpayment_amount,
+        payment_method='cash'
+    )
+    
+    # Check payment tracking
+    assert sample_invoice.amount_paid == overpayment_amount
+    assert sample_invoice.payment_status == 'overpaid'
+    assert sample_invoice.outstanding_amount == Decimal('-50.00')
+    assert sample_invoice.payment_percentage > 100.0
+
+def test_multiple_payments(app, sample_invoice):
+    """Test recording multiple payments."""
+    # Set up invoice with items
+    item = InvoiceItem(
+        invoice_id=sample_invoice.id,
+        description='Development work',
+        quantity=Decimal('10.00'),
+        unit_price=Decimal('100.00')
+    )
+    db.session.add(item)
+    db.session.commit()
+    
+    sample_invoice.calculate_totals()
+    total_amount = sample_invoice.total_amount  # 1000.00
+    
+    # First payment (30%)
+    first_payment = Decimal('300.00')
+    sample_invoice.record_payment(
+        amount=first_payment,
+        payment_method='check',
+        payment_reference='CHK-001'
+    )
+    
+    assert sample_invoice.amount_paid == first_payment
+    assert sample_invoice.payment_status == 'partially_paid'
+    
+    # Second payment (70% - completing the payment)
+    second_payment = Decimal('700.00')
+    sample_invoice.record_payment(
+        amount=second_payment,
+        payment_method='bank_transfer',
+        payment_reference='TXN-002'
+    )
+    
+    # Check final payment status
+    assert sample_invoice.amount_paid == total_amount
+    assert sample_invoice.payment_status == 'fully_paid'
+    assert sample_invoice.outstanding_amount == Decimal('0')
+    assert sample_invoice.payment_percentage == 100.0
+
+def test_update_payment_status_method(app, sample_invoice):
+    """Test the update_payment_status method."""
+    # Set up invoice with items
+    item = InvoiceItem(
+        invoice_id=sample_invoice.id,
+        description='Development work',
+        quantity=Decimal('10.00'),
+        unit_price=Decimal('100.00')
+    )
+    db.session.add(item)
+    db.session.commit()
+    
+    sample_invoice.calculate_totals()
+    total_amount = sample_invoice.total_amount
+    
+    # Test unpaid status
+    sample_invoice.amount_paid = Decimal('0')
+    sample_invoice.update_payment_status()
+    assert sample_invoice.payment_status == 'unpaid'
+    
+    # Test partial payment status
+    sample_invoice.amount_paid = total_amount / 2
+    sample_invoice.update_payment_status()
+    assert sample_invoice.payment_status == 'partially_paid'
+    
+    # Test fully paid status
+    sample_invoice.amount_paid = total_amount
+    sample_invoice.update_payment_status()
+    assert sample_invoice.payment_status == 'fully_paid'
+    
+    # Test overpaid status
+    sample_invoice.amount_paid = total_amount + Decimal('100')
+    sample_invoice.update_payment_status()
+    assert sample_invoice.payment_status == 'overpaid'
+
+def test_invoice_to_dict_includes_payment_fields(app, sample_invoice):
+    """Test that invoice to_dict includes payment tracking fields."""
+    # Record a payment
+    sample_invoice.record_payment(
+        amount=Decimal('500.00'),
+        payment_date=date.today(),
+        payment_method='paypal',
+        payment_reference='PP-123',
+        payment_notes='PayPal payment'
+    )
+    
+    invoice_dict = sample_invoice.to_dict()
+    
+    # Check that payment fields are included
+    assert 'payment_date' in invoice_dict
+    assert 'payment_method' in invoice_dict
+    assert 'payment_reference' in invoice_dict
+    assert 'payment_notes' in invoice_dict
+    assert 'amount_paid' in invoice_dict
+    assert 'payment_status' in invoice_dict
+    assert 'is_paid' in invoice_dict
+    assert 'is_partially_paid' in invoice_dict
+    assert 'outstanding_amount' in invoice_dict
+    assert 'payment_percentage' in invoice_dict
+    
+    # Check values
+    assert invoice_dict['payment_method'] == 'paypal'
+    assert invoice_dict['payment_reference'] == 'PP-123'
+    assert invoice_dict['payment_notes'] == 'PayPal payment'
+    assert invoice_dict['amount_paid'] == 500.00
