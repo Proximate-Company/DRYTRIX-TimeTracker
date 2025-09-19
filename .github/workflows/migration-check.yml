@@ -145,6 +145,7 @@ jobs:
           from app import create_app, db
           from app.models.user import User
           from app.models.project import Project
+          from app.models.client import Client
           import datetime
           
           app = create_app()
@@ -152,17 +153,24 @@ jobs:
               # Create test user
               user = User(
                   username='test_user',
-                  email='test@example.com',
                   role='user'
               )
-              user.set_password('test_password')
               db.session.add(user)
+              db.session.commit()  # Commit to get user ID
+              
+              # Create test client
+              client = Client(
+                  name='Test Client',
+                  description='Test client for migration validation'
+              )
+              db.session.add(client)
+              db.session.commit()  # Commit to get client ID
               
               # Create test project
               project = Project(
                   name='Test Project',
-                  description='Test project for migration validation',
-                  user_id=1
+                  client_id=client.id,
+                  description='Test project for migration validation'
               )
               db.session.add(project)
               
@@ -175,14 +183,16 @@ jobs:
           from app import create_app, db
           from app.models.user import User
           from app.models.project import Project
+          from app.models.client import Client
           
           app = create_app()
           with app.app_context():
               user_count = User.query.count()
               project_count = Project.query.count()
-              print(f'Users: {user_count}, Projects: {project_count}')
+              client_count = Client.query.count()
+              print(f'Users: {user_count}, Projects: {project_count}, Clients: {client_count}')
               
-              if user_count > 0 and project_count > 0:
+              if user_count > 0 and project_count > 0 and client_count > 0:
                   print('✅ Data integrity verified after migration')
               else:
                   print('❌ Data integrity check failed')
