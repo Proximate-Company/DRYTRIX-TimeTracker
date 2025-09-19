@@ -193,6 +193,7 @@ def create_app(config=None):
     from app.routes.tasks import tasks_bp
     from app.routes.invoices import invoices_bp
     from app.routes.clients import clients_bp
+    from app.routes.comments import comments_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -205,6 +206,7 @@ def create_app(config=None):
     app.register_blueprint(tasks_bp)
     app.register_blueprint(invoices_bp)
     app.register_blueprint(clients_bp)
+    app.register_blueprint(comments_bp)
     
     # Initialize phone home function if enabled
     if app.config.get('LICENSE_SERVER_ENABLED', True):
@@ -280,7 +282,7 @@ def create_app(config=None):
     def initialize_database():
         try:
             # Import models to ensure they are registered
-            from app.models import User, Project, TimeEntry, Task, Settings, TaskActivity
+            from app.models import User, Project, TimeEntry, Task, Settings, TaskActivity, Comment
             
             # Create database tables
             db.create_all()
@@ -402,7 +404,7 @@ def init_database(app):
     with app.app_context():
         try:
             # Import models to ensure they are registered
-            from app.models import User, Project, TimeEntry, Task, Settings, TaskActivity
+            from app.models import User, Project, TimeEntry, Task, Settings, TaskActivity, Comment
             
             # Create database tables
             db.create_all()

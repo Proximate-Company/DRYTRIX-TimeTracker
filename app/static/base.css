@@ -2639,3 +2639,226 @@ h6 { font-size: 1rem; }
     .navbar-nav .nav-link { padding: 0.7rem 1rem; }
 }
 
+/* ==========================================
+   Comments System Styles
+   ========================================== */
+.comments-section {
+    position: relative;
+}
+
+.comment {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: var(--border-radius-sm);
+    background: var(--bs-body-bg);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.comment:hover {
+    box-shadow: var(--card-shadow);
+    border-color: var(--primary-color);
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.comment-avatar .avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.comment-meta {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.comment-timestamp {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.comment-actions {
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.comment:hover .comment-actions {
+    opacity: 1;
+}
+
+.comment-content {
+    margin-left: 3.5rem;
+}
+
+.comment-text {
+    color: var(--text-primary);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.comment-edit-form,
+.comment-reply-form {
+    margin-left: 3.5rem;
+    margin-top: 0.75rem;
+}
+
+.comment-replies {
+    margin-left: 2rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--border-color);
+    position: relative;
+}
+
+.comment-reply {
+    margin-bottom: 1rem;
+}
+
+.comment-reply:last-child {
+    margin-bottom: 0;
+}
+
+.new-comment-form {
+    margin-bottom: 2rem;
+}
+
+.no-comments {
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+.no-comments .fas {
+    font-size: 3rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Comment form styling */
+.comment-form textarea {
+    resize: vertical;
+    min-height: 100px;
+    transition: var(--transition);
+}
+
+.comment-form textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .comment {
+    background: #0f172a;
+    border-color: #1f2a44;
+}
+
+[data-theme="dark"] .comment:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .comment-replies {
+    border-left-color: #1f2a44;
+}
+
+[data-theme="dark"] .comment-form textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.25);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .comment {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+    }
+    
+    .comment-replies {
+        margin-left: 1rem;
+        padding-left: 0.75rem;
+    }
+    
+    .comment-content,
+    .comment-edit-form,
+    .comment-reply-form {
+        margin-left: 2.75rem;
+    }
+    
+    .comment-avatar .avatar-circle {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    .comment-actions {
+        opacity: 1; /* Always show on mobile */
+    }
+    
+    .no-comments {
+        padding: 2rem 1rem;
+    }
+    
+    .no-comments .fas {
+        font-size: 2rem;
+    }
+}
+
+/* Animation for new comments */
+@keyframes slideInComment {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.comment-item {
+    animation: slideInComment 0.3s ease-out;
+}
+
+/* Loading spinner for forms */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.1em;
+}
+
+/* Modal z-index fix for comments */
+#deleteCommentModal {
+    z-index: 1060 !important;
+}
+
+#deleteCommentModal .modal-backdrop {
+    z-index: 1055 !important;
+}
+
+/* Ensure modal is clickable */
+#deleteCommentModal .modal-dialog {
+    pointer-events: auto;
+}
+

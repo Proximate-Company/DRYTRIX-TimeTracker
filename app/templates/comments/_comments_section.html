@@ -1,0 +1,156 @@
+<!-- Comments section for projects and tasks -->
+<div class="comments-section">
+    <div class="comments-header d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">
+            <i class="fas fa-comments me-2 text-primary"></i>
+            {{ _('Comments') }}
+            {% if comments %}
+            <span class="badge bg-secondary ms-2">{{ comments|length }}</span>
+            {% endif %}
+        </h6>
+        <button type="button" class="btn btn-sm btn-primary" onclick="showNewCommentForm()">
+            <i class="fas fa-plus me-1"></i>{{ _('Add Comment') }}
+        </button>
+    </div>
+    
+    <!-- New comment form (initially hidden) -->
+    <div class="new-comment-form d-none mb-4" id="new-comment-form">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('comments.create_comment') }}">
+                    {% if project %}
+                    <input type="hidden" name="project_id" value="{{ project.id }}">
+                    {% elif task %}
+                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                    {% endif %}
+                    <div class="mb-3">
+                        <label for="comment-content" class="form-label">{{ _('Your Comment') }}</label>
+                        <textarea name="content" id="comment-content" class="form-control" rows="4" 
+                                  placeholder="{{ _('Share your thoughts, updates, or questions...') }}" required></textarea>
+                        <div class="form-text">
+                            {{ _('You can use line breaks to format your comment.') }}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-comment me-1"></i>{{ _('Post Comment') }}
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="hideNewCommentForm()">
+                            <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comments list -->
+    <div class="comments-list">
+        {% if comments %}
+            {% for comment in comments %}
+                {% if not comment.parent_id %}  {# Only show top-level comments, replies are handled in _comment.html #}
+                    <div class="comment-item mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                {% include 'comments/_comment.html' with context %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="no-comments text-center py-5">
+                <div class="text-muted mb-3">
+                    <i class="fas fa-comments fa-3x opacity-50"></i>
+                </div>
+                <h6 class="text-muted mb-2">{{ _('No comments yet') }}</h6>
+                <p class="text-muted mb-3">{{ _('Start the conversation by adding the first comment.') }}</p>
+                <button type="button" class="btn btn-primary" onclick="showNewCommentForm()">
+                    <i class="fas fa-plus me-1"></i>{{ _('Add First Comment') }}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<script>
+// Comments functionality
+function showNewCommentForm() {
+    const form = document.getElementById('new-comment-form');
+    form.classList.remove('d-none');
+    document.getElementById('comment-content').focus();
+}
+
+function hideNewCommentForm() {
+    const form = document.getElementById('new-comment-form');
+    form.classList.add('d-none');
+    document.getElementById('comment-content').value = '';
+}
+
+function editComment(commentId) {
+    const content = document.getElementById('comment-content-' + commentId);
+    const editForm = document.getElementById('edit-form-' + commentId);
+    
+    content.classList.add('d-none');
+    editForm.classList.remove('d-none');
+    editForm.querySelector('textarea').focus();
+}
+
+function cancelEdit(commentId) {
+    const content = document.getElementById('comment-content-' + commentId);
+    const editForm = document.getElementById('edit-form-' + commentId);
+    
+    editForm.classList.add('d-none');
+    content.classList.remove('d-none');
+}
+
+function replyToComment(commentId) {
+    const replyForm = document.getElementById('reply-form-' + commentId);
+    replyForm.classList.remove('d-none');
+    replyForm.querySelector('textarea').focus();
+}
+
+function cancelReply(commentId) {
+    const replyForm = document.getElementById('reply-form-' + commentId);
+    replyForm.classList.add('d-none');
+    replyForm.querySelector('textarea').value = '';
+}
+
+function deleteComment(commentId) {
+    const commentElement = document.getElementById('comment-' + commentId);
+    const commentText = commentElement.querySelector('.comment-text').textContent;
+    
+    // Show preview of comment to be deleted
+    document.getElementById('comment-preview').style.display = 'block';
+    document.getElementById('comment-preview-text').textContent = commentText.substring(0, 100) + (commentText.length > 100 ? '...' : '');
+    
+    // Set form action
+    document.getElementById('deleteCommentForm').action = "{{ url_for('comments.delete_comment', comment_id=0) }}".replace('0', commentId);
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('deleteCommentModal')).show();
+}
+
+// Auto-resize textareas
+document.addEventListener('DOMContentLoaded', function() {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(function(textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+    
+    // Add loading state to forms
+    const forms = document.querySelectorAll('.comments-section form');
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"></div>' + '{{ _('Saving...') }}';
+            submitBtn.disabled = true;
+        });
+    });
+});
+</script>

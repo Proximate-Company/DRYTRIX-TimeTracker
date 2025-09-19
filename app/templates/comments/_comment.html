@@ -1,0 +1,101 @@
+<!-- Single comment template -->
+<div class="comment" id="comment-{{ comment.id }}" data-comment-id="{{ comment.id }}">
+    <div class="comment-header d-flex align-items-center mb-2">
+        <div class="comment-avatar me-3">
+            <div class="avatar-circle">
+                {{ (comment.author.full_name or comment.author.username)[0].upper() }}
+            </div>
+        </div>
+        <div class="comment-meta flex-grow-1">
+            <div class="comment-author">
+                <strong>{{ comment.author.full_name or comment.author.username }}</strong>
+                {% if comment.author.is_admin %}
+                <span class="badge bg-primary ms-1">{{ _('Admin') }}</span>
+                {% endif %}
+            </div>
+            <div class="comment-timestamp text-muted">
+                <i class="fas fa-clock me-1"></i>
+                <time datetime="{{ comment.created_at.isoformat() }}" title="{{ comment.created_at.strftime('%B %d, %Y at %I:%M %p') }}">
+                    {{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                </time>
+                {% if comment.created_at != comment.updated_at %}
+                <span class="text-muted ms-2" title="{{ _('Edited on') }} {{ comment.updated_at.strftime('%B %d, %Y at %I:%M %p') }}">
+                    <i class="fas fa-edit"></i> {{ _('edited') }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="comment-actions">
+            {% if comment.can_edit(current_user) %}
+            <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="editComment({{ comment.id }})" title="{{ _('Edit') }}">
+                <i class="fas fa-edit"></i>
+            </button>
+            {% endif %}
+            {% if comment.can_delete(current_user) %}
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteComment({{ comment.id }})" title="{{ _('Delete') }}">
+                <i class="fas fa-trash"></i>
+            </button>
+            {% endif %}
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="replyToComment({{ comment.id }})" title="{{ _('Reply') }}">
+                <i class="fas fa-reply"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="comment-content" id="comment-content-{{ comment.id }}">
+        <div class="comment-text">{{ comment.content | nl2br }}</div>
+    </div>
+    
+    <!-- Edit form (initially hidden) -->
+    <div class="comment-edit-form d-none" id="edit-form-{{ comment.id }}">
+        <form method="POST" action="{{ url_for('comments.edit_comment', comment_id=comment.id) }}">
+            <div class="mb-3">
+                <textarea name="content" class="form-control" rows="3" required>{{ comment.content }}</textarea>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-save me-1"></i>{{ _('Save') }}
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelEdit({{ comment.id }})">
+                    <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Reply form (initially hidden) -->
+    <div class="comment-reply-form d-none mt-3" id="reply-form-{{ comment.id }}">
+        <form method="POST" action="{{ url_for('comments.create_comment') }}">
+            {% if comment.project_id %}
+            <input type="hidden" name="project_id" value="{{ comment.project_id }}">
+            {% else %}
+            <input type="hidden" name="task_id" value="{{ comment.task_id }}">
+            {% endif %}
+            <input type="hidden" name="parent_id" value="{{ comment.id }}">
+            <div class="mb-3">
+                <textarea name="content" class="form-control" rows="3" placeholder="{{ _('Write your reply...') }}" required></textarea>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-reply me-1"></i>{{ _('Reply') }}
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelReply({{ comment.id }})">
+                    <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Replies -->
+    {% if comment.replies %}
+    <div class="comment-replies mt-3">
+        {% for reply in comment.replies %}
+        <div class="comment-reply ms-4">
+            {% with comment=reply %}
+            {% include 'comments/_comment.html' %}
+            {% endwith %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
