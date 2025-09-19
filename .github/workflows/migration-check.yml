@@ -257,27 +257,27 @@ jobs:
             const success = '${{ needs.validate-migrations.result }}' === 'success';
             const migrationChanges = '${{ needs.validate-migrations.outputs.migration_changes }}' === 'true';
             
-            let commentBody = '## 🗄️ Database Migration Validation\n\n';
+            let commentBody = '## Database Migration Validation\n\n';
             
             if (migrationChanges) {
               if (success) {
-                commentBody += '✅ **Migration validation passed!**\n\n';
+                commentBody += ':white_check_mark: **Migration validation passed!**\n\n';
                 commentBody += '**Completed checks:**\n';
-                commentBody += '- ✅ Migration consistency validation (with schema drift warnings)\n';
-                commentBody += '- ✅ Rollback safety test\n';
-                commentBody += '- ✅ Data integrity verification\n\n';
-                commentBody += '**The database migrations are safe to apply.** 🚀\n\n';
-                commentBody += '📝 **Note:** Schema drift warnings indicate existing model/migration mismatches that existed before this PR. These should be addressed in a separate schema alignment PR.\n';
+                commentBody += '- :white_check_mark: Migration consistency validation (with schema drift warnings)\n';
+                commentBody += '- :white_check_mark: Rollback safety test\n';
+                commentBody += '- :white_check_mark: Data integrity verification\n\n';
+                commentBody += '**The database migrations are safe to apply.** :rocket:\n\n';
+                commentBody += ':memo: **Note:** Schema drift warnings indicate existing model/migration mismatches that existed before this PR. These should be addressed in a separate schema alignment PR.\n';
               } else {
-                commentBody += '❌ **Migration validation failed!**\n\n';
+                commentBody += ':x: **Migration validation failed!**\n\n';
                 commentBody += '**Issues detected:**\n';
                 commentBody += '- Migration consistency problems\n';
                 commentBody += '- Rollback safety issues\n';
                 commentBody += '- Data integrity concerns\n\n';
-                commentBody += '**Please review the migration files and fix the issues before merging.** ⚠️\n';
+                commentBody += '**Please review the migration files and fix the issues before merging.** :warning:\n';
               }
             } else {
-              commentBody += 'ℹ️ **No migration-related changes detected.**\n\n';
+              commentBody += ':information_source: **No migration-related changes detected.**\n\n';
               commentBody += 'This PR does not modify database models or migrations.\n';
             }
             
