@@ -43,7 +43,7 @@
     </div>
     
     <div class="comment-content" id="comment-content-{{ comment.id }}">
-        <div class="comment-text">{{ comment.content | nl2br }}</div>
+        <div class="comment-text">{{ comment.content | nl2br | safe }}</div>
     </div>
     
     <!-- Edit form (initially hidden) -->
