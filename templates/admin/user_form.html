@@ -32,6 +32,7 @@
                                     <label for="username" class="form-label">{{ _('Username') }}</label>
                                     {% if user %}
                                     <input type="text" id="username" class="form-control" value="{{ user.username }}" disabled>
+                                    <input type="hidden" name="username" value="{{ user.username }}">
                                     {% else %}
                                     <input type="text" id="username" name="username" class="form-control" value="{{ request.form.get('username', '') }}" required>
                                     {% endif %}

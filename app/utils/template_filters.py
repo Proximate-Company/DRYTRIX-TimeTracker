@@ -44,6 +44,8 @@ def register_template_filters(app):
         """Convert newlines to HTML line breaks"""
         if text is None:
             return ""
+        # Handle different line break types (Windows \r\n, Mac \r, Unix \n)
+        text = text.replace('\r\n', '\n').replace('\r', '\n')
         return text.replace('\n', '<br>')
 
     @app.template_filter('markdown')

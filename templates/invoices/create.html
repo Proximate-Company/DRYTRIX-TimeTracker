@@ -72,6 +72,9 @@
                                                 {% for project in projects %}
                                                 <option value="{{ project.id }}" 
                                                         data-client="{{ project.client }}"
+                                                        data-client-id="{{ project.client_id }}"
+                                                        data-client-email="{{ project.client_obj.email if project.client_obj else '' }}"
+                                                        data-client-address="{{ project.client_obj.address if project.client_obj else '' }}"
                                                         data-hourly-rate="{{ project.hourly_rate or 0 }}">
                                                     {{ project.name }} ({{ project.client }})
                                                 </option>
@@ -115,10 +118,10 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="form-floating mb-3">
+                                        <div class="mb-3">
+                                            <label for="client_name" class="form-label">{{ _('Client Name *') }}</label>
                                             <input type="text" class="form-control" id="client_name" name="client_name" 
                                                    placeholder="{{ _('Client or company name') }}" required>
-                                            <label for="client_name">{{ _('Client Name *') }}</label>
                                             <div class="form-text">
                                                 <i class="fas fa-building text-primary me-1"></i>
                                                 {{ _('Who to bill') }}
@@ -126,10 +129,16 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="form-floating mb-3">
-                                            <input type="email" class="form-control" id="client_email" name="client_email" 
-                                                   placeholder="{{ _('client@example.com') }}">
-                                            <label for="client_email">{{ _('Client Email') }}</label>
+                                        <div class="mb-3">
+                                            <label for="client_email" class="form-label">{{ _('Client Email') }}</label>
+                                            <div class="input-group">
+                                                <input type="email" class="form-control" id="client_email" name="client_email" 
+                                                       placeholder="{{ _('client@example.com') }}">
+                                                <button type="button" class="btn btn-outline-secondary" id="reset_email_btn" 
+                                                        title="{{ _('Reset to original client email') }}" style="display: none;">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
+                                            </div>
                                             <div class="form-text">
                                                 <i class="fas fa-envelope text-muted me-1"></i>
                                                 {{ _('Optional email for sending invoices') }}
@@ -138,10 +147,16 @@
                                     </div>
                                 </div>
 
-                                <div class="form-floating mb-3">
-                                    <textarea class="form-control" id="client_address" name="client_address" 
-                                              style="height: 100px" placeholder="{{ _('Client billing address (optional)') }}"></textarea>
-                                    <label for="client_address">{{ _('Client Address') }}</label>
+                                <div class="mb-3">
+                                    <label for="client_address" class="form-label">{{ _('Client Address') }}</label>
+                                    <div class="input-group">
+                                        <textarea class="form-control" id="client_address" name="client_address" 
+                                                  style="height: 100px" placeholder="{{ _('Client billing address (optional)') }}"></textarea>
+                                        <button type="button" class="btn btn-outline-secondary" id="reset_address_btn" 
+                                                title="{{ _('Reset to original client address') }}" style="display: none;">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    </div>
                                     <div class="form-text">
                                         <i class="fas fa-map-marker-alt text-muted me-1"></i>
                                         {{ _('Optional billing address') }}
@@ -461,6 +476,29 @@
     box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
 }
 
+/* Custom styling for input groups with reset buttons */
+.input-group .btn {
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group .form-control:focus + .btn {
+    border-color: var(--primary-color);
+}
+
+/* Special handling for textarea in input group */
+.input-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.input-group textarea + .btn {
+    align-self: flex-start;
+    height: 38px;
+    margin-top: 0;
+}
+
 @media (max-width: 768px) {
     .step-indicator .step-label {
         display: none;
@@ -483,14 +521,18 @@ let currentStep = 1;
 const totalSteps = 4;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-fill client name when project is selected
+    // Auto-fill client information when project is selected
     const projectSelect = document.getElementById('project_id');
     projectSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const clientName = selectedOption ? selectedOption.getAttribute('data-client') : '';
+        const clientEmail = selectedOption ? selectedOption.getAttribute('data-client-email') : '';
+        const clientAddress = selectedOption ? selectedOption.getAttribute('data-client-address') : '';
         const hourlyRate = selectedOption ? parseFloat(selectedOption.getAttribute('data-hourly-rate') || '0') : 0;
 
         const clientNameInput = document.getElementById('client_name');
+        const clientEmailInput = document.getElementById('client_email');
+        const clientAddressInput = document.getElementById('client_address');
         const projectInfo = document.getElementById('project-info');
         const noProjectInfo = document.getElementById('no-project-info');
         const projectClient = document.getElementById('project-client');
@@ -499,11 +541,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (clientName) {
             clientNameInput.value = clientName;
+            clientEmailInput.value = clientEmail || '';
+            clientAddressInput.value = clientAddress || '';
+            
+            // Store original values for reset functionality
+            clientEmailInput.setAttribute('data-original', clientEmail || '');
+            clientAddressInput.setAttribute('data-original', clientAddress || '');
+            
             projectInfo.classList.remove('d-none');
             noProjectInfo.classList.add('d-none');
             projectClient.textContent = clientName;
             projectRate.textContent = '{{ settings.currency or "EUR" }}' + hourlyRate.toFixed(2);
             projectBillable.textContent = hourlyRate > 0 ? '{{ _('Yes') }}' : '{{ _('No') }}';
+            
+            // Update reset buttons after populating fields
+            updateResetButtons();
         } else {
             projectInfo.classList.add('d-none');
             noProjectInfo.classList.remove('d-none');
@@ -514,6 +566,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const dueDate = document.getElementById('due_date');
     const today = new Date().toISOString().split('T')[0];
     dueDate.setAttribute('min', today);
+
+    // Handle reset buttons for client email and address
+    const clientEmailInput = document.getElementById('client_email');
+    const clientAddressInput = document.getElementById('client_address');
+    const resetEmailBtn = document.getElementById('reset_email_btn');
+    const resetAddressBtn = document.getElementById('reset_address_btn');
+
+    // Show/hide reset buttons based on field changes
+    function updateResetButtons() {
+        const emailOriginal = clientEmailInput.getAttribute('data-original') || '';
+        const addressOriginal = clientAddressInput.getAttribute('data-original') || '';
+        
+        resetEmailBtn.style.display = (clientEmailInput.value !== emailOriginal) ? 'block' : 'none';
+        resetAddressBtn.style.display = (clientAddressInput.value !== addressOriginal) ? 'block' : 'none';
+    }
+
+    // Add event listeners for field changes
+    clientEmailInput.addEventListener('input', updateResetButtons);
+    clientAddressInput.addEventListener('input', updateResetButtons);
+
+    // Reset button functionality
+    resetEmailBtn.addEventListener('click', function() {
+        const original = clientEmailInput.getAttribute('data-original') || '';
+        clientEmailInput.value = original;
+        updateResetButtons();
+    });
+
+    resetAddressBtn.addEventListener('click', function() {
+        const original = clientAddressInput.getAttribute('data-original') || '';
+        clientAddressInput.value = original;
+        updateResetButtons();
+    });
 
     // Form validation
     const invoiceForm = document.getElementById('invoiceForm');
