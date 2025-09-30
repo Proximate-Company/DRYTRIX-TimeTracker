@@ -81,6 +81,22 @@ class Task(db.Model):
             return round(total_seconds / 3600, 2)
         except Exception:
             return 0.0
+
+    @property
+    def total_billable_hours(self):
+        """Calculate total billable hours spent on this task"""
+        try:
+            from .time_entry import TimeEntry
+            total_seconds = db.session.query(
+                db.func.sum(TimeEntry.duration_seconds)
+            ).filter(
+                TimeEntry.task_id == self.id,
+                TimeEntry.end_time.isnot(None),
+                TimeEntry.billable == True
+            ).scalar() or 0
+            return round(total_seconds / 3600, 2)
+        except Exception:
+            return 0.0
     
     @property
     def progress_percentage(self):
@@ -220,6 +236,7 @@ class Task(db.Model):
             'started_at': self.started_at.isoformat() if self.started_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'total_hours': self.total_hours,
+            'total_billable_hours': self.total_billable_hours,
             'progress_percentage': self.progress_percentage,
             'is_active': self.is_active,
             'is_overdue': self.is_overdue

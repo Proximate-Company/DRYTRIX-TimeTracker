@@ -141,6 +141,15 @@
                             </div>
                         </div>
                         {% endif %}
+
+                        {% if task.total_billable_hours > 0 %}
+                        <div class="col-6 col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-success mb-1">{{ task.total_billable_hours }}</div>
+                                <small class="text-muted">{{ _('Billable Hours') }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
                         
                         {% if task.estimated_hours and task.total_hours > 0 %}
                         <div class="col-6 col-md-3">
