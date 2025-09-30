@@ -235,12 +235,14 @@
 										   title="{{ _('Edit Invoice') }}">
 											<i class="fas fa-edit"></i>
 										</a>
-										<button type="button" 
-										        class="btn btn-sm btn-action btn-action--more dropdown-toggle dropdown-toggle-split" 
-										        data-bs-toggle="dropdown" 
-										        aria-expanded="false">
-											<span class="visually-hidden">{{ _('More actions') }}</span>
-										</button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-action btn-action--more dropdown-toggle dropdown-toggle-split" 
+                                            data-bs-toggle="dropdown" 
+                                            aria-expanded="false"
+                                            title="{{ _('More actions') }}">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                        <span class="visually-hidden">{{ _('More actions') }}</span>
+                                    </button>
 										<ul class="dropdown-menu dropdown-menu-end" data-bs-auto-close="true">
 											<li>
 												<a class="dropdown-item" 
@@ -402,19 +404,10 @@
     opacity: 1 !important;
 }
 
-.dropdown-toggle::after {
-    display: none;
-}
-
+.dropdown-toggle::after,
 .btn-group .dropdown-toggle-split::after {
-    display: inline-block;
-    margin-left: 0.255em;
-    vertical-align: 0.255em;
-    content: "";
-    border-top: 0.3em solid;
-    border-right: 0.3em solid transparent;
-    border-bottom: 0;
-    border-left: 0.3em solid transparent;
+    /* Hide default caret since we render an explicit ellipsis icon */
+    display: none !important;
 }
 
 .invoice-number-badge {
