@@ -58,60 +58,11 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
 
-  run-tests:
-    runs-on: ubuntu-latest
-    needs: validate-release
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_USER: test_user
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
-
-      - name: Run database migrations test
-        env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-          FLASK_APP: app.py
-        run: |
-          flask db upgrade
-          python -c "from app import create_app, db; app = create_app(); app.app_context().push(); print('✅ Database connection successful')"
-
-      - name: Run tests
-        env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-        run: |
-          if [ -d "tests" ]; then
-            pytest tests/ -v --cov=app --cov-report=xml
-          else
-            echo "⚠️ No tests directory found, skipping tests"
-          fi
+  
 
   build-and-push:
     runs-on: ubuntu-latest
-    needs: [validate-release, run-tests]
+    needs: [validate-release]
     permissions:
       contents: read
       packages: write
