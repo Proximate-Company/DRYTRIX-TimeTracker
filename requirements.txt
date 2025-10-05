@@ -15,7 +15,7 @@ psycopg2-binary==2.9.9
 
 # Web server
 gunicorn==23.0.0
-eventlet==0.37.0
+eventlet==0.40.3
 
 # Utilities
 python-dotenv==1.0.0
