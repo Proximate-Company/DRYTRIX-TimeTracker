@@ -7,9 +7,13 @@ class User(UserMixin, db.Model):
     """User model for username-based authentication"""
     
     __tablename__ = 'users'
+    __table_args__ = (
+        db.UniqueConstraint('oidc_issuer', 'oidc_sub', name='uq_users_oidc_issuer_sub'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(200), nullable=True, index=True)
     full_name = db.Column(db.String(200), nullable=True)
     role = db.Column(db.String(20), default='user', nullable=False)  # 'user' or 'admin'
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -17,13 +21,17 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     theme_preference = db.Column(db.String(10), default=None, nullable=True)  # 'light' | 'dark' | None=system
     preferred_language = db.Column(db.String(8), default=None, nullable=True)  # e.g., 'en', 'de'
+    oidc_sub = db.Column(db.String(255), nullable=True)
+    oidc_issuer = db.Column(db.String(255), nullable=True)
     
     # Relationships
     time_entries = db.relationship('TimeEntry', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     
-    def __init__(self, username, role='user'):
+    def __init__(self, username, role='user', email=None, full_name=None):
         self.username = username.lower().strip()
         self.role = role
+        self.email = (email or None)
+        self.full_name = (full_name or None)
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -80,6 +88,7 @@ class User(UserMixin, db.Model):
         return {
             'id': self.id,
             'username': self.username,
+            'email': self.email,
             'full_name': self.full_name,
             'display_name': self.display_name,
             'role': self.role,

@@ -181,6 +181,24 @@
     </div>
 </div>
 
+<!-- Today by Task -->
+<div class="row section-spacing">
+    <div class="col-12">
+        <div class="card mobile-card hover-lift">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="mb-0 d-flex align-items-center">
+                    <i class="fas fa-list-check me-3 text-secondary"></i>{{ _('Today by Task') }}
+                </h5>
+                <small class="text-muted" id="today-by-task-date"></small>
+            </div>
+            <div class="card-body" id="today-by-task">
+                <div class="text-muted">{{ _('Loading...') }}</div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
 <!-- Enhanced Recent Entries -->
 <div class="row">
     <div class="col-12">
@@ -366,7 +384,10 @@
     'choose_task': _('Choose a task...'),
     'please_select_project': _('Please select a project'),
     'starting': _('Starting...'),
-    'deleting': _('Deleting...')
+    'deleting': _('Deleting...'),
+    'today_by_task': _('Today by Task'),
+    'no_data': _('No time tracked yet today'),
+    'hours_suffix': _('h')
 }|tojson }}</script>
 <script>
     // Parse page i18n
@@ -447,6 +468,44 @@
             }
         });
     }
+
+    // Fetch and render Today by Task
+    (function(){
+        const container = document.getElementById('today-by-task');
+        const dateEl = document.getElementById('today-by-task-date');
+        if (!container) return;
+        function renderRows(rows){
+            if (!rows || rows.length === 0) {
+                container.innerHTML = `<div class="text-muted">${i18nDash.no_data || 'No time tracked yet today'}</div>`;
+                return;
+            }
+            const list = document.createElement('div');
+            list.className = 'list-group list-group-flush';
+            rows.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                const left = document.createElement('div');
+                left.className = 'd-flex align-items-center';
+                left.innerHTML = `<div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width:32px;height:32px;"><i class="fas fa-tasks text-secondary"></i></div><div><div class="fw-semibold">${(r.task_name ? r.project_name + ' • ' + r.task_name : r.project_name + ' • ' + (i18nDash.no_task || 'No task'))}</div></div>`;
+                const right = document.createElement('div');
+                right.className = 'badge bg-primary rounded-pill';
+                right.textContent = `${(r.total_hours ?? 0).toFixed(2)} ${(i18nDash.hours_suffix || 'h')}`;
+                item.appendChild(left);
+                item.appendChild(right);
+                list.appendChild(item);
+            });
+            container.innerHTML = '';
+            container.appendChild(list);
+        }
+        fetch('/api/analytics/today-by-task').then(r => r.json()).then(data => {
+            if (data && data.date) {
+                try { dateEl.textContent = new Date(data.date + 'T00:00:00').toLocaleDateString(); } catch(e) {}
+            }
+            renderRows((data && data.rows) || []);
+        }).catch(() => {
+            container.innerHTML = `<div class="text-muted">${i18nDash.no_data || 'No time tracked yet today'}</div>`;
+        });
+    })();
 
     // Validate start timer submission
     const startForm = document.querySelector('#startTimerModal form');

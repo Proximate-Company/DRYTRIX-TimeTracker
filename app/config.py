@@ -44,6 +44,23 @@ class Config:
     # User management
     ALLOW_SELF_REGISTER = os.getenv('ALLOW_SELF_REGISTER', 'true').lower() == 'true'
     ADMIN_USERNAMES = os.getenv('ADMIN_USERNAMES', 'admin').split(',')
+
+    # Authentication method: 'local' | 'oidc' | 'both'
+    AUTH_METHOD = os.getenv('AUTH_METHOD', 'local').strip().lower()
+
+    # OIDC settings (used when AUTH_METHOD is 'oidc' or 'both')
+    OIDC_ISSUER = os.getenv('OIDC_ISSUER')  # e.g., https://login.microsoftonline.com/<tenant>/v2.0
+    OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID')
+    OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET')
+    OIDC_REDIRECT_URI = os.getenv('OIDC_REDIRECT_URI')  # e.g., https://app.example.com/auth/oidc/callback
+    OIDC_SCOPES = os.getenv('OIDC_SCOPES', 'openid profile email')
+    OIDC_USERNAME_CLAIM = os.getenv('OIDC_USERNAME_CLAIM', 'preferred_username')
+    OIDC_FULL_NAME_CLAIM = os.getenv('OIDC_FULL_NAME_CLAIM', 'name')
+    OIDC_EMAIL_CLAIM = os.getenv('OIDC_EMAIL_CLAIM', 'email')
+    OIDC_GROUPS_CLAIM = os.getenv('OIDC_GROUPS_CLAIM', 'groups')
+    OIDC_ADMIN_GROUP = os.getenv('OIDC_ADMIN_GROUP')  # optional
+    OIDC_ADMIN_EMAILS = [e.strip().lower() for e in os.getenv('OIDC_ADMIN_EMAILS', '').split(',') if e.strip()]
+    OIDC_POST_LOGOUT_REDIRECT_URI = os.getenv('OIDC_POST_LOGOUT_REDIRECT_URI')
     
     # Backup settings
     BACKUP_RETENTION_DAYS = int(os.getenv('BACKUP_RETENTION_DAYS', 30))

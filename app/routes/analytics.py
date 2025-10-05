@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Project, TimeEntry, Settings
+from app.models import User, Project, TimeEntry, Settings, Task
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 import calendar
@@ -327,4 +327,75 @@ def project_efficiency():
                 'yAxisID': 'y1'
             }
         ]
+    })
+
+
+@analytics_bp.route('/api/analytics/today-by-task')
+@login_required
+def today_by_task():
+    """Get today's total hours grouped by task (includes project-level entries without task).
+
+    Optional query params:
+    - date: YYYY-MM-DD (defaults to today)
+    - user_id: admin-only override to view a specific user's data
+    """
+    # Parse target date
+    date_str = request.args.get('date')
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format, expected YYYY-MM-DD'}), 400
+    else:
+        target_date = datetime.now().date()
+
+    # Base query
+    query = db.session.query(
+        TimeEntry.task_id,
+        Task.name.label('task_name'),
+        TimeEntry.project_id,
+        Project.name.label('project_name'),
+        func.sum(TimeEntry.duration_seconds).label('total_seconds')
+    ).join(
+        Project, Project.id == TimeEntry.project_id
+    ).outerjoin(
+        Task, Task.id == TimeEntry.task_id
+    ).filter(
+        TimeEntry.end_time.isnot(None),
+        func.date(TimeEntry.start_time) == target_date
+    )
+
+    # Scope to current user unless admin (with optional override)
+    if not current_user.is_admin:
+        query = query.filter(TimeEntry.user_id == current_user.id)
+    else:
+        user_id = request.args.get('user_id', type=int)
+        if user_id:
+            query = query.filter(TimeEntry.user_id == user_id)
+
+    results = query.group_by(
+        TimeEntry.task_id,
+        Task.name,
+        TimeEntry.project_id,
+        Project.name
+    ).order_by(func.sum(TimeEntry.duration_seconds).desc()).all()
+
+    rows = []
+    for task_id, task_name, project_id, project_name, total_seconds in results:
+        total_seconds = int(total_seconds or 0)
+        total_hours = round(total_seconds / 3600, 2)
+        label = f"{project_name} • {task_name}" if task_name else f"{project_name} • No task"
+        rows.append({
+            'task_id': task_id,
+            'task_name': task_name,
+            'project_id': project_id,
+            'project_name': project_name,
+            'total_seconds': total_seconds,
+            'total_hours': total_hours,
+            'label': label
+        })
+
+    return jsonify({
+        'date': target_date.strftime('%Y-%m-%d'),
+        'rows': rows
     })

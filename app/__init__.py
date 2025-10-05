@@ -8,6 +8,7 @@ from flask_login import LoginManager
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
 from flask_babel import Babel, _
+from authlib.integrations.flask_client import OAuth
 import re
 from jinja2 import ChoiceLoader, FileSystemLoader
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -21,6 +22,7 @@ migrate = Migrate()
 login_manager = LoginManager()
 socketio = SocketIO()
 babel = Babel()
+oauth = OAuth()
 
 def create_app(config=None):
     """Application factory pattern"""
@@ -69,6 +71,7 @@ def create_app(config=None):
     migrate.init_app(app, db)
     login_manager.init_app(app)
     socketio.init_app(app, cors_allowed_origins="*")
+    oauth.init_app(app)
 
     # Ensure translations exist and configure absolute translation directories before Babel init
     try:
@@ -208,6 +211,35 @@ def create_app(config=None):
     app.register_blueprint(clients_bp)
     app.register_blueprint(comments_bp)
     
+    # Register OAuth OIDC client if enabled
+    try:
+        auth_method = (app.config.get('AUTH_METHOD') or 'local').strip().lower()
+    except Exception:
+        auth_method = 'local'
+
+    if auth_method in ('oidc', 'both'):
+        issuer = app.config.get('OIDC_ISSUER')
+        client_id = app.config.get('OIDC_CLIENT_ID')
+        client_secret = app.config.get('OIDC_CLIENT_SECRET')
+        scopes = app.config.get('OIDC_SCOPES', 'openid profile email')
+        if issuer and client_id and client_secret:
+            try:
+                oauth.register(
+                    name='oidc',
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    server_metadata_url=f"{issuer.rstrip('/')}/.well-known/openid-configuration",
+                    client_kwargs={
+                        'scope': scopes,
+                        'code_challenge_method': 'S256',
+                    },
+                )
+                app.logger.info("OIDC client registered with issuer %s", issuer)
+            except Exception as e:
+                app.logger.error("Failed to register OIDC client: %s", e)
+        else:
+            app.logger.warning("AUTH_METHOD is %s but OIDC envs are incomplete; OIDC login will not work", auth_method)
+
     # Initialize phone home function if enabled
     if app.config.get('LICENSE_SERVER_ENABLED', True):
         try:
