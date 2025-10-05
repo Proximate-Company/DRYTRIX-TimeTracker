@@ -532,7 +532,7 @@ main {
 }
 
 .btn:hover::after {
-    opacity: 1;
+    opacity: 0.35;
 }
 
 /* Button focus states */
@@ -553,8 +553,8 @@ main {
     background: var(--surface-hover) !important;
     border-color: var(--primary-color) !important;
     color: var(--text-primary) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15) !important;
+    transform: none !important;
+    box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.08) !important;
 }
 
 .btn:active {
@@ -601,8 +601,8 @@ main {
     background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%) !important;
     border-color: var(--primary-600) !important;
     color: var(--text-on-primary) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(59, 130, 246, 0.2) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.18), 0 1px 3px rgba(59, 130, 246, 0.12) !important;
 }
 
 .btn-primary:focus {
@@ -643,8 +643,8 @@ main {
     background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
     border-color: #059669 !important;
     color: var(--text-on-primary) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(16, 185, 129, 0.2) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.18), 0 1px 3px rgba(16, 185, 129, 0.12) !important;
 }
 
 /* Danger button styling */
@@ -659,7 +659,7 @@ main {
     background: #b91c1c;
     border-color: #b91c1c;
     color: var(--text-on-primary);
-    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    box-shadow: 0 3px 10px rgba(220, 38, 38, 0.25);
 }
 
 /* Outline button styling - Enhanced */
