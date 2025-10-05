@@ -17,6 +17,10 @@ psycopg2-binary==2.9.9
 gunicorn==23.0.0
 eventlet==0.40.3
 
+# Security and forms
+Flask-WTF==1.2.1
+Flask-Limiter==3.8.0
+
 # Utilities
 python-dotenv==1.0.0
 pytz==2023.3

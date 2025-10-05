@@ -5,12 +5,13 @@ from app.models import User
 from app.config import Config
 from app.utils.db import safe_commit
 from flask_babel import gettext as _
-from app import oauth
+from app import oauth, limiter
 
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=["POST"])  # rate limit login attempts
 def login():
     """Login page. Local username login is allowed only if AUTH_METHOD != 'oidc'."""
     if request.method == 'GET':

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, send_file, jsonify, render_template_string
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
-from app import db
+from app import db, limiter
 from app.models import User, Project, TimeEntry, Settings, Invoice
 from datetime import datetime
 from sqlalchemy import text
@@ -19,7 +19,8 @@ admin_bp = Blueprint('admin', __name__)
 RESTORE_PROGRESS = {}
 
 # Allowed file extensions for logos
-ALLOWED_LOGO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
+# Avoid SVG due to XSS risk unless sanitized server-side
+ALLOWED_LOGO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 def admin_required(f):
     """Decorator to require admin access"""
@@ -260,6 +261,7 @@ def settings():
 
 
 @admin_bp.route('/admin/pdf-layout', methods=['GET', 'POST'])
+@limiter.limit("30 per minute", methods=["POST"])  # editor saves
 @login_required
 @admin_required
 def pdf_layout():
@@ -301,6 +303,7 @@ def pdf_layout():
 
 
 @admin_bp.route('/admin/pdf-layout/reset', methods=['POST'])
+@limiter.limit("10 per minute")
 @login_required
 @admin_required
 def pdf_layout_reset():
@@ -345,6 +348,7 @@ def pdf_layout_default():
 
 
 @admin_bp.route('/admin/pdf-layout/preview', methods=['POST'])
+@limiter.limit("60 per minute")
 @login_required
 @admin_required
 def pdf_layout_preview():
@@ -479,6 +483,7 @@ def pdf_layout_preview():
     return page_html
 
 @admin_bp.route('/admin/upload-logo', methods=['POST'])
+@limiter.limit("10 per minute")
 @login_required
 @admin_required
 def upload_logo():
@@ -497,6 +502,17 @@ def upload_logo():
         file_extension = file.filename.rsplit('.', 1)[1].lower()
         unique_filename = f"company_logo_{uuid.uuid4().hex[:8]}.{file_extension}"
         
+        # Basic server-side validation: verify image type
+        try:
+            from PIL import Image
+            file.stream.seek(0)
+            img = Image.open(file.stream)
+            img.verify()
+            file.stream.seek(0)
+        except Exception:
+            flash('Invalid image file.', 'error')
+            return redirect(url_for('admin.settings'))
+
         # Save file
         upload_folder = get_upload_folder()
         file_path = os.path.join(upload_folder, unique_filename)
@@ -579,6 +595,7 @@ def backup():
         return redirect(url_for('admin.admin_dashboard'))
 
 @admin_bp.route('/admin/restore', methods=['GET', 'POST'])
+@limiter.limit("3 per minute", methods=["POST"])  # heavy operation
 @login_required
 @admin_required
 def restore():

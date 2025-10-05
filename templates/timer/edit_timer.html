@@ -200,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <strong>{{ _('Admin Mode:') }}</strong> {{ _('You can edit all fields of this time entry, including project, task, start/end times, and source.') }}
                             </div>
                             <form method="POST" action="{{ url_for('timer.edit_timer', timer_id=timer.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                         <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label for="project_id" class="form-label fw-semibold">
@@ -388,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     {% else %}
                         <!-- Regular user form -->
                         <form method="POST" action="{{ url_for('timer.edit_timer', timer_id=timer.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-4">
                                 <label for="notes" class="form-label fw-semibold">
                                     <i class="fas fa-sticky-note me-1"></i>{{ _('Notes') }}

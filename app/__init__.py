@@ -8,6 +8,9 @@ from flask_login import LoginManager
 from flask_socketio import SocketIO
 from dotenv import load_dotenv
 from flask_babel import Babel, _
+from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from authlib.integrations.flask_client import OAuth
 import re
 from jinja2 import ChoiceLoader, FileSystemLoader
@@ -22,6 +25,8 @@ migrate = Migrate()
 login_manager = LoginManager()
 socketio = SocketIO()
 babel = Babel()
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
 oauth = OAuth()
 
 def create_app(config=None):
@@ -33,7 +38,17 @@ def create_app(config=None):
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     
     # Configuration
-    app.config.from_object('app.config.Config')
+    # Load env-specific config class
+    try:
+        env_name = os.getenv('FLASK_ENV', 'production')
+        cfg_map = {
+            'development': 'app.config.DevelopmentConfig',
+            'testing': 'app.config.TestingConfig',
+            'production': 'app.config.ProductionConfig',
+        }
+        app.config.from_object(cfg_map.get(env_name, 'app.config.Config'))
+    except Exception:
+        app.config.from_object('app.config.Config')
     if config:
         app.config.update(config)
     
@@ -72,6 +87,20 @@ def create_app(config=None):
     login_manager.init_app(app)
     socketio.init_app(app, cors_allowed_origins="*")
     oauth.init_app(app)
+    csrf.init_app(app)
+    try:
+        # Configure limiter defaults from config if provided
+        default_limits = []
+        raw = app.config.get('RATELIMIT_DEFAULT')
+        if raw:
+            # support semicolon or comma separated limits
+            parts = [p.strip() for p in str(raw).replace(',', ';').split(';') if p.strip()]
+            if parts:
+                default_limits = parts
+        limiter._default_limits = default_limits  # set after init
+        limiter.init_app(app)
+    except Exception:
+        limiter.init_app(app)
 
     # Ensure translations exist and configure absolute translation directories before Babel init
     try:
@@ -183,6 +212,56 @@ def create_app(config=None):
     
     # Setup logging
     setup_logging(app)
+
+    # Fail-fast on weak secret in production
+    if not app.debug and app.config.get('FLASK_ENV', 'production') == 'production':
+        if app.config.get('SECRET_KEY') == 'dev-secret-key-change-in-production':
+            app.logger.error('Weak SECRET_KEY configured in production; refusing to start')
+            raise RuntimeError('Weak SECRET_KEY in production')
+
+    # Apply security headers and a basic CSP
+    @app.after_request
+    def apply_security_headers(response):
+        try:
+            headers = app.config.get('SECURITY_HEADERS', {}) or {}
+            for k, v in headers.items():
+                # do not overwrite existing header if already present
+                if not response.headers.get(k):
+                    response.headers[k] = v
+            # Minimal CSP allowing our own resources and common CDNs used in templates
+            if not response.headers.get('Content-Security-Policy'):
+                csp = (
+                    "default-src 'self'; "
+                    "img-src 'self' data: https:; "
+                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.datatables.net; "
+                    "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; "
+                    "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+                    "connect-src 'self' ws: wss:; "
+                    "frame-ancestors 'none'"
+                )
+                response.headers['Content-Security-Policy'] = csp
+            # Additional privacy headers
+            if not response.headers.get('Referrer-Policy'):
+                response.headers['Referrer-Policy'] = 'no-referrer'
+            if not response.headers.get('Permissions-Policy'):
+                response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+        except Exception:
+            pass
+        return response
+
+    # CSRF error handler
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        return ({'error': 'csrf_token_missing_or_invalid'}, 400)
+
+    # Expose csrf_token() in Jinja templates even without FlaskForm
+    try:
+        from flask_wtf.csrf import generate_csrf
+        @app.context_processor
+        def inject_csrf_token():
+            return dict(csrf_token=lambda: generate_csrf())
+    except Exception:
+        pass
     
     # Register blueprints
     from app.routes.auth import auth_bp

@@ -39,6 +39,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" id="editTaskForm">
+                        {{ csrf_token() }}
                         <!-- Task Name -->
                         <div class="mb-4">
                             <label for="name" class="form-label fw-semibold">

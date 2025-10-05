@@ -24,6 +24,7 @@
                 </p>
                 
                 <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="on" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="username" class="form-label">{{ _('Username') }}</label>
                         <div class="input-group">

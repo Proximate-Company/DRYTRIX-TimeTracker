@@ -85,6 +85,10 @@ class Config:
         'X-XSS-Protection': '1; mode=block',
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
     }
+
+    # Rate limiting
+    RATELIMIT_DEFAULT = os.getenv('RATELIMIT_DEFAULT', '')  # e.g., "200 per day;50 per hour"
+    RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'memory://')
     
     # Internationalization
     LANGUAGES = {
@@ -136,6 +140,7 @@ class ProductionConfig(Config):
     FLASK_DEBUG = False
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
+    WTF_CSRF_ENABLED = True
 
 # Configuration mapping
 config = {

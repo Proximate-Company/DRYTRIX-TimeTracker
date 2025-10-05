@@ -52,23 +52,17 @@ def dashboard():
 
 @main_bp.route('/_health')
 def health_check():
-    """Health check endpoint for monitoring"""
+    """Liveness probe: shallow checks only, no DB access"""
+    return {'status': 'healthy'}, 200
+
+@main_bp.route('/_ready')
+def readiness_check():
+    """Readiness probe: verify DB connectivity and critical dependencies"""
     try:
-        # Test database connection
         db.session.execute(text('SELECT 1'))
-        return {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()}, 200
+        return {'status': 'ready', 'timestamp': datetime.utcnow().isoformat()}, 200
     except Exception as e:
-        # Try to initialize database if connection fails
-        try:
-            from flask import current_app
-            if hasattr(current_app, 'initialize_database'):
-                current_app.initialize_database()
-                # Test connection again
-                db.session.execute(text('SELECT 1'))
-                return {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat(), 'note': 'database initialized'}, 200
-        except Exception as init_error:
-            return {'status': 'unhealthy', 'error': str(e), 'init_error': str(init_error)}, 500
-        return {'status': 'unhealthy', 'error': str(e)}, 500
+        return {'status': 'not_ready', 'error': 'db_unreachable'}, 503
 
 @main_bp.route('/about')
 def about():

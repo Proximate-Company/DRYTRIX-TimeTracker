@@ -9,6 +9,9 @@
     <meta name="theme-color" content="#3b82f6" id="meta-theme-color">
     <meta id="user-theme-pref" data-user-theme="{{ current_user.theme_preference if current_user.is_authenticated else '' }}">
     <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    {% if csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endif %}
     
     <!-- Favicon -->
     {% if settings and settings.has_logo() %}
@@ -396,6 +399,64 @@
                     localStorage.setItem(key, isCompact ? 'compact' : 'comfortable');
                 };
             } catch (e) {}
+        })();
+    </script>
+    <script>
+        // CSRF auto-injection for forms and AJAX/fetch
+        (function(){
+            try {
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                var token = meta ? meta.getAttribute('content') : '';
+                if (!token) return;
+
+                // Add hidden CSRF inputs to all POST forms that lack one
+                document.querySelectorAll('form[method="post"]:not([data-no-csrf-auto])').forEach(function(form){
+                    if (!form.querySelector('input[name="csrf_token"]')) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'csrf_token';
+                        input.value = token;
+                        form.insertBefore(input, form.firstChild);
+                    }
+                });
+
+                // jQuery AJAX: attach header automatically for same-origin, non-GET
+                if (window.$ && $.ajaxSetup) {
+                    $.ajaxSetup({
+                        beforeSend: function(xhr, settings){
+                            try {
+                                var method = (settings.type || '').toUpperCase();
+                                var url = settings.url || '';
+                                var sameOrigin = url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0 || url.indexOf(location.origin) === 0;
+                                if (sameOrigin && ['GET','HEAD','OPTIONS','TRACE'].indexOf(method) === -1) {
+                                    xhr.setRequestHeader('X-CSRFToken', token);
+                                }
+                            } catch(e) {}
+                        }
+                    });
+                }
+
+                // fetch(): wrap to add CSRF header automatically for same-origin, non-GET
+                if (window.fetch) {
+                    var _origFetch = window.fetch;
+                    window.fetch = function(input, init){
+                        try {
+                            var req = new Request(input, init);
+                            var url = new URL(req.url, window.location.origin);
+                            var sameOrigin = url.origin === window.location.origin;
+                            var method = (req.method || '').toUpperCase();
+                            if (sameOrigin && ['GET','HEAD','OPTIONS','TRACE'].indexOf(method) === -1) {
+                                var headers = new Headers(req.headers || {});
+                                if (!headers.has('X-CSRFToken')) headers.set('X-CSRFToken', token);
+                                return _origFetch(new Request(req, { headers: headers }));
+                            }
+                            return _origFetch(req);
+                        } catch(e) {
+                            return _origFetch(input, init);
+                        }
+                    };
+                }
+            } catch(e) {}
         })();
     </script>
 </body>
