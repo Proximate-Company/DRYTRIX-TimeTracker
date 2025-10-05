@@ -5,13 +5,14 @@ from app.models import User
 from app.config import Config
 from app.utils.db import safe_commit
 from flask_babel import gettext as _
+from app import oauth
 
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """Username-only login page"""
+    """Login page. Local username login is allowed only if AUTH_METHOD != 'oidc'."""
     if request.method == 'GET':
         try:
             current_app.logger.info("GET /login from %s", request.headers.get('X-Forwarded-For') or request.remote_addr)
@@ -21,6 +22,16 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
     
+    # If OIDC-only mode, redirect to OIDC login start
+    try:
+        auth_method = (getattr(Config, 'AUTH_METHOD', 'local') or 'local').strip().lower()
+    except Exception:
+        auth_method = 'local'
+
+    if auth_method == 'oidc':
+        # In OIDC-only mode, do not allow local form login at all
+        return redirect(url_for('auth.login_oidc', next=request.args.get('next')))
+
     if request.method == 'POST':
         try:
             username = request.form.get('username', '').strip().lower()
@@ -95,8 +106,34 @@ def login():
 def logout():
     """Logout the current user"""
     username = current_user.username
+    # Try OIDC end-session if enabled and configured
+    try:
+        auth_method = (getattr(Config, 'AUTH_METHOD', 'local') or 'local').strip().lower()
+    except Exception:
+        auth_method = 'local'
+
+    id_token = session.pop('oidc_id_token', None)
     logout_user()
     flash(_('Goodbye, %(username)s!', username=username), 'info')
+
+    if auth_method in ('oidc', 'both'):
+        client = oauth.create_client('oidc')
+        if client:
+            try:
+                # Build end-session URL if provider supports it
+                metadata = client.load_server_metadata()
+                end_session_endpoint = metadata.get('end_session_endpoint') or metadata.get('revocation_endpoint')
+                if end_session_endpoint:
+                    params = {}
+                    if id_token:
+                        params['id_token_hint'] = id_token
+                    post_logout = getattr(Config, 'OIDC_POST_LOGOUT_REDIRECT_URI', None) or url_for('auth.login', _external=True)
+                    params['post_logout_redirect_uri'] = post_logout
+                    from urllib.parse import urlencode
+                    return redirect(f"{end_session_endpoint}?{urlencode(params)}")
+            except Exception:
+                pass
+
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/profile')
@@ -152,3 +189,185 @@ def update_theme_preference():
         return ({'error': 'failed to save preference'}, 500)
 
     return ({'ok': True, 'theme': value}, 200)
+
+
+# --- OIDC placeholders (optional integration) ---
+@auth_bp.route('/login/oidc')
+def login_oidc():
+    """Start OIDC login using Authlib."""
+    try:
+        auth_method = (getattr(Config, 'AUTH_METHOD', 'local') or 'local').strip().lower()
+    except Exception:
+        auth_method = 'local'
+
+    if auth_method not in ('oidc', 'both'):
+        return redirect(url_for('auth.login'))
+
+    client = oauth.create_client('oidc')
+    if not client:
+        flash(_('Single Sign-On is not configured yet. Please contact an administrator.'), 'warning')
+        return redirect(url_for('auth.login'))
+
+    # Preserve next redirect
+    next_page = request.args.get('next')
+    if next_page and next_page.startswith('/'):
+        session['oidc_next'] = next_page
+
+    # Determine redirect URI
+    redirect_uri = getattr(Config, 'OIDC_REDIRECT_URI', None) or url_for('auth.oidc_callback', _external=True)
+    # Trigger authorization code flow (with PKCE via client_kwargs)
+    return client.authorize_redirect(redirect_uri)
+
+
+@auth_bp.route('/auth/oidc/callback')
+def oidc_callback():
+    """Handle OIDC callback: exchange code, map claims, upsert user, log them in."""
+    client = oauth.create_client('oidc')
+    if not client:
+        flash(_('Single Sign-On is not configured.'), 'error')
+        return redirect(url_for('auth.login'))
+
+    try:
+        token = client.authorize_access_token()
+        # Parse ID token claims
+        claims = {}
+        try:
+            claims = client.parse_id_token(token) or {}
+        except Exception:
+            claims = {}
+
+        # Fetch userinfo if available
+        userinfo = {}
+        try:
+            userinfo = client.userinfo(token=token) or {}
+        except Exception:
+            userinfo = {}
+
+        # Resolve fields from claims/userinfo
+        issuer = (claims.get('iss') or '').strip()
+        sub = (claims.get('sub') or '').strip()
+
+        username_claim = getattr(Config, 'OIDC_USERNAME_CLAIM', 'preferred_username')
+        full_name_claim = getattr(Config, 'OIDC_FULL_NAME_CLAIM', 'name')
+        email_claim = getattr(Config, 'OIDC_EMAIL_CLAIM', 'email')
+        groups_claim = getattr(Config, 'OIDC_GROUPS_CLAIM', 'groups')
+
+        username = (claims.get(username_claim) or userinfo.get(username_claim) or '').strip().lower()
+        email = (claims.get(email_claim) or userinfo.get(email_claim) or None)
+        if email:
+            email = email.strip().lower()
+        full_name = (claims.get(full_name_claim) or userinfo.get(full_name_claim) or None)
+        if isinstance(full_name, str):
+            full_name = full_name.strip()
+
+        groups = userinfo.get(groups_claim) or claims.get(groups_claim) or []
+        if isinstance(groups, str):
+            groups = [groups]
+
+        if not issuer or not sub:
+            current_app.logger.error("OIDC callback missing issuer/sub: claims=%s", claims)
+            flash(_('Authentication failed: invalid token'), 'error')
+            return redirect(url_for('auth.login'))
+
+        # Determine a fallback username if not provided
+        if not username:
+            if email and '@' in email:
+                username = email.split('@', 1)[0]
+            else:
+                username = f"user-{sub[-8:]}"
+
+        # Find or create user
+        user = User.query.filter_by(oidc_issuer=issuer, oidc_sub=sub).first()
+
+        if not user and email:
+            # Attempt match by email
+            user = User.query.filter_by(email=email).first()
+
+        if not user:
+            # Attempt match by username
+            user = User.query.filter_by(username=username).first()
+
+        if not user:
+            # Create if allowed
+            if not Config.ALLOW_SELF_REGISTER:
+                flash(_('User account does not exist and self-registration is disabled.'), 'error')
+                return redirect(url_for('auth.login'))
+            role = 'user'
+            try:
+                user = User(username=username, role=role, email=email, full_name=full_name)
+                user.is_active = True
+                user.oidc_issuer = issuer
+                user.oidc_sub = sub
+                db.session.add(user)
+                if not safe_commit('oidc_create_user', {'username': username, 'email': email}):
+                    raise RuntimeError('db commit failed on user create')
+                flash(_('Welcome! Your account has been created.'), 'success')
+            except Exception as e:
+                current_app.logger.exception("Failed to create user from OIDC claims: %s", e)
+                flash(_('Could not create your account due to a database error.'), 'error')
+                return redirect(url_for('auth.login'))
+        else:
+            # Update linkage and profile fields
+            changed = False
+            if not user.oidc_issuer or not user.oidc_sub:
+                user.oidc_issuer = issuer
+                user.oidc_sub = sub
+                changed = True
+            # Update profile fields when provided
+            if email and user.email != email:
+                user.email = email
+                changed = True
+            if full_name and user.full_name != full_name:
+                user.full_name = full_name
+                changed = True
+            if changed:
+                if not safe_commit('oidc_update_user', {'user_id': user.id}):
+                    current_app.logger.warning("DB commit failed updating user from OIDC; continuing")
+
+        # Admin role mapping based on configured group or emails
+        try:
+            admin_set = False
+            admin_group = getattr(Config, 'OIDC_ADMIN_GROUP', None)
+            admin_emails = getattr(Config, 'OIDC_ADMIN_EMAILS', []) or []
+            if admin_group and isinstance(groups, (list, tuple)) and admin_group in groups and user.role != 'admin':
+                user.role = 'admin'
+                admin_set = True
+            if email and email in [e.strip().lower() for e in admin_emails] and user.role != 'admin':
+                user.role = 'admin'
+                admin_set = True
+            if admin_set:
+                if not safe_commit('oidc_promote_admin', {'user_id': user.id}):
+                    current_app.logger.warning("DB commit failed promoting user to admin from OIDC; continuing")
+        except Exception:
+            pass
+
+        # Check if user is active
+        if not user.is_active:
+            flash(_('Account is disabled. Please contact an administrator.'), 'error')
+            return redirect(url_for('auth.login'))
+
+        # Persist id_token for possible end-session
+        try:
+            if isinstance(token, dict) and token.get('id_token'):
+                session['oidc_id_token'] = token.get('id_token')
+        except Exception:
+            pass
+
+        # Login
+        login_user(user, remember=True)
+        try:
+            user.update_last_login()
+        except Exception:
+            pass
+
+        # Redirect to intended page or dashboard
+        next_page = session.pop('oidc_next', None) or request.args.get('next')
+        if not next_page or not next_page.startswith('/'):
+            next_page = url_for('main.dashboard')
+        flash(_('Welcome back, %(username)s!', username=user.username), 'success')
+        return redirect(next_page)
+
+    except Exception as e:
+        current_app.logger.exception("OIDC callback error: %s", e)
+        flash(_('Unexpected error during SSO login. Please try again or contact support.'), 'error')
+        return redirect(url_for('auth.login'))
