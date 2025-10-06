@@ -1,0 +1,88 @@
+/* Shared UI utilities and extracted page styles */
+
+/* Skip link accessibility */
+.skip-link {
+    position: absolute;
+    left: -999px;
+    top: 0;
+    background: var(--primary-color);
+    color: var(--text-on-primary);
+    padding: 8px 12px;
+    z-index: var(--z-fixed);
+    border-radius: var(--border-radius-sm);
+}
+.skip-link:focus {
+    left: 8px;
+    top: 8px;
+    outline: none;
+}
+
+/* Mobile floating action button (Log Time) */
+.fab-log-time {
+    position: fixed;
+    right: 16px;
+    bottom: calc(var(--mobile-tabbar-height, 64px) + 16px);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: var(--text-on-primary) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    text-decoration: none;
+    transition: var(--transition);
+    z-index: var(--z-fixed);
+}
+.fab-log-time:hover { transform: translateY(-2px); box-shadow: 0 14px 24px rgba(0,0,0,0.2); }
+
+/* Invoices: extracted styles */
+.invoice-number-badge {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+}
+.payment-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.payment-status-info { min-width: 80px; }
+.payment-progress { width: 60px; }
+.payment-date { margin-top: 2px; }
+
+/* Projects: extracted styles */
+.project-badge {
+    background: var(--surface-variant);
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: var(--transition);
+}
+.project-badge:hover { background: var(--surface-hover); transform: translateY(-1px); }
+
+/* Projects: table sorting indicators */
+thead th.sorted-asc::after { content: " \25B2"; color: var(--primary-color); font-weight: bold; }
+thead th.sorted-desc::after { content: " \25BC"; color: var(--primary-color); font-weight: bold; }
+
+/* Detail sections (used on project view) */
+.invoice-section { padding: 12px 0; }
+.section-title { font-size: 16px; font-weight: 600; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px; }
+.detail-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:8px 0; border-bottom:1px solid var(--border-color); }
+.detail-label { font-weight:600; color:var(--text-secondary); }
+.detail-value { font-weight:600; color:var(--text-primary); }
+.content-box { background: var(--light-color); padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary-color); line-height: 1.6; }
+@media (max-width:768px){ .detail-row{flex-direction:column; align-items:flex-start; gap:4px;} }
+
+

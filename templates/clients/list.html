@@ -193,38 +193,41 @@ var i18nClientsList = (function(){ try{ var el=document.getElementById('i18n-jso
   applyFilters();
 })();
 
-// Client action confirmation functions
+// Client action confirmation functions using global modal
 function confirmArchiveClient(clientId, clientName) {
     const msg = (i18nClientsList.confirm_archive || 'Are you sure you want to archive "{name}"?').replace('{name}', clientName);
-    if (confirm(msg)) {
+    window.showConfirm(msg).then(function(ok){
+        if (!ok) return;
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/archive`;
         document.body.appendChild(form);
         form.submit();
-    }
+    });
 }
 
 function confirmActivateClient(clientId, clientName) {
     const msg = (i18nClientsList.confirm_activate || 'Are you sure you want to activate "{name}"?').replace('{name}', clientName);
-    if (confirm(msg)) {
+    window.showConfirm(msg).then(function(ok){
+        if (!ok) return;
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/activate`;
         document.body.appendChild(form);
         form.submit();
-    }
+    });
 }
 
 function confirmDeleteClient(clientId, clientName) {
     const msg = (i18nClientsList.confirm_delete || 'Are you sure you want to delete "{name}"? This action cannot be undone.').replace('{name}', clientName);
-    if (confirm(msg)) {
+    window.showConfirm(msg).then(function(ok){
+        if (!ok) return;
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/delete`;
         document.body.appendChild(form);
         form.submit();
-    }
+    });
 }
 </script>
 {% endblock %}

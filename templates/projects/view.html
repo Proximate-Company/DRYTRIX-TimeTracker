@@ -358,7 +358,7 @@
                 </div>
             </div>
         </div>
-    </div>
+</div>
 </div>
 
 <!-- Delete Time Entry Modal -->
@@ -428,6 +428,8 @@
     </div>
 </div>
 
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 <script>
 // Function to show delete time entry modal
 function showDeleteEntryModal(entryId, projectName, duration) {
@@ -446,30 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-<!-- Modern styling now handled by global CSS in base.css -->
 {% endblock %}
-<style>
-.status-badge {
-    padding: 8px 16px;
-    border-radius: 25px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.invoice-section { padding: 12px 0; }
-.section-title { font-size: 16px; font-weight: 600; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px; }
-.detail-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:8px 0; border-bottom:1px solid var(--border-color); }
-.detail-label { font-weight:600; color:var(--text-secondary); }
-.detail-value { font-weight:600; color:var(--text-primary); }
-.content-box { background: var(--light-color); padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary-color); line-height: 1.6; }
-
-@media (max-width:768px){
-  .detail-row{flex-direction:column; align-items:flex-start; gap:4px;}
-}
-</style>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   const btn = document.getElementById('showBurndownBtn');

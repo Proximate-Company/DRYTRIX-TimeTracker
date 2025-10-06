@@ -2,6 +2,10 @@
 
 {% block title %}{{ _('Invoices') }} - TimeTracker{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
 	{% from "_components.html" import page_header %}
@@ -18,7 +22,7 @@
 
 	<!-- Enhanced Summary Cards -->
 	<div class="row mb-4">
-		<div class="col-md-3 col-sm-6 mb-3">
+        <div class="col-md-3 col-sm-6 mb-3">
 			<div class="card border-0 shadow-sm h-100 summary-card">
 				<div class="card-body p-3">
 					<div class="d-flex align-items-center">
@@ -36,7 +40,7 @@
 			</div>
 		</div>
 
-		<div class="col-md-3 col-sm-6 mb-3">
+        <div class="col-md-3 col-sm-6 mb-3">
 			<div class="card border-0 shadow-sm h-100 summary-card">
 				<div class="card-body p-3">
 					<div class="d-flex align-items-center">
@@ -54,7 +58,7 @@
 			</div>
 		</div>
 
-		<div class="col-md-3 col-sm-6 mb-3">
+        <div class="col-md-3 col-sm-6 mb-3">
 			<div class="card border-0 shadow-sm h-100 summary-card">
 				<div class="card-body p-3">
 					<div class="d-flex align-items-center">
@@ -72,7 +76,7 @@
 			</div>
 		</div>
 
-		<div class="col-md-3 col-sm-6 mb-3">
+        <div class="col-md-3 col-sm-6 mb-3">
 			<div class="card border-0 shadow-sm h-100 summary-card">
 				<div class="card-body p-3">
 					<div class="d-flex align-items-center">
@@ -93,12 +97,19 @@
 
 	<!-- Enhanced Invoices Table -->
 	<div class="card shadow-sm border-0">
-		<div class="card-header bg-white py-3">
-			<div class="d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
 				<h6 class="m-0 font-weight-bold text-primary">
 					<i class="fas fa-list me-2"></i>{{ _('All Invoices') }}
 				</h6>
-				<div class="d-flex gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="btn-group btn-group-sm me-2" role="group" aria-label="{{ _('Filter status') }}">
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterByStatus('all')">{{ _('All') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterByStatus('draft')">{{ _('Draft') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterByStatus('sent')">{{ _('Sent') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterByStatus('paid')">{{ _('Paid') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterByStatus('overdue')">{{ _('Overdue') }}</button>
+                    </div>
 					<div class="input-group input-group-sm" style="width: 250px;">
 						<span class="input-group-text bg-light border-end-0">
 							<i class="fas fa-search text-muted"></i>
@@ -128,15 +139,15 @@
 						</thead>
 						<tbody>
 							{% for invoice in invoices %}
-							<tr class="invoice-row" data-status="{{ invoice.status }}">
-								<td class="align-middle">
+                            <tr class="invoice-row" data-status="{{ invoice.status }}">
+                                <td class="align-middle" data-label="{{ _('Invoice #') }}">
 									<div class="d-flex align-items-center">
 										<div class="invoice-number-badge me-2">
 											{{ invoice.invoice_number }}
 										</div>
 									</div>
 								</td>
-								<td class="align-middle">
+                                <td class="align-middle" data-label="{{ _('Client') }}">
 									<div class="client-info">
 										<div class="client-name">{{ invoice.client_name }}</div>
 										{% if invoice.client_email %}
@@ -144,16 +155,16 @@
 										{% endif %}
 									</div>
 								</td>
-								<td class="align-middle">
+                                <td class="align-middle" data-label="{{ _('Project') }}">
 									<span class="project-badge">{{ invoice.project.name }}</span>
 								</td>
-								<td class="align-middle">
+                                <td class="align-middle" data-label="{{ _('Issue Date') }}">
 									<div class="date-info">
 										<div class="date-value">{{ invoice.issue_date.strftime('%b %d, %Y') }}</div>
 										<small class="text-muted">{{ invoice.issue_date.strftime('%Y-%m-%d') }}</small>
 									</div>
 								</td>
-								<td class="align-middle">
+                                <td class="align-middle" data-label="{{ _('Due Date') }}">
 									{% if invoice.is_overdue %}
 										<div class="due-date overdue">
 											<div class="date-value text-danger">
@@ -171,12 +182,12 @@
 										</div>
 									{% endif %}
 								</td>
-								<td class="align-middle">
+                                <td class="align-middle" data-label="{{ _('Amount') }}">
 									<div class="amount-info">
 										<div class="amount-value">{{ "%.2f"|format(invoice.total_amount) }} {{ currency }}</div>
 									</div>
 								</td>
-								<td class="align-middle">
+                                <td class="align-middle" data-label="{{ _('Status') }}">
 									{% set status_config = {
 										'draft': {'color': 'secondary', 'icon': 'edit', 'bg': 'bg-secondary', 'label': _('Draft')},
 										'sent': {'color': 'info', 'icon': 'paper-plane', 'bg': 'bg-info', 'label': _('Sent')},
@@ -190,7 +201,7 @@
 										{{ config.label }}
 									</span>
 								</td>
-								<td class="align-middle">
+                                <td class="align-middle" data-label="{{ _('Payment') }}">
 									<div class="payment-status-info">
 										{% if invoice.payment_status == 'unpaid' %}
 											<span class="payment-badge bg-danger text-white">
@@ -223,7 +234,7 @@
 										{% endif %}
 									</div>
 								</td>
-								<td class="align-middle text-center">
+                                <td class="align-middle text-center" data-label="{{ _('Actions') }}">
 									<div class="btn-group btn-group-sm" role="group">
 										<a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" 
 										   class="btn btn-sm btn-action btn-action--view" 
@@ -305,219 +316,11 @@
 	</div>
 </div>
 
-<!-- Modern styling now handled by global CSS in base.css -->
-<style>
-/* Keep dropdown stacking sane; rely on global dropdown styles for look/feel */
-.summary-card {
-    transition: all 0.3s ease;
-    border-radius: 12px;
-}
-
-.summary-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-}
-
-.summary-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-}
-
-.summary-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-}
-
-.summary-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-/* Force table containers to allow overflow for dropdowns */
-.table-responsive {
-    overflow: visible !important;
-    position: relative !important;
-}
-
-.card-body {
-    overflow: visible !important;
-}
-
-/* Ensure dropdown menus work properly with maximum z-index */
-.dropdown-menu {
-    z-index: 9999 !important;
-    min-width: 160px;
-    position: absolute !important;
-    transform: none !important;
-}
-
-/* Ensure dropdowns in table cells stack above ALL other content */
-.table .dropdown {
-    position: relative !important;
-    z-index: 9998 !important;
-}
-
-.table .dropdown.show {
-    z-index: 9999 !important;
-}
-
-.table .dropdown-menu {
-    z-index: 9999 !important;
-    position: absolute !important;
-    top: 100% !important;
-    left: auto !important;
-    right: 0 !important;
-    transform: none !important;
-    margin-top: 0.25rem !important;
-}
-
-/* Ensure table and its containers don't clip dropdowns */
-.table {
-    overflow: visible !important;
-    position: relative !important;
-}
-
-.table tbody tr {
-    position: relative !important;
-    z-index: 1 !important;
-}
-
-.table tbody tr:hover {
-    z-index: 2 !important;
-}
-
-/* Force dropdown visibility */
-.btn-group .dropdown-menu.show,
-.dropdown.show .dropdown-menu {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.dropdown-toggle::after,
-.btn-group .dropdown-toggle-split::after {
-    /* Hide default caret since we render an explicit ellipsis icon */
-    display: none !important;
-}
-
-.invoice-number-badge {
-    background: var(--primary-color);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.client-info .client-name {
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.project-badge {
-    background: var(--light-color);
-    color: var(--text-secondary);
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.date-info .date-value {
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.due-date.overdue .date-value {
-    font-weight: 700;
-}
-
-.amount-value {
-    font-weight: 700;
-    color: var(--text-primary);
-    font-size: 16px;
-}
-
-.status-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.payment-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-.payment-status-info {
-    min-width: 80px;
-}
-
-.payment-progress {
-    width: 60px;
-}
-
-.payment-date {
-    margin-top: 2px;
-}
-
-.btn-group .btn { border-radius: 0 !important; margin-right: 0 !important; }
-.btn-group .btn:first-child { border-top-left-radius: 6px !important; border-bottom-left-radius: 6px !important; }
-.btn-group .btn:last-child { border-top-right-radius: 6px !important; border-bottom-right-radius: 6px !important; }
-
-.empty-state {
-    padding: 2rem;
-}
-
-.empty-state i {
-    opacity: 0.5;
-}
-
-@media (max-width: 768px) {
-    .summary-card {
-        margin-bottom: 1rem;
-    }
-    
-    .table-responsive {
-        font-size: 14px;
-    }
-    
-    .btn-group .btn {
-        padding: 0.375rem 0.5rem;
-        font-size: 12px;
-    }
-    
-    .invoice-number-badge {
-        font-size: 12px;
-        padding: 4px 8px;
-    }
-    
-    .status-badge {
-        font-size: 10px;
-        padding: 4px 8px;
-    }
-}
-</style>
 {% endblock %}
-
-{% block scripts %}
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script type="application/json" id="i18n-json-invoices-list">
 {
     "search_invoices": {{ _('Search invoices:')|tojson }},
@@ -588,7 +391,7 @@ function filterByStatus(status) {
 function confirmDelete(invoiceNumber) {
     const prefix = i18nList.confirm_delete_prefix || 'Are you sure you want to delete invoice';
     const suffix = i18nList.confirm_delete_suffix || 'This action cannot be undone.';
-    return confirm(`${prefix} ${invoiceNumber}? ${suffix}`);
+    return window.showConfirm(`${prefix} ${invoiceNumber}? ${suffix}`);
 }
 
 // Quick status update (if implemented in backend)
@@ -597,13 +400,12 @@ function updateStatus(invoiceId, newStatus) {
     console.log(`Updating invoice ${invoiceId} to status: ${newStatus}`);
 }
 
-// Handle generic data-confirm forms to avoid inline JS Jinja
+// Handle generic data-confirm forms using modal
 $(document).on('submit', 'form[data-confirm]', function(e) {
-    const message = $(this).attr('data-confirm');
-    if (!confirm(message)) {
-        e.preventDefault();
-        return false;
-    }
+    const form = this;
+    const message = $(form).attr('data-confirm');
+    e.preventDefault();
+    window.showConfirm(message).then(function(ok){ if (ok) form.submit(); });
 });
 </script>
 {% endblock %}
