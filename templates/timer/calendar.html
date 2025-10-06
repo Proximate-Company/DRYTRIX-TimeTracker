@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Calendar') }} - {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+<style>
+  #calendar { min-height: 70vh; }
+  .fc-toolbar-title { font-weight: 600; }
+  .fc-event { cursor: pointer; }
+  .calendar-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+  .calendar-controls { display:flex; align-items:center; gap:.5rem; }
+  .calendar-assign { width: 280px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white">
+          <div class="calendar-header">
+            <h5 class="mb-0 d-flex align-items-center"><i class="fas fa-calendar-alt me-2 text-primary"></i>{{ _('Calendar') }}</h5>
+            <div class="calendar-controls">
+              <select id="assignProject" class="form-select form-select-sm calendar-assign">
+                <option value="">{{ _('Assign to project for new events...') }}</option>
+                {% for p in projects %}
+                <option value="{{ p.id }}">{{ p.name }} ({{ p.client }})</option>
+                {% endfor %}
+              </select>
+              <button class="btn btn-sm btn-outline-secondary" id="todayBtn">{{ _('Today') }}</button>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" id="dayBtn">{{ _('Day') }}</button>
+                <button class="btn btn-sm btn-outline-primary" id="weekBtn">{{ _('Week') }}</button>
+                <button class="btn btn-sm btn-outline-primary" id="monthBtn">{{ _('Month') }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="calendar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const projectSelect = document.getElementById('assignProject');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'timeGridWeek',
+      headerToolbar: false,
+      selectable: true,
+      selectMirror: true,
+      nowIndicator: true,
+      firstDay: 1,
+      slotDuration: '00:30:00',
+      events: async (info, success, failure) => {
+        try {
+          const url = `/api/calendar/events?start=${encodeURIComponent(info.startStr)}&end=${encodeURIComponent(info.endStr)}`;
+          const res = await fetch(url);
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || 'Failed');
+          success(json.events || []);
+        } catch(e) { failure(e); }
+      },
+      select: async function(selection) {
+        const pid = projectSelect.value;
+        if (!pid) { showToast(`{{ _('Please select a project for new entries') }}`, 'warning'); return; }
+        try {
+          const res = await fetch('/api/entries', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ project_id: Number(pid), start_time: selection.startStr, end_time: selection.endStr }) });
+          const json = await res.json();
+          if (!res.ok || !json.success) throw new Error(json.error || 'Create failed');
+          showToast(`{{ _('Entry created') }}`, 'success');
+          calendar.refetchEvents();
+        } catch(e) {
+          showToast(`{{ _('Failed to create entry') }}`, 'danger');
+        }
+      },
+      eventClick: function(info){
+        const id = info.event.id;
+        window.location.href = `/timer/edit/${id}`;
+      }
+    });
+    calendar.render();
+
+    document.getElementById('todayBtn').addEventListener('click', () => calendar.today());
+    document.getElementById('dayBtn').addEventListener('click', () => calendar.changeView('timeGridDay'));
+    document.getElementById('weekBtn').addEventListener('click', () => calendar.changeView('timeGridWeek'));
+    document.getElementById('monthBtn').addEventListener('click', () => calendar.changeView('dayGridMonth'));
+  });
+</script>
+{% endblock %}
+
+

@@ -151,6 +151,113 @@ def api_stop_timer():
         'duration_hours': active_timer.duration_hours
     })
 
+# --- Idle control: stop at specific time ---
+@api_bp.route('/api/timer/stop_at', methods=['POST'])
+@login_required
+def api_stop_timer_at():
+    """Stop the active timer at a specific timestamp (idle adjustment)."""
+    active_timer = current_user.active_timer
+    if not active_timer:
+        return jsonify({'error': 'No active timer to stop'}), 400
+
+    data = request.get_json() or {}
+    stop_time_str = data.get('stop_time')  # ISO string
+    if not stop_time_str:
+        return jsonify({'error': 'stop_time is required'}), 400
+
+    try:
+        # Accept ISO; handle trailing Z
+        ts = stop_time_str.strip()
+        if ts.endswith('Z'):
+            ts = ts[:-1] + '+00:00'
+        parsed = datetime.fromisoformat(ts)
+        # Convert to local naive for storage consistency
+        if parsed.tzinfo is not None:
+            parsed_local_aware = utc_to_local(parsed)
+            stop_time_local = parsed_local_aware.replace(tzinfo=None)
+        else:
+            stop_time_local = parsed
+    except Exception:
+        return jsonify({'error': 'Invalid stop_time format'}), 400
+
+    if stop_time_local <= active_timer.start_time:
+        return jsonify({'error': 'stop_time must be after start time'}), 400
+
+    # Do not allow stopping in the future
+    now_local = local_now()
+    if stop_time_local > now_local:
+        stop_time_local = now_local
+
+    try:
+        active_timer.stop_timer(end_time=stop_time_local)
+    except Exception as e:
+        current_app.logger.warning('Failed to stop timer at specific time: %s', e)
+        return jsonify({'error': 'Failed to stop timer'}), 500
+
+    socketio.emit('timer_stopped', {
+        'user_id': current_user.id,
+        'timer_id': active_timer.id,
+        'duration': active_timer.duration_formatted
+    })
+
+    return jsonify({'success': True, 'duration': active_timer.duration_formatted})
+
+# --- Resume last timer/project ---
+@api_bp.route('/api/timer/resume', methods=['POST'])
+@login_required
+def api_resume_timer():
+    """Resume timer for last used project/task or provided project/task."""
+    if current_user.active_timer:
+        return jsonify({'error': 'Timer already running'}), 400
+
+    data = request.get_json() or {}
+    project_id = data.get('project_id')
+    task_id = data.get('task_id')
+
+    if not project_id:
+        # Find most recent finished entry
+        last = (
+            TimeEntry.query
+            .filter(TimeEntry.user_id == current_user.id)
+            .order_by(TimeEntry.end_time.desc().nullslast(), TimeEntry.start_time.desc())
+            .first()
+        )
+        if not last:
+            return jsonify({'error': 'No previous entry to resume'}), 404
+        project_id = last.project_id
+        task_id = last.task_id
+
+    # Validate project is active
+    project = Project.query.filter_by(id=project_id, status='active').first()
+    if not project:
+        return jsonify({'error': 'Invalid or inactive project'}), 400
+
+    if task_id:
+        task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+        if not task:
+            return jsonify({'error': 'Invalid task for selected project'}), 400
+
+    # Create new timer
+    new_timer = TimeEntry(
+        user_id=current_user.id,
+        project_id=project_id,
+        task_id=task_id,
+        start_time=local_now(),
+        source='auto'
+    )
+    db.session.add(new_timer)
+    db.session.commit()
+
+    socketio.emit('timer_started', {
+        'user_id': current_user.id,
+        'timer_id': new_timer.id,
+        'project_name': project.name,
+        'task_id': task_id,
+        'start_time': new_timer.start_time.isoformat()
+    })
+
+    return jsonify({'success': True, 'timer_id': new_timer.id})
+
 @api_bp.route('/api/entries')
 @login_required
 def get_entries():
@@ -193,6 +300,178 @@ def get_entries():
         'has_next': entries.has_next,
         'has_prev': entries.has_prev
     })
+
+@api_bp.route('/api/entries', methods=['POST'])
+@login_required
+def create_entry():
+    """Create a finished time entry (used by calendar drag-create)."""
+    data = request.get_json() or {}
+    project_id = data.get('project_id')
+    task_id = data.get('task_id')
+    start_time_str = data.get('start_time')
+    end_time_str = data.get('end_time')
+    notes = (data.get('notes') or '').strip() or None
+    tags = (data.get('tags') or '').strip() or None
+    billable = bool(data.get('billable', True))
+
+    if not (project_id and start_time_str and end_time_str):
+        return jsonify({'error': 'project_id, start_time, end_time are required'}), 400
+
+    # Validate project
+    project = Project.query.filter_by(id=project_id, status='active').first()
+    if not project:
+        return jsonify({'error': 'Invalid project'}), 400
+
+    if task_id:
+        task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+        if not task:
+            return jsonify({'error': 'Invalid task for selected project'}), 400
+
+    def parse_iso_local(s: str):
+        try:
+            ts = s.strip()
+            if ts.endswith('Z'):
+                ts = ts[:-1] + '+00:00'
+            dt = datetime.fromisoformat(ts)
+            if dt.tzinfo is not None:
+                return utc_to_local(dt).replace(tzinfo=None)
+            return dt
+        except Exception:
+            return None
+
+    start_dt = parse_iso_local(start_time_str)
+    end_dt = parse_iso_local(end_time_str)
+    if not (start_dt and end_dt) or end_dt <= start_dt:
+        return jsonify({'error': 'Invalid start/end time'}), 400
+
+    entry = TimeEntry(
+        user_id=current_user.id if not current_user.is_admin else (data.get('user_id') or current_user.id),
+        project_id=project_id,
+        task_id=task_id,
+        start_time=start_dt,
+        end_time=end_dt,
+        notes=notes,
+        tags=tags,
+        source='manual',
+        billable=billable
+    )
+    db.session.add(entry)
+    if not safe_commit('api_create_entry', {'project_id': project_id}):
+        return jsonify({'error': 'Database error while creating entry'}), 500
+
+    payload = entry.to_dict()
+    payload['project_name'] = entry.project.name if entry.project else None
+    return jsonify({'success': True, 'entry': payload})
+
+@api_bp.route('/api/entries/bulk', methods=['POST'])
+@login_required
+def bulk_entries_action():
+    """Perform bulk actions on time entries: delete, set billable, add/remove tag."""
+    data = request.get_json() or {}
+    entry_ids = data.get('entry_ids') or []
+    action = (data.get('action') or '').strip()
+    value = data.get('value')
+
+    if not entry_ids or not isinstance(entry_ids, list):
+        return jsonify({'error': 'entry_ids must be a non-empty list'}), 400
+    if action not in {'delete', 'set_billable', 'add_tag', 'remove_tag'}:
+        return jsonify({'error': 'Unsupported action'}), 400
+
+    # Load entries with permission checks
+    q = TimeEntry.query.filter(TimeEntry.id.in_(entry_ids))
+    entries = q.all()
+    if not entries:
+        return jsonify({'error': 'No entries found'}), 404
+
+    # Permission: non-admins can only modify own entries
+    if not current_user.is_admin:
+        for e in entries:
+            if e.user_id != current_user.id:
+                return jsonify({'error': 'Access denied for one or more entries'}), 403
+
+    affected = 0
+    if action == 'delete':
+        for e in entries:
+            if e.is_active:
+                continue
+            db.session.delete(e)
+            affected += 1
+    elif action == 'set_billable':
+        flag = bool(value)
+        for e in entries:
+            if e.is_active:
+                continue
+            e.billable = flag
+            e.updated_at = local_now()
+            affected += 1
+    elif action in {'add_tag', 'remove_tag'}:
+        tag = (value or '').strip()
+        if not tag:
+            return jsonify({'error': 'Tag value is required'}), 400
+        for e in entries:
+            if e.is_active:
+                continue
+            tags = set(e.tag_list)
+            if action == 'add_tag':
+                tags.add(tag)
+            else:
+                tags.discard(tag)
+            e.tags = ', '.join(sorted(tags)) if tags else None
+            e.updated_at = local_now()
+            affected += 1
+
+    if affected > 0:
+        if not safe_commit('api_bulk_entries', {'action': action, 'count': affected}):
+            return jsonify({'error': 'Database error during bulk operation'}), 500
+    else:
+        db.session.rollback()
+
+    return jsonify({'success': True, 'affected': affected})
+
+@api_bp.route('/api/calendar/events')
+@login_required
+def calendar_events():
+    """Return calendar events for the current user in a date range."""
+    start = request.args.get('start')
+    end = request.args.get('end')
+    if not (start and end):
+        return jsonify({'error': 'start and end are required'}), 400
+
+    def parse_iso(s: str):
+        try:
+            ts = s.strip()
+            if ts.endswith('Z'):
+                ts = ts[:-1] + '+00:00'
+            dt = datetime.fromisoformat(ts)
+            if dt.tzinfo is not None:
+                return utc_to_local(dt).replace(tzinfo=None)
+            return dt
+        except Exception:
+            return None
+
+    start_dt = parse_iso(start)
+    end_dt = parse_iso(end)
+    if not (start_dt and end_dt):
+        return jsonify({'error': 'Invalid date range'}), 400
+
+    q = TimeEntry.query.filter(TimeEntry.user_id == current_user.id)
+    q = q.filter(TimeEntry.start_time < end_dt, (TimeEntry.end_time.is_(None)) | (TimeEntry.end_time > start_dt))
+    items = q.order_by(TimeEntry.start_time.asc()).all()
+
+    events = []
+    now_local = local_now()
+    for e in items:
+        ev = {
+            'id': e.id,
+            'title': f"{e.project.name if e.project else 'Project'}" + (f" • {e.task.name}" if e.task else (f" • {e.notes[:24]}…" if e.notes else '')),
+            'start': e.start_time.isoformat(),
+            'end': (e.end_time or now_local).isoformat(),
+            'editable': False,
+            'allDay': False,
+        }
+        events.append(ev)
+
+    return jsonify({'events': events})
 
 @api_bp.route('/api/projects')
 @login_required

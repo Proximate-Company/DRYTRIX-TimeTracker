@@ -615,6 +615,14 @@ def bulk_entry():
     return render_template('timer/bulk_entry.html', projects=active_projects, 
                          selected_project_id=project_id, selected_task_id=task_id)
 
+@timer_bp.route('/timer/calendar')
+@login_required
+def calendar_view():
+    """Calendar UI combining day/week/month with list toggle."""
+    # Provide projects for quick assignment during drag-create
+    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    return render_template('timer/calendar.html', projects=active_projects)
+
 @timer_bp.route('/timer/bulk/<int:project_id>')
 @login_required
 def bulk_entry_for_project(project_id):

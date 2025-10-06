@@ -152,15 +152,17 @@
 
     <!-- Enhanced Main Content -->
     <main class="container mt-4">
-        <!-- Enhanced Flash Messages -->
+    <!-- Enhanced Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+                <div class="mb-3">
                 {% for category, message in messages %}
                     <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show fade-in" role="alert">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 
@@ -214,6 +216,27 @@
             </div>
         </div>
     </footer>
+
+    {% if current_user.is_authenticated %}
+    <!-- Command Palette Modal -->
+    <div class="modal" id="commandPaletteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-terminal me-2"></i>{{ _('Command Palette') }}</h5>
+                    <button type="button" class="btn-close" id="commandPaletteClose" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 position-relative">
+                        <input type="text" id="commandPaletteInput" class="form-control form-control-lg" placeholder="{{ _('Type a command or search...') }}" autocomplete="off">
+                        <small id="commandPaletteHelp" class="text-muted d-block mt-2"></small>
+                    </div>
+                    <div id="commandPaletteList" class="list-group"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -361,6 +384,8 @@
     {% if request.endpoint != 'auth.login' %}
     <!-- Custom JS (disabled on login to avoid interference) -->
     <script src="{{ url_for('static', filename='mobile.js') }}"></script>
+    <script src="{{ url_for('static', filename='commands.js') }}?v={{ app_version }}"></script>
+    <script src="{{ url_for('static', filename='idle.js') }}?v={{ app_version }}"></script>
     {% endif %}
     {% if current_user.is_authenticated %}
     <script>

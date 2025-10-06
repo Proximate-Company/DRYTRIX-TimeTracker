@@ -215,9 +215,27 @@
             <div class="card-body p-0">
                 {% if recent_entries %}
                 <div class="table-responsive">
+                    <div class="d-flex align-items-center justify-content-between px-3 pt-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="selectAllEntries" class="form-check-input">
+                            <label for="selectAllEntries" class="form-check-label">{{ _('Select all') }}</label>
+                        </div>
+                        <div class="btn-group" role="group" aria-label="Bulk actions">
+                            <button id="bulkDelete" class="btn btn-sm btn-outline-danger" disabled>
+                                <i class="fas fa-trash me-1"></i>{{ _('Delete') }}
+                            </button>
+                            <button id="bulkBillable" class="btn btn-sm btn-outline-primary" disabled>
+                                <i class="fas fa-dollar-sign me-1"></i>{{ _('Set Billable') }}
+                            </button>
+                            <button id="bulkNonBillable" class="btn btn-sm btn-outline-secondary" disabled>
+                                <i class="fas fa-ban me-1"></i>{{ _('Set Non-billable') }}
+                            </button>
+                        </div>
+                    </div>
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
+                                <th class="ps-4" style="width:36px"></th>
                                 <th class="ps-4">{{ _('Project') }}</th>
                                 <th>{{ _('Duration') }}</th>
                                 <th>{{ _('Date') }}</th>
@@ -228,6 +246,9 @@
                         <tbody>
                             {% for entry in recent_entries %}
                             <tr class="hover-lift">
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input entry-select" value="{{ entry.id }}">
+                                </td>
                                 <td class="ps-4" data-label="Project">
                                     <div class="d-flex align-items-center">
                                         <div class="me-3">
@@ -547,6 +568,49 @@
             });
         }
     });
+
+    // Bulk selection and actions
+    (function(){
+        const selectAll = document.getElementById('selectAllEntries');
+        const checkboxes = Array.from(document.querySelectorAll('.entry-select'));
+        const btnDelete = document.getElementById('bulkDelete');
+        const btnBillable = document.getElementById('bulkBillable');
+        const btnNonBillable = document.getElementById('bulkNonBillable');
+
+        function selectedIds(){ return checkboxes.filter(cb => cb.checked).map(cb => Number(cb.value)); }
+        function updateButtons(){
+            const any = selectedIds().length > 0;
+            [btnDelete, btnBillable, btnNonBillable].forEach(btn => { if (btn) btn.disabled = !any; });
+        }
+        if (selectAll){
+            selectAll.addEventListener('change', function(){
+                checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
+                updateButtons();
+            });
+        }
+        checkboxes.forEach(cb => cb.addEventListener('change', updateButtons));
+
+        async function bulkAction(action, value){
+            const ids = selectedIds();
+            if (!ids.length) return;
+            try {
+                const res = await fetch('/api/entries/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entry_ids: ids, action, value })
+                });
+                const json = await res.json();
+                if (!res.ok || !json.success){ throw new Error(json.error || 'Bulk action failed'); }
+                showToast(`{{ _('Bulk action completed') }}`, 'success');
+                location.reload();
+            } catch(e){
+                showToast(`{{ _('Bulk action failed') }}`, 'danger');
+            }
+        }
+        if (btnDelete) btnDelete.addEventListener('click', () => bulkAction('delete'));
+        if (btnBillable) btnBillable.addEventListener('click', () => bulkAction('set_billable', true));
+        if (btnNonBillable) btnNonBillable.addEventListener('click', () => bulkAction('set_billable', false));
+    })();
 </script>
 </div>
 {% endblock %}
