@@ -26,6 +26,8 @@ class Invoice(db.Model):
     tax_rate = db.Column(db.Numeric(5, 2), nullable=False, default=0)  # Percentage
     tax_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     total_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    currency_code = db.Column(db.String(3), nullable=False, default='EUR')
+    template_id = db.Column(db.Integer, db.ForeignKey('invoice_templates.id'), nullable=True, index=True)
     
     # Notes and terms
     notes = db.Column(db.Text, nullable=True)
@@ -49,6 +51,10 @@ class Invoice(db.Model):
     client = db.relationship('Client', backref='invoices')
     creator = db.relationship('User', backref='created_invoices')
     items = db.relationship('InvoiceItem', backref='invoice', lazy='dynamic', cascade='all, delete-orphan')
+    payments = db.relationship('Payment', backref='invoice', lazy='dynamic', cascade='all, delete-orphan')
+    credits = db.relationship('CreditNote', backref='invoice', lazy='dynamic', cascade='all, delete-orphan')
+    reminder_schedules = db.relationship('InvoiceReminderSchedule', backref='invoice', lazy='dynamic', cascade='all, delete-orphan')
+    template = db.relationship('InvoiceTemplate', backref='invoices', lazy='joined')
     
     def __init__(self, invoice_number, project_id, client_name, due_date, created_by, client_id, **kwargs):
         self.invoice_number = invoice_number
@@ -65,6 +71,8 @@ class Invoice(db.Model):
         self.notes = kwargs.get('notes')
         self.terms = kwargs.get('terms')
         self.tax_rate = Decimal(str(kwargs.get('tax_rate', 0)))
+        self.currency_code = kwargs.get('currency_code') or self.currency_code
+        self.template_id = kwargs.get('template_id') if kwargs.get('template_id') else None
         
         # Set payment tracking fields
         self.payment_date = kwargs.get('payment_date')
@@ -102,7 +110,8 @@ class Invoice(db.Model):
     @property
     def outstanding_amount(self):
         """Calculate outstanding amount"""
-        return self.total_amount - (self.amount_paid or 0)
+        credits_total = sum((c.amount for c in self.credits), Decimal('0')) if self.credits else Decimal('0')
+        return self.total_amount - (self.amount_paid or 0) - credits_total
     
     @property
     def payment_percentage(self):
@@ -146,6 +155,11 @@ class Invoice(db.Model):
     
     def calculate_totals(self):
         """Calculate invoice totals from items"""
+        # Optionally apply tax rules before totals
+        try:
+            self._apply_tax_rules_if_any()
+        except Exception:
+            pass
         subtotal = sum(item.total_amount for item in self.items)
         self.subtotal = subtotal
         self.tax_amount = subtotal * (self.tax_rate / 100)
@@ -154,6 +168,36 @@ class Invoice(db.Model):
         # Update status if overdue
         if self.status == 'sent' and self.is_overdue:
             self.status = 'overdue'
+
+    def _apply_tax_rules_if_any(self):
+        """Apply matching tax rule to set `tax_rate` if applicable.
+        Chooses the most specific active rule by client->project->country/region.
+        """
+        try:
+            from .tax_rule import TaxRule  # local import to avoid circular
+            today = self.issue_date or datetime.utcnow().date()
+            query = TaxRule.query.filter(TaxRule.active == True)
+            # constrain by date range
+            query = query.filter(
+                (TaxRule.start_date.is_(None) | (TaxRule.start_date <= today)),
+                (TaxRule.end_date.is_(None) | (TaxRule.end_date >= today)),
+            )
+            candidates = []
+            # project-specific
+            if self.project_id:
+                candidates = query.filter(TaxRule.project_id == self.project_id).all()
+            # client-specific
+            if not candidates and self.client_id:
+                candidates = query.filter(TaxRule.client_id == self.client_id).all()
+            # no direct client/project, fallback to country/region — requires client meta; skip if unavailable
+            # choose first if any
+            if candidates:
+                # prefer highest rate if multiple
+                candidates.sort(key=lambda r: float(r.rate_percent), reverse=True)
+                self.tax_rate = Decimal(str(candidates[0].rate_percent))
+        except Exception:
+            # Best-effort only
+            pass
     
     def to_dict(self):
         """Convert invoice to dictionary for API responses"""
