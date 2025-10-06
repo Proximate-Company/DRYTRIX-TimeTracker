@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Project, TimeEntry, Invoice, InvoiceItem, Settings
+from app.models import User, Project, TimeEntry, Invoice, InvoiceItem, Settings, RateOverride
 from datetime import datetime, timedelta, date
 from decimal import Decimal, InvalidOperation
 import io
@@ -349,8 +349,8 @@ def generate_from_time(invoice_id):
         
         # Create invoice items
         for group in grouped_entries.values():
-            # Use project hourly rate or default
-            hourly_rate = invoice.project.hourly_rate or Decimal('0')
+            # Resolve effective rate (project override -> project rate -> client default)
+            hourly_rate = RateOverride.resolve_rate(invoice.project)
             
             item = InvoiceItem(
                 invoice_id=invoice.id,

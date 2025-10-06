@@ -115,6 +115,12 @@ The invoice feature interface has been significantly improved to provide a more 
 
 ## Technical Improvements
 
+### **Effective Rate Resolution**
+- Invoices generated from time entries now use a precedence order for hourly rates:
+  1) project+user `rate_overrides` record; 2) project-only `rate_overrides` record;
+  3) `Project.hourly_rate`; 4) `Client.default_hourly_rate`.
+- This allows granular billable rate overrides per project/member.
+
 ### **CSS Enhancements**
 - Modern shadow system with `shadow-sm` and `border-0`
 - Consistent spacing using Bootstrap utilities

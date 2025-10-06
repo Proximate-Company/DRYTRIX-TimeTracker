@@ -18,6 +18,9 @@
                     <button type="button" id="openStartTimerBtn" class="btn-header btn-primary" data-bs-toggle="modal" data-bs-target="#startTimerModal">
                         <i class="fas fa-play"></i>{{ _('Start Timer') }}
                     </button>
+                    <button type="button" id="openFocusBtn" class="btn-header btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#focusModal">
+                        <i class="fas fa-hourglass-start"></i>{{ _('Focus Mode') }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -150,6 +153,46 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+<!-- Focus Mode Modal -->
+<div class="modal fade" id="focusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-hourglass-half me-2 text-primary"></i>{{ _('Focus Mode') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label">{{ _('Pomodoro (min)') }}</label>
+                        <input type="number" class="form-control" id="pomodoroLen" value="25" min="1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">{{ _('Short Break (min)') }}</label>
+                        <input type="number" class="form-control" id="shortBreakLen" value="5" min="1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">{{ _('Long Break (min)') }}</label>
+                        <input type="number" class="form-control" id="longBreakLen" value="15" min="1">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">{{ _('Long Break Every') }}</label>
+                        <input type="number" class="form-control" id="longBreakEvery" value="4" min="1">
+                    </div>
+                </div>
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="linkActiveTimer" checked>
+                    <label class="form-check-label" for="linkActiveTimer">{{ _('Link to active timer if running') }}</label>
+                </div>
+                <div class="mt-3 small text-muted" id="focusSummary"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                <button class="btn btn-primary" id="startFocusSessionBtn"><i class="fas fa-play me-2"></i>{{ _('Start Focus') }}</button>
+            </div>
         </div>
     </div>
 </div>
@@ -751,5 +794,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+    // Focus: session lifecycle
+    document.getElementById('startFocusSessionBtn').addEventListener('click', async function(){
+        const payload = {
+            pomodoro_length: Number(document.getElementById('pomodoroLen').value || 25),
+            short_break_length: Number(document.getElementById('shortBreakLen').value || 5),
+            long_break_length: Number(document.getElementById('longBreakLen').value || 15),
+            long_break_interval: Number(document.getElementById('longBreakEvery').value || 4),
+            link_active_timer: document.getElementById('linkActiveTimer').checked
+        };
+        const res = await fetch('/api/focus-sessions/start', { method:'POST', headers:{ 'Content-Type':'application/json' }, credentials:'same-origin', body: JSON.stringify(payload) });
+        const json = await res.json();
+        if (!json.success) { showToast(json.error || '{{ _('Failed to start focus session') }}', 'danger'); return; }
+        const session = json.session; window.__focusSessionId = session.id;
+        showToast('{{ _('Focus session started') }}', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('focusModal')).hide();
+        // Simple countdown display under timer
+        const summary = document.getElementById('focusSummary');
+        if (summary) summary.textContent = '';
+    });
+    // When modal hidden, if session running we do nothing; finishing handled manually
+});
+
+// Optional: expose a finish function to be called by UI elsewhere
+async function finishFocusSession(cyclesCompleted = 0, interruptions = 0, notes = ''){
+  if (!window.__focusSessionId) return;
+  try {
+    const res = await fetch('/api/focus-sessions/finish', { method:'POST', headers:{ 'Content-Type':'application/json' }, credentials:'same-origin', body: JSON.stringify({ session_id: window.__focusSessionId, cycles_completed: cyclesCompleted, interruptions: interruptions, notes }) });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'fail');
+    showToast('{{ _('Focus session saved') }}', 'success');
+  } catch(e) { showToast('{{ _('Failed to save focus session') }}', 'danger'); }
+  finally { window.__focusSessionId = null; }
+}
 </script>
 {% endblock %}

@@ -166,6 +166,9 @@
                     </h5>
                 </div>
                 <div class="card-body p-0">
+                    <div class="p-3">
+                        <canvas id="burndownAllChart" height="90"></canvas>
+                    </div>
                     {% if projects_data %}
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
@@ -340,6 +343,23 @@
             </div>
         </div>
     </div>
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async function(){
+  try {
+    const projectId = Number(new URLSearchParams(window.location.search).get('project_id'));
+    if (!projectId) return; // Only draw when a project is selected
+    const res = await fetch(`/api/projects/${projectId}/burndown`);
+    const data = await res.json();
+    const ctx = document.getElementById('burndownAllChart').getContext('2d');
+    new Chart(ctx, { type: 'line', data: { labels: data.labels, datasets: [
+      { label: '{{ _('Actual (cum hrs)') }}', data: data.actual_cumulative, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.08)', tension:.2 },
+      { label: '{{ _('Estimate') }}', data: data.estimated, borderColor: '#9ca3af', borderDash:[6,4], tension:0 }
+    ] }, options: { responsive: true, maintainAspectRatio: false } });
+  } catch(e) { console.error(e); }
+});
+</script>
+{% endblock %}
     {% endif %}
 </div>
 {% endblock %}

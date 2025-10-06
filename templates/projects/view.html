@@ -114,6 +114,18 @@
                             <div class="h4 text-success">{{ "%.1f"|format(project.total_billable_hours) }}</div>
                             <small class="text-muted">{{ _('Billable Hours') }}</small>
                         </div>
+                        {% if project.estimated_hours %}
+                        <div class="col-6 mb-3">
+                            <div class="h4">{{ "%.1f"|format(project.estimated_hours) }}</div>
+                            <small class="text-muted">{{ _('Estimated Hours') }}</small>
+                        </div>
+                        {% endif %}
+                        {% if project.budget_amount %}
+                        <div class="col-6 mb-3">
+                            <div class="h4">{{ currency }} {{ "%.2f"|format(project.budget_consumed_amount) }}</div>
+                            <small class="text-muted">{{ _('Budget Used') }}</small>
+                        </div>
+                        {% endif %}
                         {% if project.billable and project.hourly_rate %}
                         <div class="col-12">
                             <div class="h4 text-success">{{ currency }} {{ "%.2f"|format(project.estimated_cost) }}</div>
@@ -121,6 +133,18 @@
                         </div>
                         {% endif %}
                     </div>
+                    {% if project.budget_amount %}
+                    <div class="mt-3">
+                        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                            {% set pct = (project.budget_consumed_amount / project.budget_amount * 100) | round(0, 'floor') %}
+                            <div class="progress-bar {% if pct >= project.budget_threshold_percent %}bg-danger{% else %}bg-primary{% endif %}" style="width: {{ pct }}%">{{ pct }}%</div>
+                        </div>
+                        <div class="d-flex justify-content-between small mt-1">
+                            <span>{{ _('Budget') }}: {{ currency }} {{ "%.2f"|format(project.budget_amount) }}</span>
+                            <span>{{ _('Threshold') }}: {{ project.budget_threshold_percent }}%</span>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -204,11 +228,19 @@
                     <h6 class="m-0 font-weight-bold text-primary">
                         <i class="fas fa-clock me-2"></i>{{ _('Time Entries') }}
                     </h6>
-                    <a href="{{ url_for('reports.project_report', project_id=project.id) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-chart-line"></i> {{ _('View Report') }}
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('reports.project_report', project_id=project.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-chart-line"></i> {{ _('View Report') }}
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="showBurndownBtn">
+                            <i class="fas fa-fire"></i> {{ _('Burn-down') }}
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
+                    <div id="burndownContainer" class="mb-3" style="display:none;">
+                        <canvas id="burndownChart" height="100"></canvas>
+                    </div>
                     {% if entries %}
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -438,3 +470,32 @@ document.addEventListener('DOMContentLoaded', function() {
   .detail-row{flex-direction:column; align-items:flex-start; gap:4px;}
 }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('showBurndownBtn');
+  if (!btn) return;
+  const container = document.getElementById('burndownContainer');
+  let chart;
+  btn.addEventListener('click', async function(){
+    container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    if (container.style.display === 'none') return;
+    try {
+      const res = await fetch(`/api/projects/{{ project.id }}/burndown`);
+      const data = await res.json();
+      const ctx = document.getElementById('burndownChart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [
+            { label: '{{ _('Actual (cum hrs)') }}', data: data.actual_cumulative, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.1)', tension:.2 },
+            { label: '{{ _('Estimate') }}', data: data.estimated, borderColor: '#94a3b8', borderDash:[6,4], tension:0 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    } catch (e) { console.error(e); }
+  });
+});
+</script>

@@ -7,5 +7,12 @@ from .invoice import Invoice, InvoiceItem
 from .client import Client
 from .task_activity import TaskActivity
 from .comment import Comment
+from .focus_session import FocusSession
+from .recurring_block import RecurringBlock
+from .rate_override import RateOverride
+from .saved_filter import SavedFilter
 
-__all__ = ['User', 'Project', 'TimeEntry', 'Task', 'Settings', 'Invoice', 'InvoiceItem', 'Client', 'TaskActivity', 'Comment']
+__all__ = [
+    'User', 'Project', 'TimeEntry', 'Task', 'Settings', 'Invoice', 'InvoiceItem', 'Client', 'TaskActivity', 'Comment',
+    'FocusSession', 'RecurringBlock', 'RateOverride', 'SavedFilter'
+]

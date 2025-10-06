@@ -15,6 +15,10 @@ class Project(db.Model):
     hourly_rate = db.Column(db.Numeric(9, 2), nullable=True)
     billing_ref = db.Column(db.String(100), nullable=True)
     status = db.Column(db.String(20), default='active', nullable=False)  # 'active' or 'archived'
+    # Estimates & budgets
+    estimated_hours = db.Column(db.Float, nullable=True)
+    budget_amount = db.Column(db.Numeric(10, 2), nullable=True)
+    budget_threshold_percent = db.Column(db.Integer, nullable=False, default=80)  # alert when exceeded
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
@@ -103,6 +107,38 @@ class Project(db.Model):
         if not self.billable or not self.hourly_rate:
             return 0.0
         return float(self.total_billable_hours) * float(self.hourly_rate)
+
+    @property
+    def actual_hours(self):
+        """Alias for total hours for clarity in estimates vs actuals."""
+        return self.total_hours
+
+    @property
+    def budget_consumed_amount(self):
+        """Compute consumed budget using effective rate logic when available.
+
+        Falls back to project.hourly_rate if no overrides are present.
+        """
+        try:
+            from .rate_override import RateOverride
+            hours = self.total_billable_hours
+            # Use project-level override if present, else project rate
+            rate = RateOverride.resolve_rate(self, user_id=None)
+            return float(hours * float(rate))
+        except Exception:
+            if self.hourly_rate:
+                return float(self.total_billable_hours * float(self.hourly_rate))
+            return 0.0
+
+    @property
+    def budget_threshold_exceeded(self):
+        if not self.budget_amount:
+            return False
+        try:
+            threshold = (self.budget_threshold_percent or 0) / 100.0
+            return self.budget_consumed_amount >= float(self.budget_amount) * threshold
+        except Exception:
+            return False
     
     def get_entries_by_user(self, user_id=None, start_date=None, end_date=None):
         """Get time entries for this project, optionally filtered by user and date range"""
@@ -174,9 +210,14 @@ class Project(db.Model):
             'hourly_rate': float(self.hourly_rate) if self.hourly_rate else None,
             'billing_ref': self.billing_ref,
             'status': self.status,
+            'estimated_hours': self.estimated_hours,
+            'budget_amount': float(self.budget_amount) if self.budget_amount else None,
+            'budget_threshold_percent': self.budget_threshold_percent,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'total_hours': self.total_hours,
             'total_billable_hours': self.total_billable_hours,
-            'estimated_cost': float(self.estimated_cost) if self.estimated_cost else None
+            'estimated_cost': float(self.estimated_cost) if self.estimated_cost else None,
+            'budget_consumed_amount': self.budget_consumed_amount,
+            'budget_threshold_exceeded': self.budget_threshold_exceeded,
         }

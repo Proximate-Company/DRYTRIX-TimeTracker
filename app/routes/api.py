@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, current_app, send_from_directory
 from flask_login import login_required, current_user
 from app import db, socketio
-from app.models import User, Project, TimeEntry, Settings, Task
+from app.models import User, Project, TimeEntry, Settings, Task, FocusSession, RecurringBlock, RateOverride, SavedFilter
 from datetime import datetime, timedelta
 from app.utils.db import safe_commit
 from app.utils.timezone import parse_local_datetime, utc_to_local
@@ -266,8 +266,24 @@ def get_entries():
     per_page = request.args.get('per_page', 20, type=int)
     user_id = request.args.get('user_id', type=int)
     project_id = request.args.get('project_id', type=int)
+    tag = (request.args.get('tag') or '').strip()
+    saved_filter_id = request.args.get('saved_filter_id', type=int)
     
     query = TimeEntry.query.filter(TimeEntry.end_time.isnot(None))
+
+    # Apply saved filter if provided
+    if saved_filter_id:
+        filt = SavedFilter.query.get(saved_filter_id)
+        if filt and (filt.user_id == current_user.id or (filt.is_shared and current_user.is_admin)):
+            payload = filt.payload or {}
+            if 'project_id' in payload:
+                query = query.filter(TimeEntry.project_id == int(payload['project_id']))
+            if 'user_id' in payload and current_user.is_admin:
+                query = query.filter(TimeEntry.user_id == int(payload['user_id']))
+            if 'billable' in payload:
+                query = query.filter(TimeEntry.billable == bool(payload['billable']))
+            if 'tag' in payload and payload['tag']:
+                query = query.filter(TimeEntry.tags.ilike(f"%{payload['tag']}%"))
     
     # Filter by user (if admin or own entries)
     if user_id and current_user.is_admin:
@@ -278,6 +294,11 @@ def get_entries():
     # Filter by project
     if project_id:
         query = query.filter(TimeEntry.project_id == project_id)
+
+    # Filter by tag (simple contains search on comma-separated tags)
+    if tag:
+        like = f"%{tag}%"
+        query = query.filter(TimeEntry.tags.ilike(like))
     
     entries = query.order_by(TimeEntry.start_time.desc()).paginate(
         page=page,
@@ -300,6 +321,252 @@ def get_entries():
         'has_next': entries.has_next,
         'has_prev': entries.has_prev
     })
+
+@api_bp.route('/api/projects/<int:project_id>/burndown')
+@login_required
+def project_burndown(project_id):
+    """Return burn-down data for a given project.
+
+    Produces daily cumulative actual hours vs estimated hours line.
+    """
+    project = Project.query.get_or_404(project_id)
+    # Permission: any authenticated can view if they have entries in project or are admin
+    if not current_user.is_admin:
+        has_entries = db.session.query(TimeEntry.id).filter_by(user_id=current_user.id, project_id=project_id).first()
+        if not has_entries:
+            return jsonify({'error': 'Access denied'}), 403
+
+    # Date range: last 30 days up to today
+    end_date = datetime.utcnow().date()
+    start_date = end_date - timedelta(days=29)
+
+    # Fetch entries in range
+    entries = (
+        TimeEntry.query
+        .filter(TimeEntry.project_id == project_id)
+        .filter(TimeEntry.end_time.isnot(None))
+        .filter(TimeEntry.start_time >= datetime.combine(start_date, datetime.min.time()))
+        .filter(TimeEntry.start_time <= datetime.combine(end_date, datetime.max.time()))
+        .order_by(TimeEntry.start_time.asc())
+        .all()
+    )
+
+    # Build daily buckets
+    labels = []
+    actual_cumulative = []
+    day_map = {}
+    cur = start_date
+    while cur <= end_date:
+        labels.append(cur.isoformat())
+        day_map[cur.isoformat()] = 0.0
+        cur = cur + timedelta(days=1)
+
+    for e in entries:
+        d = e.start_time.date().isoformat()
+        day_map[d] = day_map.get(d, 0.0) + (e.duration_seconds or 0) / 3600.0
+
+    running = 0.0
+    for d in labels:
+        running += day_map.get(d, 0.0)
+        actual_cumulative.append(round(running, 2))
+
+    # Estimated line: flat line of project.estimated_hours
+    estimated = float(project.estimated_hours or 0)
+    estimate_series = [estimated for _ in labels]
+
+    return jsonify({
+        'labels': labels,
+        'actual_cumulative': actual_cumulative,
+        'estimated': estimate_series,
+        'estimated_hours': estimated,
+    })
+
+@api_bp.route('/api/focus-sessions/start', methods=['POST'])
+@login_required
+def start_focus_session():
+    data = request.get_json() or {}
+    project_id = data.get('project_id')
+    task_id = data.get('task_id')
+    pomodoro_length = int(data.get('pomodoro_length') or 25)
+    short_break_length = int(data.get('short_break_length') or 5)
+    long_break_length = int(data.get('long_break_length') or 15)
+    long_break_interval = int(data.get('long_break_interval') or 4)
+    link_active_timer = bool(data.get('link_active_timer', True))
+
+    time_entry_id = None
+    if link_active_timer and current_user.active_timer:
+        time_entry_id = current_user.active_timer.id
+
+    fs = FocusSession(
+        user_id=current_user.id,
+        project_id=project_id,
+        task_id=task_id,
+        time_entry_id=time_entry_id,
+        pomodoro_length=pomodoro_length,
+        short_break_length=short_break_length,
+        long_break_length=long_break_length,
+        long_break_interval=long_break_interval,
+    )
+    db.session.add(fs)
+    if not safe_commit('start_focus_session', {'user_id': current_user.id}):
+        return jsonify({'error': 'Database error while starting focus session'}), 500
+
+    return jsonify({'success': True, 'session': fs.to_dict()})
+
+@api_bp.route('/api/focus-sessions/finish', methods=['POST'])
+@login_required
+def finish_focus_session():
+    data = request.get_json() or {}
+    session_id = data.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'session_id is required'}), 400
+    fs = FocusSession.query.get_or_404(session_id)
+    if fs.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+
+    fs.ended_at = datetime.utcnow()
+    fs.cycles_completed = int(data.get('cycles_completed') or 0)
+    fs.interruptions = int(data.get('interruptions') or 0)
+    notes = (data.get('notes') or '').strip()
+    fs.notes = notes or fs.notes
+    if not safe_commit('finish_focus_session', {'session_id': fs.id}):
+        return jsonify({'error': 'Database error while finishing focus session'}), 500
+    return jsonify({'success': True, 'session': fs.to_dict()})
+
+@api_bp.route('/api/focus-sessions/summary')
+@login_required
+def focus_sessions_summary():
+    """Return simple summary counts for recent focus sessions for the current user."""
+    days = int(request.args.get('days', 7))
+    since = datetime.utcnow() - timedelta(days=days)
+    q = FocusSession.query.filter(FocusSession.user_id == current_user.id, FocusSession.started_at >= since)
+    sessions = q.order_by(FocusSession.started_at.desc()).all()
+    total = len(sessions)
+    cycles = sum(s.cycles_completed or 0 for s in sessions)
+    interrupts = sum(s.interruptions or 0 for s in sessions)
+    return jsonify({'total_sessions': total, 'cycles_completed': cycles, 'interruptions': interrupts})
+
+@api_bp.route('/api/recurring-blocks', methods=['GET', 'POST'])
+@login_required
+def recurring_blocks_list_create():
+    if request.method == 'GET':
+        blocks = RecurringBlock.query.filter_by(user_id=current_user.id).order_by(RecurringBlock.created_at.desc()).all()
+        return jsonify({'blocks': [b.to_dict() for b in blocks]})
+
+    data = request.get_json() or {}
+    name = (data.get('name') or '').strip()
+    project_id = data.get('project_id')
+    task_id = data.get('task_id')
+    recurrence = (data.get('recurrence') or 'weekly').strip()
+    weekdays = (data.get('weekdays') or '').strip()
+    start_time_local = (data.get('start_time_local') or '').strip()
+    end_time_local = (data.get('end_time_local') or '').strip()
+    starts_on = data.get('starts_on')
+    ends_on = data.get('ends_on')
+    is_active = bool(data.get('is_active', True))
+    notes = (data.get('notes') or '').strip() or None
+    tags = (data.get('tags') or '').strip() or None
+    billable = bool(data.get('billable', True))
+
+    if not all([name, project_id, start_time_local, end_time_local]):
+        return jsonify({'error': 'name, project_id, start_time_local, end_time_local are required'}), 400
+
+    block = RecurringBlock(
+        user_id=current_user.id,
+        project_id=project_id,
+        task_id=task_id,
+        name=name,
+        recurrence=recurrence,
+        weekdays=weekdays,
+        start_time_local=start_time_local,
+        end_time_local=end_time_local,
+        is_active=is_active,
+        notes=notes,
+        tags=tags,
+        billable=billable,
+    )
+
+    # Optional dates
+    try:
+        if starts_on:
+            block.starts_on = datetime.fromisoformat(starts_on).date()
+        if ends_on:
+            block.ends_on = datetime.fromisoformat(ends_on).date()
+    except Exception:
+        return jsonify({'error': 'Invalid starts_on/ends_on date format'}), 400
+
+    db.session.add(block)
+    if not safe_commit('create_recurring_block', {'user_id': current_user.id}):
+        return jsonify({'error': 'Database error while creating recurring block'}), 500
+    return jsonify({'success': True, 'block': block.to_dict()})
+
+@api_bp.route('/api/recurring-blocks/<int:block_id>', methods=['PUT', 'DELETE'])
+@login_required
+def recurring_block_update_delete(block_id):
+    block = RecurringBlock.query.get_or_404(block_id)
+    if block.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+
+    if request.method == 'DELETE':
+        db.session.delete(block)
+        if not safe_commit('delete_recurring_block', {'id': block.id}):
+            return jsonify({'error': 'Database error while deleting recurring block'}), 500
+        return jsonify({'success': True})
+
+    data = request.get_json() or {}
+    for field in ['name', 'recurrence', 'weekdays', 'start_time_local', 'end_time_local', 'notes', 'tags']:
+        if field in data:
+            setattr(block, field, (data.get(field) or '').strip())
+    for field in ['project_id', 'task_id']:
+        if field in data:
+            setattr(block, field, data.get(field))
+    if 'is_active' in data:
+        block.is_active = bool(data.get('is_active'))
+    if 'billable' in data:
+        block.billable = bool(data.get('billable'))
+    try:
+        if 'starts_on' in data:
+            block.starts_on = datetime.fromisoformat(data.get('starts_on')).date() if data.get('starts_on') else None
+        if 'ends_on' in data:
+            block.ends_on = datetime.fromisoformat(data.get('ends_on')).date() if data.get('ends_on') else None
+    except Exception:
+        return jsonify({'error': 'Invalid starts_on/ends_on date format'}), 400
+
+    if not safe_commit('update_recurring_block', {'id': block.id}):
+        return jsonify({'error': 'Database error while updating recurring block'}), 500
+    return jsonify({'success': True, 'block': block.to_dict()})
+
+@api_bp.route('/api/saved-filters', methods=['GET', 'POST'])
+@login_required
+def saved_filters_list_create():
+    if request.method == 'GET':
+        scope = (request.args.get('scope') or 'global').strip()
+        items = SavedFilter.query.filter_by(user_id=current_user.id, scope=scope).order_by(SavedFilter.name.asc()).all()
+        return jsonify({'filters': [f.to_dict() for f in items]})
+
+    data = request.get_json() or {}
+    name = (data.get('name') or '').strip()
+    scope = (data.get('scope') or 'global').strip()
+    payload = data.get('payload') or {}
+    is_shared = bool(data.get('is_shared', False))
+    if not name:
+        return jsonify({'error': 'name is required'}), 400
+    filt = SavedFilter(user_id=current_user.id, name=name, scope=scope, payload=payload, is_shared=is_shared)
+    db.session.add(filt)
+    if not safe_commit('create_saved_filter', {'name': name, 'scope': scope}):
+        return jsonify({'error': 'Database error while creating saved filter'}), 500
+    return jsonify({'success': True, 'filter': filt.to_dict()})
+
+@api_bp.route('/api/saved-filters/<int:filter_id>', methods=['DELETE'])
+@login_required
+def delete_saved_filter(filter_id):
+    filt = SavedFilter.query.get_or_404(filter_id)
+    if filt.user_id != current_user.id and not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    db.session.delete(filt)
+    if not safe_commit('delete_saved_filter', {'id': filt.id}):
+        return jsonify({'error': 'Database error while deleting saved filter'}), 500
+    return jsonify({'success': True})
 
 @api_bp.route('/api/entries', methods=['POST'])
 @login_required

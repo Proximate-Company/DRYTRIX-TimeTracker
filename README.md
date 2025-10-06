@@ -12,6 +12,11 @@ A comprehensive web-based time tracking application built with Flask, featuring 
 - **🔐 Multi-User Support** - Role-based access control with admin and user roles
 - **🐳 Docker Ready** - Multiple deployment options with automatic database migration
 - **📱 Mobile Optimized** - Responsive design that works perfectly on all devices
+ - **🎯 Focus Mode (Pomodoro)** - Start focus sessions with configurable cycles and view summaries
+ - **📈 Estimates vs Actuals** - Project estimates, burn-down charts, and budget threshold alerts
+ - **🔁 Recurring Time Blocks** - Create templates for common tasks and auto-generate entries
+ - **🏷️ Tagging & Saved Filters** - Add tags to entries and reuse saved filters across views
+ - **💰 Rate Overrides** - Billable rate overrides per project/member for precise invoicing
 
 ## 📸 Screenshots
 
