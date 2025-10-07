@@ -133,11 +133,20 @@
                 {
                     id: 'search',
                     category: 'General',
-                    title: 'Search',
-                    description: 'Open search / command palette',
+                    title: 'Command Palette',
+                    description: 'Open command palette (also ? key)',
                     icon: 'fas fa-search',
                     keys: ['Ctrl', 'K'],
                     ctrl: true,
+                    action: () => this.openCommandPalette()
+                },
+                {
+                    id: 'search-alt',
+                    category: 'General',
+                    title: 'Quick Command',
+                    description: 'Open command palette with ?',
+                    icon: 'fas fa-bolt',
+                    keys: ['?'],
                     action: () => this.openCommandPalette()
                 },
                 {
@@ -146,7 +155,8 @@
                     title: 'Keyboard Shortcuts Help',
                     description: 'Show all keyboard shortcuts',
                     icon: 'fas fa-keyboard',
-                    keys: ['?'],
+                    keys: ['Shift', '?'],
+                    shift: true,
                     action: () => this.showHelp()
                 },
 
@@ -189,15 +199,22 @@
                     return;
                 }
 
-                // Command palette (Ctrl+K or Cmd+K)
+                // Command palette (Ctrl+K or Cmd+K or ?)
                 if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                     e.preventDefault();
                     this.openCommandPalette();
                     return;
                 }
 
-                // Help (?)
-                if (e.key === '?' && !e.shiftKey) {
+                // Open command palette with ? (main entry point)
+                if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    this.openCommandPalette();
+                    return;
+                }
+
+                // Help with Shift+? (or Ctrl/Cmd+?)
+                if ((e.key === '?' && e.shiftKey) || (e.key === '/' && e.ctrlKey)) {
                     e.preventDefault();
                     this.showHelp();
                     return;
@@ -264,7 +281,7 @@
                         </div>
                         <div>
                             <span class="command-footer-action">
-                                <kbd class="command-kbd">?</kbd> Show shortcuts
+                                <kbd class="command-kbd">Shift</kbd>+<kbd class="command-kbd">?</kbd> Help
                             </span>
                         </div>
                     </div>
@@ -579,7 +596,7 @@
             hint.className = 'shortcut-hint';
             hint.innerHTML = `
                 <i class="fas fa-keyboard"></i>
-                Press <kbd class="command-kbd">Ctrl</kbd>+<kbd class="command-kbd">K</kbd> to open command palette
+                Press <kbd class="command-kbd">?</kbd> or <kbd class="command-kbd">Ctrl</kbd>+<kbd class="command-kbd">K</kbd> to open command palette
                 <button class="shortcut-hint-close">
                     <i class="fas fa-times"></i>
                 </button>

@@ -139,16 +139,13 @@
                     <!-- Global Search (desktop) -->
                     <li class="nav-item d-none d-xl-flex align-items-center me-2">
                         <form class="navbar-search" role="search" action="{{ url_for('main.search') }}" method="get">
-                            <div class="navbar-search-field">
-                                <i class="fas fa-search"></i>
-                                <input name="q" type="search" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}">
-                            </div>
+                            <input name="q" type="search" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" data-enhanced-search='{"endpoint": "/api/search", "minChars": 2, "maxResults": 10}'>
                         </form>
                     </li>
 
                     <!-- Command Palette Launcher (desktop) -->
                     <li class="nav-item d-none d-xl-flex align-items-center me-2">
-                        <button id="commandPaletteBtn" class="btn btn-quiet nav-control" type="button" onclick="try{ openCommandPalette(); }catch(e){}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ _('Open Command Palette') }} ({{ _('Ctrl') }}+K)">
+                        <button id="commandPaletteBtn" class="btn btn-quiet nav-control" type="button" onclick="try{ window.keyboardShortcuts?.openCommandPalette(); }catch(e){}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ _('Open Command Palette') }} (? or {{ _('Ctrl') }}+K)">
                             <i class="fas fa-terminal"></i>
                         </button>
                     </li>
@@ -157,15 +154,26 @@
                     <li class="nav-item d-none d-xl-flex align-items-center nav-divider" aria-hidden="true"></li>
 
                     <!-- Language Switcher -->
-                    <li class="nav-item dropdown me-2">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center nav-control nav-quiet" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <li class="nav-item dropdown me-2 d-flex align-items-center">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center nav-control nav-quiet" 
+                           href="#" 
+                           id="langDropdown" 
+                           role="button" 
+                           data-bs-toggle="dropdown" 
+                           aria-expanded="false"
+                           title="{{ _('Language') }}: {{ current_language_label }}">
                             <i class="fas fa-globe me-1"></i>
-                            <span class="d-none d-xl-inline">{{ current_language_label }}</span>
+                            <span class="d-none d-lg-inline">{{ current_language_label }}</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="langDropdown">
+                            <li class="dropdown-header">{{ _('Language') }}</li>
                             {% for code, label in config['LANGUAGES'].items() %}
                             <li>
-                                <a class="dropdown-item {% if current_language_code == code %}active{% endif %}" href="{{ url_for('main.set_language') }}?lang={{ code }}">{{ label }}</a>
+                                <a class="dropdown-item {% if current_language_code == code %}active{% endif %}" 
+                                   href="{{ url_for('main.set_language') }}?lang={{ code }}"
+                                   {% if current_language_code == code %}aria-current="true"{% endif %}>
+                                    {% if current_language_code == code %}<i class="fas fa-check me-2"></i>{% endif %}{{ label }}
+                                </a>
                             </li>
                             {% endfor %}
                         </ul>
@@ -180,7 +188,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <a class="dropdown-item" href="#" onclick="try{ openCommandPalette(); }catch(e){}">
+                                <a class="dropdown-item" href="#" onclick="try{ window.keyboardShortcuts?.openCommandPalette(); }catch(e){}">
                                     <i class="fas fa-keyboard me-2"></i>{{ _('Keyboard Shortcuts') }}
                                 </a>
                             </li>
@@ -273,26 +281,7 @@
         </div>
     </footer>
 
-    {% if current_user.is_authenticated %}
-    <!-- Command Palette Modal -->
-    <div class="modal" id="commandPaletteModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-terminal me-2"></i>{{ _('Command Palette') }}</h5>
-                    <button type="button" class="btn-close" id="commandPaletteClose" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3 position-relative">
-                        <input type="text" id="commandPaletteInput" class="form-control form-control-lg" placeholder="{{ _('Type a command or search...') }}" autocomplete="off">
-                        <small id="commandPaletteHelp" class="text-muted d-block mt-2"></small>
-                    </div>
-                    <div id="commandPaletteList" class="list-group"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+    <!-- Command Palette is created dynamically by keyboard-shortcuts.js -->
 
     <!-- Global Confirm Modal -->
     <div class="modal" id="globalConfirmModal" tabindex="-1" aria-hidden="true" aria-labelledby="globalConfirmTitle">
@@ -462,7 +451,6 @@
     <script src="{{ url_for('static', filename='enhanced-search.js') }}?v={{ app_version }}"></script>
     <script src="{{ url_for('static', filename='keyboard-shortcuts.js') }}?v={{ app_version }}"></script>
     <script src="{{ url_for('static', filename='enhanced-tables.js') }}?v={{ app_version }}"></script>
-    <script src="{{ url_for('static', filename='commands.js') }}?v={{ app_version }}"></script>
     <script src="{{ url_for('static', filename='idle.js') }}?v={{ app_version }}"></script>
     {% endif %}
     {% if current_user.is_authenticated %}

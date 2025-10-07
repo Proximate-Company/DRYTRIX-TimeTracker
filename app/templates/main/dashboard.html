@@ -100,17 +100,17 @@
     <div class="col-lg-4 col-md-6 mb-3">
         {% from "_components.html" import summary_card %}
         <div class="scale-hover">
-            {{ summary_card('fas fa-calendar-day', 'primary', 'Hours Today', "%.1f"|format(today_hours)) }}
+            {{ summary_card('fas fa-calendar-day', 'primary', _('Hours Today'), "%.1f"|format(today_hours)) }}
         </div>
     </div>
     <div class="col-lg-4 col-md-6 mb-3">
         <div class="scale-hover">
-            {{ summary_card('fas fa-calendar-week', 'success', 'Hours This Week', "%.1f"|format(week_hours)) }}
+            {{ summary_card('fas fa-calendar-week', 'success', _('Hours This Week'), "%.1f"|format(week_hours)) }}
         </div>
     </div>
     <div class="col-lg-4 col-md-6 mb-3">
         <div class="scale-hover">
-            {{ summary_card('fas fa-calendar-alt', 'info', 'Hours This Month', "%.1f"|format(month_hours)) }}
+            {{ summary_card('fas fa-calendar-alt', 'info', _('Hours This Month'), "%.1f"|format(month_hours)) }}
         </div>
     </div>
 </div>

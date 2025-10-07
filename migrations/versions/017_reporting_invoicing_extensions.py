@@ -167,7 +167,9 @@ def upgrade() -> None:
         columns = {c['name'] for c in inspector.get_columns('invoices')}
         if 'currency_code' not in columns:
             op.add_column('invoices', sa.Column('currency_code', sa.String(length=3), nullable=False, server_default='EUR'))
-            op.alter_column('invoices', 'currency_code', server_default=None)
+            # Only drop default on PostgreSQL (SQLite doesn't support ALTER COLUMN DROP DEFAULT)
+            if bind.dialect.name == 'postgresql':
+                op.alter_column('invoices', 'currency_code', server_default=None)
         if 'template_id' not in columns:
             op.add_column('invoices', sa.Column('template_id', sa.Integer(), nullable=True))
             try:

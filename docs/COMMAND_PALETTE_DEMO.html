@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Palette Demo - TimeTracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1e293b;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .demo-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 3rem;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .highlight-box h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .highlight-box p {
+            font-size: 1.25rem;
+            opacity: 0.95;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .feature-card p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .shortcuts-demo {
+            background: #0f172a;
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+
+        .shortcuts-demo h3 {
+            margin-bottom: 1.5rem;
+            color: #93c5fd;
+        }
+
+        .shortcut-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .shortcut-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .shortcut-label {
+            color: #e2e8f0;
+        }
+
+        .shortcut-keys {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        kbd {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 0.5rem;
+            font-size: 0.75rem;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .comparison {
+            margin: 2rem 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .comparison-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .comparison-card.before {
+            background: #fef3c7;
+            border-color: #fbbf24;
+        }
+
+        .comparison-card.after {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+
+        .comparison-card h4 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .comparison-card.before h4 {
+            color: #b45309;
+        }
+
+        .comparison-card.after h4 {
+            color: #059669;
+        }
+
+        .comparison-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .comparison-card li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .comparison-card li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .comparison-card.before li:before {
+            color: #b45309;
+        }
+
+        .comparison-card.after li:before {
+            color: #059669;
+        }
+
+        @media (max-width: 768px) {
+            .demo-container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .highlight-box h2 {
+                font-size: 2rem;
+            }
+
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>⚡ Command Palette Improvements</h1>
+        <p class="subtitle">Lightning-fast navigation with the ? key</p>
+
+        <div class="highlight-box">
+            <h2>Press <kbd>?</kbd></h2>
+            <p>That's all you need to remember! The command palette opens instantly.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h3>Instant Access</h3>
+                <p>Press ? anywhere to open the command palette. No modifier keys needed!</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3>Beautiful Design</h3>
+                <p>Modern UI with smooth animations, blur effects, and perfect dark mode support</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⌨️</div>
+                <h3>Full Keyboard</h3>
+                <p>Navigate with arrows, select with Enter, close with Esc - all keyboard driven</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Smart Search</h3>
+                <p>Type to filter commands instantly. Fuzzy matching finds what you need</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h3>Customizable</h3>
+                <p>Easy to add your own commands and shortcuts programmatically</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">♿</div>
+                <h3>Accessible</h3>
+                <p>WCAG 2.1 AA compliant with screen reader support and high contrast</p>
+            </div>
+        </div>
+
+        <h2 style="margin-top: 3rem; margin-bottom: 1rem;">📊 Before vs After</h2>
+        
+        <div class="comparison">
+            <div class="comparison-card before">
+                <h4>❌ Before</h4>
+                <ul>
+                    <li>Only Ctrl+K to open palette</li>
+                    <li>? key showed help modal</li>
+                    <li>Harder to discover</li>
+                    <li>More steps to access</li>
+                    <li>Basic styling</li>
+                </ul>
+            </div>
+
+            <div class="comparison-card after">
+                <h4>✅ After</h4>
+                <ul>
+                    <li>? key opens palette instantly</li>
+                    <li>Shift+? for help modal</li>
+                    <li>Super easy to discover</li>
+                    <li>One key press</li>
+                    <li>Modern, beautiful design</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="shortcuts-demo">
+            <h3>⌨️ Available Shortcuts</h3>
+            <div class="shortcut-list">
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Command Palette</span>
+                    <div class="shortcut-keys">
+                        <kbd>?</kbd>
+                    </div>
+                </div>
+                
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Alternative</span>
+                    <div class="shortcut-keys">
+                        <kbd>Ctrl</kbd><kbd>K</kbd>
+                    </div>
+                </div>
+
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Dashboard</span>
+                    <div class="shortcut-keys">
+                        <kbd>g</kbd><kbd>d</kbd>
+                    </div>
+                </div>
+
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Projects</span>
+                    <div class="shortcut-keys">
+                        <kbd>g</kbd><kbd>p</kbd>
+                    </div>
+                </div>
+
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Tasks</span>
+                    <div class="shortcut-keys">
+                        <kbd>g</kbd><kbd>t</kbd>
+                    </div>
+                </div>
+
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Reports</span>
+                    <div class="shortcut-keys">
+                        <kbd>g</kbd><kbd>r</kbd>
+                    </div>
+                </div>
+
+                <div class="shortcut-item">
+                    <span class="shortcut-label">New Task</span>
+                    <div class="shortcut-keys">
+                        <kbd>n</kbd><kbd>t</kbd>
+                    </div>
+                </div>
+
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Help</span>
+                    <div class="shortcut-keys">
+                        <kbd>Shift</kbd><kbd>?</kbd>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 1.125rem;">
+                Ready to try it out?
+            </p>
+            <a href="../" class="cta-button">
+                🚀 Open TimeTracker
+            </a>
+            <p style="color: #94a3b8; margin-top: 1rem; font-size: 0.875rem;">
+                Or read the <a href="COMMAND_PALETTE_USAGE.md" style="color: #667eea;">full documentation</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+

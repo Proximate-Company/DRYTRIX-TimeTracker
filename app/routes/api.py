@@ -1,11 +1,12 @@
 from flask import Blueprint, jsonify, request, current_app, send_from_directory
 from flask_login import login_required, current_user
 from app import db, socketio
-from app.models import User, Project, TimeEntry, Settings, Task, FocusSession, RecurringBlock, RateOverride, SavedFilter
+from app.models import User, Project, TimeEntry, Settings, Task, FocusSession, RecurringBlock, RateOverride, SavedFilter, Client
 from datetime import datetime, timedelta
 from app.utils.db import safe_commit
 from app.utils.timezone import parse_local_datetime, utc_to_local
 from app.models.time_entry import local_now
+from sqlalchemy import or_
 import json
 import os
 import uuid
@@ -37,6 +38,128 @@ def timer_status():
             'duration_formatted': active_timer.duration_formatted
         }
     })
+
+@api_bp.route('/api/search')
+@login_required
+def search():
+    """Global search endpoint for projects, tasks, clients, and time entries"""
+    query = request.args.get('q', '').strip()
+    limit = request.args.get('limit', 10, type=int)
+    
+    if not query or len(query) < 2:
+        return jsonify({'results': []})
+    
+    results = []
+    search_pattern = f'%{query}%'
+    
+    # Search projects
+    try:
+        projects = Project.query.filter(
+            Project.status == 'active',
+            or_(
+                Project.name.ilike(search_pattern),
+                Project.description.ilike(search_pattern)
+            )
+        ).limit(limit).all()
+        
+        for project in projects:
+            results.append({
+                'type': 'project',
+                'category': 'project',
+                'id': project.id,
+                'title': project.name,
+                'description': project.description or '',
+                'url': f'/projects/{project.id}',
+                'badge': 'Project'
+            })
+    except Exception as e:
+        current_app.logger.error(f"Error searching projects: {e}")
+    
+    # Search tasks
+    try:
+        tasks = Task.query.join(Project).filter(
+            Project.status == 'active',
+            or_(
+                Task.name.ilike(search_pattern),
+                Task.description.ilike(search_pattern)
+            )
+        ).limit(limit).all()
+        
+        for task in tasks:
+            results.append({
+                'type': 'task',
+                'category': 'task',
+                'id': task.id,
+                'title': task.name,
+                'description': f"{task.project.name if task.project else 'No Project'}",
+                'url': f'/tasks/{task.id}',
+                'badge': task.status.replace('_', ' ').title() if task.status else 'Task'
+            })
+    except Exception as e:
+        current_app.logger.error(f"Error searching tasks: {e}")
+    
+    # Search clients
+    try:
+        clients = Client.query.filter(
+            or_(
+                Client.name.ilike(search_pattern),
+                Client.email.ilike(search_pattern),
+                Client.company.ilike(search_pattern)
+            )
+        ).limit(limit).all()
+        
+        for client in clients:
+            results.append({
+                'type': 'client',
+                'category': 'client',
+                'id': client.id,
+                'title': client.name,
+                'description': client.company or client.email or '',
+                'url': f'/clients/{client.id}',
+                'badge': 'Client'
+            })
+    except Exception as e:
+        current_app.logger.error(f"Error searching clients: {e}")
+    
+    # Search time entries (notes and tags)
+    try:
+        entries = TimeEntry.query.filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.end_time.isnot(None),
+            or_(
+                TimeEntry.notes.ilike(search_pattern),
+                TimeEntry.tags.ilike(search_pattern)
+            )
+        ).order_by(TimeEntry.start_time.desc()).limit(limit).all()
+        
+        for entry in entries:
+            title_parts = []
+            if entry.project:
+                title_parts.append(entry.project.name)
+            if entry.task:
+                title_parts.append(f"• {entry.task.name}")
+            title = ' '.join(title_parts) if title_parts else 'Time Entry'
+            
+            description = entry.notes[:100] if entry.notes else ''
+            if entry.tags:
+                description += f" [{entry.tags}]"
+            
+            results.append({
+                'type': 'entry',
+                'category': 'entry',
+                'id': entry.id,
+                'title': title,
+                'description': description,
+                'url': f'/timer/edit/{entry.id}',
+                'badge': entry.duration_formatted
+            })
+    except Exception as e:
+        current_app.logger.error(f"Error searching time entries: {e}")
+    
+    # Limit total results
+    results = results[:limit]
+    
+    return jsonify({'results': results})
 
 @api_bp.route('/api/tasks')
 @login_required
@@ -698,9 +821,14 @@ def bulk_entries_action():
 @api_bp.route('/api/calendar/events')
 @login_required
 def calendar_events():
-    """Return calendar events for the current user in a date range."""
+    """Return calendar events for the current user in a date range with filtering and color coding."""
     start = request.args.get('start')
     end = request.args.get('end')
+    project_id = request.args.get('project_id', type=int)
+    task_id = request.args.get('task_id', type=int)
+    tags = request.args.get('tags', '').strip()
+    user_id = request.args.get('user_id', type=int) if current_user.is_admin else None
+    
     if not (start and end):
         return jsonify({'error': 'start and end are required'}), 400
 
@@ -721,24 +849,179 @@ def calendar_events():
     if not (start_dt and end_dt):
         return jsonify({'error': 'Invalid date range'}), 400
 
-    q = TimeEntry.query.filter(TimeEntry.user_id == current_user.id)
+    # Build query with filters
+    q = TimeEntry.query
+    if user_id and current_user.is_admin:
+        q = q.filter(TimeEntry.user_id == user_id)
+    else:
+        q = q.filter(TimeEntry.user_id == current_user.id)
+    
     q = q.filter(TimeEntry.start_time < end_dt, (TimeEntry.end_time.is_(None)) | (TimeEntry.end_time > start_dt))
+    
+    if project_id:
+        q = q.filter(TimeEntry.project_id == project_id)
+    if task_id:
+        q = q.filter(TimeEntry.task_id == task_id)
+    if tags:
+        q = q.filter(TimeEntry.tags.ilike(f'%{tags}%'))
+    
     items = q.order_by(TimeEntry.start_time.asc()).all()
 
     events = []
     now_local = local_now()
+    
+    # Color scheme for projects (deterministic based on project ID)
+    def get_project_color(project_id):
+        colors = [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+            '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'
+        ]
+        return colors[project_id % len(colors)]
+    
     for e in items:
+        # Build detailed title
+        title_parts = []
+        if e.project:
+            title_parts.append(e.project.name)
+        if e.task:
+            title_parts.append(f"• {e.task.name}")
+        elif e.notes:
+            note_preview = e.notes[:30] + ('...' if len(e.notes) > 30 else '')
+            title_parts.append(f"• {note_preview}")
+        
         ev = {
             'id': e.id,
-            'title': f"{e.project.name if e.project else 'Project'}" + (f" • {e.task.name}" if e.task else (f" • {e.notes[:24]}…" if e.notes else '')),
+            'title': ' '.join(title_parts) if title_parts else 'Time Entry',
             'start': e.start_time.isoformat(),
             'end': (e.end_time or now_local).isoformat(),
-            'editable': False,
+            'editable': True,
             'allDay': False,
+            'backgroundColor': get_project_color(e.project_id) if e.project_id else '#6b7280',
+            'borderColor': get_project_color(e.project_id) if e.project_id else '#6b7280',
+            'extendedProps': {
+                'project_id': e.project_id,
+                'project_name': e.project.name if e.project else None,
+                'task_id': e.task_id,
+                'task_name': e.task.name if e.task else None,
+                'notes': e.notes,
+                'tags': e.tags,
+                'billable': e.billable,
+                'duration_hours': e.duration_hours,
+                'user_id': e.user_id,
+                'source': e.source
+            }
         }
         events.append(ev)
 
     return jsonify({'events': events})
+
+@api_bp.route('/api/calendar/export')
+@login_required
+def calendar_export():
+    """Export calendar events to iCal or CSV format."""
+    start = request.args.get('start')
+    end = request.args.get('end')
+    format_type = request.args.get('format', 'ical').lower()
+    project_id = request.args.get('project_id', type=int)
+    
+    if not (start and end):
+        return jsonify({'error': 'start and end are required'}), 400
+    
+    def parse_iso(s: str):
+        try:
+            ts = s.strip()
+            if ts.endswith('Z'):
+                ts = ts[:-1] + '+00:00'
+            dt = datetime.fromisoformat(ts)
+            if dt.tzinfo is not None:
+                return utc_to_local(dt).replace(tzinfo=None)
+            return dt
+        except Exception:
+            return None
+    
+    start_dt = parse_iso(start)
+    end_dt = parse_iso(end)
+    if not (start_dt and end_dt):
+        return jsonify({'error': 'Invalid date range'}), 400
+    
+    # Build query
+    q = TimeEntry.query.filter(TimeEntry.user_id == current_user.id)
+    q = q.filter(TimeEntry.start_time < end_dt, (TimeEntry.end_time.is_(None)) | (TimeEntry.end_time > start_dt))
+    if project_id:
+        q = q.filter(TimeEntry.project_id == project_id)
+    
+    items = q.order_by(TimeEntry.start_time.asc()).all()
+    
+    if format_type == 'csv':
+        import csv
+        from io import StringIO
+        
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Date', 'Start Time', 'End Time', 'Project', 'Task', 'Duration (hours)', 'Notes', 'Tags', 'Billable'])
+        
+        for entry in items:
+            writer.writerow([
+                entry.start_time.strftime('%Y-%m-%d'),
+                entry.start_time.strftime('%H:%M'),
+                entry.end_time.strftime('%H:%M') if entry.end_time else 'Active',
+                entry.project.name if entry.project else '',
+                entry.task.name if entry.task else '',
+                f"{entry.duration_hours:.2f}" if entry.duration_hours else '',
+                entry.notes or '',
+                entry.tags or '',
+                'Yes' if entry.billable else 'No'
+            ])
+        
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=calendar_export_{start_dt.strftime("%Y%m%d")}_to_{end_dt.strftime("%Y%m%d")}.csv'
+        return response
+    
+    elif format_type == 'ical':
+        # Generate iCal format
+        ical_lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//TimeTracker//Calendar Export//EN',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH'
+        ]
+        
+        for entry in items:
+            if not entry.end_time:
+                continue
+            
+            title = entry.project.name if entry.project else 'Time Entry'
+            if entry.task:
+                title += f' - {entry.task.name}'
+            
+            description = []
+            if entry.notes:
+                description.append(f'Notes: {entry.notes}')
+            if entry.tags:
+                description.append(f'Tags: {entry.tags}')
+            description.append(f'Billable: {"Yes" if entry.billable else "No"}')
+            
+            ical_lines.extend([
+                'BEGIN:VEVENT',
+                f'UID:{entry.id}@timetracker',
+                f'DTSTAMP:{datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")}',
+                f'DTSTART:{entry.start_time.strftime("%Y%m%dT%H%M%S")}',
+                f'DTEND:{entry.end_time.strftime("%Y%m%dT%H%M%S")}',
+                f'SUMMARY:{title}',
+                f'DESCRIPTION:{" | ".join(description)}',
+                'END:VEVENT'
+            ])
+        
+        ical_lines.append('END:VCALENDAR')
+        
+        response = make_response('\r\n'.join(ical_lines))
+        response.headers['Content-Type'] = 'text/calendar'
+        response.headers['Content-Disposition'] = f'attachment; filename=calendar_export_{start_dt.strftime("%Y%m%d")}_to_{end_dt.strftime("%Y%m%d")}.ics'
+        return response
+    
+    return jsonify({'error': 'Invalid format. Use "ical" or "csv"'}), 400
 
 @api_bp.route('/api/projects')
 @login_required

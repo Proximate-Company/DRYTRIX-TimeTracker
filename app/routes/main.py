@@ -87,21 +87,44 @@ def set_language():
     supported = list(current_app.config.get('LANGUAGES', {}).keys()) or ['en']
     if lang not in supported:
         lang = current_app.config.get('BABEL_DEFAULT_LOCALE', 'en')
+    
+    # Make session permanent to ensure it persists across requests
+    session.permanent = True
+    
     # Persist in session for guests
     session['preferred_language'] = lang
+    session.modified = True  # Force session save
+    
     # If authenticated, persist to user profile
     try:
         from flask_login import current_user
-        from app.utils.db import safe_commit
         if current_user and getattr(current_user, 'is_authenticated', False):
-            if getattr(current_user, 'preferred_language', None) != lang:
-                current_user.preferred_language = lang
-                safe_commit('set_language', {'user_id': current_user.id, 'lang': lang})
-    except Exception:
-        pass
-    # Redirect back if referer exists
+            # Update user preference in database
+            current_user.preferred_language = lang
+            # Add to session and commit
+            db.session.add(current_user)
+            db.session.commit()
+            # Expire all cached objects to ensure fresh load on next request
+            db.session.expire_all()
+    except Exception as e:
+        # If database save fails, rollback but continue with session
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+    
+    # Redirect back if referer exists, add timestamp to force reload
     next_url = request.headers.get('Referer') or url_for('main.dashboard')
-    return redirect(next_url)
+    # Add cache-busting parameter to ensure fresh page load
+    import time
+    separator = '&' if '?' in next_url else '?'
+    next_url = f"{next_url}{separator}_lang_refresh={int(time.time())}"
+    response = make_response(redirect(next_url))
+    # Ensure no caching
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @main_bp.route('/search')
 @login_required
@@ -114,12 +137,13 @@ def search():
         return redirect(url_for('main.dashboard'))
     
     # Search in time entries
+    from sqlalchemy import or_
     entries = TimeEntry.query.filter(
         TimeEntry.user_id == current_user.id,
         TimeEntry.end_time.isnot(None),
-        db.or_(
-            TimeEntry.notes.contains(query),
-            TimeEntry.tags.contains(query)
+        or_(
+            TimeEntry.notes.ilike(f'%{query}%'),
+            TimeEntry.tags.ilike(f'%{query}%')
         )
     ).order_by(TimeEntry.start_time.desc()).paginate(
         page=page,

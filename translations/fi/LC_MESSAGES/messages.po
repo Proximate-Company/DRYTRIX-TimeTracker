@@ -5,12 +5,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# Navbar and common
+# Navigation and Common
 msgid "Time Tracker"
 msgstr "Ajanseuranta"
 
 msgid "Dashboard"
-msgstr "Koontinäyttö"
+msgstr "Kojelauta"
 
 msgid "Projects"
 msgstr "Projektit"
@@ -22,7 +22,13 @@ msgid "Tasks"
 msgstr "Tehtävät"
 
 msgid "Log Time"
-msgstr "Kirjaa aikaa"
+msgstr "Kirjaa aika"
+
+msgid "Bulk Time Entry"
+msgstr "Massakirjaus"
+
+msgid "Calendar"
+msgstr "Kalenteri"
 
 msgid "Reports"
 msgstr "Raportit"
@@ -52,17 +58,408 @@ msgid "Log"
 msgstr "Loki"
 
 msgid "About"
-msgstr "Tietoa"
+msgstr "Tietoja"
 
 msgid "Help"
 msgstr "Ohje"
 
 msgid "Buy me a coffee"
-msgstr "Tarjoa kahvi"
+msgstr "Tarjoa minulle kahvi"
+
+msgid "All rights reserved."
+msgstr "Kaikki oikeudet pidätetään."
+
+msgid "Skip to content"
+msgstr "Siirry sisältöön"
+
+msgid "Work"
+msgstr "Työ"
+
+msgid "Insights"
+msgstr "Oivallukset"
+
+msgid "Search"
+msgstr "Haku"
+
+msgid "Open Command Palette"
+msgstr "Avaa komentopalkki"
+
+msgid "Ctrl"
+msgstr "Ctrl"
+
+msgid "Keyboard Shortcuts"
+msgstr "Pikanäppäimet"
+
+msgid "Install App"
+msgstr "Asenna sovellus"
+
+msgid "App installed"
+msgstr "Sovellus asennettu"
+
+msgid "Close"
+msgstr "Sulje"
+
+msgid "Cancel"
+msgstr "Peruuta"
+
+msgid "Confirm"
+msgstr "Vahvista"
+
+msgid "Please confirm"
+msgstr "Ole hyvä ja vahvista"
+
+# Dashboard
+msgid "Welcome back,"
+msgstr "Tervetuloa takaisin,"
+
+msgid "h today"
+msgstr "t tänään"
+
+msgid "Timer Status"
+msgstr "Ajastimen tila"
+
+msgid "Timer Running"
+msgstr "Ajastin käynnissä"
+
+msgid "No Active Timer"
+msgstr "Ei aktiivista ajastinta"
+
+msgid "Choose a project or one of its tasks to start tracking."
+msgstr "Valitse projekti tai sen tehtävä aloittaaksesi seurannan."
+
+msgid "Idle"
+msgstr "Tyhjäkäynti"
+
+msgid "Started at"
+msgstr "Aloitettu klo"
+
+msgid "Stop Timer"
+msgstr "Pysäytä ajastin"
+
+msgid "Start Timer"
+msgstr "Käynnistä ajastin"
+
+msgid "Hours Today"
+msgstr "Tuntia tänään"
+
+msgid "Hours This Week"
+msgstr "Tuntia tällä viikolla"
+
+msgid "Hours This Month"
+msgstr "Tuntia tässä kuussa"
+
+msgid "Quick Actions"
+msgstr "Pikatoiminnot"
+
+msgid "Manual entry"
+msgstr "Manuaalinen syöttö"
+
+msgid "Bulk Entry"
+msgstr "Massakirjaus"
+
+msgid "Multi-day time entry"
+msgstr "Useampipäiväinen aikakirjaus"
+
+msgid "Manage projects"
+msgstr "Hallinnoi projekteja"
+
+msgid "View analytics"
+msgstr "Näytä analytiikka"
+
+msgid "Find entries"
+msgstr "Etsi merkintöjä"
+
+msgid "Today by Task"
+msgstr "Tänään tehtävittäin"
+
+msgid "Loading..."
+msgstr "Ladataan..."
+
+msgid "Recent Entries"
+msgstr "Viimeisimmät merkinnät"
+
+msgid "View All"
+msgstr "Näytä kaikki"
+
+msgid "Select all"
+msgstr "Valitse kaikki"
+
+msgid "Delete"
+msgstr "Poista"
+
+msgid "Set Billable"
+msgstr "Aseta laskutettavaksi"
+
+msgid "Set Non-billable"
+msgstr "Aseta ei-laskutettavaksi"
+
+msgid "Project"
+msgstr "Projekti"
+
+msgid "Duration"
+msgstr "Kesto"
+
+msgid "Date"
+msgstr "Päivämäärä"
+
+msgid "Notes"
+msgstr "Muistiinpanot"
+
+msgid "Actions"
+msgstr "Toiminnot"
+
+msgid "No notes"
+msgstr "Ei muistiinpanoja"
+
+msgid "Edit entry"
+msgstr "Muokkaa merkintää"
+
+msgid "Delete entry"
+msgstr "Poista merkintä"
+
+msgid "No recent entries"
+msgstr "Ei viimeaikaisia merkintöjä"
+
+msgid "Start tracking your time to see entries here"
+msgstr "Aloita ajanseuranta nähdäksesi merkinnät täällä"
+
+msgid "Log Your First Entry"
+msgstr "Kirjaa ensimmäinen merkintä"
+
+msgid "Select Project"
+msgstr "Valitse projekti"
+
+msgid "Choose a project..."
+msgstr "Valitse projekti..."
+
+msgid "Select Task (Optional)"
+msgstr "Valitse tehtävä (Valinnainen)"
+
+msgid "Choose a task..."
+msgstr "Valitse tehtävä..."
+
+msgid "Tasks list updates after choosing a project. Leave empty to log at project level."
+msgstr "Tehtäväluettelo päivittyy projektin valinnan jälkeen. Jätä tyhjäksi kirjataksesi projektitasolla."
+
+msgid "Notes (Optional)"
+msgstr "Muistiinpanot (Valinnainen)"
+
+msgid "What are you working on?"
+msgstr "Mitä olet tekemässä?"
+
+msgid "Delete Time Entry"
+msgstr "Poista aikamerkintä"
+
+msgid "Warning:"
+msgstr "Varoitus:"
+
+msgid "This action cannot be undone."
+msgstr "Tätä toimintoa ei voi peruuttaa."
+
+msgid "Are you sure you want to delete the time entry for"
+msgstr "Haluatko varmasti poistaa aikamerkinnän kohteelle"
+
+msgid "Duration:"
+msgstr "Kesto:"
+
+msgid "Delete Entry"
+msgstr "Poista merkintä"
+
+msgid "Please select a project"
+msgstr "Valitse projekti"
+
+msgid "Starting..."
+msgstr "Käynnistetään..."
+
+msgid "Deleting..."
+msgstr "Poistetaan..."
+
+msgid "No time tracked yet today"
+msgstr "Aikaa ei ole vielä kirjattu tänään"
+
+msgid "h"
+msgstr "t"
+
+msgid "Bulk action completed"
+msgstr "Massatoiminto suoritettu"
+
+msgid "Bulk action failed"
+msgstr "Massatoiminto epäonnistui"
+
+# Login
+msgid "Login"
+msgstr "Kirjaudu"
+
+msgid "Company Logo"
+msgstr "Yrityksen logo"
+
+msgid "DryTrix Logo"
+msgstr "DryTrix Logo"
+
+msgid "TimeTracker"
+msgstr "TimeTracker"
+
+msgid "Professional Time Management"
+msgstr "Ammattimainen ajanhallinta"
+
+msgid "Sign in to your account to start tracking your time"
+msgstr "Kirjaudu tilillesi aloittaaksesi ajanseurannan"
+
+msgid "Welcome to TimeTracker"
+msgstr "Tervetuloa TimeTrackeriin"
+
+msgid "Powered by"
+msgstr "Toteuttanut"
+
+msgid "Enter your username to start tracking time"
+msgstr "Syötä käyttäjätunnuksesi aloittaaksesi ajanseurannan"
+
+msgid "Username"
+msgstr "Käyttäjätunnus"
+
+msgid "Enter your username"
+msgstr "Syötä käyttäjätunnuksesi"
+
+msgid "Sign In"
+msgstr "Kirjaudu sisään"
+
+msgid "Signing in..."
+msgstr "Kirjaudutaan sisään..."
+
+msgid "Continue"
+msgstr "Jatka"
+
+msgid "or"
+msgstr "tai"
+
+msgid "Sign in with SSO"
+msgstr "Kirjaudu SSO:lla"
+
+msgid "Internal Tool"
+msgstr "Sisäinen työkalu"
+
+msgid "Internal Tool:"
+msgstr "Sisäinen työkalu:"
+
+msgid "This is a private time tracking application for internal use only."
+msgstr "Tämä on yksityinen ajanseurantasovellus vain sisäiseen käyttöön."
+
+msgid "New users will be created automatically"
+msgstr "Uudet käyttäjät luodaan automaattisesti"
+
+msgid "Version"
+msgstr "Versio"
+
+msgid "Please enter a username"
+msgstr "Syötä käyttäjätunnus"
+
+msgid "Signing in..."
+msgstr "Kirjaudutaan sisään..."
+
+# Tasks
+msgid "Board"
+msgstr "Taulu"
+
+msgid "Table"
+msgstr "Taulukko"
+
+msgid "New Task"
+msgstr "Uusi tehtävä"
+
+msgid "Plan and track work"
+msgstr "Suunnittele ja seuraa työtä"
+
+msgid "total"
+msgstr "yhteensä"
+
+msgid "To Do"
+msgstr "Tehtävä"
+
+msgid "In Progress"
+msgstr "Käynnissä"
+
+msgid "Review"
+msgstr "Tarkistus"
+
+msgid "Completed"
+msgstr "Valmis"
+
+msgid "Filter Tasks"
+msgstr "Suodata tehtäviä"
+
+msgid "Toggle Filters"
+msgstr "Vaihda suodattimet"
+
+msgid "Task name or description"
+msgstr "Tehtävän nimi tai kuvaus"
+
+msgid "Status"
+msgstr "Tila"
+
+msgid "All Statuses"
+msgstr "Kaikki tilat"
+
+msgid "Done"
+msgstr "Valmis"
+
+msgid "Cancelled"
+msgstr "Peruutettu"
+
+msgid "Priority"
+msgstr "Prioriteetti"
+
+msgid "All Priorities"
+msgstr "Kaikki prioriteetit"
+
+msgid "Low"
+msgstr "Matala"
+
+msgid "Medium"
+msgstr "Keskitaso"
+
+msgid "High"
+msgstr "Korkea"
+
+msgid "Urgent"
+msgstr "Kiireellinen"
+
+msgid "All Projects"
+msgstr "Kaikki projektit"
+
+# Command Palette
+msgid "Command Palette"
+msgstr "Komentopalkki"
+
+msgid "Type a command or search..."
+msgstr "Kirjoita komento tai hae..."
+
+# Socket.IO messages
+msgid "Timer started for"
+msgstr "Ajastin käynnistetty kohteelle"
+
+msgid "Timer stopped. Duration:"
+msgstr "Ajastin pysäytetty. Kesto:"
+
+# Theme toggle
+msgid "Switch to light mode"
+msgstr "Vaihda vaalean tilaan"
+
+msgid "Switch to dark mode"
+msgstr "Vaihda tummaan tilaan"
+
+msgid "Light mode"
+msgstr "Vaalea tila"
+
+msgid "Dark mode"
+msgstr "Tumma tila"
+
+# Mobile
+msgid "Log time"
+msgstr "Kirjaa aika"
 
 # About page
 msgid "About TimeTracker"
-msgstr "Tietoa TimeTrackerista"
+msgstr "Tietoja TimeTrackeristä"
 
 msgid "Developed by DryTrix"
 msgstr "Kehittänyt DryTrix"
@@ -71,15 +468,13 @@ msgid "What is"
 msgstr "Mikä on"
 
 msgid "A simple, efficient time tracking solution for teams and individuals."
-msgstr "Yksinkertainen ja tehokas ajanseurantaratkaisu tiimeille ja yksittäisille käyttäjille."
+msgstr "Yksinkertainen, tehokas ajanseurantaratkaisu tiimeille ja yksityishenkilöille."
 
 msgid "It provides a simple and intuitive interface for tracking time spent on various projects and tasks."
-msgstr "Tarjoaa yksinkertaisen ja intuitiivisen käyttöliittymän ajan seuraamiseen eri projekteissa ja tehtävissä."
+msgstr "Se tarjoaa yksinkertaisen ja intuitiivisen käyttöliittymän eri projekteihin ja tehtäviin käytetyn ajan seuraamiseen."
 
 msgid "%(app)s is a web-based time tracking application designed for internal use within organizations."
 msgstr "%(app)s on verkkopohjainen ajanseurantasovellus, joka on suunniteltu organisaatioiden sisäiseen käyttöön."
 
 msgid "Learn more about "
-msgstr "Lue lisää: "
-
-
+msgstr "Lue lisää "

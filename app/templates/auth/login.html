@@ -1,124 +1,682 @@
-{% extends "base.html" %}
-
-{% block title %}{{ _('Login') }} - {{ app_name }}{% endblock %}
-
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <div class="mb-4">
+<!DOCTYPE html>
+<html lang="{{ current_locale or 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3b82f6" id="meta-theme-color">
+    <title>{% block title %}{{ _('Login') }} - {{ app_name }}{% endblock %}</title>
+    {% if csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endif %}
+    
+    <!-- Favicon -->
+    {% if settings and settings.has_logo() %}
+    <link rel="icon" type="image/x-icon" href="{{ settings.get_logo_url() }}">
+    {% else %}
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/drytrix-logo.svg') }}">
+    {% endif %}
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #60a5fa;
+            --primary-50: #eff6ff;
+            --primary-100: #dbeafe;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float linear infinite;
+        }
+        
+        .particle:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-duration: 25s; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 60px; height: 60px; left: 25%; animation-duration: 30s; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 100px; height: 100px; left: 50%; animation-duration: 35s; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 50px; height: 50px; left: 70%; animation-duration: 28s; animation-delay: 1s; }
+        .particle:nth-child(5) { width: 70px; height: 70px; left: 85%; animation-duration: 32s; animation-delay: 3s; }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 480px;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            padding: 3rem 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        @media (max-width: 576px) {
+            .login-card {
+                padding: 2rem 1.5rem;
+            }
+        }
+        
+        .brand-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        .brand-logo {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 1.5rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg), 0 0 20px rgba(59, 130, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+        
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        .brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+        
+        .brand-title {
+            font-size: 1.875rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+        
+        .brand-subtitle {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        .welcome-text {
+            text-align: center;
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+            font-size: 0.925rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            letter-spacing: 0.01em;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            font-size: 1.125rem;
+            z-index: 2;
+            transition: var(--transition);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background: var(--gray-50);
+            font-family: inherit;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-control:focus ~ .input-icon {
+            color: var(--primary-color);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            letter-spacing: 0.01em;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: var(--shadow-md), 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-outline {
+            background: white;
+            color: var(--gray-700);
+            border: 2px solid var(--gray-300);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+            transform: translateY(-1px);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.75rem 0;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--gray-300);
+        }
+        
+        .divider span {
+            padding: 0 1rem;
+        }
+        
+        .info-banner {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #93c5fd;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .info-banner i {
+            color: var(--primary-color);
+            font-size: 1.125rem;
+            margin-top: 0.125rem;
+            flex-shrink: 0;
+        }
+        
+        .info-banner-content {
+            flex: 1;
+        }
+        
+        .info-banner-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-banner-text {
+            color: var(--gray-700);
+            font-size: 0.8125rem;
+            line-height: 1.4;
+        }
+        
+        .feature-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--success-color);
+            color: white;
+            padding: 0.375rem 0.875rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .footer-links {
+            text-align: center;
+            margin-top: 1.75rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        .footer-text {
+            color: var(--gray-600);
+            font-size: 0.8125rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            margin: 0 0.5rem;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            border: 1px solid var(--success-color);
+            color: #065f46;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            border: 1px solid var(--danger-color);
+            color: #991b1b;
+        }
+        
+        .alert-warning {
+            background: #fef3c7;
+            border: 1px solid var(--warning-color);
+            color: #92400e;
+        }
+        
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid var(--primary-color);
+            color: #1e40af;
+        }
+        
+        .alert i {
+            flex-shrink: 0;
+            margin-top: 0.125rem;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .brand-title {
+                font-size: 1.5rem;
+            }
+            
+            .brand-logo {
+                width: 64px;
+                height: 64px;
+            }
+        }
+        
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        /* Focus visible for keyboard navigation */
+        :focus-visible {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated background particles -->
+    <div class="bg-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else category }}" role="alert">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'error' else 'exclamation-triangle' if category == 'warning' else 'info-circle' }}"></i>
+                            <div class="alert-content">{{ message }}</div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Brand Header -->
+            <div class="brand-header">
+                <div class="brand-logo">
                     {% if settings and settings.has_logo() %}
-            <img src="{{ settings.get_logo_url() }}" alt="{{ _('Company Logo') }}" class="mb-3" width="64" height="64">
+                    <img src="{{ settings.get_logo_url() }}" alt="{{ _('Company Logo') }}">
             {% else %}
-            <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="{{ _('DryTrix Logo') }}" class="mb-3" width="64" height="64">
+                    <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="{{ _('DryTrix Logo') }}">
             {% endif %}
-                    <h2 class="card-title mb-2">{{ _('Welcome to TimeTracker') }}</h2>
-                    <p class="text-muted mb-0">{{ _('Powered by') }} <strong>DryTrix</strong></p>
                 </div>
+                <h1 class="brand-title">{{ _('TimeTracker') }}</h1>
+                <p class="brand-subtitle">{{ _('Professional Time Management') }}</p>
+            </div>
+            
+            <p class="welcome-text">
+                {{ _('Sign in to your account to start tracking your time') }}
+            </p>
                 
                 {% set auth_method = (config.get('AUTH_METHOD') or 'local') | lower %}
+            
+            <!-- Local Login Form -->
                 {% if auth_method != 'oidc' %}
-                <p class="text-muted mb-4">
-                    {{ _('Enter your username to start tracking time') }}
-                </p>
+            <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="on" novalidate id="loginForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
-                <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="on" novalidate>
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="mb-3">
+                <div class="form-group">
                         <label for="username" class="form-label">{{ _('Username') }}</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="fas fa-user"></i>
-                            </span>
+                    <div class="input-wrapper">
                             <input type="text" 
                                    class="form-control" 
                                    id="username" 
                                    name="username" 
                                    placeholder="{{ _('Enter your username') }}"
                                    required 
-                                   autofocus>
+                               autofocus
+                               aria-required="true">
+                        <i class="fas fa-user input-icon"></i>
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100" data-original-text="{{ _('Continue') }}">
-                        <i class="fas fa-sign-in-alt me-2"></i>{{ _('Continue') }}
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span id="btnText">{{ _('Sign In') }}</span>
                     </button>
                 </form>
                 {% endif %}
                 
+            <!-- Divider -->
                 {% if auth_method == 'both' %}
-                <div class="my-4 text-muted">{{ _('or') }}</div>
+            <div class="divider">
+                <span>{{ _('or') }}</span>
+            </div>
                 {% endif %}
                 
+            <!-- SSO Login -->
                 {% if auth_method in ['oidc', 'both'] %}
-                <a class="btn btn-outline-primary w-100" href="{{ url_for('auth.login_oidc', next=request.args.get('next')) }}">
-                    <i class="fas fa-lock me-2"></i>{{ _('Sign in with SSO') }}
+            <a class="btn btn-outline" href="{{ url_for('auth.login_oidc', next=request.args.get('next')) }}">
+                <i class="fas fa-shield-alt"></i>
+                <span>{{ _('Sign in with SSO') }}</span>
                 </a>
                 {% endif %}
                 
-                <hr class="my-4">
-                
-                <div class="alert alert-info" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>{{ _('Internal Tool:') }}</strong> {{ _('This is a private time tracking application for internal use only.') }}
+            <!-- Info Banner -->
+            <div class="info-banner">
+                <i class="fas fa-shield-check"></i>
+                <div class="info-banner-content">
+                    <div class="info-banner-title">{{ _('Internal Tool') }}</div>
+                    <div class="info-banner-text">
+                        {{ _('This is a private time tracking application for internal use only.') }}
+                    </div>
+                </div>
                 </div>
                 
+            <!-- Self-Registration Badge -->
                 {% if settings and settings.allow_self_register %}
-                <p class="text-muted small">
-                    <i class="fas fa-user-plus me-1"></i>
+            <div style="text-align: center;">
+                <span class="feature-badge">
+                    <i class="fas fa-user-plus"></i>
                     {{ _('New users will be created automatically') }}
-                </p>
+                </span>
+            </div>
                 {% endif %}
+            
+            <!-- Footer Links -->
+            <div class="footer-links">
+                <div class="footer-text">
+                    {{ _('Version') }} {{ app_version }} • {{ _('Powered by') }} <strong>DryTrix</strong>
+                </div>
+                <div>
+                    <a href="{{ url_for('main.about') }}">{{ _('About') }}</a>
+                    <a href="{{ url_for('main.help') }}">{{ _('Help') }}</a>
+                </div>
             </div>
         </div>
-        
-        <div class="text-center mt-3">
-            <small class="text-muted">
-                {{ _('Version') }} {{ app_version }} | 
-                <a href="{{ url_for('main.about') }}" class="text-decoration-none">{{ _('About') }}</a> | 
-                <a href="{{ url_for('main.help') }}" class="text-decoration-none">{{ _('Help') }}</a>
-            </small>
-        </div>
     </div>
-</div>
-{% endblock %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-{% block extra_js %}
 <script>
     // Auto-focus on username field
-    try { document.getElementById('username').focus(); } catch(e) {}
-    
-    // Handle form submission with minimal logging and safe guard
-    const form = document.querySelector('form');
+        try {
+            const usernameField = document.getElementById('username');
+            if (usernameField) {
+                usernameField.focus();
+            }
+        } catch(e) {}
+        
+        // Handle form submission
+        const form = document.getElementById('loginForm');
     if (form) {
         form.addEventListener('submit', function(e) {
             const usernameEl = document.getElementById('username');
             const username = (usernameEl && usernameEl.value ? usernameEl.value : '').trim();
+                
             if (!username) {
                 e.preventDefault();
-                alert('{{ _('Please enter a username') }}');
+                    
+                    // Show error styling
+                    if (usernameEl) {
+                        usernameEl.style.borderColor = 'var(--danger-color)';
+                        usernameEl.focus();
+                        
+                        setTimeout(() => {
+                            usernameEl.style.borderColor = '';
+                        }, 2000);
+                    }
+                    
                 return false;
             }
+                
             // Show loading state
-            const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                const originalText = submitBtn.innerHTML;
-                submitBtn.setAttribute('data-original-text', originalText);
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{{ _('Signing in...') }}';
+                const submitBtn = document.getElementById('submitBtn');
+                const btnText = document.getElementById('btnText');
+                
+                if (submitBtn && btnText) {
+                    btnText.innerHTML = '{{ _('Signing in...') }}';
+                    submitBtn.querySelector('i').className = 'fas fa-spinner spinner';
                 submitBtn.disabled = true;
-                // Fallback: re-enable after 8s in case of network/proxy issues
+                    
+                    // Fallback: re-enable after 8s in case of network issues
                 setTimeout(() => {
                     if (submitBtn.disabled) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = submitBtn.getAttribute('data-original-text') || '{{ _('Continue') }}';
-                        console.warn('Login submission appears stalled. Button re-enabled.');
+                            btnText.innerHTML = '{{ _('Sign In') }}';
+                            submitBtn.querySelector('i').className = 'fas fa-sign-in-alt';
                     }
                 }, 8000);
+                }
+            });
+            
+            // Add smooth input animations
+            const usernameInput = document.getElementById('username');
+            if (usernameInput) {
+                usernameInput.addEventListener('input', function() {
+                    this.style.borderColor = '';
+                });
             }
-            // Log to console for troubleshooting
-            console.log('Submitting login form to', this.getAttribute('action') || window.location.pathname);
+        }
+        
+        // Keyboard shortcut: Enter to submit
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && form && document.activeElement && document.activeElement.id === 'username') {
+                form.requestSubmit();
+            }
         });
-    }
 </script>
-{% endblock %}
+</body>
+</html>

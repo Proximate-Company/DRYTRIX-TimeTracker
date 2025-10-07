@@ -77,16 +77,18 @@ const search = new EnhancedSearch(inputElement, {
 ## 2. ⌨️ Keyboard Shortcuts & Command Palette
 
 ### What It Does
-Provides power-user keyboard shortcuts for quick navigation and actions, plus a searchable command palette (like VS Code's Ctrl+K).
+Provides power-user keyboard shortcuts for quick navigation and actions, plus a searchable command palette (like VS Code's Ctrl+K). Now with **instant `?` key access** for lightning-fast command execution! ⚡
 
 ### Features
-✅ **Command Palette** - `Ctrl+K` to open searchable command list  
+✅ **Quick Access** - Just press `?` to open command palette instantly  
+✅ **Command Palette** - `Ctrl+K` or `?` for searchable command list  
 ✅ **50+ Pre-configured Shortcuts** - Navigation, actions, timer controls  
-✅ **Visual Help** - `?` to show all shortcuts  
+✅ **Visual Help** - `Shift+?` to show all shortcuts  
 ✅ **Key Sequences** - Support for multi-key shortcuts (e.g., `g` then `d`)  
 ✅ **Keyboard Navigation** - Arrow keys, Enter, Escape  
 ✅ **Smart Filtering** - Search commands by name or description  
 ✅ **Customizable** - Easy to add new shortcuts  
+✅ **Beautiful Design** - Modern UI with smooth animations and blur effects  
 
 ### Default Shortcuts:
 
@@ -107,8 +109,9 @@ Provides power-user keyboard shortcuts for quick navigation and actions, plus a 
 - `t` - Toggle Timer (start/stop)
 
 #### General
-- `Ctrl+K` - Open Command Palette
-- `?` - Show Keyboard Shortcuts Help
+- `?` - Open Command Palette (Quick Access!) ⚡
+- `Ctrl+K` (or `Cmd+K`) - Open Command Palette (Alternative)
+- `Shift+?` - Show Keyboard Shortcuts Help
 - `Ctrl+Shift+L` - Toggle Theme (light/dark)
 
 ### Usage:
