@@ -39,6 +39,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}?v={{ app_version }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}?v={{ app_version }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='ui.css') }}?v={{ app_version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='loading-states.css') }}?v={{ app_version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='micro-interactions.css') }}?v={{ app_version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='empty-states.css') }}?v={{ app_version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-search.css') }}?v={{ app_version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='keyboard-shortcuts.css') }}?v={{ app_version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-tables.css') }}?v={{ app_version }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     
     {% block extra_css %}{% endblock %}
@@ -452,6 +458,10 @@
     {% if request.endpoint != 'auth.login' %}
     <!-- Custom JS (disabled on login to avoid interference) -->
     <script src="{{ url_for('static', filename='mobile.js') }}"></script>
+    <script src="{{ url_for('static', filename='interactions.js') }}?v={{ app_version }}"></script>
+    <script src="{{ url_for('static', filename='enhanced-search.js') }}?v={{ app_version }}"></script>
+    <script src="{{ url_for('static', filename='keyboard-shortcuts.js') }}?v={{ app_version }}"></script>
+    <script src="{{ url_for('static', filename='enhanced-tables.js') }}?v={{ app_version }}"></script>
     <script src="{{ url_for('static', filename='commands.js') }}?v={{ app_version }}"></script>
     <script src="{{ url_for('static', filename='idle.js') }}?v={{ app_version }}"></script>
     {% endif %}

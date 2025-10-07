@@ -1,0 +1,483 @@
+/* ==========================================================================
+   Enhanced Empty States
+   Beautiful empty state designs with illustrations and animations
+   ========================================================================== */
+
+/* Empty State Container */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    max-width: 500px;
+    margin: 0 auto;
+    animation: fade-in-up 0.5s ease;
+}
+
+.empty-state-sm {
+    padding: 2rem 1rem;
+}
+
+.empty-state-lg {
+    padding: 6rem 2rem;
+}
+
+/* Empty State Icon */
+.empty-state-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 2rem;
+    position: relative;
+}
+
+.empty-state-icon-sm {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state-icon-lg {
+    width: 160px;
+    height: 160px;
+    margin-bottom: 2.5rem;
+}
+
+/* Animated Icon Container */
+.empty-state-icon-animated {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Icon Background Circle */
+.empty-state-icon-circle {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-100), var(--primary-50));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--primary-900), var(--primary-800));
+}
+
+/* Pulsing Ring */
+.empty-state-icon-circle::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-200);
+    animation: pulse-ring 2s ease-out infinite;
+    opacity: 0.5;
+}
+
+[data-theme="dark"] .empty-state-icon-circle::before {
+    border-color: var(--primary-700);
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.95);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.1);
+        opacity: 0;
+    }
+}
+
+/* Icon */
+.empty-state-icon i {
+    font-size: 3rem;
+    color: var(--primary-500);
+    animation: fade-in-scale 0.6s ease;
+}
+
+@keyframes fade-in-scale {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* SVG Illustration */
+.empty-state-illustration {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 2rem;
+    opacity: 0.9;
+}
+
+/* Title */
+.empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.empty-state-title-sm {
+    font-size: 1.25rem;
+}
+
+.empty-state-title-lg {
+    font-size: 1.75rem;
+}
+
+/* Description */
+.empty-state-description {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.empty-state-description-muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Actions */
+.empty-state-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.empty-state-actions .btn {
+    min-width: 140px;
+}
+
+/* Specific Empty States */
+
+/* No Data */
+.empty-state-no-data .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--gray-100), var(--gray-50));
+}
+
+[data-theme="dark"] .empty-state-no-data .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--gray-800), var(--gray-900));
+}
+
+.empty-state-no-data i {
+    color: var(--gray-500);
+}
+
+/* No Results */
+.empty-state-no-results .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--warning-light), var(--warning-50));
+}
+
+[data-theme="dark"] .empty-state-no-results .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--warning-900), var(--warning-800));
+}
+
+.empty-state-no-results i {
+    color: var(--warning-color);
+}
+
+/* Error */
+.empty-state-error .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--danger-light), var(--danger-50));
+}
+
+[data-theme="dark"] .empty-state-error .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--danger-900), var(--danger-800));
+}
+
+.empty-state-error i {
+    color: var(--danger-color);
+}
+
+/* Success */
+.empty-state-success .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--success-light), var(--success-50));
+}
+
+[data-theme="dark"] .empty-state-success .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--success-900), var(--success-800));
+}
+
+.empty-state-success i {
+    color: var(--success-color);
+}
+
+/* Info */
+.empty-state-info .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--info-light), var(--info-50));
+}
+
+[data-theme="dark"] .empty-state-info .empty-state-icon-circle {
+    background: linear-gradient(135deg, var(--info-900), var(--info-800));
+}
+
+.empty-state-info i {
+    color: var(--info-color);
+}
+
+/* Features List */
+.empty-state-features {
+    text-align: left;
+    max-width: 400px;
+    margin: 2rem auto 2rem;
+}
+
+.empty-state-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--surface-variant);
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition);
+}
+
+.empty-state-feature:hover {
+    background: var(--surface-hover);
+    transform: translateX(5px);
+}
+
+.empty-state-feature-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    color: var(--primary-color);
+}
+
+.empty-state-feature-content {
+    flex: 1;
+}
+
+.empty-state-feature-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.empty-state-feature-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Quick Tips */
+.empty-state-tips {
+    background: var(--info-50);
+    border: 1px solid var(--info-200);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 2rem;
+    text-align: left;
+}
+
+[data-theme="dark"] .empty-state-tips {
+    background: var(--info-900);
+    border-color: var(--info-700);
+}
+
+.empty-state-tips-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--info-color);
+    margin-bottom: 1rem;
+}
+
+.empty-state-tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.empty-state-tips-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.empty-state-tips-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--info-color);
+    font-weight: bold;
+}
+
+/* Animated Illustrations */
+.empty-state-animated-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+.empty-state-animated-bg::before,
+.empty-state-animated-bg::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: var(--primary-color);
+}
+
+.empty-state-animated-bg::before {
+    width: 300px;
+    height: 300px;
+    top: 20%;
+    left: 10%;
+    animation: float-slow 10s ease-in-out infinite;
+}
+
+.empty-state-animated-bg::after {
+    width: 200px;
+    height: 200px;
+    bottom: 20%;
+    right: 10%;
+    animation: float-slow 8s ease-in-out infinite reverse;
+}
+
+@keyframes float-slow {
+    0%, 100% {
+        transform: translate(0, 0);
+    }
+    50% {
+        transform: translate(30px, -30px);
+    }
+}
+
+/* Compact Empty State */
+.empty-state-compact {
+    padding: 2rem 1rem;
+    background: var(--surface-variant);
+    border-radius: var(--border-radius);
+    border: 2px dashed var(--border-color);
+}
+
+.empty-state-compact .empty-state-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1rem;
+}
+
+.empty-state-compact .empty-state-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-compact .empty-state-description {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+/* Inline Empty State */
+.empty-state-inline {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    text-align: left;
+}
+
+.empty-state-inline .empty-state-icon {
+    margin: 0;
+    width: 80px;
+    height: 80px;
+}
+
+.empty-state-inline .empty-state-content {
+    flex: 1;
+}
+
+.empty-state-inline .empty-state-title {
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-inline .empty-state-description {
+    margin-bottom: 1rem;
+}
+
+/* Card Empty State */
+.empty-state-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 3rem 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .empty-state-title {
+        font-size: 1.25rem;
+    }
+    
+    .empty-state-description {
+        font-size: 0.95rem;
+    }
+    
+    .empty-state-actions {
+        flex-direction: column;
+    }
+    
+    .empty-state-actions .btn {
+        width: 100%;
+        min-width: 0;
+    }
+    
+    .empty-state-inline {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .empty-state-inline .empty-state-content {
+        text-align: center;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .empty-state {
+        page-break-inside: avoid;
+    }
+    
+    .empty-state-icon-circle::before {
+        display: none;
+    }
+}
+
