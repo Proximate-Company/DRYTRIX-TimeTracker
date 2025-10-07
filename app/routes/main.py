@@ -9,12 +9,34 @@ from sqlalchemy import text
 from flask import make_response, current_app
 import json
 import os
+from app.utils.tenancy import (
+    get_current_organization_id,
+    scoped_query,
+    require_organization_access
+)
 
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
+def index():
+    """Landing page or dashboard based on auth status"""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+    return render_template('marketing/landing.html')
+
+@main_bp.route('/pricing')
+def pricing():
+    """Pricing page redirect to landing"""
+    return redirect(url_for('main.index', _anchor='pricing'))
+
+@main_bp.route('/faq')
+def faq():
+    """FAQ page"""
+    return render_template('marketing/faq.html')
+
 @main_bp.route('/dashboard')
 @login_required
+@require_organization_access()
 def dashboard():
     """Main dashboard showing active timer and recent entries"""
     # Get user's active timer
@@ -23,8 +45,8 @@ def dashboard():
     # Get recent entries for the user
     recent_entries = current_user.get_recent_entries(limit=10)
     
-    # Get active projects for timer dropdown
-    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # Get active projects for timer dropdown (scoped to organization)
+    active_projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
     
     # Get user statistics
     today = datetime.utcnow().date()
@@ -128,6 +150,7 @@ def set_language():
 
 @main_bp.route('/search')
 @login_required
+@require_organization_access()
 def search():
     """Search time entries"""
     query = request.args.get('q', '').strip()
@@ -136,9 +159,9 @@ def search():
     if not query:
         return redirect(url_for('main.dashboard'))
     
-    # Search in time entries
+    # Search in time entries (scoped to organization)
     from sqlalchemy import or_
-    entries = TimeEntry.query.filter(
+    entries = scoped_query(TimeEntry).filter(
         TimeEntry.user_id == current_user.id,
         TimeEntry.end_time.isnot(None),
         or_(

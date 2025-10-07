@@ -349,21 +349,48 @@ def insert_initial_data(engine):
                 );
             """))
             
-            # Ensure default client exists (idempotent via unique name)
+            # Create default organization (idempotent via unique slug)
             conn.execute(text("""
-                INSERT INTO clients (name, status)
-                SELECT 'Default Client', 'active'
+                INSERT INTO organizations (name, slug, contact_email, subscription_plan, status, timezone, currency, date_format)
+                SELECT 'Default Organization', 'default', 'admin@timetracker.local', 'free', 'active', 'UTC', 'EUR', 'YYYY-MM-DD'
                 WHERE NOT EXISTS (
+                    SELECT 1 FROM organizations WHERE slug = 'default'
+                );
+            """))
+            
+            # Add admin user to default organization
+            conn.execute(text(f"""
+                INSERT INTO memberships (user_id, organization_id, role, status)
+                SELECT u.id, o.id, 'admin', 'active'
+                FROM users u
+                CROSS JOIN organizations o
+                WHERE u.username = '{admin_username}' 
+                AND o.slug = 'default'
+                AND NOT EXISTS (
+                    SELECT 1 FROM memberships m 
+                    WHERE m.user_id = u.id AND m.organization_id = o.id
+                );
+            """))
+            
+            # Ensure default client exists (idempotent via unique name, linked to default org)
+            conn.execute(text("""
+                INSERT INTO clients (name, organization_id, status)
+                SELECT 'Default Client', o.id, 'active'
+                FROM organizations o
+                WHERE o.slug = 'default'
+                AND NOT EXISTS (
                     SELECT 1 FROM clients WHERE name = 'Default Client'
                 );
             """))
 
-            # Insert default project linked to default client if not present
+            # Insert default project linked to default client and org if not present
             conn.execute(text("""
-                INSERT INTO projects (name, client_id, description, billable, status)
-                SELECT 'General', c.id, 'Default project for general tasks', true, 'active'
-                FROM clients c
-                WHERE c.name = 'Default Client'
+                INSERT INTO projects (name, organization_id, client_id, description, billable, status)
+                SELECT 'General', o.id, c.id, 'Default project for general tasks', true, 'active'
+                FROM organizations o
+                CROSS JOIN clients c
+                WHERE o.slug = 'default'
+                AND c.name = 'Default Client'
                 AND NOT EXISTS (
                     SELECT 1 FROM projects p WHERE p.name = 'General'
                 );

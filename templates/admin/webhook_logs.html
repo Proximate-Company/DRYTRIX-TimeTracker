@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Webhook Logs') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% from "_components.html" import page_header %}
+    <div class="row">
+        <div class="col-12">
+            {% set actions %}
+            <a href="{{ url_for('admin.customers') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ _('Back to Customers') }}
+            </a>
+            {% endset %}
+            {{ page_header('fas fa-history', _('Webhook Logs'), _('View and manage Stripe webhook events'), actions) }}
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row section-spacing">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>{{ _('Filters') }}</h6>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Event Type') }}</label>
+                            <select name="event_type" class="form-select">
+                                <option value="">{{ _('All Types') }}</option>
+                                {% for et in event_types %}
+                                <option value="{{ et }}" {% if current_filters.event_type == et %}selected{% endif %}>
+                                    {{ et }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Organization') }}</label>
+                            <select name="org_id" class="form-select">
+                                <option value="">{{ _('All Organizations') }}</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}" {% if current_filters.org_id == org.id %}selected{% endif %}>
+                                    {{ org.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ _('Status') }}</label>
+                            <select name="processed" class="form-select">
+                                <option value="">{{ _('All') }}</option>
+                                <option value="true" {% if current_filters.processed == 'true' %}selected{% endif %}>{{ _('Processed') }}</option>
+                                <option value="false" {% if current_filters.processed == 'false' %}selected{% endif %}>{{ _('Pending') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>{{ _('Filter') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-list me-2 text-primary"></i>{{ _('Webhook Events') }}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if events %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Date') }}</th>
+                                    <th>{{ _('Event Type') }}</th>
+                                    <th>{{ _('Organization') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                    <th>{{ _('Amount') }}</th>
+                                    <th>{{ _('Notes') }}</th>
+                                    <th>{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in events %}
+                                <tr class="{% if not event.processed %}table-warning{% elif event.processing_error %}table-danger{% endif %}">
+                                    <td>{{ event.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td><code class="small">{{ event.event_type }}</code></td>
+                                    <td>
+                                        {% if event.organization %}
+                                        <a href="{{ url_for('admin.customer_detail', org_id=event.organization_id) }}">
+                                            {{ event.organization.name }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if event.processed %}
+                                            {% if event.processing_error %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ _('Error') }}
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>{{ _('Processed') }}
+                                            </span>
+                                            {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock me-1"></i>{{ _('Pending') }}
+                                        </span>
+                                        {% endif %}
+                                        {% if event.retry_count > 0 %}
+                                        <span class="badge bg-secondary">{{ _('Retries') }}: {{ event.retry_count }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if event.amount %}
+                                        {{ "%.2f"|format(event.amount) }} {{ event.currency }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ event.notes[:50] if event.notes else '-' }}{% if event.notes and event.notes|length > 50 %}...{% endif %}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin.webhook_detail', event_id=event.id) }}" class="btn btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if event.processing_error or not event.processed %}
+                                            <form method="POST" action="{{ url_for('admin.reprocess_webhook', event_id=event.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-warning" title="{{ _('Reprocess') }}">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if pagination.pages > 1 %}
+                    <div class="card-footer">
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0 justify-content-center">
+                                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin.webhook_logs', page=pagination.prev_num, event_type=current_filters.event_type, org_id=current_filters.org_id, processed=current_filters.processed) }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                    {% if page_num %}
+                                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('admin.webhook_logs', page=page_num, event_type=current_filters.event_type, org_id=current_filters.org_id, processed=current_filters.processed) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    {% endif %}
+                                {% endfor %}
+                                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin.webhook_logs', page=pagination.next_num, event_type=current_filters.event_type, org_id=current_filters.org_id, processed=current_filters.processed) }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <div class="text-center mt-2">
+                            <small class="text-muted">
+                                {{ _('Page') }} {{ pagination.page }} {{ _('of') }} {{ pagination.pages }} 
+                                ({{ pagination.total }} {{ _('total events') }})
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">{{ _('No webhook events found') }}</h5>
+                            <p class="text-muted mb-0">{{ _('Webhook events will appear here when received from Stripe.') }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

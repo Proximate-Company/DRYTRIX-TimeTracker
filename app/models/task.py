@@ -6,8 +6,14 @@ class Task(db.Model):
     """Task model for breaking down projects into manageable components"""
     
     __tablename__ = 'tasks'
+    __table_args__ = (
+        db.Index('idx_tasks_org_project', 'organization_id', 'project_id'),
+        db.Index('idx_tasks_org_status', 'organization_id', 'status'),
+        db.Index('idx_tasks_org_assigned', 'organization_id', 'assigned_to'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, index=True)
     name = db.Column(db.String(200), nullable=False, index=True)
     description = db.Column(db.Text, nullable=True)
@@ -23,14 +29,16 @@ class Task(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     
     # Relationships
+    organization = db.relationship('Organization', back_populates='tasks')
     # project relationship is defined via backref in Project model
     assigned_user = db.relationship('User', foreign_keys=[assigned_to], backref='assigned_tasks')
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_tasks')
     time_entries = db.relationship('TimeEntry', backref='task', lazy='dynamic', cascade='all, delete-orphan')
     # comments relationship is defined via backref in Comment model
     
-    def __init__(self, project_id, name, description=None, priority='medium', estimated_hours=None, 
+    def __init__(self, project_id, organization_id, name, description=None, priority='medium', estimated_hours=None, 
                  due_date=None, assigned_to=None, created_by=None):
+        self.organization_id = organization_id
         self.project_id = project_id
         self.name = name.strip()
         self.description = description.strip() if description else None

@@ -5,11 +5,17 @@ from app.models import User, Project, TimeEntry, Settings, Task
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 import calendar
+from app.utils.tenancy import (
+    get_current_organization_id,
+    scoped_query,
+    require_organization_access
+)
 
 analytics_bp = Blueprint('analytics', __name__)
 
 @analytics_bp.route('/analytics')
 @login_required
+@require_organization_access()
 def analytics_dashboard():
     """Main analytics dashboard with charts"""
     # Check if user agent indicates mobile device
@@ -23,17 +29,20 @@ def analytics_dashboard():
 
 @analytics_bp.route('/api/analytics/hours-by-day')
 @login_required
+@require_organization_access()
 def hours_by_day():
     """Get hours worked per day for the last 30 days"""
+    org_id = get_current_organization_id()
     days = int(request.args.get('days', 30))
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
     
-    # Build query based on user permissions
+    # Build query based on user permissions (scoped to organization)
     query = db.session.query(
         func.date(TimeEntry.start_time).label('date'),
         func.sum(TimeEntry.duration_seconds).label('total_seconds')
     ).filter(
+        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
         TimeEntry.start_time <= end_date
@@ -70,8 +79,10 @@ def hours_by_day():
 
 @analytics_bp.route('/api/analytics/hours-by-project')
 @login_required
+@require_organization_access()
 def hours_by_project():
     """Get total hours per project"""
+    org_id = get_current_organization_id()
     days = int(request.args.get('days', 30))
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
@@ -80,6 +91,8 @@ def hours_by_project():
         Project.name,
         func.sum(TimeEntry.duration_seconds).label('total_seconds')
     ).join(TimeEntry).filter(
+        Project.organization_id == org_id,
+        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
         TimeEntry.start_time <= end_date,
@@ -113,11 +126,13 @@ def hours_by_project():
 
 @analytics_bp.route('/api/analytics/hours-by-user')
 @login_required
+@require_organization_access()
 def hours_by_user():
     """Get total hours per user (admin only)"""
     if not current_user.is_admin:
         return jsonify({'error': 'Unauthorized'}), 403
     
+    org_id = get_current_organization_id()
     days = int(request.args.get('days', 30))
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
@@ -126,6 +141,7 @@ def hours_by_user():
         User.username,
         func.sum(TimeEntry.duration_seconds).label('total_seconds')
     ).join(TimeEntry).filter(
+        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
         TimeEntry.start_time <= end_date,
@@ -148,8 +164,10 @@ def hours_by_user():
 
 @analytics_bp.route('/api/analytics/hours-by-hour')
 @login_required
+@require_organization_access()
 def hours_by_hour():
     """Get hours worked by hour of day (24-hour format)"""
+    org_id = get_current_organization_id()
     days = int(request.args.get('days', 30))
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
@@ -158,6 +176,7 @@ def hours_by_hour():
         extract('hour', TimeEntry.start_time).label('hour'),
         func.sum(TimeEntry.duration_seconds).label('total_seconds')
     ).filter(
+        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
         TimeEntry.start_time <= end_date
@@ -189,8 +208,10 @@ def hours_by_hour():
 
 @analytics_bp.route('/api/analytics/billable-vs-nonbillable')
 @login_required
+@require_organization_access()
 def billable_vs_nonbillable():
     """Get billable vs non-billable hours breakdown"""
+    org_id = get_current_organization_id()
     days = int(request.args.get('days', 30))
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
@@ -199,6 +220,7 @@ def billable_vs_nonbillable():
         TimeEntry.billable,
         func.sum(TimeEntry.duration_seconds).label('total_seconds')
     ).filter(
+        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
         TimeEntry.start_time <= end_date
@@ -232,8 +254,10 @@ def billable_vs_nonbillable():
 
 @analytics_bp.route('/api/analytics/weekly-trends')
 @login_required
+@require_organization_access()
 def weekly_trends():
     """Get weekly trends over the last 12 weeks"""
+    org_id = get_current_organization_id()
     weeks = int(request.args.get('weeks', 12))
     end_date = datetime.now().date()
     start_date = end_date - timedelta(weeks=weeks)
@@ -242,6 +266,7 @@ def weekly_trends():
         func.date_trunc('week', TimeEntry.start_time).label('week'),
         func.sum(TimeEntry.duration_seconds).label('total_seconds')
     ).filter(
+        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
         TimeEntry.start_time <= end_date
@@ -279,8 +304,10 @@ def weekly_trends():
 
 @analytics_bp.route('/api/analytics/project-efficiency')
 @login_required
+@require_organization_access()
 def project_efficiency():
     """Get project efficiency metrics (hours vs billable amount)"""
+    org_id = get_current_organization_id()
     days = int(request.args.get('days', 30))
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
@@ -290,6 +317,8 @@ def project_efficiency():
         func.sum(TimeEntry.duration_seconds).label('total_seconds'),
         Project.hourly_rate
     ).join(TimeEntry).filter(
+        Project.organization_id == org_id,
+        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
         TimeEntry.start_time <= end_date,
@@ -332,6 +361,7 @@ def project_efficiency():
 
 @analytics_bp.route('/api/analytics/today-by-task')
 @login_required
+@require_organization_access()
 def today_by_task():
     """Get today's total hours grouped by task (includes project-level entries without task).
 
@@ -349,7 +379,8 @@ def today_by_task():
     else:
         target_date = datetime.now().date()
 
-    # Base query
+    # Base query (scoped to organization)
+    org_id = get_current_organization_id()
     query = db.session.query(
         TimeEntry.task_id,
         Task.name.label('task_name'),
@@ -361,6 +392,8 @@ def today_by_task():
     ).outerjoin(
         Task, Task.id == TimeEntry.task_id
     ).filter(
+        TimeEntry.organization_id == org_id,
+        Project.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         func.date(TimeEntry.start_time) == target_date
     )

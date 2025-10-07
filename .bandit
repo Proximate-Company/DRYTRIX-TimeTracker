@@ -1,0 +1,22 @@
+# Bandit configuration file
+# https://bandit.readthedocs.io/
+
+[bandit]
+# Exclude test files and migrations
+exclude_dirs = ['/tests', '/migrations', '/venv', '/.venv', '/env']
+
+# Tests to skip (if any)
+skips = []
+
+# Tests to run (empty = run all)
+tests = []
+
+# Severity level to report (LOW, MEDIUM, HIGH)
+level = LOW
+
+# Confidence level to report (LOW, MEDIUM, HIGH)
+confidence = LOW
+
+[bandit.plugins]
+# Plugin configuration (if needed)
+

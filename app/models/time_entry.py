@@ -14,8 +14,14 @@ class TimeEntry(db.Model):
     """Time entry model for manual and automatic time tracking"""
     
     __tablename__ = 'time_entries'
+    __table_args__ = (
+        db.Index('idx_time_entries_org_user', 'organization_id', 'user_id'),
+        db.Index('idx_time_entries_org_project', 'organization_id', 'project_id'),
+        db.Index('idx_time_entries_org_dates', 'organization_id', 'start_time', 'end_time'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, index=True)
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True, index=True)
@@ -30,10 +36,12 @@ class TimeEntry(db.Model):
     updated_at = db.Column(db.DateTime, default=local_now, onupdate=local_now, nullable=False)
     
     # Relationships
+    organization = db.relationship('Organization', back_populates='time_entries')
     # user and project relationships are defined via backref in their respective models
     # task relationship is defined via backref in Task model
     
-    def __init__(self, user_id, project_id, start_time, end_time=None, task_id=None, notes=None, tags=None, source='manual', billable=True):
+    def __init__(self, user_id, project_id, organization_id, start_time, end_time=None, task_id=None, notes=None, tags=None, source='manual', billable=True):
+        self.organization_id = organization_id
         self.user_id = user_id
         self.project_id = project_id
         self.task_id = task_id

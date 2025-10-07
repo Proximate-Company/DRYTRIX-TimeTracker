@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Cancelled</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #6c757d; color: white; padding: 20px; border-radius: 5px 5px 0 0;">
+        <h1 style="margin: 0;">Subscription Cancelled</h1>
+    </div>
+    
+    <div style="background-color: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 5px 5px;">
+        <p>Hello {{ user.display_name }},</p>
+        
+        <p>We're writing to let you know that your subscription for <strong>{{ organization.name }}</strong> has been cancelled.</p>
+        
+        <div style="background-color: #fff; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Organization:</strong> {{ organization.name }}</p>
+            <p style="margin: 5px 0 0 0;"><strong>Status:</strong> Suspended</p>
+        </div>
+        
+        <p><strong>What this means:</strong></p>
+        <ul>
+            <li>Your account has been suspended</li>
+            <li>You no longer have access to premium features</li>
+            <li>Your data is safely stored and can be restored if you resubscribe</li>
+        </ul>
+        
+        <p><strong>Want to keep using TimeTracker?</strong></p>
+        <p>You can reactivate your subscription at any time.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ url_for('billing.index', _external=True) }}" 
+               style="display: inline-block; background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Reactivate Subscription
+            </a>
+        </div>
+        
+        <p>If you cancelled by mistake or have any questions, please contact our support team.</p>
+        
+        <p>We're sorry to see you go!<br>
+        The TimeTracker Team</p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px;">
+        <p>This is an automated message from TimeTracker</p>
+    </div>
+</body>
+</html>
+

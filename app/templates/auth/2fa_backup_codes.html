@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Backup Codes - TimeTracker{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-check-circle"></i> 2FA Enabled Successfully!</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>Important:</strong> Save these backup codes in a safe place. Each code can only be used once.
+                    </div>
+
+                    <div class="card bg-light p-3 mb-3">
+                        <div class="row">
+                            {% for code in backup_codes %}
+                                <div class="col-md-6 mb-2">
+                                    <code class="d-block p-2 bg-white border rounded text-center">{{ code }}</code>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="copyAllCodes()">
+                            <i class="bi bi-clipboard"></i> Copy All Codes
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="printCodes()">
+                            <i class="bi bi-printer"></i> Print Codes
+                        </button>
+                        <a href="{{ url_for('auth_extended.settings') }}" class="btn btn-primary">
+                            Continue to Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const backupCodes = {{ backup_codes | tojson }};
+
+function copyAllCodes() {
+    const codesText = backupCodes.join('\n');
+    navigator.clipboard.writeText(codesText).then(() => {
+        alert('Backup codes copied to clipboard!');
+    });
+}
+
+function printCodes() {
+    window.print();
+}
+</script>
+
+<style media="print">
+    body * {
+        visibility: hidden;
+    }
+    .card, .card * {
+        visibility: visible;
+    }
+    .card {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    .btn {
+        display: none;
+    }
+</style>
+{% endblock %}
+

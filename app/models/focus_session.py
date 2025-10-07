@@ -12,6 +12,7 @@ class FocusSession(db.Model):
     __tablename__ = 'focus_sessions'
 
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True, index=True)
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True, index=True)

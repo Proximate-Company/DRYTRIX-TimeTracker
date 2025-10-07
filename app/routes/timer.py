@@ -7,36 +7,43 @@ from app.utils.timezone import parse_local_datetime, utc_to_local
 from datetime import datetime
 import json
 from app.utils.db import safe_commit
+from app.utils.tenancy import (
+    get_current_organization_id,
+    scoped_query,
+    require_organization_access
+)
 
 timer_bp = Blueprint('timer', __name__)
 
 @timer_bp.route('/timer/start', methods=['POST'])
 @login_required
+@require_organization_access()
 def start_timer():
     """Start a new timer for the current user"""
+    org_id = get_current_organization_id()
     project_id = request.form.get('project_id', type=int)
     task_id = request.form.get('task_id', type=int)
     notes = request.form.get('notes', '').strip()
-    current_app.logger.info("POST /timer/start user=%s project_id=%s task_id=%s", current_user.username, project_id, task_id)
+    current_app.logger.info("POST /timer/start user=%s project_id=%s task_id=%s org_id=%s", current_user.username, project_id, task_id, org_id)
     
     if not project_id:
         flash('Project is required', 'error')
         current_app.logger.warning("Start timer failed: missing project_id")
         return redirect(url_for('main.dashboard'))
     
-    # Check if project exists and is active
-    project = Project.query.filter_by(id=project_id, status='active').first()
+    # Check if project exists and is active (scoped to organization)
+    project = scoped_query(Project).filter_by(id=project_id, status='active').first()
     if not project:
         flash('Invalid project selected', 'error')
-        current_app.logger.warning("Start timer failed: invalid or inactive project_id=%s", project_id)
+        current_app.logger.warning("Start timer failed: invalid or inactive project_id=%s in org_id=%s", project_id, org_id)
         return redirect(url_for('main.dashboard'))
     
-    # If a task is provided, validate it belongs to the project
+    # If a task is provided, validate it belongs to the project (and organization)
     if task_id:
-        task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+        task = scoped_query(Task).filter_by(id=task_id, project_id=project_id).first()
         if not task:
             flash('Selected task is invalid for the chosen project', 'error')
-            current_app.logger.warning("Start timer failed: task_id=%s does not belong to project_id=%s", task_id, project_id)
+            current_app.logger.warning("Start timer failed: task_id=%s does not belong to project_id=%s in org_id=%s", task_id, project_id, org_id)
             return redirect(url_for('main.dashboard'))
     else:
         task = None
@@ -48,11 +55,12 @@ def start_timer():
         current_app.logger.info("Start timer blocked: user already has an active timer")
         return redirect(url_for('main.dashboard'))
     
-    # Create new timer
+    # Create new timer with organization_id
     from app.models.time_entry import local_now
     new_timer = TimeEntry(
         user_id=current_user.id,
         project_id=project_id,
+        organization_id=org_id,
         task_id=task.id if task else None,
         start_time=local_now(),
         notes=notes if notes else None,
@@ -88,16 +96,18 @@ def start_timer():
 
 @timer_bp.route('/timer/start/<int:project_id>')
 @login_required
+@require_organization_access()
 def start_timer_for_project(project_id):
     """Start a timer for a specific project (GET route for direct links)"""
+    org_id = get_current_organization_id()
     task_id = request.args.get('task_id', type=int)
-    current_app.logger.info("GET /timer/start/%s user=%s task_id=%s", project_id, current_user.username, task_id)
+    current_app.logger.info("GET /timer/start/%s user=%s task_id=%s org_id=%s", project_id, current_user.username, task_id, org_id)
     
-    # Check if project exists and is active
-    project = Project.query.filter_by(id=project_id, status='active').first()
+    # Check if project exists and is active (scoped to organization)
+    project = scoped_query(Project).filter_by(id=project_id, status='active').first()
     if not project:
         flash('Invalid project selected', 'error')
-        current_app.logger.warning("Start timer (GET) failed: invalid or inactive project_id=%s", project_id)
+        current_app.logger.warning("Start timer (GET) failed: invalid or inactive project_id=%s in org_id=%s", project_id, org_id)
         return redirect(url_for('main.dashboard'))
     
     # Check if user already has an active timer
@@ -107,11 +117,12 @@ def start_timer_for_project(project_id):
         current_app.logger.info("Start timer (GET) blocked: user already has an active timer")
         return redirect(url_for('main.dashboard'))
     
-    # Create new timer
+    # Create new timer with organization_id
     from app.models.time_entry import local_now
     new_timer = TimeEntry(
         user_id=current_user.id,
         project_id=project_id,
+        organization_id=org_id,
         task_id=task_id,
         start_time=local_now(),
         source='auto'
@@ -136,7 +147,7 @@ def start_timer_for_project(project_id):
         current_app.logger.warning("Socket emit failed for timer_started (GET): %s", e)
     
     if task_id:
-        task = Task.query.get(task_id)
+        task = scoped_query(Task).filter_by(id=task_id).first()
         task_name = task.name if task else "Unknown Task"
         flash(f'Timer started for {project.name} - {task_name}', 'success')
     else:
@@ -146,6 +157,7 @@ def start_timer_for_project(project_id):
 
 @timer_bp.route('/timer/stop', methods=['POST'])
 @login_required
+@require_organization_access()
 def stop_timer():
     """Stop the current user's active timer"""
     active_timer = current_user.active_timer
@@ -177,6 +189,7 @@ def stop_timer():
 
 @timer_bp.route('/timer/status')
 @login_required
+@require_organization_access()
 def timer_status():
     """Get current timer status as JSON"""
     active_timer = current_user.active_timer
@@ -200,9 +213,10 @@ def timer_status():
 
 @timer_bp.route('/timer/edit/<int:timer_id>', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def edit_timer(timer_id):
     """Edit a completed timer entry"""
-    timer = TimeEntry.query.get_or_404(timer_id)
+    timer = scoped_query(TimeEntry).filter_by(id=timer_id).first_or_404()
     
     # Check if user can edit this timer
     if timer.user_id != current_user.id and not current_user.is_admin:
@@ -220,27 +234,27 @@ def edit_timer(timer_id):
             # Update project if changed
             new_project_id = request.form.get('project_id', type=int)
             if new_project_id and new_project_id != timer.project_id:
-                new_project = Project.query.filter_by(id=new_project_id, status='active').first()
+                new_project = scoped_query(Project).filter_by(id=new_project_id, status='active').first()
                 if new_project:
                     timer.project_id = new_project_id
                 else:
                     flash('Invalid project selected', 'error')
                     return render_template('timer/edit_timer.html', timer=timer, 
-                                        projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
-                                        tasks=[] if not new_project_id else Task.query.filter_by(project_id=new_project_id).order_by(Task.name).all())
+                                        projects=scoped_query(Project).filter_by(status='active').order_by(Project.name).all(),
+                                        tasks=[] if not new_project_id else scoped_query(Task).filter_by(project_id=new_project_id).order_by(Task.name).all())
             
             # Update task if changed
             new_task_id = request.form.get('task_id', type=int)
             if new_task_id != timer.task_id:
                 if new_task_id:
-                    new_task = Task.query.filter_by(id=new_task_id, project_id=timer.project_id).first()
+                    new_task = scoped_query(Task).filter_by(id=new_task_id, project_id=timer.project_id).first()
                     if new_task:
                         timer.task_id = new_task_id
                     else:
                         flash('Invalid task selected for the chosen project', 'error')
                         return render_template('timer/edit_timer.html', timer=timer, 
-                                            projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
-                                            tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+                                            projects=scoped_query(Project).filter_by(status='active').order_by(Project.name).all(),
+                                            tasks=scoped_query(Task).filter_by(project_id=timer.project_id).order_by(Task.name).all())
                 else:
                     timer.task_id = None
             
@@ -262,15 +276,15 @@ def edit_timer(timer_id):
                     if new_start_time > current_time:
                         flash('Start time cannot be in the future', 'error')
                         return render_template('timer/edit_timer.html', timer=timer, 
-                                            projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
-                                            tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+                                            projects=scoped_query(Project).filter_by(status='active').order_by(Project.name).all(),
+                                            tasks=scoped_query(Task).filter_by(project_id=timer.project_id).order_by(Task.name).all())
                     
                     timer.start_time = new_start_time
                 except ValueError:
                     flash('Invalid start date/time format', 'error')
                     return render_template('timer/edit_timer.html', timer=timer, 
-                                        projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
-                                        tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+                                        projects=scoped_query(Project).filter_by(status='active').order_by(Project.name).all(),
+                                        tasks=scoped_query(Task).filter_by(project_id=timer.project_id).order_by(Task.name).all())
             
             if end_date and end_time:
                 try:
@@ -282,8 +296,8 @@ def edit_timer(timer_id):
                     if new_end_time <= timer.start_time:
                         flash('End time must be after start time', 'error')
                         return render_template('timer/edit_timer.html', timer=timer, 
-                                            projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
-                                            tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+                                            projects=scoped_query(Project).filter_by(status='active').order_by(Project.name).all(),
+                                            tasks=scoped_query(Task).filter_by(project_id=timer.project_id).order_by(Task.name).all())
                     
                     timer.end_time = new_end_time
                     # Recalculate duration
@@ -291,8 +305,8 @@ def edit_timer(timer_id):
                 except ValueError:
                     flash('Invalid end date/time format', 'error')
                     return render_template('timer/edit_timer.html', timer=timer, 
-                                        projects=Project.query.filter_by(status='active').order_by(Project.name).all(),
-                                        tasks=Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all())
+                                        projects=scoped_query(Project).filter_by(status='active').order_by(Project.name).all(),
+                                        tasks=scoped_query(Task).filter_by(project_id=timer.project_id).order_by(Task.name).all())
             
             # Update source if provided
             new_source = request.form.get('source')
@@ -306,21 +320,22 @@ def edit_timer(timer_id):
         flash('Timer updated successfully', 'success')
         return redirect(url_for('main.dashboard'))
     
-    # Get projects and tasks for admin users
+    # Get projects and tasks for admin users (scoped to organization)
     projects = []
     tasks = []
     if current_user.is_admin:
-        projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+        projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
         if timer.project_id:
-            tasks = Task.query.filter_by(project_id=timer.project_id).order_by(Task.name).all()
+            tasks = scoped_query(Task).filter_by(project_id=timer.project_id).order_by(Task.name).all()
     
     return render_template('timer/edit_timer.html', timer=timer, projects=projects, tasks=tasks)
 
 @timer_bp.route('/timer/delete/<int:timer_id>', methods=['POST'])
 @login_required
+@require_organization_access()
 def delete_timer(timer_id):
     """Delete a timer entry"""
-    timer = TimeEntry.query.get_or_404(timer_id)
+    timer = scoped_query(TimeEntry).filter_by(id=timer_id).first_or_404()
     
     # Check if user can delete this timer
     if timer.user_id != current_user.id and not current_user.is_admin:
@@ -343,10 +358,12 @@ def delete_timer(timer_id):
 
 @timer_bp.route('/timer/manual', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def manual_entry():
     """Create a manual time entry"""
-    # Get active projects for dropdown (used for both GET and error re-renders on POST)
-    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    org_id = get_current_organization_id()
+    # Get active projects for dropdown (scoped to organization)
+    active_projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
     
     # Get project_id and task_id from query parameters for pre-filling
     project_id = request.args.get('project_id', type=int)
@@ -369,16 +386,16 @@ def manual_entry():
             return render_template('timer/manual_entry.html', projects=active_projects, 
                                 selected_project_id=project_id, selected_task_id=task_id)
         
-        # Check if project exists and is active
-        project = Project.query.filter_by(id=project_id, status='active').first()
+        # Check if project exists and is active (scoped to organization)
+        project = scoped_query(Project).filter_by(id=project_id, status='active').first()
         if not project:
             flash('Invalid project selected', 'error')
             return render_template('timer/manual_entry.html', projects=active_projects,
                                 selected_project_id=project_id, selected_task_id=task_id)
         
-        # Validate task if provided
+        # Validate task if provided (scoped to organization)
         if task_id:
-            task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+            task = scoped_query(Task).filter_by(id=task_id, project_id=project_id).first()
             if not task:
                 flash('Invalid task selected', 'error')
                 return render_template('timer/manual_entry.html', projects=active_projects,
@@ -399,10 +416,11 @@ def manual_entry():
             return render_template('timer/manual_entry.html', projects=active_projects,
                                 selected_project_id=project_id, selected_task_id=task_id)
         
-        # Create manual entry
+        # Create manual entry with organization_id
         entry = TimeEntry(
             user_id=current_user.id,
             project_id=project_id,
+            organization_id=org_id,
             task_id=task_id,
             start_time=start_time_parsed,
             end_time=end_time_parsed,
@@ -419,7 +437,7 @@ def manual_entry():
                                 selected_project_id=project_id, selected_task_id=task_id)
         
         if task_id:
-            task = Task.query.get(task_id)
+            task = scoped_query(Task).filter_by(id=task_id).first()
             task_name = task.name if task else "Unknown Task"
             flash(f'Manual entry created for {project.name} - {task_name}', 'success')
         else:
@@ -432,28 +450,31 @@ def manual_entry():
 
 @timer_bp.route('/timer/manual/<int:project_id>')
 @login_required
+@require_organization_access()
 def manual_entry_for_project(project_id):
     """Create a manual time entry for a specific project"""
     task_id = request.args.get('task_id', type=int)
     
-    # Check if project exists and is active
-    project = Project.query.filter_by(id=project_id, status='active').first()
+    # Check if project exists and is active (scoped to organization)
+    project = scoped_query(Project).filter_by(id=project_id, status='active').first()
     if not project:
         flash('Invalid project selected', 'error')
         return redirect(url_for('main.dashboard'))
     
-    # Get active projects for dropdown
-    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # Get active projects for dropdown (scoped to organization)
+    active_projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
     
     return render_template('timer/manual_entry.html', projects=active_projects, 
                          selected_project_id=project_id, selected_task_id=task_id)
 
 @timer_bp.route('/timer/bulk', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def bulk_entry():
     """Create bulk time entries for multiple days"""
-    # Get active projects for dropdown
-    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    org_id = get_current_organization_id()
+    # Get active projects for dropdown (scoped to organization)
+    active_projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
     
     # Get project_id and task_id from query parameters for pre-filling
     project_id = request.args.get('project_id', type=int)
@@ -477,16 +498,16 @@ def bulk_entry():
             return render_template('timer/bulk_entry.html', projects=active_projects, 
                                 selected_project_id=project_id, selected_task_id=task_id)
         
-        # Check if project exists and is active
-        project = Project.query.filter_by(id=project_id, status='active').first()
+        # Check if project exists and is active (scoped to organization)
+        project = scoped_query(Project).filter_by(id=project_id, status='active').first()
         if not project:
             flash('Invalid project selected', 'error')
             return render_template('timer/bulk_entry.html', projects=active_projects,
                                 selected_project_id=project_id, selected_task_id=task_id)
         
-        # Validate task if provided
+        # Validate task if provided (scoped to organization)
         if task_id:
-            task = Task.query.filter_by(id=task_id, project_id=project_id).first()
+            task = scoped_query(Task).filter_by(id=task_id, project_id=project_id).first()
             if not task:
                 flash('Invalid task selected', 'error')
                 return render_template('timer/bulk_entry.html', projects=active_projects,
@@ -553,8 +574,8 @@ def bulk_entry():
             start_datetime = datetime.combine(date_obj, start_time_obj)
             end_datetime = datetime.combine(date_obj, end_time_obj)
             
-            # Check for overlapping entries
-            overlapping = TimeEntry.query.filter(
+            # Check for overlapping entries (scoped to organization)
+            overlapping = scoped_query(TimeEntry).filter(
                 TimeEntry.user_id == current_user.id,
                 TimeEntry.start_time <= end_datetime,
                 TimeEntry.end_time >= start_datetime,
@@ -580,6 +601,7 @@ def bulk_entry():
                 entry = TimeEntry(
                     user_id=current_user.id,
                     project_id=project_id,
+                    organization_id=org_id,
                     task_id=task_id,
                     start_time=start_datetime,
                     end_time=end_datetime,
@@ -599,7 +621,7 @@ def bulk_entry():
             
             task_name = ""
             if task_id:
-                task = Task.query.get(task_id)
+                task = scoped_query(Task).filter_by(id=task_id).first()
                 task_name = f" - {task.name}" if task else ""
             
             flash(f'Successfully created {len(created_entries)} time entries for {project.name}{task_name}', 'success')
@@ -617,26 +639,28 @@ def bulk_entry():
 
 @timer_bp.route('/timer/calendar')
 @login_required
+@require_organization_access()
 def calendar_view():
     """Calendar UI combining day/week/month with list toggle."""
-    # Provide projects for quick assignment during drag-create
-    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # Provide projects for quick assignment during drag-create (scoped to organization)
+    active_projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
     return render_template('timer/calendar.html', projects=active_projects)
 
 @timer_bp.route('/timer/bulk/<int:project_id>')
 @login_required
+@require_organization_access()
 def bulk_entry_for_project(project_id):
     """Create bulk time entries for a specific project"""
     task_id = request.args.get('task_id', type=int)
     
-    # Check if project exists and is active
-    project = Project.query.filter_by(id=project_id, status='active').first()
+    # Check if project exists and is active (scoped to organization)
+    project = scoped_query(Project).filter_by(id=project_id, status='active').first()
     if not project:
         flash('Invalid project selected', 'error')
         return redirect(url_for('main.dashboard'))
     
-    # Get active projects for dropdown
-    active_projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # Get active projects for dropdown (scoped to organization)
+    active_projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
     
     return render_template('timer/bulk_entry.html', projects=active_projects, 
                          selected_project_id=project_id, selected_task_id=task_id)

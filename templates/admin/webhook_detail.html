@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Webhook Event Detail') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% from "_components.html" import page_header %}
+    <div class="row">
+        <div class="col-12">
+            {% set actions %}
+            <a href="{{ url_for('admin.webhook_logs') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ _('Back to Logs') }}
+            </a>
+            {% if event.processing_error or not event.processed %}
+            <form method="POST" action="{{ url_for('admin.reprocess_webhook', event_id=event.id) }}" class="d-inline">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-redo me-2"></i>{{ _('Reprocess') }}
+                </button>
+            </form>
+            {% endif %}
+            {% endset %}
+            {{ page_header('fas fa-file-alt', _('Webhook Event Detail'), 'Event #' ~ event.id, actions) }}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Event Info -->
+        <div class="col-md-6 mb-4">
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>{{ _('Event Information') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%;">{{ _('Event ID') }}:</th>
+                                <td><code>{{ event.id }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Event Type') }}:</th>
+                                <td><code>{{ event.event_type }}</code></td>
+                            </tr>
+                            {% if event.stripe_event_id %}
+                            <tr>
+                                <th>{{ _('Stripe Event ID') }}:</th>
+                                <td><code>{{ event.stripe_event_id }}</code></td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>{{ _('Organization') }}:</th>
+                                <td>
+                                    {% if event.organization %}
+                                    <a href="{{ url_for('admin.customer_detail', org_id=event.organization_id) }}">
+                                        {{ event.organization.name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Created At') }}:</th>
+                                <td>{{ event.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Updated At') }}:</th>
+                                <td>{{ event.updated_at.strftime('%Y-%m-%d %H:%M:%S') if event.updated_at else 'N/A' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Status -->
+        <div class="col-md-6 mb-4">
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-cogs me-2 text-primary"></i>{{ _('Processing Status') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%;">{{ _('Status') }}:</th>
+                                <td>
+                                    {% if event.processed %}
+                                        {% if event.processing_error %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>{{ _('Error') }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>{{ _('Processed') }}
+                                        </span>
+                                        {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock me-1"></i>{{ _('Pending') }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Processed At') }}:</th>
+                                <td>{{ event.processed_at.strftime('%Y-%m-%d %H:%M:%S') if event.processed_at else 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Retry Count') }}:</th>
+                                <td>
+                                    <span class="badge bg-secondary">{{ event.retry_count }}</span>
+                                </td>
+                            </tr>
+                            {% if event.processing_error %}
+                            <tr>
+                                <th>{{ _('Error') }}:</th>
+                                <td>
+                                    <div class="alert alert-danger mb-0 p-2">
+                                        <small>{{ event.processing_error }}</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Details -->
+    {% if event.stripe_customer_id or event.stripe_subscription_id or event.stripe_invoice_id %}
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-receipt me-2 text-primary"></i>{{ _('Transaction Details') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if event.stripe_customer_id %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Customer ID') }}:</strong><br>
+                            <code>{{ event.stripe_customer_id }}</code>
+                        </div>
+                        {% endif %}
+                        {% if event.stripe_subscription_id %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Subscription ID') }}:</strong><br>
+                            <code>{{ event.stripe_subscription_id }}</code>
+                        </div>
+                        {% endif %}
+                        {% if event.stripe_invoice_id %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Invoice ID') }}:</strong><br>
+                            <code>{{ event.stripe_invoice_id }}</code>
+                        </div>
+                        {% endif %}
+                        {% if event.stripe_charge_id %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Charge ID') }}:</strong><br>
+                            <code>{{ event.stripe_charge_id }}</code>
+                        </div>
+                        {% endif %}
+                        {% if event.stripe_refund_id %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Refund ID') }}:</strong><br>
+                            <code>{{ event.stripe_refund_id }}</code>
+                        </div>
+                        {% endif %}
+                        {% if event.amount %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Amount') }}:</strong><br>
+                            <span class="badge bg-success">{{ "%.2f"|format(event.amount) }} {{ event.currency|upper }}</span>
+                        </div>
+                        {% endif %}
+                        {% if event.status %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Status') }}:</strong><br>
+                            <span class="badge bg-info">{{ event.status|title }}</span>
+                        </div>
+                        {% endif %}
+                        {% if event.previous_status %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Previous Status') }}:</strong><br>
+                            <span class="badge bg-secondary">{{ event.previous_status|title }}</span>
+                        </div>
+                        {% endif %}
+                        {% if event.quantity %}
+                        <div class="col-md-4 mb-3">
+                            <strong>{{ _('Quantity') }}:</strong><br>
+                            {{ event.quantity }}
+                            {% if event.previous_quantity %}
+                            <small class="text-muted">(was {{ event.previous_quantity }})</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Notes -->
+    {% if event.notes %}
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-sticky-note me-2 text-primary"></i>{{ _('Notes') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ event.notes }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Raw Event Data -->
+    {% if event.raw_payload or event.event_data %}
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-code me-2 text-primary"></i>{{ _('Raw Event Data') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="rawDataAccordion">
+                        {% if event.raw_payload %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#rawPayload">
+                                    {{ _('Raw Payload') }}
+                                </button>
+                            </h2>
+                            <div id="rawPayload" class="accordion-collapse collapse" data-bs-parent="#rawDataAccordion">
+                                <div class="accordion-body">
+                                    <pre class="bg-light p-3 rounded"><code>{{ event.raw_payload }}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if event.event_data %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#eventData">
+                                    {{ _('Event Data') }}
+                                </button>
+                            </h2>
+                            <div id="eventData" class="accordion-collapse collapse" data-bs-parent="#rawDataAccordion">
+                                <div class="accordion-body">
+                                    <pre class="bg-light p-3 rounded"><code>{{ event.event_data }}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

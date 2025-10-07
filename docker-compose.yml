@@ -13,6 +13,11 @@ services:
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this}
       - DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
       - LOG_FILE=/app/logs/timetracker.log
+      # Flask environment - set to development for local testing
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - FLASK_DEBUG=${FLASK_DEBUG:-false}
+      # HTTPS enforcement - DISABLE for local development
+      - FORCE_HTTPS=${FORCE_HTTPS:-false}
       # Ensure cookies work over HTTP (disable Secure for local/dev or non-TLS proxies)
       - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-false}
       - REMEMBER_COOKIE_SECURE=${REMEMBER_COOKIE_SECURE:-false}

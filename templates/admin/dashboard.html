@@ -14,11 +14,8 @@
             <a href="{{ url_for('admin.backup') }}" class="btn btn-outline-primary me-2">
                 <i class="fas fa-download me-2"></i>{{ _('Create Backup') }}
             </a>
-            <a href="{{ url_for('admin.restore') }}" class="btn btn-outline-primary me-2">
+            <a href="{{ url_for('admin.restore') }}" class="btn btn-outline-primary">
                 <i class="fas fa-undo-alt me-2"></i>{{ _('Restore') }}
-            </a>
-            <a href="{{ url_for('admin.license_status') }}" class="btn btn-outline-primary">
-                <i class="fas fa-chart-bar me-2"></i>{{ _('Metrics Status') }}
             </a>
             {% endset %}
             {{ page_header('fas fa-cogs', _('Admin Dashboard'), _('Manage users, system settings, and core operations at a glance.'), actions) }}
@@ -44,7 +41,29 @@
 
     <!-- Quick Actions -->
     <div class="row section-spacing">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-building me-2 text-primary"></i>{{ _('Customer Management') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.customers') }}" class="btn btn-primary">
+                            <i class="fas fa-building me-2"></i>{{ _('Manage Customers') }}
+                        </a>
+                        <a href="{{ url_for('admin.billing_reconciliation') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-sync me-2"></i>{{ _('Billing Sync') }}
+                        </a>
+                        <a href="{{ url_for('admin.webhook_logs') }}" class="btn btn-outline-info">
+                            <i class="fas fa-history me-2"></i>{{ _('Webhook Logs') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
             <div class="card hover-lift">
                 <div class="card-header">
                     <h5 class="mb-0 d-flex align-items-center">
@@ -63,7 +82,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="card hover-lift">
                 <div class="card-header">
                     <h5 class="mb-0 d-flex align-items-center">
@@ -157,13 +176,10 @@
 						<a href="{{ url_for('reports.reports') }}" class="btn btn-outline-info">
 							<i class="fas fa-chart-line"></i> {{ _('View Reports') }}
 						</a>
-						<a href="{{ url_for('admin.system_info') }}" class="btn btn-outline-secondary">
-							<i class="fas fa-info-circle"></i> {{ _('System Info') }}
-						</a>
-						<a href="{{ url_for('admin.license_status') }}" class="btn btn-outline-info">
-							<i class="fas fa-chart-line"></i> {{ _('Metrics Status') }}
-						</a>
-					</div>
+					<a href="{{ url_for('admin.system_info') }}" class="btn btn-outline-secondary">
+						<i class="fas fa-info-circle"></i> {{ _('System Info') }}
+					</a>
+				</div>
 				</div>
 			</div>
 		</div>

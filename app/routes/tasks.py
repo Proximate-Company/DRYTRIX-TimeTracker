@@ -7,11 +7,17 @@ from datetime import datetime, date
 from decimal import Decimal
 from app.utils.db import safe_commit
 from app.utils.timezone import now_in_app_timezone
+from app.utils.tenancy import (
+    get_current_organization_id,
+    scoped_query,
+    require_organization_access
+)
 
 tasks_bp = Blueprint('tasks', __name__)
 
 @tasks_bp.route('/tasks')
 @login_required
+@require_organization_access()
 def list_tasks():
     """List all tasks with filtering options"""
     page = request.args.get('page', 1, type=int)
@@ -23,7 +29,7 @@ def list_tasks():
     overdue_param = request.args.get('overdue', '').strip().lower()
     overdue = overdue_param in ['1', 'true', 'on', 'yes']
     
-    query = Task.query
+    query = scoped_query(Task)
     
     # Apply filters
     if status:
@@ -70,9 +76,9 @@ def list_tasks():
         error_out=False
     )
     
-    # Get filter options
-    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
-    users = User.query.order_by(User.username).all()
+    # Get filter options (scoped to organization)
+    projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
+    users = User.query.order_by(User.username).all()  # Users are global, not org-scoped
     
     return render_template(
         'tasks/list.html',
@@ -90,8 +96,11 @@ def list_tasks():
 
 @tasks_bp.route('/tasks/create', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def create_task():
     """Create a new task"""
+    org_id = get_current_organization_id()
+    
     if request.method == 'POST':
         project_id = request.form.get('project_id', type=int)
         name = request.form.get('name', '').strip()
@@ -106,10 +115,10 @@ def create_task():
             flash('Project and task name are required', 'error')
             return render_template('tasks/create.html')
         
-        # Validate project exists
-        project = Project.query.get(project_id)
+        # Validate project exists (scoped to organization)
+        project = scoped_query(Project).filter_by(id=project_id).first()
         if not project:
-            flash('Selected project does not exist', 'error')
+            flash('Selected project does not exist in your organization', 'error')
             return render_template('tasks/create.html')
         
         # Parse estimated hours
@@ -128,9 +137,10 @@ def create_task():
                 flash('Invalid due date format', 'error')
                 return render_template('tasks/create.html')
         
-        # Create task
+        # Create task with organization_id
         task = Task(
             project_id=project_id,
+            organization_id=org_id,
             name=name,
             description=description,
             priority=priority,
@@ -148,17 +158,18 @@ def create_task():
         flash(f'Task "{name}" created successfully', 'success')
         return redirect(url_for('tasks.view_task', task_id=task.id))
     
-    # Get available projects and users for form
-    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # Get available projects and users for form (scoped to organization)
+    projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
     users = User.query.order_by(User.username).all()
     
     return render_template('tasks/create.html', projects=projects, users=users)
 
 @tasks_bp.route('/tasks/<int:task_id>')
 @login_required
+@require_organization_access()
 def view_task(task_id):
     """View task details"""
-    task = Task.query.get_or_404(task_id)
+    task = scoped_query(Task).filter_by(id=task_id).first_or_404()
     
     # Check if user has access to this task
     if not current_user.is_admin and task.assigned_to != current_user.id and task.created_by != current_user.id:
@@ -178,9 +189,11 @@ def view_task(task_id):
 
 @tasks_bp.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def edit_task(task_id):
     """Edit task details"""
-    task = Task.query.get_or_404(task_id)
+    org_id = get_current_organization_id()
+    task = scoped_query(Task).filter_by(id=task_id).first_or_404()
     
     # Check if user can edit this task
     if not current_user.is_admin and task.created_by != current_user.id:
@@ -237,21 +250,21 @@ def edit_task(task_id):
                         if not task.started_at:
                             task.started_at = now_in_app_timezone()
                         task.updated_at = now_in_app_timezone()
-                        db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='reopen', details='Task reopened to In Progress'))
+                        db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event='reopen', details='Task reopened to In Progress'))
                         if not safe_commit('edit_task_reopen_in_progress', {'task_id': task.id}):
                             flash('Could not update status due to a database error. Please check server logs.', 'error')
                             return render_template('tasks/edit.html', task=task)
                     else:
                         task.start_task()
-                        db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='start', details=f"Task moved from {previous_status} to In Progress"))
+                        db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event='start', details=f"Task moved from {previous_status} to In Progress"))
                         safe_commit('log_task_start_from_edit', {'task_id': task.id})
                 elif selected_status == 'done':
                     task.complete_task()
-                    db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='complete', details='Task completed'))
+                    db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event='complete', details='Task completed'))
                     safe_commit('log_task_complete_from_edit', {'task_id': task.id})
                 elif selected_status == 'cancelled':
                     task.cancel_task()
-                    db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='cancel', details='Task cancelled'))
+                    db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event='cancel', details='Task cancelled'))
                     safe_commit('log_task_cancel_from_edit', {'task_id': task.id})
                 else:
                     # Reopen or move to non-special states
@@ -261,7 +274,7 @@ def edit_task(task_id):
                     task.status = selected_status
                     task.updated_at = now_in_app_timezone()
                     event_name = 'reopen' if previous_status == 'done' and selected_status in ['todo', 'review'] else ('pause' if selected_status == 'todo' else ('review' if selected_status == 'review' else 'status_change'))
-                    db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event=event_name, details=f"Task moved from {previous_status} to {selected_status}"))
+                    db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event=event_name, details=f"Task moved from {previous_status} to {selected_status}"))
                     if not safe_commit('edit_task_status_change', {'task_id': task.id, 'status': selected_status}):
                         flash('Could not update status due to a database error. Please check server logs.', 'error')
                         return render_template('tasks/edit.html', task=task)
@@ -279,17 +292,19 @@ def edit_task(task_id):
         flash(f'Task "{name}" updated successfully', 'success')
         return redirect(url_for('tasks.view_task', task_id=task.id))
     
-    # Get available projects and users for form
-    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # Get available projects and users for form (scoped to organization)
+    projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
     users = User.query.order_by(User.username).all()
     
     return render_template('tasks/edit.html', task=task, projects=projects, users=users)
 
 @tasks_bp.route('/tasks/<int:task_id>/status', methods=['POST'])
 @login_required
+@require_organization_access()
 def update_task_status(task_id):
     """Update task status"""
-    task = Task.query.get_or_404(task_id)
+    org_id = get_current_organization_id()
+    task = scoped_query(Task).filter_by(id=task_id).first_or_404()
     new_status = request.form.get('status', '').strip()
     
     # Check if user can update this task
@@ -314,22 +329,22 @@ def update_task_status(task_id):
                 if not task.started_at:
                     task.started_at = now_in_app_timezone()
                 task.updated_at = now_in_app_timezone()
-                db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='reopen', details='Task reopened to In Progress'))
+                db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event='reopen', details='Task reopened to In Progress'))
                 if not safe_commit('update_task_status_reopen_in_progress', {'task_id': task.id, 'status': new_status}):
                     flash('Could not update status due to a database error. Please check server logs.', 'error')
                     return redirect(url_for('tasks.view_task', task_id=task.id))
             else:
                 previous_status = task.status
                 task.start_task()
-                db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='start', details=f"Task moved from {previous_status} to In Progress"))
+                db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event='start', details=f"Task moved from {previous_status} to In Progress"))
                 safe_commit('log_task_start', {'task_id': task.id})
         elif new_status == 'done':
             task.complete_task()
-            db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='complete', details='Task completed'))
+            db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event='complete', details='Task completed'))
             safe_commit('log_task_complete', {'task_id': task.id})
         elif new_status == 'cancelled':
             task.cancel_task()
-            db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='cancel', details='Task cancelled'))
+            db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event='cancel', details='Task cancelled'))
             safe_commit('log_task_cancel', {'task_id': task.id})
         else:
             # For other transitions, handle reopening from done and local timestamps
@@ -347,7 +362,7 @@ def update_task_status(task_id):
                     'review': 'review',
                 }
                 event_name = event_map.get(new_status, 'status_change')
-            db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event=event_name, details=f"Task moved from {previous_status} to {new_status}"))
+            db.session.add(TaskActivity(task_id=task.id, organization_id=org_id, user_id=current_user.id, event=event_name, details=f"Task moved from {previous_status} to {new_status}"))
             if not safe_commit('update_task_status', {'task_id': task.id, 'status': new_status}):
                 flash('Could not update status due to a database error. Please check server logs.', 'error')
                 return redirect(url_for('tasks.view_task', task_id=task.id))
@@ -360,9 +375,10 @@ def update_task_status(task_id):
 
 @tasks_bp.route('/tasks/<int:task_id>/priority', methods=['POST'])
 @login_required
+@require_organization_access()
 def update_task_priority(task_id):
     """Update task priority"""
-    task = Task.query.get_or_404(task_id)
+    task = scoped_query(Task).filter_by(id=task_id).first_or_404()
     new_priority = request.form.get('priority', '').strip()
     
     # Check if user can update this task
@@ -380,9 +396,10 @@ def update_task_priority(task_id):
 
 @tasks_bp.route('/tasks/<int:task_id>/assign', methods=['POST'])
 @login_required
+@require_organization_access()
 def assign_task(task_id):
     """Assign task to a user"""
-    task = Task.query.get_or_404(task_id)
+    task = scoped_query(Task).filter_by(id=task_id).first_or_404()
     user_id = request.form.get('user_id', type=int)
     
     # Check if user can assign this task
@@ -406,9 +423,10 @@ def assign_task(task_id):
 
 @tasks_bp.route('/tasks/<int:task_id>/delete', methods=['POST'])
 @login_required
+@require_organization_access()
 def delete_task(task_id):
     """Delete a task"""
-    task = Task.query.get_or_404(task_id)
+    task = scoped_query(Task).filter_by(id=task_id).first_or_404()
     
     # Check if user can delete this task
     if not current_user.is_admin and task.created_by != current_user.id:
@@ -431,6 +449,7 @@ def delete_task(task_id):
 
 @tasks_bp.route('/tasks/my-tasks')
 @login_required
+@require_organization_access()
 def my_tasks():
     """Show current user's tasks with filters and pagination"""
     page = request.args.get('page', 1, type=int)
@@ -442,7 +461,7 @@ def my_tasks():
     overdue_param = request.args.get('overdue', '').strip().lower()
     overdue = overdue_param in ['1', 'true', 'on', 'yes']
 
-    query = Task.query
+    query = scoped_query(Task)
 
     # Restrict to current user's tasks depending on task_type filter
     if task_type == 'assigned':
@@ -490,8 +509,8 @@ def my_tasks():
         Task.created_at.asc()
     ).paginate(page=page, per_page=20, error_out=False)
 
-    # Provide projects for filter dropdown
-    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # Provide projects for filter dropdown (scoped to organization)
+    projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
 
     return render_template(
         'tasks/my_tasks.html',
@@ -508,21 +527,29 @@ def my_tasks():
 
 @tasks_bp.route('/tasks/overdue')
 @login_required
+@require_organization_access()
 def overdue_tasks():
     """Show all overdue tasks"""
     if not current_user.is_admin:
         flash('Only administrators can view all overdue tasks', 'error')
         return redirect(url_for('tasks.list_tasks'))
     
-    tasks = Task.get_overdue_tasks()
+    # Get overdue tasks scoped to organization
+    org_id = get_current_organization_id()
+    today = date.today()
+    tasks = scoped_query(Task).filter(
+        Task.due_date < today,
+        Task.status.in_(['todo', 'in_progress', 'review'])
+    ).order_by(Task.priority.desc(), Task.due_date.asc()).all()
     
     return render_template('tasks/overdue.html', tasks=tasks)
 
 @tasks_bp.route('/api/tasks/<int:task_id>')
 @login_required
+@require_organization_access()
 def api_task(task_id):
     """API endpoint to get task details"""
-    task = Task.query.get_or_404(task_id)
+    task = scoped_query(Task).filter_by(id=task_id).first_or_404()
     
     # Check if user has access to this task
     if not current_user.is_admin and task.assigned_to != current_user.id and task.created_by != current_user.id:
@@ -532,9 +559,10 @@ def api_task(task_id):
 
 @tasks_bp.route('/api/tasks/<int:task_id>/status', methods=['PUT'])
 @login_required
+@require_organization_access()
 def api_update_status(task_id):
     """API endpoint to update task status"""
-    task = Task.query.get_or_404(task_id)
+    task = scoped_query(Task).filter_by(id=task_id).first_or_404()
     data = request.get_json()
     new_status = data.get('status', '').strip()
     

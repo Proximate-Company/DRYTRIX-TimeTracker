@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Enable 2FA - TimeTracker{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Enable Two-Factor Authentication</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <p>Scan this QR code with your authenticator app:</p>
+                        <img src="{{ qr_code }}" alt="QR Code" class="img-fluid" style="max-width: 300px;">
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Can't scan?</strong> Enter this code manually: <code>{{ secret }}</code>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('auth_extended.enable_2fa') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="mb-3">
+                            <label for="token" class="form-label">Verification Code</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="token" 
+                                   name="token" 
+                                   required 
+                                   autofocus 
+                                   pattern="[0-9]{6}"
+                                   placeholder="123456"
+                                   maxlength="6">
+                            <small class="form-text text-muted">Enter the 6-digit code from your authenticator app</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Verify and Enable 2FA</button>
+                            <a href="{{ url_for('auth_extended.settings') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6>Recommended Authenticator Apps:</h6>
+                    <ul>
+                        <li>Google Authenticator (iOS/Android)</li>
+                        <li>Microsoft Authenticator (iOS/Android)</li>
+                        <li>Authy (iOS/Android/Desktop)</li>
+                        <li>1Password (Cross-platform)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

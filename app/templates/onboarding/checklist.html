@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Onboarding Checklist') }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .onboarding-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .onboarding-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .onboarding-progress {
+        background: rgba(255,255,255,0.2);
+        border-radius: 20px;
+        height: 10px;
+        overflow: hidden;
+        margin-top: 20px;
+    }
+    
+    .onboarding-progress-bar {
+        background: #fff;
+        height: 100%;
+        transition: width 0.5s ease;
+        border-radius: 20px;
+    }
+    
+    .task-list {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .task-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .task-item:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+    }
+    
+    .task-item:last-child {
+        border-bottom: none;
+    }
+    
+    .task-item.completed {
+        opacity: 0.6;
+    }
+    
+    .task-checkbox {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        border: 2px solid #dee2e6;
+        border-radius: 50%;
+        margin-right: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .task-checkbox:hover {
+        border-color: #667eea;
+        transform: scale(1.1);
+    }
+    
+    .task-checkbox.completed {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-color: #667eea;
+    }
+    
+    .task-checkbox.completed i {
+        color: white;
+        font-size: 14px;
+    }
+    
+    .task-content {
+        flex: 1;
+    }
+    
+    .task-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .task-icon {
+        margin-right: 10px;
+        color: #667eea;
+        width: 24px;
+        text-align: center;
+    }
+    
+    .task-description {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    
+    .task-action {
+        margin-top: 10px;
+    }
+    
+    .task-action a {
+        color: #667eea;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .task-action a:hover {
+        color: #5568d3;
+        text-decoration: underline;
+    }
+    
+    .task-meta {
+        font-size: 12px;
+        color: #999;
+        margin-top: 8px;
+    }
+    
+    .completion-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-left: 15px;
+    }
+    
+    .completion-badge.complete {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .completion-badge.in-progress {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .dismiss-banner {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .category-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        font-size: 11px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-left: 10px;
+    }
+    
+    .category-team { background: #e3f2fd; color: #1976d2; }
+    .category-setup { background: #f3e5f5; color: #7b1fa2; }
+    .category-usage { background: #e8f5e9; color: #388e3c; }
+    .category-billing { background: #fff3e0; color: #f57c00; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="onboarding-container">
+    <!-- Header -->
+    <div class="onboarding-header">
+        <h1><i class="fas fa-rocket"></i> {{ _('Welcome to TimeTracker!') }}</h1>
+        <p style="font-size: 18px; margin: 10px 0 0 0;">{{ _('Let\'s get you started with') }} <strong>{{ organization.name }}</strong></p>
+        
+        <!-- Progress Bar -->
+        <div class="onboarding-progress">
+            <div class="onboarding-progress-bar" style="width: {{ checklist.completion_percentage }}%"></div>
+        </div>
+        
+        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong>{{ _('Progress:') }}</strong> {{ checklist.get_completed_count() }} / {{ checklist.get_total_count() }} {{ _('tasks completed') }}
+            </div>
+            <div>
+                {% if checklist.is_complete %}
+                    <span class="completion-badge complete">
+                        <i class="fas fa-check-circle"></i> {{ _('Complete!') }}
+                    </span>
+                {% else %}
+                    <span class="completion-badge in-progress">
+                        {{ checklist.completion_percentage }}% {{ _('Complete') }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dismissed Banner -->
+    {% if checklist.dismissed %}
+    <div class="dismiss-banner alert alert-info">
+        <i class="fas fa-info-circle"></i> {{ _('This checklist has been dismissed. You can still complete tasks!') }}
+        <button class="btn btn-sm btn-primary ms-3" onclick="restoreChecklist()">
+            {{ _('Restore Checklist') }}
+        </button>
+    </div>
+    {% endif %}
+    
+    <!-- Complete Banner -->
+    {% if checklist.is_complete %}
+    <div class="alert alert-success">
+        <i class="fas fa-trophy"></i> <strong>{{ _('Congratulations!') }}</strong> 
+        {{ _('You\'ve completed all onboarding tasks. You\'re all set!') }}
+    </div>
+    {% endif %}
+    
+    <!-- Task List -->
+    <div class="task-list">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h3><i class="fas fa-list-check"></i> {{ _('Getting Started Checklist') }}</h3>
+            {% if not checklist.dismissed and not checklist.is_complete %}
+            <button class="btn btn-sm btn-outline-secondary" onclick="dismissChecklist()">
+                <i class="fas fa-times"></i> {{ _('Dismiss') }}
+            </button>
+            {% endif %}
+        </div>
+        
+        {% for task in tasks %}
+        <div class="task-item {% if task.completed %}completed{% endif %}" data-task-key="{{ task.key }}">
+            <div class="task-checkbox {% if task.completed %}completed{% endif %}" onclick="toggleTask('{{ task.key }}', {{ 'true' if task.completed else 'false' }})">
+                {% if task.completed %}
+                <i class="fas fa-check"></i>
+                {% endif %}
+            </div>
+            
+            <div class="task-content">
+                <div class="task-title">
+                    <i class="{{ task.icon }} task-icon"></i>
+                    {{ _(task.title) }}
+                    <span class="category-badge category-{{ task.category }}">{{ _(task.category) }}</span>
+                </div>
+                
+                <div class="task-description">
+                    {{ _(task.description) }}
+                </div>
+                
+                {% if not task.completed %}
+                <div class="task-action">
+                    {% if task.key == 'invited_team_member' %}
+                        <a href="{{ url_for('organizations.members') }}">
+                            <i class="fas fa-arrow-right"></i> {{ _('Invite Team Member') }}
+                        </a>
+                    {% elif task.key == 'created_project' %}
+                        <a href="{{ url_for('projects.create_project') }}">
+                            <i class="fas fa-arrow-right"></i> {{ _('Create Project') }}
+                        </a>
+                    {% elif task.key == 'created_time_entry' %}
+                        <a href="{{ url_for('main.dashboard') }}">
+                            <i class="fas fa-arrow-right"></i> {{ _('Start Timer') }}
+                        </a>
+                    {% elif task.key == 'created_client' %}
+                        <a href="{{ url_for('clients.new_client') }}">
+                            <i class="fas fa-arrow-right"></i> {{ _('Add Client') }}
+                        </a>
+                    {% elif task.key == 'added_billing_info' %}
+                        <a href="{{ url_for('billing.index') }}">
+                            <i class="fas fa-arrow-right"></i> {{ _('Go to Billing') }}
+                        </a>
+                    {% elif task.key == 'generated_report' %}
+                        <a href="{{ url_for('reports.index') }}">
+                            <i class="fas fa-arrow-right"></i> {{ _('View Reports') }}
+                        </a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="task-meta">
+                    <i class="fas fa-check-circle"></i> {{ _('Completed') }} {{ task.completed_at }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Help Section -->
+    <div class="mt-4 text-center">
+        <p class="text-muted">
+            <i class="fas fa-question-circle"></i> {{ _('Need help getting started?') }}
+            <a href="{{ url_for('onboarding.guide') }}">{{ _('View the complete guide') }}</a>
+        </p>
+    </div>
+</div>
+
+<script>
+function toggleTask(taskKey, isCompleted) {
+    if (isCompleted) {
+        return; // Already completed, don't allow unchecking
+    }
+    
+    // Mark as complete via API
+    fetch(`/onboarding/api/checklist/complete/${taskKey}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI
+            location.reload();
+        } else {
+            alert('Failed to update task: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update task');
+    });
+}
+
+function dismissChecklist() {
+    if (!confirm('{{ _("Are you sure you want to dismiss the onboarding checklist?") }}')) {
+        return;
+    }
+    
+    fetch('/onboarding/api/checklist/dismiss', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Failed to dismiss checklist: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to dismiss checklist');
+    });
+}
+
+function restoreChecklist() {
+    fetch('/onboarding/api/checklist/restore', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Failed to restore checklist: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to restore checklist');
+    });
+}
+</script>
+{% endblock %}
+

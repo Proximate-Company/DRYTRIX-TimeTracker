@@ -6,8 +6,14 @@ class Comment(db.Model):
     """Comment model for project and task discussions"""
     
     __tablename__ = 'comments'
+    __table_args__ = (
+        db.Index('idx_comments_org_project', 'organization_id', 'project_id'),
+        db.Index('idx_comments_org_task', 'organization_id', 'task_id'),
+        db.Index('idx_comments_org_user', 'organization_id', 'user_id'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
     content = db.Column(db.Text, nullable=False)
     
     # Reference to either project or task (one will be null)
@@ -25,6 +31,7 @@ class Comment(db.Model):
     parent_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=True, index=True)
     
     # Relationships
+    organization = db.relationship('Organization', back_populates='comments')
     author = db.relationship('User', backref='comments')
     project = db.relationship('Project', backref='comments')
     task = db.relationship('Task', backref='comments')
@@ -32,12 +39,13 @@ class Comment(db.Model):
     # Self-referential relationship for replies
     parent = db.relationship('Comment', remote_side=[id], backref='replies')
     
-    def __init__(self, content, user_id, project_id=None, task_id=None, parent_id=None):
+    def __init__(self, content, user_id, organization_id, project_id=None, task_id=None, parent_id=None):
         """Create a comment.
         
         Args:
             content: The comment text
             user_id: ID of the user creating the comment
+            organization_id: ID of the organization this comment belongs to
             project_id: ID of the project (if this is a project comment)
             task_id: ID of the task (if this is a task comment)
             parent_id: ID of parent comment (if this is a reply)
@@ -48,6 +56,7 @@ class Comment(db.Model):
         if project_id and task_id:
             raise ValueError("Comment cannot be associated with both a project and a task")
         
+        self.organization_id = organization_id
         self.content = content.strip()
         self.user_id = user_id
         self.project_id = project_id

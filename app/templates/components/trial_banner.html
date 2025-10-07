@@ -1,0 +1,86 @@
+{% if organization and organization.is_on_trial %}
+<div class="trial-banner alert alert-warning alert-dismissible fade show" role="alert" style="
+    background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+">
+    <div class="d-flex align-items-center">
+        <div style="font-size: 48px; margin-right: 20px; color: #f57c00;">
+            <i class="fas fa-gift"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h4 class="alert-heading mb-2" style="color: #856404;">
+                <strong>🎉 {{ _('Free Trial Active!') }}</strong>
+            </h4>
+            <p class="mb-2" style="color: #856404; font-size: 16px;">
+                {% if organization.trial_days_remaining > 1 %}
+                    {{ _('You have') }} <strong>{{ organization.trial_days_remaining }} {{ _('days') }}</strong> {{ _('remaining in your trial.') }}
+                {% elif organization.trial_days_remaining == 1 %}
+                    {{ _('Your trial ends') }} <strong>{{ _('tomorrow') }}</strong>!
+                {% else %}
+                    {{ _('Your trial ends') }} <strong>{{ _('today') }}</strong>!
+                {% endif %}
+                {{ _('Explore all features with no limits!') }}
+            </p>
+            <p class="mb-0" style="font-size: 14px; color: #856404;">
+                <i class="fas fa-calendar-alt"></i> 
+                {{ _('Trial expires on:') }} <strong>{{ organization.trial_ends_at.strftime('%B %d, %Y') }}</strong>
+            </p>
+        </div>
+        <div class="ms-3">
+            {% if organization.stripe_customer_id %}
+                <a href="{{ url_for('billing.index') }}" class="btn btn-warning btn-lg" style="
+                    background: #f57c00;
+                    border: none;
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(245, 124, 0, 0.3);
+                ">
+                    <i class="fas fa-credit-card"></i> {{ _('Add Payment Method') }}
+                </a>
+            {% else %}
+                <a href="{{ url_for('billing.subscribe', plan='team') }}" class="btn btn-warning btn-lg" style="
+                    background: #f57c00;
+                    border: none;
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(245, 124, 0, 0.3);
+                ">
+                    <i class="fas fa-rocket"></i> {{ _('Upgrade Now') }}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _('Close') }}"></button>
+</div>
+{% endif %}
+
+{% if organization and organization.has_billing_issue %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert" style="
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+">
+    <div class="d-flex align-items-center">
+        <div style="font-size: 48px; margin-right: 20px;">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="flex-grow-1">
+            <h4 class="alert-heading mb-2">
+                <strong>{{ _('Payment Issue Detected') }}</strong>
+            </h4>
+            <p class="mb-0">
+                {{ _('We couldn\'t process your payment. Please update your payment method to continue using TimeTracker.') }}
+            </p>
+        </div>
+        <div class="ms-3">
+            <a href="{{ url_for('billing.index') }}" class="btn btn-danger btn-lg">
+                <i class="fas fa-credit-card"></i> {{ _('Update Payment') }}
+            </a>
+        </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _('Close') }}"></button>
+</div>
+{% endif %}
+

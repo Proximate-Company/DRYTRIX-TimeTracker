@@ -6,11 +6,19 @@ from app.models import Project, TimeEntry, Task, Client
 from datetime import datetime
 from decimal import Decimal
 from app.utils.db import safe_commit
+from app.utils.tenancy import (
+    get_current_organization_id,
+    get_current_organization,
+    scoped_query,
+    require_organization_access,
+    ensure_organization_access
+)
 
 projects_bp = Blueprint('projects', __name__)
 
 @projects_bp.route('/projects')
 @login_required
+@require_organization_access()
 def list_projects():
     """List all projects"""
     page = request.args.get('page', 1, type=int)
@@ -18,7 +26,8 @@ def list_projects():
     client_name = request.args.get('client', '').strip()
     search = request.args.get('search', '').strip()
     
-    query = Project.query
+    # Use scoped query to automatically filter by organization
+    query = scoped_query(Project)
     if status == 'active':
         query = query.filter_by(status='active')
     elif status == 'archived':
@@ -42,8 +51,8 @@ def list_projects():
         error_out=False
     )
     
-    # Get clients for filter dropdown
-    clients = Client.get_active_clients()
+    # Get clients for filter dropdown (scoped to current org)
+    clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
     client_list = [c.name for c in clients]
     
     return render_template(
@@ -55,6 +64,7 @@ def list_projects():
 
 @projects_bp.route('/projects/create', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def create_project():
     """Create a new project"""
     if not current_user.is_admin:
@@ -64,6 +74,9 @@ def create_project():
             pass
         flash('Only administrators can create projects', 'error')
         return redirect(url_for('projects.list_projects'))
+    
+    # Get current organization
+    org_id = get_current_organization_id()
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -77,11 +90,12 @@ def create_project():
         budget_threshold_raw = request.form.get('budget_threshold_percent', '').strip()
         try:
             current_app.logger.info(
-                "POST /projects/create user=%s name=%s client_id=%s billable=%s",
+                "POST /projects/create user=%s name=%s client_id=%s billable=%s org_id=%s",
                 current_user.username,
                 name or '<empty>',
                 client_id or '<empty>',
                 billable,
+                org_id,
             )
         except Exception:
             pass
@@ -93,17 +107,19 @@ def create_project():
                 current_app.logger.warning("Validation failed: missing required fields for project creation")
             except Exception:
                 pass
-            return render_template('projects/create.html', clients=Client.get_active_clients())
+            clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+            return render_template('projects/create.html', clients=clients)
         
-        # Get client and validate
-        client = Client.query.get(client_id)
+        # Get client and validate (must be in same organization)
+        client = scoped_query(Client).filter_by(id=client_id).first()
         if not client:
-            flash('Selected client not found', 'error')
+            flash('Selected client not found in your organization', 'error')
             try:
-                current_app.logger.warning("Validation failed: client not found (id=%s)", client_id)
+                current_app.logger.warning("Validation failed: client not found or not in org (id=%s, org=%s)", client_id, org_id)
             except Exception:
                 pass
-            return render_template('projects/create.html', clients=Client.get_active_clients())
+            clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+            return render_template('projects/create.html', clients=clients)
         
         # Validate hourly rate
         try:
@@ -130,18 +146,20 @@ def create_project():
                 flash('Invalid budget threshold percent (0-100)', 'error')
                 return render_template('projects/create.html', clients=Client.get_active_clients())
         
-        # Check if project name already exists
-        if Project.query.filter_by(name=name).first():
-            flash('A project with this name already exists', 'error')
+        # Check if project name already exists (within organization)
+        if scoped_query(Project).filter_by(name=name).first():
+            flash('A project with this name already exists in your organization', 'error')
             try:
-                current_app.logger.warning("Validation failed: duplicate project name '%s'", name)
+                current_app.logger.warning("Validation failed: duplicate project name '%s' in org %s", name, org_id)
             except Exception:
                 pass
-            return render_template('projects/create.html', clients=Client.get_active_clients())
+            clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+            return render_template('projects/create.html', clients=clients)
         
-        # Create project
+        # Create project with organization_id
         project = Project(
             name=name,
+            organization_id=org_id,  # ✅ Set organization
             client_id=client_id,
             description=description,
             billable=billable,
@@ -152,20 +170,24 @@ def create_project():
         )
         
         db.session.add(project)
-        if not safe_commit('create_project', {'name': name, 'client_id': client_id}):
+        if not safe_commit('create_project', {'name': name, 'client_id': client_id, 'org_id': org_id}):
             flash('Could not create project due to a database error. Please check server logs.', 'error')
-            return render_template('projects/create.html', clients=Client.get_active_clients())
+            clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+            return render_template('projects/create.html', clients=clients)
         
         flash(f'Project "{name}" created successfully', 'success')
         return redirect(url_for('projects.view_project', project_id=project.id))
     
-    return render_template('projects/create.html', clients=Client.get_active_clients())
+    clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+    return render_template('projects/create.html', clients=clients)
 
 @projects_bp.route('/projects/<int:project_id>')
 @login_required
+@require_organization_access()
 def view_project(project_id):
     """View project details and time entries"""
-    project = Project.query.get_or_404(project_id)
+    # Use scoped query to ensure project belongs to current organization
+    project = scoped_query(Project).filter_by(id=project_id).first_or_404()
     
     # Get time entries for this project
     page = request.args.get('page', 1, type=int)
@@ -199,13 +221,15 @@ def view_project(project_id):
 
 @projects_bp.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def edit_project(project_id):
     """Edit project details"""
     if not current_user.is_admin:
         flash('Only administrators can edit projects', 'error')
         return redirect(url_for('projects.view_project', project_id=project_id))
     
-    project = Project.query.get_or_404(project_id)
+    # Use scoped query to ensure project belongs to current organization
+    project = scoped_query(Project).filter_by(id=project_id).first_or_404()
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -222,11 +246,12 @@ def edit_project(project_id):
             flash('Project name and client are required', 'error')
             return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
         
-        # Get client and validate
-        client = Client.query.get(client_id)
+        # Get client and validate (must be in same organization)
+        client = scoped_query(Client).filter_by(id=client_id).first()
         if not client:
-            flash('Selected client not found', 'error')
-            return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
+            flash('Selected client not found in your organization', 'error')
+            clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+            return render_template('projects/edit.html', project=project, clients=clients)
         
         # Validate hourly rate
         try:
@@ -253,13 +278,15 @@ def edit_project(project_id):
                     raise ValueError('Invalid threshold')
             except Exception:
                 flash('Invalid budget threshold percent (0-100)', 'error')
-                return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
+                clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+            return render_template('projects/edit.html', project=project, clients=clients)
         
-        # Check if project name already exists (excluding current project)
-        existing = Project.query.filter_by(name=name).first()
+        # Check if project name already exists (excluding current project, within organization)
+        existing = scoped_query(Project).filter_by(name=name).first()
         if existing and existing.id != project.id:
-            flash('A project with this name already exists', 'error')
-            return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
+            flash('A project with this name already exists in your organization', 'error')
+            clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+            return render_template('projects/edit.html', project=project, clients=clients)
         
         # Update project
         project.name = name
@@ -274,22 +301,25 @@ def edit_project(project_id):
         
         if not safe_commit('edit_project', {'project_id': project.id}):
             flash('Could not update project due to a database error. Please check server logs.', 'error')
-            return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
+            clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+            return render_template('projects/edit.html', project=project, clients=clients)
         
         flash(f'Project "{name}" updated successfully', 'success')
         return redirect(url_for('projects.view_project', project_id=project.id))
     
-    return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
+    clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
+    return render_template('projects/edit.html', project=project, clients=clients)
 
 @projects_bp.route('/projects/<int:project_id>/archive', methods=['POST'])
 @login_required
+@require_organization_access()
 def archive_project(project_id):
     """Archive a project"""
     if not current_user.is_admin:
         flash('Only administrators can archive projects', 'error')
         return redirect(url_for('projects.view_project', project_id=project_id))
     
-    project = Project.query.get_or_404(project_id)
+    project = scoped_query(Project).filter_by(id=project_id).first_or_404()
     
     if project.status == 'archived':
         flash('Project is already archived', 'info')
@@ -301,13 +331,14 @@ def archive_project(project_id):
 
 @projects_bp.route('/projects/<int:project_id>/unarchive', methods=['POST'])
 @login_required
+@require_organization_access()
 def unarchive_project(project_id):
     """Unarchive a project"""
     if not current_user.is_admin:
         flash('Only administrators can unarchive projects', 'error')
         return redirect(url_for('projects.view_project', project_id=project_id))
     
-    project = Project.query.get_or_404(project_id)
+    project = scoped_query(Project).filter_by(id=project_id).first_or_404()
     
     if project.status == 'active':
         flash('Project is already active', 'info')
@@ -319,13 +350,10 @@ def unarchive_project(project_id):
 
 @projects_bp.route('/projects/<int:project_id>/delete', methods=['POST'])
 @login_required
+@require_organization_access(admin_only=True)
 def delete_project(project_id):
     """Delete a project (only if no time entries exist)"""
-    if not current_user.is_admin:
-        flash('Only administrators can delete projects', 'error')
-        return redirect(url_for('projects.view_project', project_id=project_id))
-    
-    project = Project.query.get_or_404(project_id)
+    project = scoped_query(Project).filter_by(id=project_id).first_or_404()
     
     # Check if project has time entries
     if project.time_entries.count() > 0:

@@ -6,9 +6,15 @@ class Client(db.Model):
     """Client model for managing client information and rates"""
     
     __tablename__ = 'clients'
+    __table_args__ = (
+        # Client names must be unique per organization
+        db.UniqueConstraint('organization_id', 'name', name='uq_clients_org_name'),
+        db.Index('idx_clients_org_status', 'organization_id', 'status'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False, unique=True, index=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
+    name = db.Column(db.String(200), nullable=False, index=True)
     description = db.Column(db.Text, nullable=True)
     contact_person = db.Column(db.String(200), nullable=True)
     email = db.Column(db.String(200), nullable=True)
@@ -20,9 +26,11 @@ class Client(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
+    organization = db.relationship('Organization', back_populates='clients')
     projects = db.relationship('Project', backref='client_obj', lazy='dynamic', cascade='all, delete-orphan')
     
-    def __init__(self, name, description=None, contact_person=None, email=None, phone=None, address=None, default_hourly_rate=None):
+    def __init__(self, name, organization_id, description=None, contact_person=None, email=None, phone=None, address=None, default_hourly_rate=None):
+        self.organization_id = organization_id
         self.name = name.strip()
         self.description = description.strip() if description else None
         self.contact_person = contact_person.strip() if contact_person else None

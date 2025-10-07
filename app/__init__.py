@@ -37,6 +37,35 @@ def create_app(config=None):
     # Trust a single proxy by default; adjust via env if needed
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     
+    # HTTPS enforcement in production
+    @app.before_request
+    def enforce_https():
+        """Redirect HTTP to HTTPS in production"""
+        # Skip for local development and health checks
+        if app.config.get('FLASK_ENV') == 'development':
+            return None
+        
+        # Skip for health check endpoints
+        if request.path in ['/_health', '/health', '/metrics']:
+            return None
+        
+        # Check if HTTPS enforcement is enabled
+        if not app.config.get('FORCE_HTTPS', True):
+            return None
+        
+        # Check if request is already HTTPS
+        if request.is_secure:
+            return None
+        
+        # Check X-Forwarded-Proto header (from reverse proxy)
+        if request.headers.get('X-Forwarded-Proto', 'http') == 'https':
+            return None
+        
+        # Redirect to HTTPS
+        from flask import redirect
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
+    
     # Configuration
     # Load env-specific config class
     try:
@@ -138,9 +167,8 @@ def create_app(config=None):
             # 2) Session override (set-language route)
             if 'preferred_language' in session:
                 return session.get('preferred_language')
-            # 3) Best match with Accept-Language
-            supported = list(app.config.get('LANGUAGES', {}).keys()) or ['en']
-            return request.accept_languages.best_match(supported) or app.config.get('BABEL_DEFAULT_LOCALE', 'en')
+            # 3) Default to English (do NOT use Accept-Language header)
+            return app.config.get('BABEL_DEFAULT_LOCALE', 'en')
         except Exception:
             return app.config.get('BABEL_DEFAULT_LOCALE', 'en')
 
@@ -235,8 +263,9 @@ def create_app(config=None):
                     "img-src 'self' data: https:; "
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.datatables.net; "
                     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; "
-                    "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
-                    "connect-src 'self' ws: wss:; "
+                    "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://js.stripe.com; "
+                    "connect-src 'self' ws: wss: https://api.stripe.com; "
+                    "frame-src https://js.stripe.com https://hooks.stripe.com; "
                     "frame-ancestors 'none'"
                 )
                 response.headers['Content-Security-Policy'] = csp
@@ -263,8 +292,16 @@ def create_app(config=None):
     except Exception:
         pass
     
+    # Initialize email service
+    from app.utils.email_service import email_service
+    email_service.init_app(app)
+    
+    # Exempt Stripe webhook from CSRF protection
+    csrf.exempt('app.routes.billing.stripe_webhook')
+    
     # Register blueprints
     from app.routes.auth import auth_bp
+    from app.routes.auth_extended import auth_extended_bp
     from app.routes.main import main_bp
     from app.routes.projects import projects_bp
     from app.routes.timer import timer_bp
@@ -276,8 +313,15 @@ def create_app(config=None):
     from app.routes.invoices import invoices_bp
     from app.routes.clients import clients_bp
     from app.routes.comments import comments_bp
+    from app.routes.organizations import organizations_bp
+    from app.routes.billing import bp as billing_bp
+    from app.routes.onboarding import bp as onboarding_bp
+    from app.routes.promo_codes import promo_codes_bp
+    from app.routes.security import security_bp
+    from app.routes.gdpr import gdpr_bp
     
     app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_extended_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(projects_bp)
     app.register_blueprint(timer_bp)
@@ -289,6 +333,12 @@ def create_app(config=None):
     app.register_blueprint(invoices_bp)
     app.register_blueprint(clients_bp)
     app.register_blueprint(comments_bp)
+    app.register_blueprint(organizations_bp)
+    app.register_blueprint(billing_bp)
+    app.register_blueprint(onboarding_bp)
+    app.register_blueprint(promo_codes_bp)
+    app.register_blueprint(security_bp)
+    app.register_blueprint(gdpr_bp)
     
     # Register OAuth OIDC client if enabled
     try:
@@ -319,39 +369,15 @@ def create_app(config=None):
         else:
             app.logger.warning("AUTH_METHOD is %s but OIDC envs are incomplete; OIDC login will not work", auth_method)
 
-    # Initialize phone home function if enabled
-    if app.config.get('LICENSE_SERVER_ENABLED', True):
+    # Cleanup RLS context after each request
+    @app.teardown_request
+    def _cleanup_rls_context(exception=None):
+        """Clean up Row Level Security context after request."""
         try:
-            from app.utils.license_server import init_license_client, start_license_client, get_license_client
-            
-            # Check if client is already running
-            existing_client = get_license_client()
-            if existing_client and existing_client.running:
-                app.logger.info("Phone home function already running, skipping initialization")
-            else:
-                license_client = init_license_client(
-                    app_identifier=app.config.get('LICENSE_SERVER_APP_ID', 'timetracker'),
-                    app_version=app.config.get('LICENSE_SERVER_APP_VERSION', '1.0.0')
-                )
-                if start_license_client():
-                    app.logger.info("Phone home function started successfully")
-                else:
-                    app.logger.warning("Failed to start phone home function")
+            from app.utils.rls import cleanup_rls_for_request
+            cleanup_rls_for_request()
         except Exception as e:
-            app.logger.warning(f"Could not initialize phone home function: {e}")
-    
-    # Register cleanup function for graceful shutdown
-    @app.teardown_appcontext
-    def cleanup_license_client(exception=None):
-        """Cleanup phone home function on app context teardown"""
-        try:
-            from app.utils.license_server import get_license_client, stop_license_client
-            client = get_license_client()
-            if client and client.running:
-                app.logger.info("Stopping phone home function during app teardown")
-                stop_license_client()
-        except Exception as e:
-            app.logger.warning(f"Error during license client cleanup: {e}")
+            app.logger.debug(f"RLS cleanup: {e}")
     
     # Register error handlers
     from app.utils.error_handlers import register_error_handlers
@@ -360,6 +386,10 @@ def create_app(config=None):
     # Register context processors
     from app.utils.context_processors import register_context_processors
     register_context_processors(app)
+    
+    # Register billing context processor
+    from app.utils.billing_gates import inject_billing_context
+    app.context_processor(inject_billing_context)
     
     # (translations compiled and directories set before Babel init)
     
@@ -371,6 +401,21 @@ def create_app(config=None):
     from app.utils.cli import register_cli_commands
     register_cli_commands(app)
 
+    # Initialize tenancy context for each request
+    @app.before_request
+    def _init_tenancy_context():
+        """Set up multi-tenant context for the current request."""
+        try:
+            from app.utils.tenancy import init_tenancy_for_request
+            init_tenancy_for_request()
+            
+            # Also set up Row Level Security context for PostgreSQL
+            from app.utils.rls import init_rls_for_request
+            init_rls_for_request()
+        except Exception as e:
+            # Non-fatal; some routes don't require organization context
+            app.logger.debug(f"Tenancy initialization: {e}")
+    
     # Promote configured admin usernames automatically on each request (idempotent)
     @app.before_request
     def _promote_admin_users_on_request():

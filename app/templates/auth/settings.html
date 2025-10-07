@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings - TimeTracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                    <i class="bi bi-person"></i> Profile
+                </a>
+                <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-shield-lock"></i> Security
+                </a>
+                <a href="#sessions" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-devices"></i> Sessions
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- Profile Tab -->
+                <div class="tab-pane fade show active" id="profile">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Profile Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('auth.edit_profile') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" value="{{ current_user.username }}" disabled>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" value="{{ current_user.email or 'Not set' }}" disabled>
+                                    {% if current_user.email %}
+                                        <small class="form-text">
+                                            {% if current_user.email_verified %}
+                                                <span class="badge bg-success">Verified</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Not Verified</span>
+                                            {% endif %}
+                                        </small>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="full_name" class="form-label">Full Name</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="full_name" 
+                                           name="full_name" 
+                                           value="{{ current_user.full_name or '' }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="preferred_language" class="form-label">Preferred Language</label>
+                                    <select class="form-select" id="preferred_language" name="preferred_language">
+                                        {% for code, name in config.LANGUAGES.items() %}
+                                            <option value="{{ code }}" {% if current_user.preferred_language == code %}selected{% endif %}>
+                                                {{ name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div class="tab-pane fade" id="security">
+                    <!-- Change Email -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Change Email</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('auth_extended.change_email') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                
+                                <div class="mb-3">
+                                    <label for="new_email" class="form-label">New Email</label>
+                                    <input type="email" class="form-control" id="new_email" name="new_email" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Confirm Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Update Email</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Change Password -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Change Password</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('auth_extended.change_password') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Change Password</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Two-Factor Authentication -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Two-Factor Authentication</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if current_user.totp_enabled %}
+                                <div class="alert alert-success">
+                                    <i class="bi bi-shield-check"></i> 2FA is currently <strong>enabled</strong>
+                                </div>
+                                <form method="POST" action="{{ url_for('auth_extended.disable_2fa') }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label">Confirm Password to Disable</label>
+                                        <input type="password" class="form-control" id="password" name="password" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger">Disable 2FA</button>
+                                </form>
+                            {% else %}
+                                <p>Add an extra layer of security to your account with two-factor authentication.</p>
+                                <a href="{{ url_for('auth_extended.enable_2fa') }}" class="btn btn-success">Enable 2FA</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Tab -->
+                <div class="tab-pane fade" id="sessions">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Active Sessions</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if active_tokens %}
+                                <div class="list-group">
+                                    {% for token in active_tokens %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="mb-1">{{ token.device_name or 'Unknown Device' }}</h6>
+                                                    <p class="mb-1 text-muted small">
+                                                        <i class="bi bi-geo-alt"></i> {{ token.ip_address or 'Unknown location' }}
+                                                    </p>
+                                                    <p class="mb-0 text-muted small">
+                                                        Last active: {{ token.last_used_at.strftime('%Y-%m-%d %H:%M') if token.last_used_at else 'Unknown' }}
+                                                    </p>
+                                                </div>
+                                                <form method="POST" action="{{ url_for('auth_extended.revoke_session', token_id=token.id) }}">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Revoke</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No active sessions</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

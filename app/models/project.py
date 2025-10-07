@@ -6,8 +6,13 @@ class Project(db.Model):
     """Project model for client projects with billing information"""
     
     __tablename__ = 'projects'
+    __table_args__ = (
+        db.Index('idx_projects_org_status', 'organization_id', 'status'),
+        db.Index('idx_projects_org_client', 'organization_id', 'client_id'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
     name = db.Column(db.String(200), nullable=False, index=True)
     client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False, index=True)
     description = db.Column(db.Text, nullable=True)
@@ -23,19 +28,31 @@ class Project(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
+    organization = db.relationship('Organization', back_populates='projects')
     time_entries = db.relationship('TimeEntry', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     # comments relationship is defined via backref in Comment model
     
-    def __init__(self, name, client_id=None, description=None, billable=True, hourly_rate=None, billing_ref=None, client=None):
+    def __init__(self, name, organization_id, client_id=None, description=None, billable=True, hourly_rate=None, billing_ref=None, client=None):
         """Create a Project.
 
         Backward-compatible initializer that accepts either client_id or client name.
         If client name is provided and client_id is not, the corresponding Client
         record will be found or created on the fly and client_id will be set.
+        
+        Args:
+            name: Project name
+            organization_id: ID of the organization this project belongs to
+            client_id: ID of the client (optional if client name is provided)
+            description: Project description
+            billable: Whether the project is billable
+            hourly_rate: Hourly rate for the project
+            billing_ref: Billing reference
+            client: Client name (will be found or created if client_id not provided)
         """
         from .client import Client  # local import to avoid circular dependencies
 
+        self.organization_id = organization_id
         self.name = name.strip()
         self.description = description.strip() if description else None
         self.billable = billable
@@ -44,13 +61,13 @@ class Project(db.Model):
 
         resolved_client_id = client_id
         if resolved_client_id is None and client:
-            # Find or create client by name
+            # Find or create client by name (scoped to organization)
             client_name = client.strip()
-            existing = Client.query.filter_by(name=client_name).first()
+            existing = Client.query.filter_by(name=client_name, organization_id=organization_id).first()
             if existing:
                 resolved_client_id = existing.id
             else:
-                new_client = Client(name=client_name)
+                new_client = Client(name=client_name, organization_id=organization_id)
                 db.session.add(new_client)
                 # Flush to obtain id without committing the whole transaction
                 try:

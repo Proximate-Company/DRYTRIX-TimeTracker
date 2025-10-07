@@ -7,6 +7,7 @@ class TaskActivity(db.Model):
     __tablename__ = 'task_activities'
 
     id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     event = db.Column(db.String(50), nullable=False, index=True)
@@ -16,7 +17,8 @@ class TaskActivity(db.Model):
     task = db.relationship('Task', backref=db.backref('activities', lazy='dynamic', cascade='all, delete-orphan'))
     user = db.relationship('User')
 
-    def __init__(self, task_id, event, user_id=None, details=None):
+    def __init__(self, task_id, organization_id, event, user_id=None, details=None):
+        self.organization_id = organization_id
         self.task_id = task_id
         self.user_id = user_id
         self.event = event

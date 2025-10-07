@@ -1,0 +1,85 @@
+{% if checklist and not checklist.dismissed and not checklist.is_complete %}
+<div class="card shadow-sm border-0 mb-4" style="
+    border-radius: 12px;
+    overflow: hidden;
+    border-left: 4px solid #667eea !important;
+">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list-check" style="color: #667eea;"></i>
+                {{ _('Getting Started') }}
+            </h5>
+            <span class="badge bg-primary" style="font-size: 14px; padding: 6px 12px;">
+                {{ checklist.completion_percentage }}% {{ _('Complete') }}
+            </span>
+        </div>
+        
+        <div class="progress mb-3" style="height: 8px; border-radius: 10px;">
+            <div class="progress-bar" role="progressbar" 
+                 style="width: {{ checklist.completion_percentage }}%; background: linear-gradient(90deg, #667eea, #764ba2);"
+                 aria-valuenow="{{ checklist.completion_percentage }}" 
+                 aria-valuemin="0" 
+                 aria-valuemax="100">
+            </div>
+        </div>
+        
+        <p class="text-muted mb-3" style="font-size: 14px;">
+            {{ _('Complete these tasks to get the most out of TimeTracker:') }}
+        </p>
+        
+        {% set next_task = checklist.get_next_task() %}
+        {% if next_task %}
+        <div class="d-flex align-items-start p-3 mb-3" style="
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        ">
+            <div style="font-size: 24px; color: #667eea; margin-right: 15px;">
+                <i class="{{ next_task.icon }}"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div style="font-weight: 600; color: #2c3e50; margin-bottom: 5px;">
+                    {{ _('Next:') }} {{ _(next_task.title) }}
+                </div>
+                <div style="font-size: 13px; color: #6c757d;">
+                    {{ _(next_task.description) }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('onboarding.checklist') }}" class="btn btn-primary btn-sm flex-grow-1">
+                <i class="fas fa-arrow-right"></i> {{ _('Continue Setup') }}
+            </a>
+            <button class="btn btn-outline-secondary btn-sm" onclick="dismissOnboarding()" title="{{ _('Dismiss') }}">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function dismissOnboarding() {
+    if (!confirm('{{ _("Dismiss the onboarding checklist? You can always access it later.") }}')) {
+        return;
+    }
+    
+    fetch('/onboarding/api/checklist/dismiss', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endif %}
+

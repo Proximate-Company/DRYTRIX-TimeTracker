@@ -6,17 +6,23 @@ from app.models import Client, Project
 from datetime import datetime
 from decimal import Decimal
 from app.utils.db import safe_commit
+from app.utils.tenancy import (
+    get_current_organization_id,
+    scoped_query,
+    require_organization_access
+)
 
 clients_bp = Blueprint('clients', __name__)
 
 @clients_bp.route('/clients')
 @login_required
+@require_organization_access()
 def list_clients():
     """List all clients"""
     status = request.args.get('status', 'active')
     search = request.args.get('search', '').strip()
     
-    query = Client.query
+    query = scoped_query(Client)
     if status == 'active':
         query = query.filter_by(status='active')
     elif status == 'inactive':
@@ -39,11 +45,14 @@ def list_clients():
 
 @clients_bp.route('/clients/create', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def create_client():
     """Create a new client"""
     if not current_user.is_admin:
         flash(_('Only administrators can create clients'), 'error')
         return redirect(url_for('clients.list_clients'))
+    
+    org_id = get_current_organization_id()
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -55,10 +64,11 @@ def create_client():
         default_hourly_rate = request.form.get('default_hourly_rate', '').strip()
         try:
             current_app.logger.info(
-                "POST /clients/create user=%s name=%s email=%s",
+                "POST /clients/create user=%s name=%s email=%s org_id=%s",
                 current_user.username,
                 name or '<empty>',
-                email or '<empty>'
+                email or '<empty>',
+                org_id
             )
         except Exception:
             pass
@@ -72,11 +82,11 @@ def create_client():
                 pass
             return render_template('clients/create.html')
         
-        # Check if client name already exists
-        if Client.query.filter_by(name=name).first():
-            flash('A client with this name already exists', 'error')
+        # Check if client name already exists (within organization)
+        if scoped_query(Client).filter_by(name=name).first():
+            flash('A client with this name already exists in your organization', 'error')
             try:
-                current_app.logger.warning("Validation failed: duplicate client name '%s'", name)
+                current_app.logger.warning("Validation failed: duplicate client name '%s' in org %s", name, org_id)
             except Exception:
                 pass
             return render_template('clients/create.html')
@@ -92,9 +102,10 @@ def create_client():
                 pass
             return render_template('clients/create.html')
         
-        # Create client
+        # Create client with organization_id
         client = Client(
             name=name,
+            organization_id=org_id,
             description=description,
             contact_person=contact_person,
             email=email,
@@ -115,24 +126,26 @@ def create_client():
 
 @clients_bp.route('/clients/<int:client_id>')
 @login_required
+@require_organization_access()
 def view_client(client_id):
     """View client details and projects"""
-    client = Client.query.get_or_404(client_id)
+    client = scoped_query(Client).filter_by(id=client_id).first_or_404()
     
-    # Get projects for this client
-    projects = Project.query.filter_by(client_id=client.id).order_by(Project.name).all()
+    # Get projects for this client (scoped to organization)
+    projects = scoped_query(Project).filter_by(client_id=client.id).order_by(Project.name).all()
     
     return render_template('clients/view.html', client=client, projects=projects)
 
 @clients_bp.route('/clients/<int:client_id>/edit', methods=['GET', 'POST'])
 @login_required
+@require_organization_access()
 def edit_client(client_id):
     """Edit client details"""
     if not current_user.is_admin:
         flash('Only administrators can edit clients', 'error')
         return redirect(url_for('clients.view_client', client_id=client_id))
     
-    client = Client.query.get_or_404(client_id)
+    client = scoped_query(Client).filter_by(id=client_id).first_or_404()
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -148,10 +161,10 @@ def edit_client(client_id):
             flash('Client name is required', 'error')
             return render_template('clients/edit.html', client=client)
         
-        # Check if client name already exists (excluding current client)
-        existing = Client.query.filter_by(name=name).first()
+        # Check if client name already exists (excluding current client, within organization)
+        existing = scoped_query(Client).filter_by(name=name).first()
         if existing and existing.id != client.id:
-            flash('A client with this name already exists', 'error')
+            flash('A client with this name already exists in your organization', 'error')
             return render_template('clients/edit.html', client=client)
         
         # Validate hourly rate
@@ -182,13 +195,14 @@ def edit_client(client_id):
 
 @clients_bp.route('/clients/<int:client_id>/archive', methods=['POST'])
 @login_required
+@require_organization_access()
 def archive_client(client_id):
     """Archive a client"""
     if not current_user.is_admin:
         flash('Only administrators can archive clients', 'error')
         return redirect(url_for('clients.view_client', client_id=client_id))
     
-    client = Client.query.get_or_404(client_id)
+    client = scoped_query(Client).filter_by(id=client_id).first_or_404()
     
     if client.status == 'inactive':
         flash('Client is already inactive', 'info')
@@ -200,13 +214,14 @@ def archive_client(client_id):
 
 @clients_bp.route('/clients/<int:client_id>/activate', methods=['POST'])
 @login_required
+@require_organization_access()
 def activate_client(client_id):
     """Activate a client"""
     if not current_user.is_admin:
         flash('Only administrators can activate clients', 'error')
         return redirect(url_for('clients.view_client', client_id=client_id))
     
-    client = Client.query.get_or_404(client_id)
+    client = scoped_query(Client).filter_by(id=client_id).first_or_404()
     
     if client.status == 'active':
         flash('Client is already active', 'info')
@@ -218,13 +233,10 @@ def activate_client(client_id):
 
 @clients_bp.route('/clients/<int:client_id>/delete', methods=['POST'])
 @login_required
+@require_organization_access(admin_only=True)
 def delete_client(client_id):
     """Delete a client (only if no projects exist)"""
-    if not current_user.is_admin:
-        flash('Only administrators can delete clients', 'error')
-        return redirect(url_for('clients.view_client', client_id=client_id))
-    
-    client = Client.query.get_or_404(client_id)
+    client = scoped_query(Client).filter_by(id=client_id).first_or_404()
     
     # Check if client has projects
     if client.projects.count() > 0:
@@ -242,7 +254,8 @@ def delete_client(client_id):
 
 @clients_bp.route('/api/clients')
 @login_required
+@require_organization_access()
 def api_clients():
     """API endpoint to get clients for dropdowns"""
-    clients = Client.get_active_clients()
+    clients = scoped_query(Client).filter_by(status='active').order_by(Client.name).all()
     return {'clients': [{'id': c.id, 'name': c.name, 'default_rate': float(c.default_hourly_rate) if c.default_hourly_rate else None} for c in clients]}

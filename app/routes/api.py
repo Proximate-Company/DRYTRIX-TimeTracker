@@ -11,11 +11,17 @@ import json
 import os
 import uuid
 from werkzeug.utils import secure_filename
+from app.utils.tenancy import (
+    get_current_organization_id,
+    scoped_query,
+    require_organization_access
+)
 
 api_bp = Blueprint('api', __name__)
 
 @api_bp.route('/api/timer/status')
 @login_required
+@require_organization_access()
 def timer_status():
     """Get current timer status"""
     active_timer = current_user.active_timer
@@ -41,8 +47,10 @@ def timer_status():
 
 @api_bp.route('/api/search')
 @login_required
+@require_organization_access()
 def search():
     """Global search endpoint for projects, tasks, clients, and time entries"""
+    org_id = get_current_organization_id()
     query = request.args.get('q', '').strip()
     limit = request.args.get('limit', 10, type=int)
     
@@ -52,9 +60,9 @@ def search():
     results = []
     search_pattern = f'%{query}%'
     
-    # Search projects
+    # Search projects (scoped to organization)
     try:
-        projects = Project.query.filter(
+        projects = scoped_query(Project).filter(
             Project.status == 'active',
             or_(
                 Project.name.ilike(search_pattern),
@@ -75,9 +83,9 @@ def search():
     except Exception as e:
         current_app.logger.error(f"Error searching projects: {e}")
     
-    # Search tasks
+    # Search tasks (scoped to organization)
     try:
-        tasks = Task.query.join(Project).filter(
+        tasks = scoped_query(Task).join(Project).filter(
             Project.status == 'active',
             or_(
                 Task.name.ilike(search_pattern),
