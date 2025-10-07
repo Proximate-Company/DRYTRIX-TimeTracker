@@ -11,6 +11,7 @@
   .calendar-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
   .calendar-controls { display:flex; align-items:center; gap:.5rem; }
   .calendar-assign { width: 280px; }
+  .recurring-list { max-height: 240px; overflow:auto; }
 </style>
 {% endblock %}
 
@@ -35,6 +36,7 @@
                 <button class="btn btn-sm btn-outline-primary" id="weekBtn">{{ _('Week') }}</button>
                 <button class="btn btn-sm btn-outline-primary" id="monthBtn">{{ _('Month') }}</button>
               </div>
+              <button class="btn btn-sm btn-outline-secondary" id="manageRecurringBtn"><i class="fas fa-redo"></i> {{ _('Recurring') }}</button>
             </div>
           </div>
         </div>
@@ -95,6 +97,18 @@
     document.getElementById('weekBtn').addEventListener('click', () => calendar.changeView('timeGridWeek'));
     document.getElementById('monthBtn').addEventListener('click', () => calendar.changeView('dayGridMonth'));
   });
+  // Recurring blocks minimal UI
+  const recurringBtn = document.getElementById('manageRecurringBtn');
+  if (recurringBtn) {
+    recurringBtn.addEventListener('click', async function(){
+      try {
+        const res = await fetch('/api/recurring-blocks', { credentials:'same-origin' });
+        const json = await res.json();
+        const list = (json.blocks || []).map(b => `• ${b.name} (${b.recurrence})`).join('\n') || '{{ _('No recurring blocks yet') }}';
+        alert(list);
+      } catch(e) { alert('{{ _('Failed to load recurring blocks') }}'); }
+    });
+  }
 </script>
 {% endblock %}
 

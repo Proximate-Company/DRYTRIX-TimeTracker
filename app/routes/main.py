@@ -6,6 +6,10 @@ import pytz
 from app import db
 from sqlalchemy import text
 
+from flask import make_response, current_app
+import json
+import os
+
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
@@ -124,3 +128,66 @@ def search():
     )
     
     return render_template('main/search.html', entries=entries, query=query)
+
+
+@main_bp.route('/service-worker.js')
+def service_worker():
+    """Serve a minimal service worker for PWA offline caching."""
+    # Build absolute URLs for static assets to ensure proper caching
+    assets = [
+        '/',
+        url_for('static', filename='base.css'),
+        url_for('static', filename='mobile.css'),
+        url_for('static', filename='ui.css'),
+        url_for('static', filename='mobile.js'),
+        url_for('static', filename='commands.js'),
+    ]
+    preamble = "const CACHE_NAME='tt-cache-v2';\n"
+    assets_js = "const ASSETS=" + json.dumps(assets) + ";\n\n"
+    body = (
+        "self.addEventListener('install', (event)=>{ event.waitUntil(caches.open(CACHE_NAME).then((c)=>c.addAll(ASSETS))); self.skipWaiting()); });\n"
+        .replace('); );', ');')  # guard against formatting
+    )
+    body = (
+        "self.addEventListener('install', (event)=>{\n"
+        "  event.waitUntil((async()=>{\n"
+        "    const cache = await caches.open(CACHE_NAME);\n"
+        "    try { await cache.addAll(ASSETS); } catch(e) {}\n"
+        "    self.skipWaiting();\n"
+        "  })());\n"
+        "});\n"
+        "self.addEventListener('activate', (event)=>{\n"
+        "  event.waitUntil((async()=>{\n"
+        "    const keys = await caches.keys();\n"
+        "    await Promise.all(keys.map((k)=>{ if(k!==CACHE_NAME){ return caches.delete(k); } return null; }));\n"
+        "    self.clients.claim();\n"
+        "  })());\n"
+        "});\n"
+        "self.addEventListener('fetch', (event)=>{\n"
+        "  const req = event.request;\n"
+        "  if (req.method !== 'GET') { return; }\n"
+        "  const url = new URL(req.url);\n"
+        "  const sameOrigin = url.origin === self.location.origin;\n"
+        "  if (!sameOrigin) {\n"
+        "    // Do not intercept cross-origin (CDN) requests\n"
+        "    return;\n"
+        "  }\n"
+        "  event.respondWith((async()=>{\n"
+        "    const cached = await caches.match(req);\n"
+        "    if (cached) return cached;\n"
+        "    try {\n"
+        "      const res = await fetch(req);\n"
+        "      const cache = await caches.open(CACHE_NAME);\n"
+        "      cache.put(req, res.clone());\n"
+        "      return res;\n"
+        "    } catch(e) {\n"
+        "      const fallback = await caches.match('/');\n"
+        "      return fallback || new Response('', { status: 504, statusText: 'Gateway Timeout' });\n"
+        "    }\n"
+        "  })());\n"
+        "});\n"
+    )
+    sw_js = preamble + assets_js + body
+    resp = make_response(sw_js)
+    resp.headers['Content-Type'] = 'application/javascript'
+    return resp

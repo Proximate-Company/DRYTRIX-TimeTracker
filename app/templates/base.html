@@ -20,6 +20,15 @@
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/drytrix-logo.svg') }}">
     {% endif %}
     
+    <!-- Persist compact density ASAP to avoid flicker across pages -->
+    <script>
+        (function(){
+            try {
+                var d = localStorage.getItem('tt-density');
+                if (d === 'compact') { document.documentElement.classList.add('compact'); }
+            } catch(e) {}
+        })();
+    </script>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -30,6 +39,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}?v={{ app_version }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}?v={{ app_version }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='ui.css') }}?v={{ app_version }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     
     {% block extra_css %}{% endblock %}
     {% block head_extra %}{% endblock %}
@@ -61,14 +71,14 @@
     <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
     <!-- Enhanced Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
+        <div class="container-fluid px-3">
             <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
                 {% if settings and settings.has_logo() %}
         <img src="{{ settings.get_logo_url() }}" alt="Company Logo" width="36" height="36">
         {% else %}
         <img src="{{ url_for('static', filename='images/drytrix-logo.svg') }}" alt="DryTrix Logo" width="36" height="36">
         {% endif %}
-                <span class="text-dark fw-bold">{{ _('Time Tracker') }}</span>
+                <span class="text-dark fw-bold ms-2 d-none d-md-inline">{{ _('Time Tracker') }}</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,6 +105,7 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('timer.manual_entry') }}"><i class="fas fa-plus me-2"></i>{{ _('Log Time') }}</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('timer.bulk_entry') }}"><i class="fas fa-calendar-plus me-2"></i>{{ _('Bulk Time Entry') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('timer.calendar_view') }}"><i class="fas fa-calendar-alt me-2"></i>{{ _('Calendar') }}</a></li>
                         </ul>
                     </li>
 
@@ -119,15 +130,60 @@
                 </ul>
                 
                 <ul class="navbar-nav ms-auto">
+                    <!-- Global Search (desktop) -->
+                    <li class="nav-item d-none d-xl-flex align-items-center me-2">
+                        <form class="navbar-search" role="search" action="{{ url_for('main.search') }}" method="get">
+                            <div class="navbar-search-field">
+                                <i class="fas fa-search"></i>
+                                <input name="q" type="search" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}">
+                            </div>
+                        </form>
+                    </li>
+
+                    <!-- Command Palette Launcher (desktop) -->
+                    <li class="nav-item d-none d-xl-flex align-items-center me-2">
+                        <button id="commandPaletteBtn" class="btn btn-quiet nav-control" type="button" onclick="try{ openCommandPalette(); }catch(e){}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ _('Open Command Palette') }} ({{ _('Ctrl') }}+K)">
+                            <i class="fas fa-terminal"></i>
+                        </button>
+                    </li>
+
+                    <!-- Visual divider between actions and account -->
+                    <li class="nav-item d-none d-xl-flex align-items-center nav-divider" aria-hidden="true"></li>
+
+                    <!-- Language Switcher -->
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center nav-control nav-quiet" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe me-1"></i>
+                            <span class="d-none d-xl-inline">{{ current_language_label }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                            {% for code, label in config['LANGUAGES'].items() %}
+                            <li>
+                                <a class="dropdown-item {% if current_language_code == code %}active{% endif %}" href="{{ url_for('main.set_language') }}?lang={{ code }}">{{ label }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                             <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
                                 <i class="fas fa-user text-primary"></i>
                             </div>
-                            <span>{{ current_user.display_name }}</span>
+                            <span class="d-none d-xl-inline">{{ current_user.display_name }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="try{ openCommandPalette(); }catch(e){}">
+                                    <i class="fas fa-keyboard me-2"></i>{{ _('Keyboard Shortcuts') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-none" id="installAppMenuItem" href="#">
+                                    <i class="fas fa-download me-2"></i>{{ _('Install App') }}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">
                                 <i class="fas fa-user-circle me-2"></i>{{ _('Profile') }}
                             </a></li>
@@ -145,7 +201,7 @@
     </nav>
 
     <!-- Enhanced Main Content -->
-    <main id="main-content" class="container mt-4">
+    <main id="main-content" class="container-fluid mt-4 px-3 px-md-4">
     <!-- Enhanced Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -377,6 +433,7 @@
                     });
                     // Enable tooltip if available
                     try { new bootstrap.Tooltip(btn); } catch(e) {}
+                try { var cp = document.getElementById('commandPaletteBtn'); if (cp) { new bootstrap.Tooltip(cp); } } catch(e) {}
                 }
 
                 // Keep icon in sync if theme changes elsewhere
@@ -422,6 +479,36 @@
     
     {% block scripts_extra %}{% endblock %}
     {% block extra_js %}{% endblock %}
+    <script>
+        // Service Worker registration and PWA install UI
+        (function(){
+            try {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('/service-worker.js').catch(function(){});
+                }
+                var deferredPrompt = null;
+                var installItem = document.getElementById('installAppMenuItem');
+                window.addEventListener('beforeinstallprompt', function(e){
+                    try { e.preventDefault(); } catch(_) {}
+                    deferredPrompt = e;
+                    if (installItem) installItem.classList.remove('d-none');
+                });
+                if (installItem) {
+                    installItem.addEventListener('click', async function(ev){
+                        ev.preventDefault();
+                        if (!deferredPrompt) return;
+                        try {
+                            deferredPrompt.prompt();
+                            await deferredPrompt.userChoice;
+                        } catch (_) {}
+                        deferredPrompt = null;
+                        installItem.classList.add('d-none');
+                    });
+                }
+                window.addEventListener('appinstalled', function(){ try { showToast('{{ _('App installed') }}', 'success'); } catch(_) {} });
+            } catch(e) {}
+        })();
+    </script>
     <script>
         // Promise-based global confirm helper
         (function(){

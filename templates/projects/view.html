@@ -33,6 +33,19 @@
                     <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" class="btn btn-secondary">
                         <i class="fas fa-edit me-1"></i> {{ _('Edit') }}
                     </a>
+                    {% if project.status == 'active' %}
+                    <form method="POST" action="{{ url_for('projects.archive_project', project_id=project.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-outline-secondary" data-confirm="{{ _('Archive this project?') }}">
+                            <i class="fas fa-archive me-1"></i> {{ _('Archive') }}
+                        </button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('projects.unarchive_project', project_id=project.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-outline-secondary" data-confirm="{{ _('Unarchive this project?') }}">
+                            <i class="fas fa-box-open me-1"></i> {{ _('Unarchive') }}
+                        </button>
+                    </form>
+                    {% endif %}
                     {% endif %}
                     <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i> {{ _('Back') }}
@@ -199,6 +212,30 @@
                         {{ empty_state('fas fa-tasks', _('No Tasks Yet'), _('Break down this project into manageable tasks to track progress.'), actions) }}
                     </div>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rates (Overrides) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-money-bill-wave me-2"></i>{{ _('Rate Overrides') }}
+                    </h6>
+                    <a href="{{ url_for('projects.edit_project', project_id=project.id) }}#rates" class="btn btn-sm btn-outline-primary">{{ _('Manage') }}</a>
+                </div>
+                <div class="card-body">
+                    <div class="text-muted small">{{ _('Effective rates are applied in this order: user-specific override, project default override, project hourly rate, client default rate.') }}</div>
+                    <div class="mt-2">
+                        {% if project.hourly_rate %}
+                        <div><strong>{{ _('Project rate') }}:</strong> {{ currency }} {{ "%.2f"|format(project.hourly_rate) }}</div>
+                        {% else %}
+                        <div class="text-muted">{{ _('Project has no hourly rate; relying on overrides or client default.') }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

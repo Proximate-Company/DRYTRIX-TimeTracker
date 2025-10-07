@@ -148,6 +148,15 @@
     --bs-dropdown-link-hover-color: var(--text-primary);
 }
 
+/* Force containers to full width unless pages explicitly constrain */
+.container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
+    max-width: 100% !important;
+}
+
+/* Ensure common blocks stretch */
+.card { width: 100%; }
+.table-responsive, .table { width: 100%; }
+
 /* Dark Theme Variables */
 [data-theme="dark"] {
     /* Primary Color Palette - Enhanced for dark theme */
@@ -1695,6 +1704,7 @@ main {
     vertical-align: middle;
     color: var(--text-secondary);
 }
+.table thead th, .table tbody td { white-space: normal; }
 
 .table tbody tr {
     transition: var(--transition);
@@ -2092,6 +2102,22 @@ main {
     border-radius: 0;
 }
 
+/* Responsive navbar squeezes: hide labels earlier, keep icons and key controls */
+@media (max-width: 1199.98px) { /* < xl */
+  .navbar .navbar-brand span { display: none !important; }
+  .navbar .nav-divider { display: none !important; }
+  .navbar .navbar-search { display: none !important; }
+}
+
+@media (max-width: 991.98px) { /* < lg */
+  .navbar .dropdown .dropdown-toggle .d-none.d-xl-inline { display: none !important; }
+}
+
+/* Improve spacing of right-side controls on tight viewports */
+@media (max-width: 1199.98px) {
+  .navbar .navbar-nav.ms-auto > .nav-item { margin-left: .25rem; }
+}
+
 /* Prevent overflow issues with longer localized labels */
 .navbar .container {
     overflow: visible;
@@ -2101,8 +2127,8 @@ main {
 .navbar-nav.me-auto { flex: 1 1 auto; min-width: 0; }
 .navbar-nav.ms-auto { flex: 0 0 auto; }
 
-/* Allow wrapping to a second row on tighter widths (desktop too) */
-.navbar-nav { flex-wrap: wrap; row-gap: 0.25rem; column-gap: 0.25rem; background-color: transparent; border-radius: 0;}
+/* Prevent wrapping on desktop; allow only at mobile sizes */
+.navbar-nav { flex-wrap: nowrap; row-gap: 0.25rem; column-gap: 0.25rem; background-color: transparent; border-radius: 0;}
 .navbar-nav .nav-item { flex: 0 1 auto; min-width: 0; }
 
 /* Dark theme navbar styling */
@@ -2182,7 +2208,7 @@ main {
 .navbar-nav .nav-link {
     color: var(--text-secondary) !important;
     font-weight: 500;
-    padding: 0.875rem 1.25rem;
+    padding: 0.75rem 1rem; /* slightly tighter to reduce overflow */
     border-radius: 0;
     transition: var(--transition);
     position: relative;
@@ -2474,8 +2500,8 @@ h6 { font-size: 1rem; }
     min-width: 220px;
     border-radius: 12px !important;
     padding: 0.75rem 0.25rem; /* Add padding to prevent outline clipping */
-    position: absolute !important;
-    right: 0;
+    position: absolute; /* allow Bootstrap popper to control */
+    right: auto;
     overflow: visible !important; /* Allow outlines to show */
 }
 .navbar .dropdown-item {
@@ -2602,6 +2628,86 @@ h6 { font-size: 1rem; }
     display: inline-flex;
     align-items: center;
     border-radius: var(--border-radius-sm);
+}
+
+/* Navbar search alignment and control sizing */
+.navbar .navbar-search-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bs-body-bg, #fff);
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.03);
+}
+.navbar .navbar-search-field i { color: #9ca3af; }
+.navbar .navbar-search-field input {
+    border: 0;
+    outline: none;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    color: var(--text-primary);
+}
+.navbar .navbar-search-field:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.navbar .nav-control {
+    height: 40px;
+    min-height: 40px; /* override btn min-height */
+    display: inline-flex;
+    align-items: center;
+}
+.navbar .ms-auto > .nav-item { margin-left: 0.5rem; }
+.navbar .ms-auto > .nav-item:first-child { margin-left: 0; }
+.navbar .nav-divider { width: 1px; height: 24px; background: var(--border-color); opacity: 0.5; margin: 0 0.25rem; }
+
+/* Keep header on one line on desktop; constrain search width */
+@media (max-width: 991.98px) {
+    /* Permit wrapping on small screens to avoid overflow */
+    .navbar .navbar-collapse { flex-wrap: wrap; }
+    .navbar .navbar-nav.me-auto { flex-wrap: wrap; row-gap: 0.25rem; }
+    .navbar .navbar-nav.ms-auto { flex: 0 1 auto; min-width: 0; align-items: center; column-gap: 0.25rem; row-gap: 0.25rem; flex-wrap: wrap; justify-content: flex-end; }
+    /* Search flexes but can shrink to fit */
+    .navbar .navbar-search { flex: 1 1 220px; min-width: 180px; max-width: 320px; }
+}
+
+/* Subtle active state with underline instead of pill */
+.navbar .navbar-nav .nav-link.active {
+    background: transparent;
+    color: var(--text-primary) !important;
+    box-shadow: none;
+}
+.navbar .navbar-nav .nav-link.active::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 4px;
+    height: 2px;
+    background: var(--primary-color);
+    border-radius: 1px;
+}
+[data-theme="dark"] .navbar .navbar-nav .nav-link.active::after {
+    background: var(--primary-color);
+}
+
+/* Quiet navbar actions (icon-only) */
+.btn.btn-quiet, .nav-quiet {
+    background: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+.btn.btn-quiet:hover, .nav-quiet:hover {
+    background: var(--light-color) !important;
+    color: var(--text-primary) !important;
+}
+.btn.btn-quiet:focus, .nav-quiet:focus {
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
 }
 
 /* Backdrop to block interactions behind open dropdowns */

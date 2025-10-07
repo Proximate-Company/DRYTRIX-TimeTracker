@@ -62,16 +62,22 @@ class MobileNavigation {
             }
         });
         
-        // Close mobile menu when clicking on nav links
+        // Close mobile menu when clicking on nav links that are not dropdown toggles
         this.navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (MobileUtils.isMobile()) {
-                    this.closeMenu();
+            link.addEventListener('click', (ev) => {
+                if (!MobileUtils.isMobile()) return;
+                // If a dropdown toggle inside the navbar, don't close the whole menu; let dropdown open
+                const isDropdownToggle = link.classList.contains('dropdown-toggle');
+                if (isDropdownToggle) {
+                    // Allow Bootstrap's dropdown to toggle; prevent nav collapse from closing immediately
+                    ev.stopPropagation();
+                    return;
                 }
+                this.closeMenu();
             });
         });
         
-        // Close mobile menu when clicking on dropdown items
+        // Close mobile menu when a dropdown item is selected (navigate)
         this.dropdownItems.forEach(item => {
             item.addEventListener('click', () => {
                 if (MobileUtils.isMobile()) {
@@ -817,13 +823,30 @@ class MobileGestures {
     }
     
     handleSwipeLeft() {
-        // Handle swipe left gesture
-        console.log('Swipe left detected');
+        // Navigate between primary sections on swipe
+        try {
+            // Prefer reports after tasks
+            const path = (location.pathname || '/').toLowerCase();
+            if (path.startsWith('/')) {
+                if (path.startsWith('/')) {
+                    if (path === '/' || path.startsWith('/dashboard')) { window.location.href = '/projects'; return; }
+                    if (path.startsWith('/projects')) { window.location.href = '/tasks'; return; }
+                    if (path.startsWith('/tasks')) { window.location.href = '/reports'; return; }
+                }
+            }
+        } catch (e) { console.log('Swipe left detected'); }
     }
     
     handleSwipeRight() {
-        // Handle swipe right gesture
-        console.log('Swipe right detected');
+        // Navigate backwards between primary sections on swipe
+        try {
+            const path = (location.pathname || '/').toLowerCase();
+            if (path.startsWith('/')) {
+                if (path.startsWith('/reports')) { window.location.href = '/tasks'; return; }
+                if (path.startsWith('/tasks')) { window.location.href = '/projects'; return; }
+                if (path.startsWith('/projects')) { window.location.href = '/'; return; }
+            }
+        } catch (e) { console.log('Swipe right detected'); }
     }
     
     preventPinchZoom() {

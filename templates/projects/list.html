@@ -213,6 +213,19 @@
                                                class="btn btn-sm btn-action btn-action--edit touch-target" title="{{ _('Edit project') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            {% if project.status == 'active' %}
+                                            <form method="POST" action="{{ url_for('projects.archive_project', project_id=project.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-action btn-action--more touch-target" title="{{ _('Archive project') }}">
+                                                    <i class="fas fa-archive"></i>
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <form method="POST" action="{{ url_for('projects.unarchive_project', project_id=project.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-action btn-action--more touch-target" title="{{ _('Unarchive project') }}">
+                                                    <i class="fas fa-box-open"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
                                             <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="{{ _('Delete project') }}"
                                                     onclick="showDeleteProjectModal('{{ project.id }}', '{{ project.name }}')">
                                                 <i class="fas fa-trash"></i>

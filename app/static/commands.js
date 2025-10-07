@@ -71,13 +71,20 @@
 
   addCommand({ id: 'goto-dashboard', title: 'Go to Dashboard', hint: 'g d', keywords: 'home main', action: () => nav('/') });
   addCommand({ id: 'goto-projects', title: 'Go to Projects', hint: 'g p', keywords: 'work clients', action: () => nav('/projects') });
+  addCommand({ id: 'goto-clients', title: 'Go to Clients', hint: '', keywords: 'work companies', action: () => nav('/clients') });
   addCommand({ id: 'goto-tasks', title: 'Go to Tasks', hint: 'g t', keywords: 'work', action: () => nav('/tasks') });
   addCommand({ id: 'goto-reports', title: 'Go to Reports', hint: 'g r', keywords: 'insights analytics', action: () => nav('/reports') });
+  addCommand({ id: 'goto-invoices', title: 'Go to Invoices', hint: '', keywords: 'billing finance', action: () => nav('/invoices') });
+  addCommand({ id: 'goto-analytics', title: 'Go to Analytics', hint: '', keywords: 'charts insights', action: () => nav('/analytics') });
   addCommand({ id: 'open-calendar', title: 'Open Calendar', hint: '', keywords: 'day week month schedule', action: () => nav('/timer/calendar') });
   addCommand({ id: 'log-time', title: 'Log Time (Manual Entry)', hint: '', keywords: 'add create', action: () => nav('/timer/manual') });
   addCommand({ id: 'bulk-entry', title: 'Bulk Time Entry', hint: '', keywords: 'multi add', action: () => nav('/timer/bulk') });
-  addCommand({ id: 'start-timer', title: 'Start Timer (Quick)', hint: '', keywords: 'play run', action: startTimerQuick });
+  addCommand({ id: 'start-timer', title: 'Start New Timer (Quick → Manual)', hint: '', keywords: 'play run', action: startTimerQuick });
   addCommand({ id: 'stop-timer', title: 'Stop Timer', hint: '', keywords: 'pause end', action: stopTimerQuick });
+  addCommand({ id: 'goto-admin', title: 'Open Admin', hint: '', keywords: 'settings system', action: () => nav('/admin') });
+  addCommand({ id: 'open-profile', title: 'Open Profile', hint: '', keywords: 'account user', action: () => nav('/profile') });
+  addCommand({ id: 'open-help', title: 'Open Help', hint: '', keywords: 'support docs', action: () => nav('/help') });
+  addCommand({ id: 'open-about', title: 'Open About', hint: '', keywords: 'info version', action: () => nav('/about') });
   addCommand({ id: 'toggle-theme', title: 'Toggle Theme', hint: isMac ? '⌘⇧L' : 'Ctrl+Shift+L', keywords: 'light dark', action: () => { try { document.getElementById('theme-toggle-global')?.click(); } catch(e) {} } });
 
   // Filtering and rendering

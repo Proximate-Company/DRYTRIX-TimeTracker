@@ -72,6 +72,9 @@ def create_project():
         billable = request.form.get('billable') == 'on'
         hourly_rate = request.form.get('hourly_rate', '').strip()
         billing_ref = request.form.get('billing_ref', '').strip()
+        # Budgets
+        budget_amount_raw = request.form.get('budget_amount', '').strip()
+        budget_threshold_raw = request.form.get('budget_threshold_percent', '').strip()
         try:
             current_app.logger.info(
                 "POST /projects/create user=%s name=%s client_id=%s billable=%s",
@@ -107,11 +110,25 @@ def create_project():
             hourly_rate = Decimal(hourly_rate) if hourly_rate else None
         except ValueError:
             flash('Invalid hourly rate format', 'error')
+        # Validate budgets
+        budget_amount = None
+        budget_threshold_percent = None
+        if budget_amount_raw:
             try:
-                current_app.logger.warning("Validation failed: invalid hourly rate '%s'", hourly_rate)
+                budget_amount = Decimal(budget_amount_raw)
+                if budget_amount < 0:
+                    raise ValueError('Budget cannot be negative')
             except Exception:
-                pass
-            return render_template('projects/create.html', clients=Client.get_active_clients())
+                flash('Invalid budget amount', 'error')
+                return render_template('projects/create.html', clients=Client.get_active_clients())
+        if budget_threshold_raw:
+            try:
+                budget_threshold_percent = int(budget_threshold_raw)
+                if budget_threshold_percent < 0 or budget_threshold_percent > 100:
+                    raise ValueError('Invalid threshold')
+            except Exception:
+                flash('Invalid budget threshold percent (0-100)', 'error')
+                return render_template('projects/create.html', clients=Client.get_active_clients())
         
         # Check if project name already exists
         if Project.query.filter_by(name=name).first():
@@ -129,7 +146,9 @@ def create_project():
             description=description,
             billable=billable,
             hourly_rate=hourly_rate,
-            billing_ref=billing_ref
+            billing_ref=billing_ref,
+            budget_amount=budget_amount,
+            budget_threshold_percent=budget_threshold_percent or 80
         )
         
         db.session.add(project)
@@ -195,6 +214,8 @@ def edit_project(project_id):
         billable = request.form.get('billable') == 'on'
         hourly_rate = request.form.get('hourly_rate', '').strip()
         billing_ref = request.form.get('billing_ref', '').strip()
+        budget_amount_raw = request.form.get('budget_amount', '').strip()
+        budget_threshold_raw = request.form.get('budget_threshold_percent', '').strip()
         
         # Validate required fields
         if not name or not client_id:
@@ -213,6 +234,26 @@ def edit_project(project_id):
         except ValueError:
             flash('Invalid hourly rate format', 'error')
             return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
+
+        # Validate budgets
+        budget_amount = None
+        if budget_amount_raw:
+            try:
+                budget_amount = Decimal(budget_amount_raw)
+                if budget_amount < 0:
+                    raise ValueError('Budget cannot be negative')
+            except Exception:
+                flash('Invalid budget amount', 'error')
+                return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
+        budget_threshold_percent = project.budget_threshold_percent or 80
+        if budget_threshold_raw:
+            try:
+                budget_threshold_percent = int(budget_threshold_raw)
+                if budget_threshold_percent < 0 or budget_threshold_percent > 100:
+                    raise ValueError('Invalid threshold')
+            except Exception:
+                flash('Invalid budget threshold percent (0-100)', 'error')
+                return render_template('projects/edit.html', project=project, clients=Client.get_active_clients())
         
         # Check if project name already exists (excluding current project)
         existing = Project.query.filter_by(name=name).first()
@@ -227,6 +268,8 @@ def edit_project(project_id):
         project.billable = billable
         project.hourly_rate = hourly_rate
         project.billing_ref = billing_ref
+        project.budget_amount = budget_amount if budget_amount_raw != '' else None
+        project.budget_threshold_percent = budget_threshold_percent
         project.updated_at = datetime.utcnow()
         
         if not safe_commit('edit_project', {'project_id': project.id}):
