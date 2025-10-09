@@ -345,11 +345,10 @@ def test_task_status_transitions(app, task):
 @pytest.mark.smoke
 def test_invoice_creation(app, invoice):
     """Test basic invoice creation."""
-    with app.app_context():
-        db.session.refresh(invoice)
-        assert invoice.id is not None
-        assert invoice.invoice_number is not None
-        assert invoice.status == 'draft'
+    # Invoice is already refreshed in the fixture, no need to refresh again
+    assert invoice.id is not None
+    assert invoice.invoice_number is not None
+    assert invoice.status == 'draft'
 
 
 @pytest.mark.unit
