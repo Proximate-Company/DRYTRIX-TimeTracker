@@ -4,21 +4,14 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Comment, Project, Task
 from app.utils.db import safe_commit
-from app.utils.tenancy import (
-    get_current_organization_id,
-    scoped_query,
-    require_organization_access
-)
 
 comments_bp = Blueprint('comments', __name__)
 
 @comments_bp.route('/comments/create', methods=['POST'])
 @login_required
-@require_organization_access()
 def create_comment():
     """Create a new comment for a project or task"""
     try:
-        org_id = get_current_organization_id()
         content = request.form.get('content', '').strip()
         project_id = request.form.get('project_id', type=int)
         task_id = request.form.get('task_id', type=int)
@@ -37,29 +30,28 @@ def create_comment():
             flash(_('Comment cannot be associated with both a project and a task'), 'error')
             return redirect(request.referrer or url_for('main.dashboard'))
         
-        # Verify project or task exists (scoped to organization)
+        # Verify project or task exists
         if project_id:
-            target = scoped_query(Project).filter_by(id=project_id).first_or_404()
+            target = Project.query.get_or_404(project_id)
             target_type = 'project'
         else:
-            target = scoped_query(Task).filter_by(id=task_id).first_or_404()
+            target = Task.query.get_or_404(task_id)
             target_type = 'task'
             project_id = target.project_id  # For redirects
         
-        # If this is a reply, verify parent comment exists (scoped to organization)
+        # If this is a reply, verify parent comment exists
         if parent_id:
-            parent_comment = scoped_query(Comment).filter_by(id=parent_id).first_or_404()
+            parent_comment = Comment.query.get_or_404(parent_id)
             # Verify parent is for the same target
             if (project_id and parent_comment.project_id != project_id) or \
                (task_id and parent_comment.task_id != task_id):
                 flash(_('Invalid parent comment'), 'error')
                 return redirect(request.referrer or url_for('main.dashboard'))
         
-        # Create the comment with organization_id
+        # Create the comment
         comment = Comment(
             content=content,
             user_id=current_user.id,
-            organization_id=org_id,
             project_id=project_id if target_type == 'project' else None,
             task_id=task_id if target_type == 'task' else None,
             parent_id=parent_id
@@ -84,10 +76,9 @@ def create_comment():
 
 @comments_bp.route('/comments/<int:comment_id>/edit', methods=['GET', 'POST'])
 @login_required
-@require_organization_access()
 def edit_comment(comment_id):
     """Edit an existing comment"""
-    comment = scoped_query(Comment).filter_by(id=comment_id).first_or_404()
+    comment = Comment.query.get_or_404(comment_id)
     
     # Check permissions
     if not comment.can_edit(current_user):
@@ -120,10 +111,9 @@ def edit_comment(comment_id):
 
 @comments_bp.route('/comments/<int:comment_id>/delete', methods=['POST'])
 @login_required
-@require_organization_access()
 def delete_comment(comment_id):
     """Delete a comment"""
-    comment = scoped_query(Comment).filter_by(id=comment_id).first_or_404()
+    comment = Comment.query.get_or_404(comment_id)
     
     # Check permissions
     if not comment.can_delete(current_user):
@@ -151,7 +141,6 @@ def delete_comment(comment_id):
 
 @comments_bp.route('/api/comments')
 @login_required
-@require_organization_access()
 def list_comments():
     """API endpoint to get comments for a project or task"""
     project_id = request.args.get('project_id', type=int)
@@ -166,12 +155,12 @@ def list_comments():
     
     try:
         if project_id:
-            # Verify project exists (scoped to organization)
-            project = scoped_query(Project).filter_by(id=project_id).first_or_404()
+            # Verify project exists
+            project = Project.query.get_or_404(project_id)
             comments = Comment.get_project_comments(project_id, include_replies)
         else:
-            # Verify task exists (scoped to organization)
-            task = scoped_query(Task).filter_by(id=task_id).first_or_404()
+            # Verify task exists
+            task = Task.query.get_or_404(task_id)
             comments = Comment.get_task_comments(task_id, include_replies)
         
         return jsonify({
@@ -184,11 +173,10 @@ def list_comments():
 
 @comments_bp.route('/api/comments/<int:comment_id>')
 @login_required
-@require_organization_access()
 def get_comment(comment_id):
     """API endpoint to get a single comment"""
     try:
-        comment = scoped_query(Comment).filter_by(id=comment_id).first_or_404()
+        comment = Comment.query.get_or_404(comment_id)
         return jsonify({
             'success': True,
             'comment': comment.to_dict()
@@ -199,14 +187,12 @@ def get_comment(comment_id):
 
 @comments_bp.route('/api/comments/recent')
 @login_required
-@require_organization_access()
 def get_recent_comments():
     """API endpoint to get recent comments"""
     limit = request.args.get('limit', 10, type=int)
     
     try:
-        # Get recent comments scoped to organization
-        comments = scoped_query(Comment).order_by(Comment.created_at.desc()).limit(limit).all()
+        comments = Comment.get_recent_comments(limit)
         return jsonify({
             'success': True,
             'comments': [comment.to_dict() for comment in comments]
@@ -217,7 +203,6 @@ def get_recent_comments():
 
 @comments_bp.route('/api/comments/user/<int:user_id>')
 @login_required
-@require_organization_access()
 def get_user_comments(user_id):
     """API endpoint to get comments by a specific user"""
     limit = request.args.get('limit', type=int)
@@ -227,11 +212,7 @@ def get_user_comments(user_id):
         return jsonify({'error': 'Permission denied'}), 403
     
     try:
-        # Get user comments scoped to organization
-        query = scoped_query(Comment).filter_by(user_id=user_id).order_by(Comment.created_at.desc())
-        if limit:
-            query = query.limit(limit)
-        comments = query.all()
+        comments = Comment.get_user_comments(user_id, limit)
         return jsonify({
             'success': True,
             'comments': [comment.to_dict() for comment in comments]

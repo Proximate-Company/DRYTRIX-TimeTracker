@@ -36,28 +36,25 @@ def login():
     if request.method == 'POST':
         try:
             username = request.form.get('username', '').strip().lower()
-            password = request.form.get('password', '')
             current_app.logger.info("POST /login (username=%s) from %s", username or '<empty>', request.headers.get('X-Forwarded-For') or request.remote_addr)
             
             if not username:
-                flash(_('Username or email is required'), 'error')
+                flash(_('Username is required'), 'error')
                 return render_template('auth/login.html')
-            
-            # Try to find user by username or email
-            user = User.query.filter(
-                db.or_(User.username == username, User.email == username)
-            ).first()
-            current_app.logger.info("User lookup for '%s': %s", username, 'found' if user else 'not found')
             
             # Normalize admin usernames from config
             try:
                 admin_usernames = [u.strip().lower() for u in (Config.ADMIN_USERNAMES or [])]
             except Exception:
                 admin_usernames = ['admin']
+
+            # Check if user exists
+            user = User.query.filter_by(username=username).first()
+            current_app.logger.info("User lookup for '%s': %s", username, 'found' if user else 'not found')
             
             if not user:
-                # Check if self-registration is allowed (passwordless mode)
-                if Config.ALLOW_SELF_REGISTER and not password:
+                # Check if self-registration is allowed
+                if Config.ALLOW_SELF_REGISTER:
                     # Create new user, promote to admin if username is configured as admin
                     role = 'admin' if username in admin_usernames else 'user'
                     user = User(username=username, role=role)
@@ -69,19 +66,9 @@ def login():
                     current_app.logger.info("Created new user '%s'", username)
                     flash(_('Welcome! Your account has been created.'), 'success')
                 else:
-                    flash(_('Invalid credentials'), 'error')
+                    flash(_('User not found. Please contact an administrator.'), 'error')
                     return render_template('auth/login.html')
             else:
-                # If user has password set, require password
-                if user.has_password:
-                    if not password:
-                        flash(_('Password is required'), 'error')
-                        return render_template('auth/login.html')
-                    
-                    if not user.check_password(password):
-                        flash(_('Invalid credentials'), 'error')
-                        return render_template('auth/login.html')
-                
                 # If existing user matches admin usernames, ensure admin role
                 if username in admin_usernames and user.role != 'admin':
                     user.role = 'admin'
@@ -95,16 +82,8 @@ def login():
                 flash(_('Account is disabled. Please contact an administrator.'), 'error')
                 return render_template('auth/login.html')
             
-            # Check for 2FA
-            if user.totp_enabled:
-                # Store user info in session for 2FA verification
-                session['2fa_user_id'] = user.id
-                session['2fa_remember'] = request.form.get('remember') == 'on'
-                return redirect(url_for('auth_extended.verify_2fa', next=request.args.get('next')))
-            
             # Log in the user
-            remember_me = request.form.get('remember') == 'on'
-            login_user(user, remember=remember_me)
+            login_user(user, remember=True)
             user.update_last_login()
             current_app.logger.info("User '%s' logged in successfully", user.username)
             

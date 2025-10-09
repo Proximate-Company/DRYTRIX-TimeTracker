@@ -9,24 +9,18 @@ import io
 import csv
 import json
 from app.utils.db import safe_commit
-from app.utils.tenancy import (
-    get_current_organization_id,
-    scoped_query,
-    require_organization_access
-)
 
 invoices_bp = Blueprint('invoices', __name__)
 
 @invoices_bp.route('/invoices')
 @login_required
-@require_organization_access()
 def list_invoices():
     """List all invoices"""
-    # Get invoices scoped to organization (scope by user unless admin)
+    # Get invoices (scope by user unless admin)
     if current_user.is_admin:
-        invoices = scoped_query(Invoice).order_by(Invoice.created_at.desc()).all()
+        invoices = Invoice.query.order_by(Invoice.created_at.desc()).all()
     else:
-        invoices = scoped_query(Invoice).filter_by(created_by=current_user.id).order_by(Invoice.created_at.desc()).all()
+        invoices = Invoice.query.filter_by(created_by=current_user.id).order_by(Invoice.created_at.desc()).all()
     
     # Get summary statistics
     total_invoices = len(invoices)
@@ -52,11 +46,8 @@ def list_invoices():
 
 @invoices_bp.route('/invoices/create', methods=['GET', 'POST'])
 @login_required
-@require_organization_access()
 def create_invoice():
     """Create a new invoice"""
-    org_id = get_current_organization_id()
-    
     if request.method == 'POST':
         # Get form data
         project_id = request.form.get('project_id', type=int)
@@ -85,19 +76,18 @@ def create_invoice():
             flash('Invalid tax rate format', 'error')
             return render_template('invoices/create.html')
         
-        # Get project (scoped to organization)
-        project = scoped_query(Project).filter_by(id=project_id).first()
+        # Get project
+        project = Project.query.get(project_id)
         if not project:
-            flash('Selected project not found in your organization', 'error')
+            flash('Selected project not found', 'error')
             return render_template('invoices/create.html')
         
-        # Generate invoice number (scoped to organization)
-        invoice_number = Invoice.generate_invoice_number(org_id)
+        # Generate invoice number
+        invoice_number = Invoice.generate_invoice_number()
         
-        # Create invoice with organization_id
+        # Create invoice
         invoice = Invoice(
             invoice_number=invoice_number,
-            organization_id=org_id,
             project_id=project_id,
             client_name=client_name,
             due_date=due_date,
@@ -118,8 +108,8 @@ def create_invoice():
         flash(f'Invoice {invoice_number} created successfully', 'success')
         return redirect(url_for('invoices.edit_invoice', invoice_id=invoice.id))
     
-    # GET request - show form (scoped to organization)
-    projects = scoped_query(Project).filter_by(status='active', billable=True).order_by(Project.name).all()
+    # GET request - show form
+    projects = Project.query.filter_by(status='active', billable=True).order_by(Project.name).all()
     settings = Settings.get_settings()
     
     # Set default due date to 30 days from now
@@ -132,10 +122,9 @@ def create_invoice():
 
 @invoices_bp.route('/invoices/<int:invoice_id>')
 @login_required
-@require_organization_access()
 def view_invoice(invoice_id):
     """View invoice details"""
-    invoice = scoped_query(Invoice).filter_by(id=invoice_id).first_or_404()
+    invoice = Invoice.query.get_or_404(invoice_id)
     
     # Check access permissions
     if not current_user.is_admin and invoice.created_by != current_user.id:
@@ -146,10 +135,9 @@ def view_invoice(invoice_id):
 
 @invoices_bp.route('/invoices/<int:invoice_id>/edit', methods=['GET', 'POST'])
 @login_required
-@require_organization_access()
 def edit_invoice(invoice_id):
     """Edit invoice"""
-    invoice = scoped_query(Invoice).filter_by(id=invoice_id).first_or_404()
+    invoice = Invoice.query.get_or_404(invoice_id)
     
     # Check access permissions
     if not current_user.is_admin and invoice.created_by != current_user.id:
@@ -197,21 +185,20 @@ def edit_invoice(invoice_id):
         invoice.calculate_totals()
         if not safe_commit('edit_invoice', {'invoice_id': invoice.id}):
             flash('Could not update invoice due to a database error. Please check server logs.', 'error')
-            return render_template('invoices/edit.html', invoice=invoice, projects=scoped_query(Project).filter_by(status='active').order_by(Project.name).all())
+            return render_template('invoices/edit.html', invoice=invoice, projects=Project.query.filter_by(status='active').order_by(Project.name).all())
         
         flash('Invoice updated successfully', 'success')
         return redirect(url_for('invoices.view_invoice', invoice_id=invoice.id))
     
-    # GET request - show edit form (scoped to organization)
-    projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
+    # GET request - show edit form
+    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
     return render_template('invoices/edit.html', invoice=invoice, projects=projects)
 
 @invoices_bp.route('/invoices/<int:invoice_id>/status', methods=['POST'])
 @login_required
-@require_organization_access()
 def update_invoice_status(invoice_id):
     """Update invoice status"""
-    invoice = scoped_query(Invoice).filter_by(id=invoice_id).first_or_404()
+    invoice = Invoice.query.get_or_404(invoice_id)
     
     # Check access permissions
     if not current_user.is_admin and invoice.created_by != current_user.id:
@@ -237,10 +224,9 @@ def update_invoice_status(invoice_id):
 
 @invoices_bp.route('/invoices/<int:invoice_id>/payment', methods=['GET', 'POST'])
 @login_required
-@require_organization_access()
 def record_payment(invoice_id):
     """Record payment for invoice"""
-    invoice = scoped_query(Invoice).filter_by(id=invoice_id).first_or_404()
+    invoice = Invoice.query.get_or_404(invoice_id)
     
     # Check access permissions
     if not current_user.is_admin and invoice.created_by != current_user.id:
@@ -336,7 +322,7 @@ def generate_from_time(invoice_id):
         invoice.items.delete()
         
         # Group time entries by task/project and create invoice items
-        time_entries = scoped_query(TimeEntry).filter(TimeEntry.id.in_(selected_entries)).all()
+        time_entries = TimeEntry.query.filter(TimeEntry.id.in_(selected_entries)).all()
         
         # Group by task (if available) or project
         grouped_entries = {}
@@ -386,7 +372,7 @@ def generate_from_time(invoice_id):
     
     # GET request - show time entry selection
     # Get unbilled time entries for this project
-    time_entries = scoped_query(TimeEntry).filter(
+    time_entries = TimeEntry.query.filter(
         TimeEntry.project_id == invoice.project_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.billable == True
@@ -424,10 +410,9 @@ def generate_from_time(invoice_id):
 
 @invoices_bp.route('/invoices/<int:invoice_id>/export/csv')
 @login_required
-@require_organization_access()
 def export_invoice_csv(invoice_id):
     """Export invoice as CSV"""
-    invoice = scoped_query(Invoice).filter_by(id=invoice_id).first_or_404()
+    invoice = Invoice.query.get_or_404(invoice_id)
     
     # Check access permissions
     if not current_user.is_admin and invoice.created_by != current_user.id:
@@ -475,10 +460,9 @@ def export_invoice_csv(invoice_id):
 
 @invoices_bp.route('/invoices/<int:invoice_id>/export/pdf')
 @login_required
-@require_organization_access()
 def export_invoice_pdf(invoice_id):
     """Export invoice as PDF"""
-    invoice = scoped_query(Invoice).filter_by(id=invoice_id).first_or_404()
+    invoice = Invoice.query.get_or_404(invoice_id)
     if not current_user.is_admin and invoice.created_by != current_user.id:
         flash(_('You do not have permission to export this invoice'), 'error')
         return redirect(request.referrer or url_for('invoices.list_invoices'))
@@ -513,24 +497,21 @@ def export_invoice_pdf(invoice_id):
 
 @invoices_bp.route('/invoices/<int:invoice_id>/duplicate')
 @login_required
-@require_organization_access()
 def duplicate_invoice(invoice_id):
     """Duplicate an existing invoice"""
-    org_id = get_current_organization_id()
-    original_invoice = scoped_query(Invoice).filter_by(id=invoice_id).first_or_404()
+    original_invoice = Invoice.query.get_or_404(invoice_id)
     
     # Check access permissions
     if not current_user.is_admin and original_invoice.created_by != current_user.id:
         flash('You do not have permission to duplicate this invoice', 'error')
         return redirect(url_for('invoices.list_invoices'))
     
-    # Generate new invoice number (scoped to organization)
-    new_invoice_number = Invoice.generate_invoice_number(org_id)
+    # Generate new invoice number
+    new_invoice_number = Invoice.generate_invoice_number()
     
-    # Create new invoice with organization_id
+    # Create new invoice
     new_invoice = Invoice(
         invoice_number=new_invoice_number,
-        organization_id=org_id,
         project_id=original_invoice.project_id,
         client_name=original_invoice.client_name,
         client_email=original_invoice.client_email,

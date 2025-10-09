@@ -3,24 +3,15 @@ from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db, limiter
 from app.models import User, Project, TimeEntry, Settings, Invoice
-from app.models.organization import Organization
-from app.models.membership import Membership
-from app.models.subscription_event import SubscriptionEvent
 from datetime import datetime
-from sqlalchemy import text, func, desc
+from sqlalchemy import text
 import os
 from werkzeug.utils import secure_filename
 import uuid
 from app.utils.db import safe_commit
 from app.utils.backup import create_backup, restore_backup
-from app.utils.stripe_service import stripe_service
 import threading
 import time
-from app.utils.tenancy import (
-    get_current_organization_id,
-    scoped_query,
-    require_organization_access
-)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -56,36 +47,22 @@ def get_upload_folder():
 @admin_bp.route('/admin')
 @login_required
 @admin_required
-@require_organization_access()
 def admin_dashboard():
     """Admin dashboard"""
-    org_id = get_current_organization_id()
-    
-    # Get system statistics (scoped to organization)
-    total_users = User.query.count()  # Users are global
+    # Get system statistics
+    total_users = User.query.count()
     active_users = User.query.filter_by(is_active=True).count()
-    total_projects = scoped_query(Project).count()
-    active_projects = scoped_query(Project).filter_by(status='active').count()
-    total_entries = scoped_query(TimeEntry).filter(TimeEntry.end_time.isnot(None)).count()
-    active_timers = scoped_query(TimeEntry).filter_by(end_time=None).count()
+    total_projects = Project.query.count()
+    active_projects = Project.query.filter_by(status='active').count()
+    total_entries = TimeEntry.query.filter(TimeEntry.end_time.isnot(None)).count()
+    active_timers = TimeEntry.query.filter_by(end_time=None).count()
     
-    # Get recent activity (scoped to organization)
-    recent_entries = scoped_query(TimeEntry).filter(
+    # Get recent activity
+    recent_entries = TimeEntry.query.filter(
         TimeEntry.end_time.isnot(None)
     ).order_by(
         TimeEntry.created_at.desc()
     ).limit(10).all()
-    
-    # Calculate hours (scoped to organization)
-    org_total_seconds = db.session.query(db.func.sum(TimeEntry.duration_seconds)).filter(
-        TimeEntry.organization_id == org_id,
-        TimeEntry.end_time.isnot(None)
-    ).scalar() or 0
-    org_billable_seconds = db.session.query(db.func.sum(TimeEntry.duration_seconds)).filter(
-        TimeEntry.organization_id == org_id,
-        TimeEntry.end_time.isnot(None),
-        TimeEntry.billable == True
-    ).scalar() or 0
     
     # Build stats object expected by the template
     stats = {
@@ -94,8 +71,8 @@ def admin_dashboard():
         'total_projects': total_projects,
         'active_projects': active_projects,
         'total_entries': total_entries,
-        'total_hours': round(org_total_seconds / 3600, 2),
-        'billable_hours': round(org_billable_seconds / 3600, 2),
+        'total_hours': TimeEntry.get_total_hours_for_period(),
+        'billable_hours': TimeEntry.get_total_hours_for_period(billable_only=True),
         'last_backup': None
     }
     
@@ -713,414 +690,64 @@ def system_info():
                          active_timers=active_timers,
                          db_size_mb=db_size_mb)
 
-# ========================================
-# Customer Management (Organizations)
-# ========================================
-
-@admin_bp.route('/admin/customers')
+@admin_bp.route('/license-status')
 @login_required
 @admin_required
-def customers():
-    """List all organizations (customers) with billing info"""
-    # Get all organizations with member counts and subscription info
-    organizations = Organization.query.order_by(Organization.created_at.desc()).all()
-    
-    # Enrich with additional data
-    customer_data = []
-    for org in organizations:
-        # Get active member count
-        active_members = Membership.query.filter_by(
-            organization_id=org.id,
-            status='active'
-        ).count()
-        
-        # Get most recent activity (last login of any member)
-        last_activity = db.session.query(func.max(User.last_login)).join(
-            Membership, Membership.user_id == User.id
-        ).filter(
-            Membership.organization_id == org.id,
-            Membership.status == 'active'
-        ).scalar()
-        
-        # Get invoice count
-        invoice_count = Invoice.query.filter_by(organization_id=org.id).count()
-        
-        customer_data.append({
-            'organization': org,
-            'active_members': active_members,
-            'last_activity': last_activity,
-            'invoice_count': invoice_count,
-        })
-    
-    return render_template(
-        'admin/customers.html',
-        customer_data=customer_data,
-        stripe_configured=stripe_service.is_configured()
-    )
-
-@admin_bp.route('/admin/customers/<int:org_id>')
-@login_required
-@admin_required
-def customer_detail(org_id):
-    """View detailed information about a specific organization/customer"""
-    organization = Organization.query.get_or_404(org_id)
-    
-    # Get members
-    memberships = Membership.query.filter_by(
-        organization_id=org_id
-    ).join(User).order_by(Membership.created_at.desc()).all()
-    
-    # Get subscription events
-    recent_events = SubscriptionEvent.get_organization_events(
-        organization_id=org_id,
-        limit=20
-    )
-    
-    # Get Stripe data if configured
-    stripe_data = None
-    if stripe_service.is_configured() and organization.stripe_customer_id:
-        try:
-            stripe_data = {
-                'invoices': stripe_service.get_invoices(organization, limit=10),
-                'upcoming_invoice': stripe_service.get_upcoming_invoice(organization),
-                'payment_methods': stripe_service.get_payment_methods(organization),
-                'refunds': stripe_service.get_refunds(organization, limit=5),
-            }
-        except Exception as e:
-            current_app.logger.error(f"Error fetching Stripe data: {e}")
-            flash('Error loading Stripe data', 'warning')
-    
-    return render_template(
-        'admin/customer_detail.html',
-        organization=organization,
-        memberships=memberships,
-        recent_events=recent_events,
-        stripe_data=stripe_data,
-        stripe_configured=stripe_service.is_configured()
-    )
-
-@admin_bp.route('/admin/customers/<int:org_id>/subscription/quantity', methods=['POST'])
-@login_required
-@admin_required
-@limiter.limit("10 per minute")
-def update_subscription_quantity(org_id):
-    """Update the subscription quantity (seats) for an organization"""
-    organization = Organization.query.get_or_404(org_id)
-    
-    if not organization.stripe_subscription_id:
-        flash(_('Organization does not have an active subscription'), 'error')
-        return redirect(url_for('admin.customer_detail', org_id=org_id))
-    
+def license_status():
+    """Show metrics server client status"""
     try:
-        new_quantity = int(request.form.get('quantity', 1))
-        
-        if new_quantity < 1:
-            flash(_('Quantity must be at least 1'), 'error')
-            return redirect(url_for('admin.customer_detail', org_id=org_id))
-        
-        # Update via Stripe
-        result = stripe_service.update_subscription_quantity(organization, new_quantity)
-        
-        flash(_(f'Subscription updated: {result["old_quantity"]} → {result["new_quantity"]} seats'), 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error updating subscription quantity: {e}")
-        flash(_(f'Error updating subscription: {str(e)}'), 'error')
-    
-    return redirect(url_for('admin.customer_detail', org_id=org_id))
-
-@admin_bp.route('/admin/customers/<int:org_id>/subscription/cancel', methods=['POST'])
-@login_required
-@admin_required
-@limiter.limit("5 per minute")
-def cancel_subscription(org_id):
-    """Cancel a subscription"""
-    organization = Organization.query.get_or_404(org_id)
-    
-    if not organization.stripe_subscription_id:
-        flash(_('Organization does not have an active subscription'), 'error')
-        return redirect(url_for('admin.customer_detail', org_id=org_id))
-    
-    try:
-        at_period_end = request.form.get('at_period_end', 'true') == 'true'
-        
-        result = stripe_service.cancel_subscription(organization, at_period_end=at_period_end)
-        
-        if at_period_end:
-            flash(_(f'Subscription will cancel at period end: {result["ends_at"].strftime("%Y-%m-%d")}'), 'success')
+        from app.utils.license_server import get_license_client
+        client = get_license_client()
+        if client:
+            status = client.get_status()
+            settings = Settings.get_settings()
+            return render_template('admin/license_status.html', status=status, settings=settings)
         else:
-            flash(_('Subscription cancelled immediately'), 'success')
+            flash('Metrics server client not initialized', 'warning')
+            return redirect(url_for('admin.admin_dashboard'))
     except Exception as e:
-        current_app.logger.error(f"Error cancelling subscription: {e}")
-        flash(_(f'Error cancelling subscription: {str(e)}'), 'error')
-    
-    return redirect(url_for('admin.customer_detail', org_id=org_id))
-
-@admin_bp.route('/admin/customers/<int:org_id>/subscription/reactivate', methods=['POST'])
-@login_required
-@admin_required
-@limiter.limit("5 per minute")
-def reactivate_subscription(org_id):
-    """Reactivate a subscription that was set to cancel"""
-    organization = Organization.query.get_or_404(org_id)
-    
-    if not organization.stripe_subscription_id:
-        flash(_('Organization does not have an active subscription'), 'error')
-        return redirect(url_for('admin.customer_detail', org_id=org_id))
-    
-    try:
-        result = stripe_service.reactivate_subscription(organization)
-        flash(_('Subscription reactivated successfully'), 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error reactivating subscription: {e}")
-        flash(_(f'Error reactivating subscription: {str(e)}'), 'error')
-    
-    return redirect(url_for('admin.customer_detail', org_id=org_id))
-
-@admin_bp.route('/admin/customers/<int:org_id>/suspend', methods=['POST'])
-@login_required
-@admin_required
-@limiter.limit("5 per minute")
-def suspend_organization(org_id):
-    """Suspend an organization"""
-    organization = Organization.query.get_or_404(org_id)
-    
-    if organization.is_suspended:
-        flash(_('Organization is already suspended'), 'info')
-        return redirect(url_for('admin.customer_detail', org_id=org_id))
-    
-    try:
-        reason = request.form.get('reason', 'Administrative action')
-        organization.suspend(reason=reason)
-        
-        # Log event
-        SubscriptionEvent.create_event(
-            event_type='organization.suspended',
-            organization_id=organization.id,
-            notes=f'Suspended by admin: {reason}'
-        )
-        
-        flash(_('Organization suspended successfully'), 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error suspending organization: {e}")
-        flash(_(f'Error suspending organization: {str(e)}'), 'error')
-    
-    return redirect(url_for('admin.customer_detail', org_id=org_id))
-
-@admin_bp.route('/admin/customers/<int:org_id>/activate', methods=['POST'])
-@login_required
-@admin_required
-@limiter.limit("5 per minute")
-def activate_organization(org_id):
-    """Activate/reactivate an organization"""
-    organization = Organization.query.get_or_404(org_id)
-    
-    if organization.is_active:
-        flash(_('Organization is already active'), 'info')
-        return redirect(url_for('admin.customer_detail', org_id=org_id))
-    
-    try:
-        organization.activate()
-        
-        # Log event
-        SubscriptionEvent.create_event(
-            event_type='organization.activated',
-            organization_id=organization.id,
-            notes=f'Activated by admin: {current_user.username}'
-        )
-        
-        flash(_('Organization activated successfully'), 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error activating organization: {e}")
-        flash(_(f'Error activating organization: {str(e)}'), 'error')
-    
-    return redirect(url_for('admin.customer_detail', org_id=org_id))
-
-@admin_bp.route('/admin/customers/<int:org_id>/invoice/<invoice_id>/refund', methods=['POST'])
-@login_required
-@admin_required
-@limiter.limit("3 per minute")
-def create_refund(org_id, invoice_id):
-    """Create a refund for an invoice"""
-    organization = Organization.query.get_or_404(org_id)
-    
-    if not stripe_service.is_configured():
-        flash(_('Stripe is not configured'), 'error')
-        return redirect(url_for('admin.customer_detail', org_id=org_id))
-    
-    try:
-        amount_str = request.form.get('amount')
-        reason = request.form.get('reason', 'requested_by_customer')
-        
-        # Convert amount to cents if provided
-        amount_cents = None
-        if amount_str:
-            try:
-                amount_cents = int(float(amount_str) * 100)
-            except ValueError:
-                flash(_('Invalid amount'), 'error')
-                return redirect(url_for('admin.customer_detail', org_id=org_id))
-        
-        result = stripe_service.create_refund(
-            organization=organization,
-            invoice_id=invoice_id,
-            amount=amount_cents,
-            reason=reason
-        )
-        
-        flash(_(f'Refund created: {result["amount"]} {result["currency"]}'), 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error creating refund: {e}")
-        flash(_(f'Error creating refund: {str(e)}'), 'error')
-    
-    return redirect(url_for('admin.customer_detail', org_id=org_id))
-
-# ========================================
-# Billing Reconciliation
-# ========================================
-
-@admin_bp.route('/admin/billing/reconciliation')
-@login_required
-@admin_required
-def billing_reconciliation():
-    """View billing reconciliation - sync status between Stripe and local DB"""
-    if not stripe_service.is_configured():
-        flash(_('Stripe is not configured'), 'warning')
-        return redirect(url_for('admin.admin_dashboard'))
-    
-    try:
-        sync_results = stripe_service.check_all_organizations_sync()
-        
-        return render_template(
-            'admin/billing_reconciliation.html',
-            sync_results=sync_results
-        )
-    except Exception as e:
-        current_app.logger.error(f"Error checking sync status: {e}")
-        flash(_(f'Error checking sync status: {str(e)}'), 'error')
+        flash(f'Error getting metrics status: {e}', 'error')
         return redirect(url_for('admin.admin_dashboard'))
 
-@admin_bp.route('/admin/billing/reconciliation/<int:org_id>/sync', methods=['POST'])
+@admin_bp.route('/license-test')
 @login_required
 @admin_required
-@limiter.limit("10 per minute")
-def sync_organization(org_id):
-    """Manually sync an organization with Stripe"""
-    organization = Organization.query.get_or_404(org_id)
-    
-    if not stripe_service.is_configured():
-        flash(_('Stripe is not configured'), 'error')
-        return redirect(url_for('admin.billing_reconciliation'))
-    
+def license_test():
+    """Test metrics server communication"""
     try:
-        result = stripe_service.sync_organization_with_stripe(organization)
-        
-        if result.get('synced'):
-            if result.get('discrepancy_count', 0) > 0:
-                flash(_(f'Synced with {result["discrepancy_count"]} discrepancy(ies) found and corrected'), 'warning')
+        from app.utils.license_server import get_license_client, send_usage_event
+        client = get_license_client()
+        if client:
+            # Test server health
+            server_healthy = client.check_server_health()
+            
+            # Test usage event
+            usage_sent = send_usage_event("admin_test", {"admin": current_user.username})
+            
+            flash(f'Metrics Server: {"✓ Healthy" if server_healthy else "✗ Not Responding"}, Usage Event: {"✓ Sent" if usage_sent else "✗ Failed"}', 'info')
+        else:
+            flash('Metrics server client not initialized', 'warning')
+    except Exception as e:
+        flash(f'Error testing metrics server: {e}', 'error')
+    
+    return redirect(url_for('admin.license_status'))
+
+@admin_bp.route('/license-restart')
+@login_required
+@admin_required
+def license_restart():
+    """Restart the metrics server client"""
+    try:
+        from app.utils.license_server import get_license_client, start_license_client
+        client = get_license_client()
+        if client:
+            if start_license_client():
+                flash('Metrics server client restarted successfully', 'success')
             else:
-                flash(_('Organization synced successfully - no discrepancies found'), 'success')
+                flash('Failed to restart metrics server client', 'error')
         else:
-            flash(_(f'Sync failed: {result.get("error")}'), 'error')
+            flash('Metrics server client not initialized', 'warning')
     except Exception as e:
-        current_app.logger.error(f"Error syncing organization: {e}")
-        flash(_(f'Error syncing organization: {str(e)}'), 'error')
+        flash(f'Error restarting metrics server client: {e}', 'error')
     
-    return redirect(url_for('admin.billing_reconciliation'))
-
-# ========================================
-# Webhook Logs
-# ========================================
-
-@admin_bp.route('/admin/webhooks')
-@login_required
-@admin_required
-def webhook_logs():
-    """View webhook event logs"""
-    page = request.args.get('page', 1, type=int)
-    per_page = 50
-    
-    # Filter options
-    event_type = request.args.get('event_type')
-    org_id = request.args.get('org_id', type=int)
-    processed = request.args.get('processed')
-    
-    # Build query
-    query = SubscriptionEvent.query
-    
-    if event_type:
-        query = query.filter_by(event_type=event_type)
-    
-    if org_id:
-        query = query.filter_by(organization_id=org_id)
-    
-    if processed == 'true':
-        query = query.filter_by(processed=True)
-    elif processed == 'false':
-        query = query.filter_by(processed=False)
-    
-    # Order by most recent first
-    query = query.order_by(desc(SubscriptionEvent.created_at))
-    
-    # Paginate
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    events = pagination.items
-    
-    # Get unique event types for filter
-    event_types = db.session.query(
-        SubscriptionEvent.event_type
-    ).distinct().order_by(SubscriptionEvent.event_type).all()
-    event_types = [et[0] for et in event_types]
-    
-    # Get organizations for filter
-    organizations = Organization.query.order_by(Organization.name).all()
-    
-    return render_template(
-        'admin/webhook_logs.html',
-        events=events,
-        pagination=pagination,
-        event_types=event_types,
-        organizations=organizations,
-        current_filters={
-            'event_type': event_type,
-            'org_id': org_id,
-            'processed': processed
-        }
-    )
-
-@admin_bp.route('/admin/webhooks/<int:event_id>')
-@login_required
-@admin_required
-def webhook_detail(event_id):
-    """View detailed information about a webhook event"""
-    event = SubscriptionEvent.query.get_or_404(event_id)
-    
-    return render_template(
-        'admin/webhook_detail.html',
-        event=event
-    )
-
-@admin_bp.route('/admin/webhooks/<int:event_id>/reprocess', methods=['POST'])
-@login_required
-@admin_required
-@limiter.limit("10 per minute")
-def reprocess_webhook(event_id):
-    """Reprocess a failed webhook event"""
-    event = SubscriptionEvent.query.get_or_404(event_id)
-    
-    if event.processed and not event.processing_error:
-        flash(_('Event has already been processed successfully'), 'info')
-        return redirect(url_for('admin.webhook_logs'))
-    
-    try:
-        # Mark as unprocessed and reset retry count
-        event.processed = False
-        event.processing_error = None
-        event.retry_count = 0
-        db.session.commit()
-        
-        flash(_('Event queued for reprocessing'), 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error queueing event for reprocessing: {e}")
-        flash(_(f'Error: {str(e)}'), 'error')
-    
-    return redirect(url_for('admin.webhook_logs'))
+    return redirect(url_for('admin.license_status'))

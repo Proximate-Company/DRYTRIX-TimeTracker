@@ -6,16 +6,9 @@ class Invoice(db.Model):
     """Invoice model for client billing"""
     
     __tablename__ = 'invoices'
-    __table_args__ = (
-        # Invoice numbers must be unique per organization
-        db.UniqueConstraint('organization_id', 'invoice_number', name='uq_invoices_org_number'),
-        db.Index('idx_invoices_org_status', 'organization_id', 'status'),
-        db.Index('idx_invoices_org_client', 'organization_id', 'client_id'),
-    )
     
     id = db.Column(db.Integer, primary_key=True)
-    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
-    invoice_number = db.Column(db.String(50), nullable=False, index=True)
+    invoice_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False, index=True)
     client_name = db.Column(db.String(200), nullable=False)
     client_email = db.Column(db.String(200), nullable=True)
@@ -54,7 +47,6 @@ class Invoice(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
-    organization = db.relationship('Organization', back_populates='invoices')
     project = db.relationship('Project', backref='invoices')
     client = db.relationship('Client', backref='invoices')
     creator = db.relationship('User', backref='created_invoices')
@@ -64,8 +56,7 @@ class Invoice(db.Model):
     reminder_schedules = db.relationship('InvoiceReminderSchedule', backref='invoice', lazy='dynamic', cascade='all, delete-orphan')
     template = db.relationship('InvoiceTemplate', backref='invoices', lazy='joined')
     
-    def __init__(self, invoice_number, organization_id, project_id, client_name, due_date, created_by, client_id, **kwargs):
-        self.organization_id = organization_id
+    def __init__(self, invoice_number, project_id, client_name, due_date, created_by, client_id, **kwargs):
         self.invoice_number = invoice_number
         self.project_id = project_id
         self.client_name = client_name
@@ -246,17 +237,16 @@ class Invoice(db.Model):
         }
     
     @classmethod
-    def generate_invoice_number(cls, organization_id):
-        """Generate a unique invoice number for an organization"""
+    def generate_invoice_number(cls):
+        """Generate a unique invoice number"""
         from datetime import datetime
         
         # Format: INV-YYYYMMDD-XXX
         today = datetime.utcnow()
         date_prefix = today.strftime('%Y%m%d')
         
-        # Find the next available number for today within this organization
+        # Find the next available number for today
         existing = cls.query.filter(
-            cls.organization_id == organization_id,
             cls.invoice_number.like(f'INV-{date_prefix}-%')
         ).order_by(cls.invoice_number.desc()).first()
         

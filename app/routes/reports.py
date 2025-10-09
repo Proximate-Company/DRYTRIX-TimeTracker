@@ -6,33 +6,23 @@ from datetime import datetime, timedelta
 import csv
 import io
 import pytz
-from app.utils.tenancy import (
-    get_current_organization_id,
-    scoped_query,
-    require_organization_access
-)
 
 reports_bp = Blueprint('reports', __name__)
 
 @reports_bp.route('/reports')
 @login_required
-@require_organization_access()
 def reports():
     """Main reports page"""
-    org_id = get_current_organization_id()
-    
-    # Aggregate totals (scope by organization and user unless admin)
+    # Aggregate totals (scope by user unless admin)
     totals_query = db.session.query(db.func.sum(TimeEntry.duration_seconds)).filter(
-        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None)
     )
     billable_query = db.session.query(db.func.sum(TimeEntry.duration_seconds)).filter(
-        TimeEntry.organization_id == org_id,
         TimeEntry.end_time.isnot(None),
         TimeEntry.billable == True
     )
 
-    entries_query = scoped_query(TimeEntry).filter(TimeEntry.end_time.isnot(None))
+    entries_query = TimeEntry.query.filter(TimeEntry.end_time.isnot(None))
 
     if not current_user.is_admin:
         totals_query = totals_query.filter(TimeEntry.user_id == current_user.id)
@@ -45,7 +35,7 @@ def reports():
     summary = {
         'total_hours': round(total_seconds / 3600, 2),
         'billable_hours': round(billable_seconds / 3600, 2),
-        'active_projects': scoped_query(Project).filter_by(status='active').count(),
+        'active_projects': Project.query.filter_by(status='active').count(),
         'total_users': User.query.filter_by(is_active=True).count(),
     }
 
@@ -55,17 +45,15 @@ def reports():
 
 @reports_bp.route('/reports/project')
 @login_required
-@require_organization_access()
 def project_report():
     """Project-based time report"""
-    org_id = get_current_organization_id()
     project_id = request.args.get('project_id', type=int)
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     user_id = request.args.get('user_id', type=int)
     
-    # Get projects for filter (scoped to organization)
-    projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
+    # Get projects for filter
+    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
     users = User.query.filter_by(is_active=True).order_by(User.username).all()
     
     # Parse dates
@@ -81,8 +69,8 @@ def project_report():
         flash('Invalid date format', 'error')
         return render_template('reports/project_report.html', projects=projects, users=users)
     
-    # Get time entries (scoped to organization)
-    query = scoped_query(TimeEntry).filter(
+    # Get time entries
+    query = TimeEntry.query.filter(
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_dt,
         TimeEntry.start_time <= end_dt
@@ -165,10 +153,8 @@ def project_report():
 
 @reports_bp.route('/reports/user')
 @login_required
-@require_organization_access()
 def user_report():
     """User-based time report"""
-    org_id = get_current_organization_id()
     user_id = request.args.get('user_id', type=int)
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -176,7 +162,7 @@ def user_report():
     
     # Get users for filter
     users = User.query.filter_by(is_active=True).order_by(User.username).all()
-    projects = scoped_query(Project).filter_by(status='active').order_by(Project.name).all()
+    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
     
     # Parse dates
     if not start_date:
@@ -192,7 +178,7 @@ def user_report():
         return render_template('reports/user_report.html', users=users, projects=projects)
     
     # Get time entries
-    query = scoped_query(TimeEntry).filter(
+    query = TimeEntry.query.filter(
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_dt,
         TimeEntry.start_time <= end_dt
@@ -251,10 +237,8 @@ def user_report():
 
 @reports_bp.route('/reports/export/csv')
 @login_required
-@require_organization_access()
 def export_csv():
     """Export time entries as CSV"""
-    org_id = get_current_organization_id()
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     user_id = request.args.get('user_id', type=int)
@@ -274,7 +258,7 @@ def export_csv():
         return redirect(url_for('reports.reports'))
     
     # Get time entries
-    query = scoped_query(TimeEntry).filter(
+    query = TimeEntry.query.filter(
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_dt,
         TimeEntry.start_time <= end_dt
@@ -335,7 +319,6 @@ def export_csv():
 
 @reports_bp.route('/reports/summary')
 @login_required
-@require_organization_access()
 def summary_report():
     """Summary report with key metrics"""
     # Get date range
@@ -361,14 +344,14 @@ def summary_report():
     # Get top projects
     if current_user.is_admin:
         # For admins, show all projects
-        projects = scoped_query(Project).filter_by(status='active').all()
+        projects = Project.query.filter_by(status='active').all()
     else:
         # For users, show only their projects
         project_ids = db.session.query(TimeEntry.project_id).filter(
             TimeEntry.user_id == current_user.id
         ).distinct().all()
         project_ids = [pid[0] for pid in project_ids]
-        projects = scoped_query(Project).filter(Project.id.in_(project_ids)).all()
+        projects = Project.query.filter(Project.id.in_(project_ids)).all()
     
     # Sort projects by total hours
     project_stats = []
@@ -395,17 +378,15 @@ def summary_report():
 
 @reports_bp.route('/reports/tasks')
 @login_required
-@require_organization_access()
 def task_report():
     """Report of finished tasks within a project, including hours spent per task"""
-    org_id = get_current_organization_id()
     project_id = request.args.get('project_id', type=int)
     user_id = request.args.get('user_id', type=int)
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
-    # Filters data (scoped to organization)
-    projects = scoped_query(Project).order_by(Project.name).all()
+    # Filters data
+    projects = Project.query.order_by(Project.name).all()
     users = User.query.filter_by(is_active=True).order_by(User.username).all()
 
     # Default date range: last 30 days
@@ -421,8 +402,8 @@ def task_report():
         flash('Invalid date format', 'error')
         return render_template('reports/task_report.html', projects=projects, users=users)
 
-    # Base tasks query: finished tasks (scoped to organization)
-    tasks_query = scoped_query(Task).filter(Task.status == 'done')
+    # Base tasks query: finished tasks
+    tasks_query = Task.query.filter(Task.status == 'done')
 
     if project_id:
         tasks_query = tasks_query.filter(Task.project_id == project_id)
@@ -441,7 +422,7 @@ def task_report():
     task_rows = []
     total_hours = 0.0
     for task in tasks:
-        te_query = scoped_query(TimeEntry).filter(
+        te_query = TimeEntry.query.filter(
             TimeEntry.task_id == task.id,
             TimeEntry.end_time.isnot(None),
             TimeEntry.start_time >= start_dt,

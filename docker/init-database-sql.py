@@ -270,42 +270,17 @@ def insert_initial_data(engine):
         SELECT 1 FROM users WHERE username = '{admin_username}'
     );
 
-    -- Create default organization
-    INSERT INTO organizations (name, slug, contact_email, subscription_plan, status, timezone, currency, date_format)
-    SELECT 'Default Organization', 'default', 'admin@timetracker.local', 'free', 'active', 'UTC', 'EUR', 'YYYY-MM-DD'
+    -- Ensure default client exists
+    INSERT INTO clients (name, status)
+    SELECT 'Default Client', 'active'
     WHERE NOT EXISTS (
-        SELECT 1 FROM organizations WHERE slug = 'default'
-    );
-
-    -- Add admin user to default organization
-    INSERT INTO memberships (user_id, organization_id, role, status)
-    SELECT u.id, o.id, 'admin', 'active'
-    FROM users u
-    CROSS JOIN organizations o
-    WHERE u.username = '{admin_username}' 
-    AND o.slug = 'default'
-    AND NOT EXISTS (
-        SELECT 1 FROM memberships m 
-        WHERE m.user_id = u.id AND m.organization_id = o.id
-    );
-
-    -- Ensure default client exists (linked to default org)
-    INSERT INTO clients (name, organization_id, status)
-    SELECT 'Default Client', o.id, 'active'
-    FROM organizations o
-    WHERE o.slug = 'default'
-    AND NOT EXISTS (
         SELECT 1 FROM clients WHERE name = 'Default Client'
     );
 
-    -- Insert default project linked to default client and org
-    INSERT INTO projects (name, organization_id, client_id, description, billable, status) 
-    SELECT 'General', o.id, c.id, 'Default project for general tasks', true, 'active'
-    FROM organizations o
-    CROSS JOIN clients c
-    WHERE o.slug = 'default'
-    AND c.name = 'Default Client'
-    AND NOT EXISTS (
+    -- Insert default project idempotently and link to default client
+    INSERT INTO projects (name, client, description, billable, status) 
+    SELECT 'General', 'Default Client', 'Default project for general tasks', true, 'active'
+    WHERE NOT EXISTS (
         SELECT 1 FROM projects WHERE name = 'General'
     );
 

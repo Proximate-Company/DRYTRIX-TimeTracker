@@ -20,6 +20,8 @@ services:
       # Set Flask environment for development
       - FLASK_ENV=development
       - FLASK_DEBUG=true
+      # Disable license server for local testing
+      - LICENSE_SERVER_ENABLED=false
     ports:
       - "8080:8080"
     volumes:

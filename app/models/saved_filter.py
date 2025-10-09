@@ -12,7 +12,6 @@ class SavedFilter(db.Model):
     __tablename__ = 'saved_filters'
 
     id = db.Column(db.Integer, primary_key=True)
-    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     name = db.Column(db.String(200), nullable=False)
     scope = db.Column(db.String(50), nullable=False, default='global')  # e.g., 'time', 'projects', 'tasks', 'reports'
