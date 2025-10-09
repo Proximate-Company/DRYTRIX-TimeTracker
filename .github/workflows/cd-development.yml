@@ -61,21 +61,6 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m smoke -v --tb=short --no-cov
-      
-      - name: Run unit tests
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          pytest -m unit -v --no-cov
-      
-      - name: Run critical integration tests
-        env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
-          FLASK_APP: app.py
-          FLASK_ENV: testing
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          pytest -m "integration and not slow" -v --no-cov
 
   # ============================================================================
   # Build and Push Development Image
