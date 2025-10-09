@@ -88,8 +88,7 @@ def main():
     if sqlite_success or postgres_success:
         print("\n✓ Migration completed successfully!")
         print("\nThe new 'allow_analytics' setting has been added to your settings table.")
-        print("Users can now control whether system information is shared with the license server.")
-        print("License validation will continue to work regardless of this setting.")
+        print("Users can now control whether system information is shared for analytics.")
     else:
         print("\n✗ Migration failed for all database types.")
         print("Please check your database connection and try again.")

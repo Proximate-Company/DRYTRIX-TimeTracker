@@ -250,12 +250,7 @@
     margin-bottom: 0.5rem;
     background: var(--surface-variant);
     border-radius: var(--border-radius-sm);
-    transition: var(--transition);
-}
-
-.empty-state-feature:hover {
-    background: var(--surface-hover);
-    transform: translateX(5px);
+    cursor: default;
 }
 
 .empty-state-feature-icon {

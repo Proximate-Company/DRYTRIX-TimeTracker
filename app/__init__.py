@@ -319,40 +319,6 @@ def create_app(config=None):
         else:
             app.logger.warning("AUTH_METHOD is %s but OIDC envs are incomplete; OIDC login will not work", auth_method)
 
-    # Initialize phone home function if enabled
-    if app.config.get('LICENSE_SERVER_ENABLED', True):
-        try:
-            from app.utils.license_server import init_license_client, start_license_client, get_license_client
-            
-            # Check if client is already running
-            existing_client = get_license_client()
-            if existing_client and existing_client.running:
-                app.logger.info("Phone home function already running, skipping initialization")
-            else:
-                license_client = init_license_client(
-                    app_identifier=app.config.get('LICENSE_SERVER_APP_ID', 'timetracker'),
-                    app_version=app.config.get('LICENSE_SERVER_APP_VERSION', '1.0.0')
-                )
-                if start_license_client():
-                    app.logger.info("Phone home function started successfully")
-                else:
-                    app.logger.warning("Failed to start phone home function")
-        except Exception as e:
-            app.logger.warning(f"Could not initialize phone home function: {e}")
-    
-    # Register cleanup function for graceful shutdown
-    @app.teardown_appcontext
-    def cleanup_license_client(exception=None):
-        """Cleanup phone home function on app context teardown"""
-        try:
-            from app.utils.license_server import get_license_client, stop_license_client
-            client = get_license_client()
-            if client and client.running:
-                app.logger.info("Stopping phone home function during app teardown")
-                stop_license_client()
-        except Exception as e:
-            app.logger.warning(f"Error during license client cleanup: {e}")
-    
     # Register error handlers
     from app.utils.error_handlers import register_error_handlers
     register_error_handlers(app)

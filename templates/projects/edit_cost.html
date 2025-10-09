@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Edit Cost') }} - {{ project.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-lg-8 offset-lg-2">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('projects.list_projects') }}">{{ _('Projects') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('projects.view_project', project_id=project.id) }}">{{ project.name }}</a></li>
+                    <li class="breadcrumb-item active">{{ _('Edit Cost') }}</li>
+                </ol>
+            </nav>
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-edit me-2"></i>{{ _('Edit Cost') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if cost.is_invoiced %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {{ _('This cost has been invoiced. Changes may affect existing invoices.') }}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('projects.edit_cost', project_id=project.id, cost_id=cost.id) }}">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="description" class="form-label">{{ _('Description') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="description" name="description" required 
+                                       value="{{ cost.description }}" placeholder="{{ _('e.g., Travel expenses to client site') }}">
+                                <small class="form-text text-muted">{{ _('Brief description of the cost') }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">{{ _('Category') }} <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">{{ _('Select category') }}</option>
+                                    <option value="travel" {% if cost.category == 'travel' %}selected{% endif %}>{{ _('Travel') }}</option>
+                                    <option value="materials" {% if cost.category == 'materials' %}selected{% endif %}>{{ _('Materials') }}</option>
+                                    <option value="services" {% if cost.category == 'services' %}selected{% endif %}>{{ _('Services') }}</option>
+                                    <option value="equipment" {% if cost.category == 'equipment' %}selected{% endif %}>{{ _('Equipment') }}</option>
+                                    <option value="software" {% if cost.category == 'software' %}selected{% endif %}>{{ _('Software/Licenses') }}</option>
+                                    <option value="other" {% if cost.category == 'other' %}selected{% endif %}>{{ _('Other') }}</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="cost_date" class="form-label">{{ _('Date') }} <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="cost_date" name="cost_date" 
+                                       value="{{ cost.cost_date.isoformat() }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="amount" class="form-label">{{ _('Amount') }} <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required 
+                                       value="{{ cost.amount }}" placeholder="0.00">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="currency_code" class="form-label">{{ _('Currency') }}</label>
+                                <select class="form-select" id="currency_code" name="currency_code">
+                                    <option value="EUR" {% if cost.currency_code == 'EUR' %}selected{% endif %}>EUR (€)</option>
+                                    <option value="USD" {% if cost.currency_code == 'USD' %}selected{% endif %}>USD ($)</option>
+                                    <option value="GBP" {% if cost.currency_code == 'GBP' %}selected{% endif %}>GBP (£)</option>
+                                    <option value="CHF" {% if cost.currency_code == 'CHF' %}selected{% endif %}>CHF (Fr)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="notes" class="form-label">{{ _('Notes') }}</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="{{ _('Additional details about this cost') }}">{{ cost.notes if cost.notes else '' }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="billable" name="billable" {% if cost.billable %}checked{% endif %}>
+                                    <label class="form-check-label" for="billable">
+                                        {{ _('Billable to client') }}
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        {{ _('If checked, this cost will be included in invoices') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{{ url_for('projects.view_project', project_id=project.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i> {{ _('Cancel') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> {{ _('Update Cost') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -4,23 +4,10 @@ Time Tracker Application Entry Point
 """
 
 import os
-import atexit
 from app import create_app, db
 from app.models import User, Project, TimeEntry, Task, Settings, Invoice, InvoiceItem, Client
 
 app = create_app()
-
-def cleanup_on_exit():
-    """Cleanup function called when the application exits"""
-    try:
-        from app.utils.license_server import stop_license_client
-        stop_license_client()
-        print("Phone home function stopped")
-    except Exception as e:
-        print(f"Error stopping phone home function: {e}")
-
-# Register cleanup function
-atexit.register(cleanup_on_exit)
 
 @app.shell_context_processor
 def make_shell_context():

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Project, TimeEntry, Invoice, InvoiceItem, Settings, RateOverride
+from app.models import User, Project, TimeEntry, Invoice, InvoiceItem, Settings, RateOverride, ProjectCost
 from datetime import datetime, timedelta, date
 from decimal import Decimal, InvalidOperation
 import io
@@ -312,54 +312,75 @@ def generate_from_time(invoice_id):
         return redirect(url_for('invoices.list_invoices'))
     
     if request.method == 'POST':
-        # Get selected time entries
+        # Get selected time entries and costs
         selected_entries = request.form.getlist('time_entries[]')
-        if not selected_entries:
-            flash('No time entries selected', 'error')
+        selected_costs = request.form.getlist('project_costs[]')
+        
+        if not selected_entries and not selected_costs:
+            flash('No time entries or costs selected', 'error')
             return redirect(url_for('invoices.generate_from_time', invoice_id=invoice.id))
         
         # Clear existing items
         invoice.items.delete()
         
-        # Group time entries by task/project and create invoice items
-        time_entries = TimeEntry.query.filter(TimeEntry.id.in_(selected_entries)).all()
-        
-        # Group by task (if available) or project
-        grouped_entries = {}
-        for entry in time_entries:
-            if entry.task_id:
-                key = f"task_{entry.task_id}"
-                if key not in grouped_entries:
-                    grouped_entries[key] = {
-                        'description': f"Task: {entry.task.name if entry.task else 'Unknown Task'}",
-                        'entries': [],
-                        'total_hours': 0
-                    }
-            else:
-                key = f"project_{entry.project_id}"
-                if key not in grouped_entries:
-                    grouped_entries[key] = {
-                        'description': f"Project: {entry.project.name}",
-                        'entries': [],
-                        'total_hours': 0
-                    }
+        # Process time entries
+        if selected_entries:
+            # Group time entries by task/project and create invoice items
+            time_entries = TimeEntry.query.filter(TimeEntry.id.in_(selected_entries)).all()
             
-            grouped_entries[key]['entries'].append(entry)
-            grouped_entries[key]['total_hours'] += entry.duration_hours
-        
-        # Create invoice items
-        for group in grouped_entries.values():
-            # Resolve effective rate (project override -> project rate -> client default)
-            hourly_rate = RateOverride.resolve_rate(invoice.project)
+            # Group by task (if available) or project
+            grouped_entries = {}
+            for entry in time_entries:
+                if entry.task_id:
+                    key = f"task_{entry.task_id}"
+                    if key not in grouped_entries:
+                        grouped_entries[key] = {
+                            'description': f"Task: {entry.task.name if entry.task else 'Unknown Task'}",
+                            'entries': [],
+                            'total_hours': 0
+                        }
+                else:
+                    key = f"project_{entry.project_id}"
+                    if key not in grouped_entries:
+                        grouped_entries[key] = {
+                            'description': f"Project: {entry.project.name}",
+                            'entries': [],
+                            'total_hours': 0
+                        }
+                
+                grouped_entries[key]['entries'].append(entry)
+                grouped_entries[key]['total_hours'] += entry.duration_hours
             
-            item = InvoiceItem(
-                invoice_id=invoice.id,
-                description=group['description'],
-                quantity=group['total_hours'],
-                unit_price=hourly_rate,
-                time_entry_ids=','.join(str(entry.id) for entry in group['entries'])
-            )
-            db.session.add(item)
+            # Create invoice items from time entries
+            for group in grouped_entries.values():
+                # Resolve effective rate (project override -> project rate -> client default)
+                hourly_rate = RateOverride.resolve_rate(invoice.project)
+                
+                item = InvoiceItem(
+                    invoice_id=invoice.id,
+                    description=group['description'],
+                    quantity=group['total_hours'],
+                    unit_price=hourly_rate,
+                    time_entry_ids=','.join(str(entry.id) for entry in group['entries'])
+                )
+                db.session.add(item)
+        
+        # Process project costs
+        if selected_costs:
+            costs = ProjectCost.query.filter(ProjectCost.id.in_(selected_costs)).all()
+            
+            for cost in costs:
+                # Create invoice item for each cost
+                item = InvoiceItem(
+                    invoice_id=invoice.id,
+                    description=f"{cost.description} ({cost.category.title()})",
+                    quantity=1,  # Costs are typically a single unit
+                    unit_price=cost.amount
+                )
+                db.session.add(item)
+                
+                # Mark cost as invoiced
+                cost.mark_as_invoiced(invoice.id)
         
         # Calculate totals
         invoice.calculate_totals()
@@ -367,10 +388,10 @@ def generate_from_time(invoice_id):
             flash('Could not generate items due to a database error. Please check server logs.', 'error')
             return redirect(url_for('invoices.edit_invoice', invoice_id=invoice.id))
         
-        flash('Invoice items generated from time entries successfully', 'success')
+        flash('Invoice items generated successfully from time entries and costs', 'success')
         return redirect(url_for('invoices.edit_invoice', invoice_id=invoice.id))
     
-    # GET request - show time entry selection
+    # GET request - show time entry and cost selection
     # Get unbilled time entries for this project
     time_entries = TimeEntry.query.filter(
         TimeEntry.project_id == invoice.project_id,
@@ -395,8 +416,12 @@ def generate_from_time(invoice_id):
         if not already_billed:
             unbilled_entries.append(entry)
     
-    # Calculate total available hours
+    # Get uninvoiced billable costs for this project
+    unbilled_costs = ProjectCost.get_uninvoiced_costs(invoice.project_id)
+    
+    # Calculate totals
     total_available_hours = sum(entry.duration_hours for entry in unbilled_entries)
+    total_available_costs = sum(float(cost.amount) for cost in unbilled_costs)
     
     # Get currency from settings
     settings = Settings.get_settings()
@@ -405,7 +430,9 @@ def generate_from_time(invoice_id):
     return render_template('invoices/generate_from_time.html', 
                          invoice=invoice, 
                          time_entries=unbilled_entries,
+                         project_costs=unbilled_costs,
                          total_available_hours=total_available_hours,
+                         total_available_costs=total_available_costs,
                          currency=currency)
 
 @invoices_bp.route('/invoices/<int:invoice_id>/export/csv')

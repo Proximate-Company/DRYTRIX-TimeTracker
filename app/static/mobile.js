@@ -943,50 +943,39 @@ class MobileErrorHandling {
     }
     
     showMobileError(error) {
-        // Create mobile-friendly error message
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger mobile-error';
-        errorDiv.innerHTML = `
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>Something went wrong</strong><br>
-            <small>Please try again or contact support if the problem persists.</small>
-        `;
-        
-        // Insert at top of page
-        const container = document.querySelector('.container');
-        if (container) {
-            container.insertBefore(errorDiv, container.firstChild);
-            
-            // Auto-remove after 10 seconds
-            setTimeout(() => {
-                errorDiv.remove();
-            }, 10000);
+        // Use the new toast notification system if available
+        if (window.toastManager) {
+            const message = error.message || 'Please try again or contact support if the problem persists.';
+            window.toastManager.error(
+                message,
+                'Something went wrong',
+                10000
+            );
+        } else {
+            // Fallback to console if toast system not loaded
+            console.error('Mobile error:', error);
         }
     }
     
     showOfflineIndicator() {
-        // Create offline indicator
-        const offlineDiv = document.createElement('div');
-        offlineDiv.className = 'alert alert-warning mobile-offline';
-        offlineDiv.innerHTML = `
-            <i class="fas fa-wifi me-2"></i>
-            <strong>You're offline</strong><br>
-            <small>Some features may not work properly.</small>
-        `;
-        
-        offlineDiv.id = 'offline-indicator';
-        
-        // Insert at top of page
-        const container = document.querySelector('.container');
-        if (container && !document.getElementById('offline-indicator')) {
-            container.insertBefore(offlineDiv, container.firstChild);
+        // Use the new toast notification system if available
+        if (window.toastManager) {
+            // Store the toast ID for later dismissal
+            this.offlineToastId = window.toastManager.warning(
+                'Some features may not work properly.',
+                "You're offline",
+                0  // Don't auto-dismiss
+            );
         }
     }
     
     hideOfflineIndicator() {
-        const offlineDiv = document.getElementById('offline-indicator');
-        if (offlineDiv) {
-            offlineDiv.remove();
+        // Dismiss the offline toast if it exists
+        if (window.toastManager && this.offlineToastId) {
+            window.toastManager.dismiss(this.offlineToastId);
+            this.offlineToastId = null;
+            // Show a success message that we're back online
+            window.toastManager.success('Connection restored', "You're online", 3000);
         }
     }
 }

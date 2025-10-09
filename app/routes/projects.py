@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
-from app.models import Project, TimeEntry, Task, Client
+from app.models import Project, TimeEntry, Task, Client, ProjectCost
 from datetime import datetime
 from decimal import Decimal
 from app.utils.db import safe_commit
@@ -189,13 +189,23 @@ def view_project(project_id):
     from app.models import Comment
     comments = Comment.get_project_comments(project_id, include_replies=True)
     
+    # Get recent project costs (latest 5)
+    recent_costs = ProjectCost.query.filter_by(project_id=project_id).order_by(
+        ProjectCost.cost_date.desc()
+    ).limit(5).all()
+    
+    # Get total cost count
+    total_costs_count = ProjectCost.query.filter_by(project_id=project_id).count()
+    
     return render_template('projects/view.html', 
                          project=project, 
                          entries=entries_pagination.items,
                          pagination=entries_pagination,
                          tasks=tasks,
                          user_totals=user_totals,
-                         comments=comments)
+                         comments=comments,
+                         recent_costs=recent_costs,
+                         total_costs_count=total_costs_count)
 
 @projects_bp.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -340,5 +350,259 @@ def delete_project(project_id):
     
     flash(f'Project "{project_name}" deleted successfully', 'success')
     return redirect(url_for('projects.list_projects'))
+
+
+# ===== PROJECT COSTS ROUTES =====
+
+@projects_bp.route('/projects/<int:project_id>/costs')
+@login_required
+def list_costs(project_id):
+    """List all costs for a project"""
+    project = Project.query.get_or_404(project_id)
+    
+    # Get filters from query params
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    category = request.args.get('category', '')
+    
+    start_date = None
+    end_date = None
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    # Get costs
+    query = project.costs
+    
+    if start_date:
+        query = query.filter(ProjectCost.cost_date >= start_date)
+    
+    if end_date:
+        query = query.filter(ProjectCost.cost_date <= end_date)
+    
+    if category:
+        query = query.filter(ProjectCost.category == category)
+    
+    costs = query.order_by(ProjectCost.cost_date.desc()).all()
+    
+    # Get category breakdown
+    category_breakdown = ProjectCost.get_costs_by_category(
+        project_id, start_date, end_date
+    )
+    
+    return render_template(
+        'projects/costs.html',
+        project=project,
+        costs=costs,
+        category_breakdown=category_breakdown,
+        start_date=start_date_str,
+        end_date=end_date_str,
+        selected_category=category
+    )
+
+
+@projects_bp.route('/projects/<int:project_id>/costs/add', methods=['GET', 'POST'])
+@login_required
+def add_cost(project_id):
+    """Add a new cost to a project"""
+    project = Project.query.get_or_404(project_id)
+    
+    if request.method == 'POST':
+        description = request.form.get('description', '').strip()
+        category = request.form.get('category', '').strip()
+        amount = request.form.get('amount', '').strip()
+        cost_date_str = request.form.get('cost_date', '').strip()
+        billable = request.form.get('billable') == 'on'
+        notes = request.form.get('notes', '').strip()
+        currency_code = request.form.get('currency_code', 'EUR').strip()
+        
+        # Validate required fields
+        if not description or not category or not amount or not cost_date_str:
+            flash(_('Description, category, amount, and date are required'), 'error')
+            return render_template('projects/add_cost.html', project=project)
+        
+        # Validate amount
+        try:
+            amount = Decimal(amount)
+            if amount <= 0:
+                raise ValueError('Amount must be positive')
+        except (ValueError, Exception):
+            flash(_('Invalid amount format'), 'error')
+            return render_template('projects/add_cost.html', project=project)
+        
+        # Validate date
+        try:
+            cost_date = datetime.strptime(cost_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            flash(_('Invalid date format'), 'error')
+            return render_template('projects/add_cost.html', project=project)
+        
+        # Create cost
+        cost = ProjectCost(
+            project_id=project_id,
+            user_id=current_user.id,
+            description=description,
+            category=category,
+            amount=amount,
+            cost_date=cost_date,
+            billable=billable,
+            notes=notes,
+            currency_code=currency_code
+        )
+        
+        db.session.add(cost)
+        if not safe_commit('add_project_cost', {'project_id': project_id}):
+            flash(_('Could not add cost due to a database error. Please check server logs.'), 'error')
+            return render_template('projects/add_cost.html', project=project)
+        
+        flash(_('Cost added successfully'), 'success')
+        return redirect(url_for('projects.view_project', project_id=project.id))
+    
+    return render_template('projects/add_cost.html', project=project)
+
+
+@projects_bp.route('/projects/<int:project_id>/costs/<int:cost_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_cost(project_id, cost_id):
+    """Edit a project cost"""
+    project = Project.query.get_or_404(project_id)
+    cost = ProjectCost.query.get_or_404(cost_id)
+    
+    # Verify cost belongs to project
+    if cost.project_id != project_id:
+        flash(_('Cost not found'), 'error')
+        return redirect(url_for('projects.view_project', project_id=project_id))
+    
+    # Only admin or the user who created the cost can edit
+    if not current_user.is_admin and cost.user_id != current_user.id:
+        flash(_('You do not have permission to edit this cost'), 'error')
+        return redirect(url_for('projects.view_project', project_id=project_id))
+    
+    if request.method == 'POST':
+        description = request.form.get('description', '').strip()
+        category = request.form.get('category', '').strip()
+        amount = request.form.get('amount', '').strip()
+        cost_date_str = request.form.get('cost_date', '').strip()
+        billable = request.form.get('billable') == 'on'
+        notes = request.form.get('notes', '').strip()
+        currency_code = request.form.get('currency_code', 'EUR').strip()
+        
+        # Validate required fields
+        if not description or not category or not amount or not cost_date_str:
+            flash(_('Description, category, amount, and date are required'), 'error')
+            return render_template('projects/edit_cost.html', project=project, cost=cost)
+        
+        # Validate amount
+        try:
+            amount = Decimal(amount)
+            if amount <= 0:
+                raise ValueError('Amount must be positive')
+        except (ValueError, Exception):
+            flash(_('Invalid amount format'), 'error')
+            return render_template('projects/edit_cost.html', project=project, cost=cost)
+        
+        # Validate date
+        try:
+            cost_date = datetime.strptime(cost_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            flash(_('Invalid date format'), 'error')
+            return render_template('projects/edit_cost.html', project=project, cost=cost)
+        
+        # Update cost
+        cost.description = description
+        cost.category = category
+        cost.amount = amount
+        cost.cost_date = cost_date
+        cost.billable = billable
+        cost.notes = notes
+        cost.currency_code = currency_code
+        cost.updated_at = datetime.utcnow()
+        
+        if not safe_commit('edit_project_cost', {'cost_id': cost_id}):
+            flash(_('Could not update cost due to a database error. Please check server logs.'), 'error')
+            return render_template('projects/edit_cost.html', project=project, cost=cost)
+        
+        flash(_('Cost updated successfully'), 'success')
+        return redirect(url_for('projects.view_project', project_id=project.id))
+    
+    return render_template('projects/edit_cost.html', project=project, cost=cost)
+
+
+@projects_bp.route('/projects/<int:project_id>/costs/<int:cost_id>/delete', methods=['POST'])
+@login_required
+def delete_cost(project_id, cost_id):
+    """Delete a project cost"""
+    project = Project.query.get_or_404(project_id)
+    cost = ProjectCost.query.get_or_404(cost_id)
+    
+    # Verify cost belongs to project
+    if cost.project_id != project_id:
+        flash(_('Cost not found'), 'error')
+        return redirect(url_for('projects.view_project', project_id=project_id))
+    
+    # Only admin or the user who created the cost can delete
+    if not current_user.is_admin and cost.user_id != current_user.id:
+        flash(_('You do not have permission to delete this cost'), 'error')
+        return redirect(url_for('projects.view_project', project_id=project_id))
+    
+    # Check if cost has been invoiced
+    if cost.is_invoiced:
+        flash(_('Cannot delete cost that has been invoiced'), 'error')
+        return redirect(url_for('projects.view_project', project_id=project_id))
+    
+    cost_description = cost.description
+    db.session.delete(cost)
+    if not safe_commit('delete_project_cost', {'cost_id': cost_id}):
+        flash(_('Could not delete cost due to a database error. Please check server logs.'), 'error')
+        return redirect(url_for('projects.view_project', project_id=project_id))
+    
+    flash(_(f'Cost "{cost_description}" deleted successfully'), 'success')
+    return redirect(url_for('projects.view_project', project_id=project.id))
+
+
+# API endpoint for getting project costs as JSON
+@projects_bp.route('/api/projects/<int:project_id>/costs')
+@login_required
+def api_project_costs(project_id):
+    """API endpoint to get project costs"""
+    project = Project.query.get_or_404(project_id)
+    
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+    
+    start_date = None
+    end_date = None
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    costs = ProjectCost.get_project_costs(project_id, start_date, end_date)
+    total_costs = ProjectCost.get_total_costs(project_id, start_date, end_date)
+    billable_costs = ProjectCost.get_total_costs(project_id, start_date, end_date, billable_only=True)
+    
+    return jsonify({
+        'costs': [cost.to_dict() for cost in costs],
+        'total_costs': total_costs,
+        'billable_costs': billable_costs,
+        'count': len(costs)
+    })
 
 

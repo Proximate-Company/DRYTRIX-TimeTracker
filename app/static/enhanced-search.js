@@ -91,15 +91,6 @@
                     this.hideAutocomplete();
                 }
             });
-
-            // Global keyboard shortcut (Ctrl+K)
-            document.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                    e.preventDefault();
-                    this.input.focus();
-                    this.input.select();
-                }
-            });
         }
 
         handleInput(e) {

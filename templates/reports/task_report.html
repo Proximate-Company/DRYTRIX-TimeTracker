@@ -2,6 +2,10 @@
 
 {% block title %}{{ _('Finished Tasks Report') }} - {{ app_name }}{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='reports.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
@@ -25,13 +29,21 @@
     <!-- Filters -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm filters-card">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
                         <i class="fas fa-filter"></i> {{ _('Filters') }}
                     </h5>
                 </div>
                 <div class="card-body">
+                    <!-- Date Range Presets -->
+                    <div class="date-presets-container">
+                        <span class="date-presets-label">
+                            <i class="fas fa-calendar-day me-2"></i>{{ _('Quick Date Ranges') }}
+                        </span>
+                        <div id="datePresets"></div>
+                    </div>
+                    
                     <form method="GET" class="row g-3">
                         <div class="col-md-3">
                             <label for="start_date" class="form-label">{{ _('Start Date') }}</label>
@@ -72,6 +84,16 @@
                             <a href="{{ url_for('reports.task_report') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times"></i> {{ _('Clear') }}
                             </a>
+                            
+                            <!-- Export Options -->
+                            <div class="export-options float-end">
+                                <button type="button" class="btn btn-outline-success btn-sm export-btn" onclick="window.ReportsEnhanced.exportTableToCSV('tasksTable', 'tasks_report.csv')">
+                                    <i class="fas fa-file-csv"></i> {{ _('CSV') }}
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm export-btn" onclick="window.print()">
+                                    <i class="fas fa-print"></i> {{ _('Print') }}
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -115,30 +137,89 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 summary-card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="summary-icon bg-info bg-opacity-10 text-info">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="summary-label">{{ _('Avg Hours/Task') }}</div>
+                            <div class="summary-value">
+                                {% if summary.tasks_count > 0 %}
+                                {{ "%.1f"|format(summary.total_hours / summary.tasks_count) }}h
+                                {% else %}
+                                0h
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 summary-card">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="summary-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="summary-label">{{ _('Completion Rate') }}</div>
+                            <div class="summary-value">100%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+    
+    <!-- Task Completion Chart -->
+    {% if tasks|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title">
+                        <i class="fas fa-chart-bar me-2"></i>{{ _('Top Tasks by Hours') }}
+                    </h5>
+                </div>
+                <canvas id="taskCompletionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Finished Tasks Table -->
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-list"></i> {{ _('Finished Tasks') }} ({{ tasks|length }})
                     </h5>
+                    <div class="table-search-container">
+                        <input type="text" class="table-search" id="taskTableSearch" placeholder="{{ _('Search tasks...') }}">
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     {% if tasks %}
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover mb-0 report-table sortable-table" id="tasksTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th>{{ _('Task') }}</th>
-                                    <th>{{ _('Project') }}</th>
-                                    <th>{{ _('Assignee') }}</th>
-                                    <th>{{ _('Completed') }}</th>
-                                    <th>{{ _('Hours') }}</th>
-                                    <th>{{ _('Entries') }}</th>
-                                    <th>{{ _('Actions') }}</th>
+                                    <th data-sortable>{{ _('Task') }}</th>
+                                    <th data-sortable>{{ _('Project') }}</th>
+                                    <th data-sortable>{{ _('Assignee') }}</th>
+                                    <th data-sortable>{{ _('Completed') }}</th>
+                                    <th data-sortable>{{ _('Hours') }}</th>
+                                    <th data-sortable>{{ _('Entries') }}</th>
+                                    <th class="text-center">{{ _('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -173,8 +254,8 @@
                                     </td>
                                     <td><strong>{{ "%.2f"|format(row.hours) }}h</strong></td>
                                     <td>{{ row.entries_count }}</td>
-                                    <td>
-                                        <a href="{{ url_for('tasks.view_task', task_id=row.task.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <td class="text-center">
+                                        <a href="{{ url_for('tasks.view_task', task_id=row.task.id) }}" class="btn btn-sm btn-action btn-action--view" title="{{ _('View Task') }}">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>
@@ -197,6 +278,45 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script src="{{ url_for('static', filename='reports-enhanced.js') }}"></script>
+<script>
+// Initialize Task Completion Chart
+document.addEventListener('DOMContentLoaded', function() {
+  {% if tasks %}
+  const tasksData = [
+    {% for row in tasks[:10] %}
+    {
+      name: "{{ row.task.name|safe }}",
+      hours: {{ row.hours }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+  
+  if (tasksData.length > 0) {
+    window.ReportsEnhanced.ReportCharts.createTaskCompletionChart('taskCompletionChart', tasksData);
+  }
+  {% endif %}
+  
+  // Table search for tasks
+  const taskSearch = document.getElementById('taskTableSearch');
+  if (taskSearch) {
+    taskSearch.addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const table = document.getElementById('tasksTable');
+      const rows = table.querySelectorAll('tbody tr');
+      
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+      });
+    });
+  }
+});
+</script>
 {% endblock %}
 
 

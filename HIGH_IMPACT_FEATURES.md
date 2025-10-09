@@ -77,11 +77,11 @@ const search = new EnhancedSearch(inputElement, {
 ## 2. ⌨️ Keyboard Shortcuts & Command Palette
 
 ### What It Does
-Provides power-user keyboard shortcuts for quick navigation and actions, plus a searchable command palette (like VS Code's Ctrl+K). Now with **instant `?` key access** for lightning-fast command execution! ⚡
+Provides power-user keyboard shortcuts for quick navigation and actions, plus a searchable command palette. Now with **instant `?` key access** for lightning-fast command execution! ⚡
 
 ### Features
 ✅ **Quick Access** - Just press `?` to open command palette instantly  
-✅ **Command Palette** - `Ctrl+K` or `?` for searchable command list  
+✅ **Quick Search** - `Ctrl+K` to instantly focus search box  
 ✅ **50+ Pre-configured Shortcuts** - Navigation, actions, timer controls  
 ✅ **Visual Help** - `Shift+?` to show all shortcuts  
 ✅ **Key Sequences** - Support for multi-key shortcuts (e.g., `g` then `d`)  
@@ -110,7 +110,7 @@ Provides power-user keyboard shortcuts for quick navigation and actions, plus a 
 
 #### General
 - `?` - Open Command Palette (Quick Access!) ⚡
-- `Ctrl+K` (or `Cmd+K`) - Open Command Palette (Alternative)
+- `Ctrl+K` (or `Cmd+K`) - Focus Search Box  
 - `Shift+?` - Show Keyboard Shortcuts Help
 - `Ctrl+Shift+L` - Toggle Theme (light/dark)
 
@@ -285,7 +285,7 @@ document.querySelector('#my-table').addEventListener('cellEdited', (e) => {
 ```
 
 ### 3. Enable Keyboard Shortcuts (Already Active!)
-Shortcuts work automatically on all pages. Just press `Ctrl+K` or `?`.
+Shortcuts work automatically on all pages. Press `?` for command palette or `Ctrl+K` for search.
 
 ---
 
@@ -471,7 +471,7 @@ table.on('export', () => analytics.track('TableExport'));
 ### Shortcuts not responding?
 1. Check for JavaScript errors
 2. Verify not in input field
-3. Try `Ctrl+K` to open command palette
+3. Try `?` to open command palette or `Ctrl+K` for search
 4. Check `keyboard-shortcuts.js` loaded
 
 ### Table features not active?
@@ -484,7 +484,7 @@ table.on('export', () => analytics.track('TableExport'));
 
 ## 💡 Pro Tips
 
-1. **Search**: Use `Ctrl+K` from anywhere to quick-search
+1. **Search**: Use `Ctrl+K` from anywhere to quick-search, or `?` for command palette
 2. **Shortcuts**: Learn just 5 shortcuts to 3x your speed
 3. **Tables**: Double-click cells to edit, ESC to cancel
 4. **Export**: Use table export for quick reports

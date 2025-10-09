@@ -45,6 +45,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-search.css') }}?v={{ app_version }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='keyboard-shortcuts.css') }}?v={{ app_version }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-tables.css') }}?v={{ app_version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='toast-notifications.css') }}?v={{ app_version }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     
     {% block extra_css %}{% endblock %}
@@ -74,7 +75,10 @@
 </head>
 <body>
     <a class="skip-link" href="#main-content">{{ _('Skip to content') }}</a>
-    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    <!-- Modern Toast Notification Container -->
+    <div id="toast-notification-container"></div>
+    <!-- Legacy toast container for backwards compatibility -->
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="display: none;"></div>
     <!-- Enhanced Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
         <div class="container-fluid px-3">
@@ -139,13 +143,13 @@
                     <!-- Global Search (desktop) -->
                     <li class="nav-item d-none d-xl-flex align-items-center me-2">
                         <form class="navbar-search" role="search" action="{{ url_for('main.search') }}" method="get">
-                            <input name="q" type="search" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" data-enhanced-search='{"endpoint": "/api/search", "minChars": 2, "maxResults": 10}'>
+                            <input name="q" type="search" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" data-enhanced-search='{"endpoint": "/api/search", "minChars": 2, "maxResults": 10}' data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ _('Search') }} ({{ _('Ctrl') }}+K)">
                         </form>
                     </li>
 
                     <!-- Command Palette Launcher (desktop) -->
                     <li class="nav-item d-none d-xl-flex align-items-center me-2">
-                        <button id="commandPaletteBtn" class="btn btn-quiet nav-control" type="button" onclick="try{ window.keyboardShortcuts?.openCommandPalette(); }catch(e){}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ _('Open Command Palette') }} (? or {{ _('Ctrl') }}+K)">
+                        <button id="commandPaletteBtn" class="btn btn-quiet nav-control" type="button" onclick="try{ window.keyboardShortcuts?.openCommandPalette(); }catch(e){}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ _('Open Command Palette') }} (?)">
                             <i class="fas fa-terminal"></i>
                         </button>
                     </li>
@@ -216,14 +220,13 @@
 
     <!-- Enhanced Main Content -->
     <main id="main-content" class="container-fluid mt-4 px-3 px-md-4">
-    <!-- Enhanced Flash Messages -->
+    <!-- Flash Messages (converted to toast notifications by JS) -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="mb-3">
+                <div id="flash-messages-container" style="display: none;">
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show fade-in" role="alert">
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }}" role="alert" data-toast-message="{{ message }}" data-toast-type="{{ 'error' if category == 'error' else category }}">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
                 </div>
@@ -332,33 +335,11 @@
             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
+        // Legacy showToast function - redirects to new toast system
+        // Will be overridden by toast-notifications.js when it loads
         function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            if (!container) {
-                // Fallback: alert when toast container not present
-                try { console.warn('Toast container missing:', message); } catch(e) {}
-                return;
-            }
-            const toast = document.createElement('div');
-            toast.className = `toast align-items-center text-white bg-${type} border-0 fade`;
-            toast.setAttribute('role', 'alert');
-            toast.setAttribute('aria-live', 'assertive');
-            toast.setAttribute('aria-atomic', 'true');
-            toast.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">${message}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="${i18n.close}"></button>
-                </div>`;
-            container.appendChild(toast);
-            try {
-                const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
-                toast.classList.add('show');
-                bsToast.show();
-                toast.addEventListener('hidden.bs.toast', () => toast.remove());
-            } catch (e) {
-                // If bootstrap toast not available, remove after timeout
-                setTimeout(() => toast.remove(), 3000);
-            }
+            // Temporary implementation until toast-notifications.js loads
+            console.log('Toast:', type, message);
         }
         
         // Navbar scrolled shadow behavior
@@ -444,6 +425,8 @@
     <!-- Socket.IO only for authenticated users -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     {% endif %}
+    <!-- Toast Notification System -->
+    <script src="{{ url_for('static', filename='toast-notifications.js') }}?v={{ app_version }}"></script>
     {% if request.endpoint != 'auth.login' %}
     <!-- Custom JS (disabled on login to avoid interference) -->
     <script src="{{ url_for('static', filename='mobile.js') }}"></script>
@@ -461,11 +444,15 @@
             socket.on('connect', () => console.log('Connected to server'));
             socket.on('disconnect', () => console.log('Disconnected from server'));
             socket.on('timer_started', (data) => {
-                showToast(`{{ _('Timer started for') }} ${data.project_name}`, 'success');
+                if (window.toastManager) {
+                    window.toastManager.success(`{{ _('Timer started for') }} ${data.project_name}`, '{{ _('Timer Started') }}');
+                }
                 if (typeof updateTimerDisplay === 'function') updateTimerDisplay();
             });
             socket.on('timer_stopped', (data) => {
-                showToast(`{{ _('Timer stopped. Duration:') }} ${data.duration}`, 'info');
+                if (window.toastManager) {
+                    window.toastManager.info(`{{ _('Timer stopped. Duration:') }} ${data.duration}`, '{{ _('Timer Stopped') }}');
+                }
                 if (typeof updateTimerDisplay === 'function') updateTimerDisplay();
             });
             console.log('Base template initialized - Socket.IO and global functions ready');

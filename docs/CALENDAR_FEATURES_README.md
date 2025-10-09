@@ -525,7 +525,7 @@ Potential additions:
 ## 💡 Tips & Tricks
 
 1. **Quick Project Switch**: Keep the project dropdown visible at all times for fast entry creation
-2. **Keyboard Shortcut**: Use `Ctrl+K` to open command palette and type "calendar"
+2. **Keyboard Shortcuts**: Use `?` to open command palette, or `Ctrl+K` to quickly search
 3. **Week View Default**: Start each session in week view for best overview
 4. **Color Recognition**: Learn your project colors to quickly identify entries
 5. **Agenda for Planning**: Use agenda view for day planning and reviews

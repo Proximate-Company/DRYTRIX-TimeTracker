@@ -22,6 +22,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Toast Notifications -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='toast-notifications.css') }}?v={{ app_version }}">
     
     <style>
         :root {
@@ -137,6 +139,7 @@
             box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255, 255, 255, 0.1);
             padding: 3rem 2.5rem;
             border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
         }
         
         @media (max-width: 576px) {
@@ -393,60 +396,6 @@
             text-decoration: underline;
         }
         
-        .alert {
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .alert-success {
-            background: #d1fae5;
-            border: 1px solid var(--success-color);
-            color: #065f46;
-        }
-        
-        .alert-error {
-            background: #fee2e2;
-            border: 1px solid var(--danger-color);
-            color: #991b1b;
-        }
-        
-        .alert-warning {
-            background: #fef3c7;
-            border: 1px solid var(--warning-color);
-            color: #92400e;
-        }
-        
-        .alert-info {
-            background: #dbeafe;
-            border: 1px solid var(--primary-color);
-            color: #1e40af;
-        }
-        
-        .alert i {
-            flex-shrink: 0;
-            margin-top: 0.125rem;
-        }
-        
-        .alert-content {
-            flex: 1;
-        }
-        
         .spinner {
             animation: spin 1s linear infinite;
         }
@@ -486,9 +435,121 @@
             outline: 3px solid var(--primary-color);
             outline-offset: 2px;
         }
+        
+        /* Language Selector */
+        .language-selector {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 10;
+        }
+        
+        @media (max-width: 576px) {
+            .language-selector {
+                top: 1rem;
+                right: 1rem;
+            }
+        }
+        
+        .language-dropdown {
+            position: relative;
+        }
+        
+        .language-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 0.5rem 0.875rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .language-btn:hover {
+            background: white;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .language-btn i {
+            font-size: 1rem;
+        }
+        
+        .language-menu {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-xl);
+            min-width: 160px;
+            padding: 0.5rem 0;
+            display: none;
+            animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+        }
+        
+        .language-menu.show {
+            display: block;
+        }
+        
+        .language-menu-header {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .language-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 0.625rem 1rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .language-menu-item:hover {
+            background: var(--gray-50);
+            color: var(--primary-color);
+        }
+        
+        .language-menu-item.active {
+            background: var(--primary-50);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .language-menu-item i {
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Toast adjustments for login page (no mobile tab bar) */
+        @media (max-width: 576px) {
+            #toast-notification-container {
+                bottom: 24px !important; /* Override mobile tab bar offset */
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Toast Notification Container -->
+    <div id="toast-notification-container"></div>
+    
     <!-- Animated background particles -->
     <div class="bg-particles">
         <div class="particle"></div>
@@ -500,15 +561,37 @@
     
     <div class="login-container">
         <div class="login-card">
-            <!-- Flash Messages -->
+            <!-- Language Selector -->
+            <div class="language-selector">
+                <div class="language-dropdown">
+                    <button type="button" class="language-btn" id="languageBtn" aria-label="{{ _('Language') }}" aria-expanded="false">
+                        <i class="fas fa-globe"></i>
+                        <span>{{ current_language_label }}</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
+                    </button>
+                    <div class="language-menu" id="languageMenu">
+                        <div class="language-menu-header">{{ _('Language') }}</div>
+                        {% for code, label in config['LANGUAGES'].items() %}
+                        <a href="{{ url_for('main.set_language') }}?lang={{ code }}&next={{ request.url }}" 
+                           class="language-menu-item {% if current_language_code == code %}active{% endif %}"
+                           {% if current_language_code == code %}aria-current="true"{% endif %}>
+                            {% if current_language_code == code %}<i class="fas fa-check"></i>{% endif %}{{ label }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Flash Messages (converted to toasts by JavaScript) -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
+                    <div id="flash-messages-container" style="display: none;">
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ 'error' if category == 'error' else category }}" role="alert">
-                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'error' else 'exclamation-triangle' if category == 'warning' else 'info-circle' }}"></i>
-                            <div class="alert-content">{{ message }}</div>
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }}" role="alert" data-toast-message="{{ message }}" data-toast-type="{{ 'error' if category == 'error' else category }}">
+                            {{ message }}
                         </div>
                     {% endfor %}
+                    </div>
                 {% endif %}
             {% endwith %}
             
@@ -609,8 +692,43 @@
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Toast Notifications -->
+    <script src="{{ url_for('static', filename='toast-notifications.js') }}?v={{ app_version }}"></script>
 
 <script>
+    // Language Selector
+    (function() {
+        const languageBtn = document.getElementById('languageBtn');
+        const languageMenu = document.getElementById('languageMenu');
+        
+        if (languageBtn && languageMenu) {
+            // Toggle dropdown
+            languageBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isOpen = languageMenu.classList.contains('show');
+                languageMenu.classList.toggle('show');
+                languageBtn.setAttribute('aria-expanded', !isOpen);
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!languageBtn.contains(e.target) && !languageMenu.contains(e.target)) {
+                    languageMenu.classList.remove('show');
+                    languageBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Close dropdown on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && languageMenu.classList.contains('show')) {
+                    languageMenu.classList.remove('show');
+                    languageBtn.setAttribute('aria-expanded', 'false');
+                    languageBtn.focus();
+                }
+            });
+        }
+    })();
+
     // Auto-focus on username field
         try {
             const usernameField = document.getElementById('username');

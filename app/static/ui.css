@@ -68,9 +68,8 @@
     font-weight: var(--font-weight-medium);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    transition: var(--transition);
+    cursor: default;
 }
-.project-badge:hover { background: var(--surface-hover); transform: translateY(-1px); }
 
 /* Projects: table sorting indicators */
 thead th.sorted-asc::after { content: " \25B2"; color: var(--primary-color); font-weight: bold; }

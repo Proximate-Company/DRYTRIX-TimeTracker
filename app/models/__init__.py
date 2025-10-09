@@ -16,10 +16,11 @@ from .focus_session import FocusSession
 from .recurring_block import RecurringBlock
 from .rate_override import RateOverride
 from .saved_filter import SavedFilter
+from .project_cost import ProjectCost
 
 __all__ = [
     'User', 'Project', 'TimeEntry', 'Task', 'Settings', 'Invoice', 'InvoiceItem', 'Client', 'TaskActivity', 'Comment',
-    'FocusSession', 'RecurringBlock', 'RateOverride', 'SavedFilter',
+    'FocusSession', 'RecurringBlock', 'RateOverride', 'SavedFilter', 'ProjectCost',
     'InvoiceTemplate', 'Currency', 'ExchangeRate', 'TaxRule', 'Payment', 'CreditNote', 'InvoiceReminderSchedule',
     'SavedReportView', 'ReportEmailSchedule'
 ]

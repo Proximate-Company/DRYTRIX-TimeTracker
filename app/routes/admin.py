@@ -49,6 +49,8 @@ def get_upload_folder():
 @admin_required
 def admin_dashboard():
     """Admin dashboard"""
+    from app.config import Config
+    
     # Get system statistics
     total_users = User.query.count()
     active_users = User.query.filter_by(is_active=True).count()
@@ -63,6 +65,22 @@ def admin_dashboard():
     ).order_by(
         TimeEntry.created_at.desc()
     ).limit(10).all()
+    
+    # Get OIDC status
+    auth_method = (getattr(Config, 'AUTH_METHOD', 'local') or 'local').strip().lower()
+    oidc_enabled = auth_method in ('oidc', 'both')
+    oidc_issuer = getattr(Config, 'OIDC_ISSUER', None)
+    oidc_configured = oidc_enabled and oidc_issuer and getattr(Config, 'OIDC_CLIENT_ID', None) and getattr(Config, 'OIDC_CLIENT_SECRET', None)
+    
+    # Count OIDC users
+    oidc_users_count = 0
+    try:
+        oidc_users_count = User.query.filter(
+            User.oidc_issuer.isnot(None),
+            User.oidc_sub.isnot(None)
+        ).count()
+    except Exception:
+        pass
     
     # Build stats object expected by the template
     stats = {
@@ -80,7 +98,11 @@ def admin_dashboard():
         'admin/dashboard.html',
         stats=stats,
         active_timers=active_timers,
-        recent_entries=recent_entries
+        recent_entries=recent_entries,
+        oidc_enabled=oidc_enabled,
+        oidc_configured=oidc_configured,
+        oidc_auth_method=auth_method,
+        oidc_users_count=oidc_users_count
     )
 
 # Compatibility alias for code/templates that might reference 'admin.dashboard'
@@ -690,64 +712,169 @@ def system_info():
                          active_timers=active_timers,
                          db_size_mb=db_size_mb)
 
-@admin_bp.route('/license-status')
+@admin_bp.route('/admin/oidc/debug')
 @login_required
 @admin_required
-def license_status():
-    """Show metrics server client status"""
-    try:
-        from app.utils.license_server import get_license_client
-        client = get_license_client()
-        if client:
-            status = client.get_status()
-            settings = Settings.get_settings()
-            return render_template('admin/license_status.html', status=status, settings=settings)
-        else:
-            flash('Metrics server client not initialized', 'warning')
-            return redirect(url_for('admin.admin_dashboard'))
-    except Exception as e:
-        flash(f'Error getting metrics status: {e}', 'error')
-        return redirect(url_for('admin.admin_dashboard'))
-
-@admin_bp.route('/license-test')
-@login_required
-@admin_required
-def license_test():
-    """Test metrics server communication"""
-    try:
-        from app.utils.license_server import get_license_client, send_usage_event
-        client = get_license_client()
-        if client:
-            # Test server health
-            server_healthy = client.check_server_health()
-            
-            # Test usage event
-            usage_sent = send_usage_event("admin_test", {"admin": current_user.username})
-            
-            flash(f'Metrics Server: {"✓ Healthy" if server_healthy else "✗ Not Responding"}, Usage Event: {"✓ Sent" if usage_sent else "✗ Failed"}', 'info')
-        else:
-            flash('Metrics server client not initialized', 'warning')
-    except Exception as e:
-        flash(f'Error testing metrics server: {e}', 'error')
+def oidc_debug():
+    """OIDC Configuration Debug Dashboard"""
+    from app.config import Config
+    from app import oauth
     
-    return redirect(url_for('admin.license_status'))
+    # Gather OIDC configuration
+    oidc_config = {
+        'enabled': False,
+        'auth_method': getattr(Config, 'AUTH_METHOD', 'local'),
+        'issuer': getattr(Config, 'OIDC_ISSUER', None),
+        'client_id': getattr(Config, 'OIDC_CLIENT_ID', None),
+        'client_secret_set': bool(getattr(Config, 'OIDC_CLIENT_SECRET', None)),
+        'redirect_uri': getattr(Config, 'OIDC_REDIRECT_URI', None),
+        'scopes': getattr(Config, 'OIDC_SCOPES', 'openid profile email'),
+        'username_claim': getattr(Config, 'OIDC_USERNAME_CLAIM', 'preferred_username'),
+        'email_claim': getattr(Config, 'OIDC_EMAIL_CLAIM', 'email'),
+        'full_name_claim': getattr(Config, 'OIDC_FULL_NAME_CLAIM', 'name'),
+        'groups_claim': getattr(Config, 'OIDC_GROUPS_CLAIM', 'groups'),
+        'admin_group': getattr(Config, 'OIDC_ADMIN_GROUP', None),
+        'admin_emails': getattr(Config, 'OIDC_ADMIN_EMAILS', []),
+        'post_logout_redirect': getattr(Config, 'OIDC_POST_LOGOUT_REDIRECT_URI', None),
+    }
+    
+    # Check if OIDC is enabled
+    auth_method = (oidc_config['auth_method'] or 'local').strip().lower()
+    oidc_config['enabled'] = auth_method in ('oidc', 'both')
+    
+    # Try to get OIDC client metadata
+    metadata = None
+    metadata_error = None
+    well_known_url = None
+    
+    if oidc_config['enabled'] and oidc_config['issuer']:
+        try:
+            client = oauth.create_client('oidc')
+            if client:
+                metadata = client.load_server_metadata()
+                well_known_url = f"{oidc_config['issuer'].rstrip('/')}/.well-known/openid-configuration"
+        except Exception as e:
+            metadata_error = str(e)
+            well_known_url = f"{oidc_config['issuer'].rstrip('/')}/.well-known/openid-configuration" if oidc_config['issuer'] else None
+    
+    # Get OIDC users from database
+    oidc_users = []
+    try:
+        oidc_users = User.query.filter(
+            User.oidc_issuer.isnot(None),
+            User.oidc_sub.isnot(None)
+        ).order_by(User.last_login.desc()).all()
+    except Exception:
+        pass
+    
+    return render_template('admin/oidc_debug.html',
+                         oidc_config=oidc_config,
+                         metadata=metadata,
+                         metadata_error=metadata_error,
+                         well_known_url=well_known_url,
+                         oidc_users=oidc_users)
 
-@admin_bp.route('/license-restart')
+
+@admin_bp.route('/admin/oidc/test')
+@limiter.limit("10 per minute")
 @login_required
 @admin_required
-def license_restart():
-    """Restart the metrics server client"""
+def oidc_test():
+    """Test OIDC configuration by fetching discovery document"""
+    from app.config import Config
+    from app import oauth
+    import requests
+    
+    auth_method = (getattr(Config, 'AUTH_METHOD', 'local') or 'local').strip().lower()
+    if auth_method not in ('oidc', 'both'):
+        flash('OIDC is not enabled. Set AUTH_METHOD to "oidc" or "both".', 'warning')
+        return redirect(url_for('admin.oidc_debug'))
+    
+    issuer = getattr(Config, 'OIDC_ISSUER', None)
+    if not issuer:
+        flash('OIDC_ISSUER is not configured', 'error')
+        return redirect(url_for('admin.oidc_debug'))
+    
+    # Test 1: Check if discovery document is accessible
+    well_known_url = f"{issuer.rstrip('/')}/.well-known/openid-configuration"
     try:
-        from app.utils.license_server import get_license_client, start_license_client
-        client = get_license_client()
+        current_app.logger.info("OIDC Test: Fetching discovery document from %s", well_known_url)
+        response = requests.get(well_known_url, timeout=10)
+        response.raise_for_status()
+        discovery_doc = response.json()
+        flash(f'✓ Discovery document fetched successfully from {well_known_url}', 'success')
+        current_app.logger.info("OIDC Test: Discovery document retrieved, issuer=%s", discovery_doc.get('issuer'))
+    except requests.exceptions.Timeout:
+        flash(f'✗ Timeout fetching discovery document from {well_known_url}', 'error')
+        current_app.logger.error("OIDC Test: Timeout fetching discovery document")
+        return redirect(url_for('admin.oidc_debug'))
+    except requests.exceptions.RequestException as e:
+        flash(f'✗ Failed to fetch discovery document: {str(e)}', 'error')
+        current_app.logger.error("OIDC Test: Failed to fetch discovery document: %s", str(e))
+        return redirect(url_for('admin.oidc_debug'))
+    except Exception as e:
+        flash(f'✗ Unexpected error: {str(e)}', 'error')
+        current_app.logger.error("OIDC Test: Unexpected error: %s", str(e))
+        return redirect(url_for('admin.oidc_debug'))
+    
+    # Test 2: Check if OAuth client is registered
+    try:
+        client = oauth.create_client('oidc')
         if client:
-            if start_license_client():
-                flash('Metrics server client restarted successfully', 'success')
+            flash('✓ OAuth client is registered in application', 'success')
+            current_app.logger.info("OIDC Test: OAuth client registered")
+        else:
+            flash('✗ OAuth client is not registered', 'error')
+            current_app.logger.error("OIDC Test: OAuth client not registered")
+    except Exception as e:
+        flash(f'✗ Failed to create OAuth client: {str(e)}', 'error')
+        current_app.logger.error("OIDC Test: Failed to create OAuth client: %s", str(e))
+    
+    # Test 3: Verify required endpoints are present
+    required_endpoints = ['authorization_endpoint', 'token_endpoint', 'userinfo_endpoint']
+    for endpoint in required_endpoints:
+        if endpoint in discovery_doc:
+            flash(f'✓ {endpoint}: {discovery_doc[endpoint]}', 'info')
+        else:
+            flash(f'✗ Missing {endpoint} in discovery document', 'warning')
+    
+    # Test 4: Check supported scopes
+    supported_scopes = discovery_doc.get('scopes_supported', [])
+    requested_scopes = getattr(Config, 'OIDC_SCOPES', 'openid profile email').split()
+    for scope in requested_scopes:
+        if scope in supported_scopes:
+            flash(f'✓ Scope "{scope}" is supported by provider', 'info')
+        else:
+            flash(f'⚠ Scope "{scope}" may not be supported by provider (supported: {", ".join(supported_scopes)})', 'warning')
+    
+    # Test 5: Check claims
+    supported_claims = discovery_doc.get('claims_supported', [])
+    if supported_claims:
+        flash(f'ℹ Provider supports claims: {", ".join(supported_claims)}', 'info')
+        
+        # Check if configured claims are supported
+        claim_checks = {
+            'username': getattr(Config, 'OIDC_USERNAME_CLAIM', 'preferred_username'),
+            'email': getattr(Config, 'OIDC_EMAIL_CLAIM', 'email'),
+            'full_name': getattr(Config, 'OIDC_FULL_NAME_CLAIM', 'name'),
+            'groups': getattr(Config, 'OIDC_GROUPS_CLAIM', 'groups'),
+        }
+        
+        for claim_type, claim_name in claim_checks.items():
+            if claim_name in supported_claims:
+                flash(f'✓ Configured {claim_type} claim "{claim_name}" is supported', 'info')
             else:
-                flash('Failed to restart metrics server client', 'error')
-        else:
-            flash('Metrics server client not initialized', 'warning')
-    except Exception as e:
-        flash(f'Error restarting metrics server client: {e}', 'error')
+                flash(f'⚠ Configured {claim_type} claim "{claim_name}" not in supported claims list (may still work)', 'warning')
     
-    return redirect(url_for('admin.license_status'))
+    flash('OIDC configuration test completed', 'info')
+    return redirect(url_for('admin.oidc_debug'))
+
+
+@admin_bp.route('/admin/oidc/user/<int:user_id>')
+@login_required
+@admin_required
+def oidc_user_detail(user_id):
+    """View OIDC details for a specific user"""
+    user = User.query.get_or_404(user_id)
+    
+    return render_template('admin/oidc_user_detail.html', user=user)

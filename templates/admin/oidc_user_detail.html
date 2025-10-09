@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('OIDC User Details') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-user-shield text-primary"></i> {{ _('OIDC User Details') }}
+                </h1>
+                <a href="{{ url_for('admin.oidc_debug') }}" class="btn-header btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>{{ _('Back to OIDC Debug') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Profile -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user me-1"></i> {{ _('User Profile') }}</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">{{ _('Username') }}</th>
+                                <td><strong>{{ user.username }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Email') }}</th>
+                                <td>{{ user.email or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Full Name') }}</th>
+                                <td>{{ user.full_name or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Role') }}</th>
+                                <td>
+                                    {% if user.is_admin %}
+                                        <span class="badge bg-danger">{{ _('Admin') }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ _('User') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Status') }}</th>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">{{ _('Active') }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ _('Inactive') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Preferred Language') }}</th>
+                                <td>{{ user.preferred_language or 'en' }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Theme') }}</th>
+                                <td>{{ user.theme_preference or 'system' }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Created At') }}</th>
+                                <td>
+                                    {% if user.created_at %}
+                                        {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Unknown') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Last Login') }}</th>
+                                <td>
+                                    {% if user.last_login %}
+                                        {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Never') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- OIDC Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt me-1"></i> {{ _('OIDC Information') }}</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">{{ _('OIDC Issuer') }}</th>
+                                <td>
+                                    {% if user.oidc_issuer %}
+                                        <code class="text-break">{{ user.oidc_issuer }}</code>
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Not set') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('OIDC Subject (sub)') }}</th>
+                                <td>
+                                    {% if user.oidc_sub %}
+                                        <code class="text-break">{{ user.oidc_sub }}</code>
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Not set') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Authentication Method') }}</th>
+                                <td>
+                                    {% if user.oidc_issuer and user.oidc_sub %}
+                                        <span class="badge bg-primary">OIDC</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ _('Local') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {% if user.oidc_issuer and user.oidc_sub %}
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <small>
+                                {{ _('This user was created or linked via OIDC. The issuer and subject are used to uniquely identify the user across login sessions.') }}
+                            </small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <small>
+                                {{ _('This user has no OIDC information. They may have been created manually or via self-registration without OIDC.') }}
+                            </small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Statistics -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-1"></i> {{ _('Activity Statistics') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <h3 class="mb-0">{{ user.projects.count() }}</h3>
+                                <small class="text-muted">{{ _('Projects') }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <h3 class="mb-0">{{ user.time_entries.count() }}</h3>
+                                <small class="text-muted">{{ _('Time Entries') }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <h3 class="mb-0">
+                                    {% set active_timer = user.time_entries.filter_by(end_time=None).first() %}
+                                    {% if active_timer %}
+                                        <span class="badge bg-success">{{ _('Active') }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ _('None') }}</span>
+                                    {% endif %}
+                                </h3>
+                                <small class="text-muted">{{ _('Active Timer') }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <h3 class="mb-0">{{ user.created_tasks.count() }}</h3>
+                                <small class="text-muted">{{ _('Tasks Created') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tools me-1"></i> {{ _('Actions') }}</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>{{ _('Edit User') }}
+                    </a>
+                    <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-users me-2"></i>{{ _('View All Users') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-break {
+    word-break: break-all;
+}
+</style>
+{% endblock %}
+

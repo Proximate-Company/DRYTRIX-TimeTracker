@@ -1,5 +1,29 @@
 # Command Palette - Changelog
 
+## Version 2.1.0 - 2025-10-09
+
+### 🎯 Keyboard Shortcut Reorganization
+
+#### Changed: Ctrl+K Now Focuses Search
+- **Changed**: `Ctrl+K` / `Cmd+K` now focuses the search box instead of opening command palette
+- **Why**: More intuitive - Ctrl+K for search is a common pattern (like GitHub, Slack, etc.)
+- **Command Palette**: Still accessible via `?` key (primary method)
+- **Impact**: Better alignment with user expectations and industry standards
+
+#### Updated Documentation
+- **Updated**: All documentation files to reflect new shortcuts
+- **Updated**: UI tooltips and hints
+- **Updated**: Help text in command palette
+
+### 📝 Files Changed
+- `app/static/keyboard-shortcuts.js` - Removed Ctrl+K handler for command palette, added focusSearch()
+- `app/static/enhanced-search.js` - Removed duplicate Ctrl+K handler
+- `app/static/commands.js` - Updated for consistency
+- `app/templates/base.html` - Updated tooltips
+- Multiple documentation files updated
+
+---
+
 ## Version 2.0.1 - 2025-10-07
 
 ### 🐛 Bug Fixes

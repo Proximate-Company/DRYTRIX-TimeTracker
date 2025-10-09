@@ -1,5 +1,7 @@
 # Command Palette Improvements Summary
 
+> **Note (2025-10-09):** As of version 2.1.0, `Ctrl+K` has been reassigned to focus the search box instead of opening the command palette. The command palette is now accessed exclusively via the `?` key. See [COMMAND_PALETTE_CHANGELOG.md](COMMAND_PALETTE_CHANGELOG.md) for details.
+
 ## Overview
 Enhanced the command palette system to provide a more intuitive and accessible keyboard-driven interface for power users, with the addition of the `?` key as a primary shortcut.
 
@@ -12,10 +14,10 @@ Enhanced the command palette system to provide a more intuitive and accessible k
 - **Impact**: Significantly improves discoverability and ease of access
 
 ### 2. **Smart Keyboard Handling**
-Both implementations (`keyboard-shortcuts.js` and `commands.js`) now support:
-- **`?` key**: Opens command palette
-- **`Ctrl+K` / `Cmd+K`**: Alternative keyboard shortcut (traditional)
-- **`Shift+?`**: Opens keyboard shortcuts help modal (in newer implementation)
+The keyboard shortcuts system now supports:
+- **`?` key**: Opens command palette (primary method)
+- **`Ctrl+K` / `Cmd+K`**: Focuses the search box
+- **`Shift+?`**: Opens keyboard shortcuts help modal
 - **Input field detection**: Shortcuts are ignored when typing in text fields
 
 ### 3. **Enhanced Visual Design**
@@ -41,8 +43,8 @@ Both implementations (`keyboard-shortcuts.js` and `commands.js`) now support:
 ### 4. **User Experience Enhancements**
 
 #### First-Time User Experience
-- Updated hint text to mention `?` key first
-- Shows tooltip: "Press ? or Ctrl+K to open command palette"
+- Updated hint text to mention `?` key for command palette
+- Shows tooltip: "Press ? for command palette or Ctrl+K for search"
 - Persistent across sessions with localStorage
 
 #### Visual Feedback

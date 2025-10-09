@@ -21,9 +21,9 @@ echo.
 echo Running Containers:
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-REM Test port 8082 (license server)
+REM Test port 8082 (was used for license server)
 echo.
-echo Testing License Server Port (8082):
+echo Testing Port 8082:
 powershell -Command "try { $null = New-Object System.Net.Sockets.TcpClient('localhost', 8082); Write-Host '  ✓ Port 8082 is open on localhost' } catch { Write-Host '  ✗ Port 8082 is not open on localhost' }"
 
 REM Test from host to host.docker.internal
@@ -74,9 +74,7 @@ echo.
 echo === End Network Test ===
 echo.
 echo If you're having connectivity issues:
-echo 1. Make sure your license server is running on port 8082
-echo 2. Check if the license server is accessible from the host
-echo 3. Verify Docker network configuration
-echo 4. Consider using Docker service names instead of host.docker.internal
+echo 1. Verify Docker network configuration
+echo 2. Consider using Docker service names instead of host.docker.internal
 echo.
 pause

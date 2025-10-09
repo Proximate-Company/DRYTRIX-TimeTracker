@@ -15,9 +15,15 @@ You can open the command palette in multiple ways:
   - Works on all keyboard layouts
 
 ### Alternative Methods
-- **Press `Ctrl+K` (Windows/Linux)** or **`Cmd+K` (Mac)** - Traditional power user shortcut
 - **Click the command palette button** in the navigation bar (terminal icon)
 - **Use the help menu** dropdown
+
+## Quick Search
+
+To quickly access the search functionality:
+- **Press `Ctrl+K` (Windows/Linux)** or **`Cmd+K` (Mac)** - Focuses the search box
+  - Works from anywhere in the application
+  - Instantly ready to search projects, tasks, clients, and more
 
 ## Using the Command Palette
 

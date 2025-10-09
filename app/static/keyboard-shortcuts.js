@@ -133,18 +133,18 @@
                 {
                     id: 'search',
                     category: 'General',
-                    title: 'Command Palette',
-                    description: 'Open command palette (also ? key)',
+                    title: 'Search',
+                    description: 'Focus search box (Ctrl+K)',
                     icon: 'fas fa-search',
                     keys: ['Ctrl', 'K'],
                     ctrl: true,
-                    action: () => this.openCommandPalette()
+                    action: () => this.focusSearch()
                 },
                 {
-                    id: 'search-alt',
+                    id: 'command-palette',
                     category: 'General',
-                    title: 'Quick Command',
-                    description: 'Open command palette with ?',
+                    title: 'Command Palette',
+                    description: 'Open command palette',
                     icon: 'fas fa-bolt',
                     keys: ['?'],
                     action: () => this.openCommandPalette()
@@ -199,10 +199,10 @@
                     return;
                 }
 
-                // Command palette (Ctrl+K or Cmd+K or ?)
+                // Focus search with Ctrl+K or Cmd+K
                 if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                     e.preventDefault();
-                    this.openCommandPalette();
+                    this.focusSearch();
                     return;
                 }
 
@@ -473,6 +473,17 @@
         }
 
         // Helper methods
+        focusSearch() {
+            // Find and focus the search input
+            const searchInput = document.querySelector('input[type="search"]') ||
+                              document.querySelector('[data-enhanced-search]') ||
+                              document.querySelector('.search-enhanced input');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+
         toggleTimer() {
             // Find and click the timer button
             const timerBtn = document.querySelector('[data-timer-toggle]') || 
@@ -596,7 +607,7 @@
             hint.className = 'shortcut-hint';
             hint.innerHTML = `
                 <i class="fas fa-keyboard"></i>
-                Press <kbd class="command-kbd">?</kbd> or <kbd class="command-kbd">Ctrl</kbd>+<kbd class="command-kbd">K</kbd> to open command palette
+                Press <kbd class="command-kbd">?</kbd> for command palette or <kbd class="command-kbd">Ctrl</kbd>+<kbd class="command-kbd">K</kbd> for search
                 <button class="shortcut-hint-close">
                     <i class="fas fa-times"></i>
                 </button>

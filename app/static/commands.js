@@ -147,10 +147,6 @@
     // Check if typing in input field
     if (['input','textarea'].includes(ev.target.tagName.toLowerCase())) return;
     
-    // Open with Ctrl/Cmd+K
-    const openKeys = (ev.key.toLowerCase() === 'k' && (ev.metaKey || ev.ctrlKey));
-    if (openKeys){ ev.preventDefault(); openModal(); return; }
-    
     // Open with ? key (question mark)
     if (ev.key === '?' && !ev.ctrlKey && !ev.metaKey && !ev.altKey){ 
       ev.preventDefault(); 
@@ -212,7 +208,7 @@
     if (closeBtn){ closeBtn.addEventListener('click', closeModal); }
     const help = $('#commandPaletteHelp');
     if (help){
-      help.textContent = `Shortcuts: ? or ${isMac ? '⌘' : 'Ctrl'}+K · g d (Dashboard) · g p (Projects) · g r (Reports) · g t (Tasks)`;
+      help.textContent = `Shortcuts: ? (Command Palette) · ${isMac ? '⌘' : 'Ctrl'}+K (Search) · g d (Dashboard) · g p (Projects) · g r (Reports) · g t (Tasks)`;
     }
   });
 

@@ -24,8 +24,8 @@ echo "  - Docker Host IP: $DOCKER_HOST_IP"
 echo -e "\nRunning Containers:"
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# Test port 8082 (license server)
-echo -e "\nTesting License Server Port (8082):"
+# Test port 8082 (was used for license server)
+echo -e "\nTesting Port 8082:"
 if nc -z localhost 8082 2>/dev/null; then
     echo "  ✓ Port 8082 is open on localhost"
 else
@@ -71,7 +71,5 @@ docker network inspect bridge 2>/dev/null | grep -A 10 -B 5 "Containers"
 echo -e "\n=== End Network Test ==="
 echo ""
 echo "If you're having connectivity issues:"
-echo "1. Make sure your license server is running on port 8082"
-echo "2. Check if the license server is accessible from the host"
-echo "3. Verify Docker network configuration"
-echo "4. Consider using Docker service names instead of host.docker.internal"
+echo "1. Verify Docker network configuration"
+echo "2. Consider using Docker service names instead of host.docker.internal"

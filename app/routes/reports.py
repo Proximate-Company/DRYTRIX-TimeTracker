@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Project, TimeEntry, Settings, Task
+from app.models import User, Project, TimeEntry, Settings, Task, ProjectCost
 from datetime import datetime, timedelta
 import csv
 import io
@@ -101,6 +101,9 @@ def project_report():
                 'total_hours': 0.0,
                 'billable_hours': 0.0,
                 'billable_amount': 0.0,
+                'total_costs': 0.0,
+                'billable_costs': 0.0,
+                'total_value': 0.0,
                 'user_totals': {}
             }
         agg = projects_map[project.id]
@@ -113,19 +116,50 @@ def project_report():
         # per-user totals
         username = entry.user.display_name if entry.user else 'Unknown'
         agg['user_totals'][username] = agg['user_totals'].get(username, 0.0) + hours
+    
+    # Add project costs to the aggregated data
+    for project_id, agg in projects_map.items():
+        # Get costs for this project within the date range
+        costs_query = ProjectCost.query.filter(
+            ProjectCost.project_id == project_id,
+            ProjectCost.cost_date >= start_dt.date(),
+            ProjectCost.cost_date <= end_dt.date()
+        )
+        
+        if user_id:
+            costs_query = costs_query.filter(ProjectCost.user_id == user_id)
+        
+        costs = costs_query.all()
+        
+        for cost in costs:
+            agg['total_costs'] += float(cost.amount)
+            if cost.billable:
+                agg['billable_costs'] += float(cost.amount)
+        
+        # Calculate total project value (billable hours + billable costs)
+        agg['total_value'] = agg['billable_amount'] + agg['billable_costs']
 
     # Finalize structures
     projects_data = []
     total_hours = 0.0
     billable_hours = 0.0
     total_billable_amount = 0.0
+    total_costs = 0.0
+    total_billable_costs = 0.0
+    total_project_value = 0.0
     for agg in projects_map.values():
         total_hours += agg['total_hours']
         billable_hours += agg['billable_hours']
         total_billable_amount += agg['billable_amount']
+        total_costs += agg['total_costs']
+        total_billable_costs += agg['billable_costs']
+        total_project_value += agg['total_value']
         agg['total_hours'] = round(agg['total_hours'], 1)
         agg['billable_hours'] = round(agg['billable_hours'], 1)
         agg['billable_amount'] = round(agg['billable_amount'], 2)
+        agg['total_costs'] = round(agg['total_costs'], 2)
+        agg['billable_costs'] = round(agg['billable_costs'], 2)
+        agg['total_value'] = round(agg['total_value'], 2)
         agg['user_totals'] = [
             {'username': username, 'hours': round(hours, 1)}
             for username, hours in agg['user_totals'].items()
@@ -137,6 +171,9 @@ def project_report():
         'total_hours': round(total_hours, 1),
         'billable_hours': round(billable_hours, 1),
         'total_billable_amount': round(total_billable_amount, 2),
+        'total_costs': round(total_costs, 2),
+        'total_billable_costs': round(total_billable_costs, 2),
+        'total_project_value': round(total_project_value, 2),
         'projects_count': len(projects_data),
     }
 

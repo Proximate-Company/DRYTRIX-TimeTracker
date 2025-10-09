@@ -111,14 +111,6 @@ class Config:
         github_run_number = os.getenv('GITHUB_RUN_NUMBER')
         APP_VERSION = f"dev-{github_run_number}" if github_run_number else "dev-0"
 
-    # License server settings (no license required)
-    # All settings are hardcoded since clients cannot change license server configuration
-    LICENSE_SERVER_ENABLED = os.getenv('LICENSE_SERVER_ENABLED', 'true').lower() == 'true'
-    LICENSE_SERVER_API_KEY = "no-license-required"  # Hardcoded placeholder
-    LICENSE_SERVER_APP_ID = "timetracker"  # Hardcoded app identifier
-    LICENSE_SERVER_APP_VERSION = APP_VERSION  # Match application version
-    LICENSE_SERVER_HEARTBEAT_INTERVAL = 3600  # Hardcoded heartbeat interval (1 hour)
-
 class DevelopmentConfig(Config):
     """Development configuration"""
     FLASK_DEBUG = True

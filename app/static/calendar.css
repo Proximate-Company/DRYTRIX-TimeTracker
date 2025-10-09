@@ -287,13 +287,8 @@
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     margin-bottom: 0.75rem;
-    transition: var(--transition);
     background: var(--card-bg);
-}
-
-.recurring-item:hover {
-    border-color: var(--primary-color);
-    box-shadow: var(--card-shadow);
+    cursor: default;
 }
 
 .recurring-item-header {
@@ -564,10 +559,6 @@
 [data-theme="dark"] .recurring-item {
     border-color: var(--border-color);
     background: var(--card-bg);
-}
-
-[data-theme="dark"] .recurring-item:hover {
-    border-color: var(--primary-color);
 }
 
 [data-theme="dark"] .calendar-legend {

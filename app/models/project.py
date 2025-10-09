@@ -25,9 +25,10 @@ class Project(db.Model):
     # Relationships
     time_entries = db.relationship('TimeEntry', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade='all, delete-orphan')
+    costs = db.relationship('ProjectCost', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     # comments relationship is defined via backref in Comment model
     
-    def __init__(self, name, client_id=None, description=None, billable=True, hourly_rate=None, billing_ref=None, client=None):
+    def __init__(self, name, client_id=None, description=None, billable=True, hourly_rate=None, billing_ref=None, client=None, budget_amount=None, budget_threshold_percent=80):
         """Create a Project.
 
         Backward-compatible initializer that accepts either client_id or client name.
@@ -41,6 +42,8 @@ class Project(db.Model):
         self.billable = billable
         self.hourly_rate = Decimal(str(hourly_rate)) if hourly_rate else None
         self.billing_ref = billing_ref.strip() if billing_ref else None
+        self.budget_amount = Decimal(str(budget_amount)) if budget_amount else None
+        self.budget_threshold_percent = budget_threshold_percent if budget_threshold_percent else 80
 
         resolved_client_id = client_id
         if resolved_client_id is None and client:
@@ -107,6 +110,34 @@ class Project(db.Model):
         if not self.billable or not self.hourly_rate:
             return 0.0
         return float(self.total_billable_hours) * float(self.hourly_rate)
+    
+    @property
+    def total_costs(self):
+        """Calculate total project costs (expenses)"""
+        from .project_cost import ProjectCost
+        total = db.session.query(
+            db.func.sum(ProjectCost.amount)
+        ).filter(
+            ProjectCost.project_id == self.id
+        ).scalar() or 0
+        return float(total)
+    
+    @property
+    def total_billable_costs(self):
+        """Calculate total billable project costs"""
+        from .project_cost import ProjectCost
+        total = db.session.query(
+            db.func.sum(ProjectCost.amount)
+        ).filter(
+            ProjectCost.project_id == self.id,
+            ProjectCost.billable == True
+        ).scalar() or 0
+        return float(total)
+    
+    @property
+    def total_project_value(self):
+        """Calculate total project value (billable hours + billable costs)"""
+        return self.estimated_cost + self.total_billable_costs
 
     @property
     def actual_hours(self):
@@ -220,4 +251,7 @@ class Project(db.Model):
             'estimated_cost': float(self.estimated_cost) if self.estimated_cost else None,
             'budget_consumed_amount': self.budget_consumed_amount,
             'budget_threshold_exceeded': self.budget_threshold_exceeded,
+            'total_costs': self.total_costs,
+            'total_billable_costs': self.total_billable_costs,
+            'total_project_value': self.total_project_value,
         }

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Add Cost') }} - {{ project.name }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-lg-8 offset-lg-2">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('projects.list_projects') }}">{{ _('Projects') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('projects.view_project', project_id=project.id) }}">{{ project.name }}</a></li>
+                    <li class="breadcrumb-item active">{{ _('Add Cost') }}</li>
+                </ol>
+            </nav>
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-receipt me-2"></i>{{ _('Add Cost to Project') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('projects.add_cost', project_id=project.id) }}">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="description" class="form-label">{{ _('Description') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="description" name="description" required 
+                                       placeholder="{{ _('e.g., Travel expenses to client site') }}">
+                                <small class="form-text text-muted">{{ _('Brief description of the cost') }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">{{ _('Category') }} <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">{{ _('Select category') }}</option>
+                                    <option value="travel">{{ _('Travel') }}</option>
+                                    <option value="materials">{{ _('Materials') }}</option>
+                                    <option value="services">{{ _('Services') }}</option>
+                                    <option value="equipment">{{ _('Equipment') }}</option>
+                                    <option value="software">{{ _('Software/Licenses') }}</option>
+                                    <option value="other">{{ _('Other') }}</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="cost_date" class="form-label">{{ _('Date') }} <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="cost_date" name="cost_date" 
+                                       value="{{ today if today else '' }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="amount" class="form-label">{{ _('Amount') }} <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required 
+                                       placeholder="0.00">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="currency_code" class="form-label">{{ _('Currency') }}</label>
+                                <select class="form-select" id="currency_code" name="currency_code">
+                                    <option value="EUR" selected>EUR (€)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                    <option value="CHF">CHF (Fr)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="notes" class="form-label">{{ _('Notes') }}</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="{{ _('Additional details about this cost') }}"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="billable" name="billable" checked>
+                                    <label class="form-check-label" for="billable">
+                                        {{ _('Billable to client') }}
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        {{ _('If checked, this cost will be included in invoices') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{{ url_for('projects.view_project', project_id=project.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i> {{ _('Cancel') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> {{ _('Add Cost') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date as default
+    const dateInput = document.getElementById('cost_date');
+    if (!dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+});
+</script>
+{% endblock %}
+

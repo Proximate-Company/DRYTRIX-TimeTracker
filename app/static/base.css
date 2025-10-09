@@ -349,26 +349,7 @@ main {
     -webkit-backdrop-filter: blur(10px);
 }
 
-.card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
-    opacity: 0;
-    transition: opacity var(--transition);
-}
-
-.card:hover::before {
-    opacity: 0.8;
-}
-
-.card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: var(--primary-200);
-}
+/* Removed general card hover effect - only interactive cards should have hover effects */
 
 /* Simplified card variants */
 .card.card-elevated {
@@ -2727,7 +2708,8 @@ h6 {
     color: var(--text-primary) !important;
     box-shadow: none;
 }
-.navbar .navbar-nav .nav-link.active::after {
+/* Only show underline on non-dropdown nav-links to avoid conflicting with Bootstrap's dropdown caret */
+.navbar .navbar-nav .nav-link.active:not(.dropdown-toggle)::after {
     content: "";
     position: absolute;
     left: 0.75rem;
@@ -2737,7 +2719,7 @@ h6 {
     background: var(--primary-color);
     border-radius: 1px;
 }
-[data-theme="dark"] .navbar .navbar-nav .nav-link.active::after {
+[data-theme="dark"] .navbar .navbar-nav .nav-link.active:not(.dropdown-toggle)::after {
     background: var(--primary-color);
 }
 
@@ -3417,13 +3399,8 @@ h6 {
 
 /* Shared summary cards used across pages (invoices, reports) */
 .summary-card {
-    transition: all 0.3s ease;
     border-radius: 12px;
-}
-
-.summary-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: default;
 }
 
 .summary-icon {
@@ -4352,32 +4329,10 @@ h6 {
     font-size: 12px; 
     font-weight: var(--font-weight-semibold); 
     letter-spacing: 0.5px;
-    position: relative;
-    overflow: hidden;
-    transition: var(--transition-slow);
     display: inline-block;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-}
-
-.status-badge::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.6s;
-}
-
-.status-badge:hover::before {
-    left: 100%;
-}
-
-.status-badge:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: default;
 }
 
 /* Enhanced Status Badge Large */
@@ -4388,31 +4343,9 @@ h6 {
     font-weight: var(--font-weight-semibold); 
     text-transform: uppercase; 
     letter-spacing: 0.5px;
-    position: relative;
-    overflow: hidden;
-    transition: var(--transition-slow);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-}
-
-.status-badge-large::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.6s;
-}
-
-.status-badge-large:hover::before {
-    left: 100%;
-}
-
-.status-badge-large:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: default;
 }
 
 /* Modern Section Title */
@@ -4504,32 +4437,10 @@ h6 {
 
 /* Enhanced Summary Card System */
 .summary-card { 
-    transition: var(--transition-slow); 
     border-radius: var(--border-radius-lg);
-    position: relative;
-    overflow: hidden;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-}
-
-.summary-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.6s;
-}
-
-.summary-card:hover::before {
-    left: 100%;
-}
-
-.summary-card:hover { 
-    transform: translateY(-4px) scale(1.02); 
-    box-shadow: var(--card-shadow-hover); 
+    cursor: default;
 }
 
 .summary-icon { 
@@ -4539,13 +4450,8 @@ h6 {
     display: inline-flex; 
     align-items: center; 
     justify-content: center;
-    transition: var(--transition-slow);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-}
-
-.summary-card:hover .summary-icon {
-    transform: scale(1.1) rotate(5deg);
 }
 
 .summary-label { 
@@ -4554,7 +4460,6 @@ h6 {
     font-weight: var(--font-weight-semibold); 
     letter-spacing: 0.4px; 
     text-transform: uppercase;
-    transition: color var(--transition);
     margin-bottom: 4px;
 }
 
@@ -4562,13 +4467,7 @@ h6 {
     font-size: 20px; 
     font-weight: var(--font-weight-extrabold); 
     color: var(--text-primary);
-    transition: var(--transition-slow);
     font-family: var(--font-family-mono);
-}
-
-.summary-card:hover .summary-value {
-    transform: scale(1.05);
-    color: var(--primary-color);
 }
 
 /* Enhanced Table Hover Effects */
@@ -4613,10 +4512,6 @@ h6 {
 [data-theme="dark"] .content-box:hover {
     background: var(--surface-hover);
     border-left-color: var(--primary-400);
-}
-
-[data-theme="dark"] .summary-card:hover .summary-value {
-    color: var(--primary-400);
 }
 
 [data-theme="dark"] .table-hover tbody tr:hover {
@@ -4849,12 +4744,7 @@ h6 {
     font-weight: var(--font-weight-medium);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    transition: var(--transition);
-}
-
-.project-badge:hover {
-    background: var(--surface-hover);
-    transform: translateY(-1px);
+    cursor: default;
 }
 
 /* Priority Badge System */
@@ -4865,31 +4755,9 @@ h6 {
     font-weight: var(--font-weight-semibold);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    position: relative;
-    overflow: hidden;
-    transition: var(--transition-slow);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-}
-
-.priority-badge::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transition: left 0.8s;
-}
-
-.priority-badge:hover::before {
-    left: 100%;
-}
-
-.priority-badge:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: default;
 }
 
 /* Status Badge Variants */
@@ -4983,10 +4851,6 @@ h6 {
 [data-theme="dark"] .project-badge {
     background: var(--surface-variant);
     color: var(--text-secondary);
-}
-
-[data-theme="dark"] .project-badge:hover {
-    background: var(--surface-hover);
 }
 
 /* Dark theme status badges */
@@ -5108,6 +4972,7 @@ h6 {
 .stat-card {
     position: relative;
     overflow: hidden;
+    cursor: default;
 }
 
 .stat-card::after {
@@ -5120,12 +4985,6 @@ h6 {
     background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
     border-radius: 50%;
     transform: translate(30%, -30%);
-    transition: all var(--transition-slow);
-}
-
-.stat-card:hover::after {
-    transform: translate(30%, -30%) scale(1.5);
-    opacity: 0;
 }
 
 /* Quick action cards with gradient effects */

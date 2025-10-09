@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toast Notification System Demo - TimeTracker</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --light-color: #f1f5f9;
+            --border-color: #e2e8f0;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #60a5fa;
+            --success-color: #34d399;
+            --danger-color: #f87171;
+            --warning-color: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --light-color: #1e293b;
+            --border-color: #334155;
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #f8fafc;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        [data-theme="dark"] body {
+            background: #0f172a;
+            color: #f1f5f9;
+        }
+
+        .demo-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .demo-header h1 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: default;
+        }
+
+        [data-theme="dark"] .demo-section {
+            background: #1e293b;
+        }
+
+        .demo-section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-demo {
+            min-width: 150px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 8px;
+            margin: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-demo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-demo:active {
+            transform: translateY(0);
+        }
+
+        .btn-demo i {
+            margin-right: 0.5rem;
+        }
+
+        .code-block {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            cursor: default;
+        }
+
+        [data-theme="dark"] .code-block {
+            background: #0f172a;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .feature-card {
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+            cursor: default;
+        }
+
+        .feature-card i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background: #1e293b;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .demo-section {
+                padding: 1.5rem;
+            }
+
+            .btn-demo {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+
+            .theme-toggle {
+                top: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🎉 Toast Notification System</h1>
+            <p>Professional, modern notifications for TimeTracker</p>
+        </div>
+
+        <!-- Basic Notifications -->
+        <div class="demo-section">
+            <h2>Basic Notifications</h2>
+            <p class="mb-4">Click the buttons below to see different notification types:</p>
+            
+            <div class="text-center">
+                <button class="btn btn-success btn-demo" onclick="showSuccessToast()">
+                    <i class="fas fa-check-circle"></i>Success
+                </button>
+                <button class="btn btn-danger btn-demo" onclick="showErrorToast()">
+                    <i class="fas fa-exclamation-circle"></i>Error
+                </button>
+                <button class="btn btn-warning btn-demo" onclick="showWarningToast()">
+                    <i class="fas fa-exclamation-triangle"></i>Warning
+                </button>
+                <button class="btn btn-info btn-demo" onclick="showInfoToast()">
+                    <i class="fas fa-info-circle"></i>Info
+                </button>
+            </div>
+
+            <div class="code-block mt-4">
+toastManager.success('Operation completed successfully!');<br>
+toastManager.error('Something went wrong!');<br>
+toastManager.warning('Please review your input!');<br>
+toastManager.info('New updates available!');
+            </div>
+        </div>
+
+        <!-- Advanced Options -->
+        <div class="demo-section">
+            <h2>Advanced Options</h2>
+            <p class="mb-4">Customize duration, titles, and more:</p>
+            
+            <div class="text-center">
+                <button class="btn btn-primary btn-demo" onclick="showQuickToast()">
+                    <i class="fas fa-bolt"></i>Quick (2s)
+                </button>
+                <button class="btn btn-primary btn-demo" onclick="showLongToast()">
+                    <i class="fas fa-hourglass-half"></i>Long (10s)
+                </button>
+                <button class="btn btn-primary btn-demo" onclick="showPersistentToast()">
+                    <i class="fas fa-thumbtack"></i>Persistent
+                </button>
+                <button class="btn btn-secondary btn-demo" onclick="dismissAll()">
+                    <i class="fas fa-times"></i>Dismiss All
+                </button>
+            </div>
+
+            <div class="code-block mt-4">
+// Quick notification (2 seconds)<br>
+toastManager.success('Quick message', null, 2000);<br><br>
+// Long notification (10 seconds)<br>
+toastManager.info('This stays longer', 'Extended', 10000);<br><br>
+// Persistent (must close manually)<br>
+toastManager.show({<br>
+&nbsp;&nbsp;message: 'Manual close required',<br>
+&nbsp;&nbsp;type: 'warning',<br>
+&nbsp;&nbsp;duration: 0<br>
+});
+            </div>
+        </div>
+
+        <!-- Multiple Toasts -->
+        <div class="demo-section">
+            <h2>Multiple Notifications</h2>
+            <p class="mb-4">Test notification stacking and management:</p>
+            
+            <div class="text-center">
+                <button class="btn btn-primary btn-demo" onclick="showMultipleToasts()">
+                    <i class="fas fa-layer-group"></i>Show Multiple
+                </button>
+                <button class="btn btn-primary btn-demo" onclick="showSequential()">
+                    <i class="fas fa-stream"></i>Sequential
+                </button>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="demo-section">
+            <h2>Key Features</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <i class="fas fa-palette"></i>
+                    <h4>Theme Support</h4>
+                    <p>Seamless light/dark mode integration</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h4>Mobile Ready</h4>
+                    <p>Responsive on all screen sizes</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-universal-access"></i>
+                    <h4>Accessible</h4>
+                    <p>ARIA labels and keyboard support</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-magic"></i>
+                    <h4>Smooth Animations</h4>
+                    <p>60fps elegant transitions</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-pause-circle"></i>
+                    <h4>Hover to Pause</h4>
+                    <p>Read messages at your pace</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-layer-group"></i>
+                    <h4>Smart Stacking</h4>
+                    <p>Graceful multiple notifications</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage Guide -->
+        <div class="demo-section">
+            <h2>Quick Start</h2>
+            
+            <h4 class="mt-4">1. Include the files</h4>
+            <div class="code-block">
+&lt;link rel="stylesheet" href="toast-notifications.css"&gt;<br>
+&lt;script src="toast-notifications.js"&gt;&lt;/script&gt;
+            </div>
+
+            <h4 class="mt-4">2. Show a notification</h4>
+            <div class="code-block">
+// Simple<br>
+toastManager.success('Action completed!');<br><br>
+// Advanced<br>
+toastManager.show({<br>
+&nbsp;&nbsp;message: 'Your custom message',<br>
+&nbsp;&nbsp;title: 'Custom Title',<br>
+&nbsp;&nbsp;type: 'info',<br>
+&nbsp;&nbsp;duration: 5000<br>
+});
+            </div>
+
+            <h4 class="mt-4">3. Use with Flask</h4>
+            <div class="code-block">
+# Python<br>
+from flask import flash<br>
+flash('User created successfully', 'success')<br><br>
+# Automatically becomes a toast on page load!
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the actual toast notification system -->
+    <link rel="stylesheet" href="../app/static/toast-notifications.css">
+    <script src="../app/static/toast-notifications.js"></script>
+
+    <!-- Demo Scripts -->
+    <script>
+        // Basic notifications
+        function showSuccessToast() {
+            toastManager.success('Your changes have been saved successfully!', 'Success');
+        }
+
+        function showErrorToast() {
+            toastManager.error('Failed to complete the operation. Please try again.', 'Error');
+        }
+
+        function showWarningToast() {
+            toastManager.warning('Please review the highlighted fields before continuing.', 'Warning');
+        }
+
+        function showInfoToast() {
+            toastManager.info('New features are now available. Check the changelog!', 'Information');
+        }
+
+        // Advanced options
+        function showQuickToast() {
+            toastManager.success('Quick notification!', 'Fast', 2000);
+        }
+
+        function showLongToast() {
+            toastManager.info('This notification will stay visible for 10 seconds.', 'Extended Duration', 10000);
+        }
+
+        function showPersistentToast() {
+            toastManager.show({
+                message: 'This notification will not auto-dismiss. Click the X to close.',
+                title: 'Persistent',
+                type: 'warning',
+                duration: 0
+            });
+        }
+
+        function dismissAll() {
+            toastManager.dismissAll();
+        }
+
+        // Multiple toasts
+        function showMultipleToasts() {
+            setTimeout(() => toastManager.success('First notification'), 0);
+            setTimeout(() => toastManager.info('Second notification'), 300);
+            setTimeout(() => toastManager.warning('Third notification'), 600);
+            setTimeout(() => toastManager.error('Fourth notification'), 900);
+        }
+
+        function showSequential() {
+            let messages = [
+                { type: 'info', msg: 'Loading data...' },
+                { type: 'success', msg: 'Data loaded!' },
+                { type: 'info', msg: 'Processing...' },
+                { type: 'success', msg: 'Complete!' }
+            ];
+            
+            messages.forEach((item, index) => {
+                setTimeout(() => {
+                    toastManager[item.type](item.msg);
+                }, index * 1500);
+            });
+        }
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        function updateThemeIcon() {
+            const icon = themeToggle.querySelector('i');
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            updateThemeIcon();
+        });
+
+        // Initialize with light theme
+        html.setAttribute('data-theme', 'light');
+        updateThemeIcon();
+
+        // Show welcome message
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                toastManager.success('Welcome to the Toast Notification Demo!', 'Welcome', 4000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
+

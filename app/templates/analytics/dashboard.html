@@ -188,6 +188,9 @@
 {% endblock %}
 
 {% block extra_head %}
+<!-- Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script type="application/json" id="i18n-json-analytics-dashboard">
     {
         "error_loading_charts": {{ _('Failed to load charts. Please try again.')|tojson }},
@@ -604,22 +607,13 @@ class AnalyticsDashboard {
     }
 
     showError(message) {
-        // Create a simple error notification
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
-        errorDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        errorDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.body.appendChild(errorDiv);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            if (errorDiv.parentNode) {
-                errorDiv.parentNode.removeChild(errorDiv);
-            }
-        }, 5000);
+        // Use the new toast notification system
+        if (window.toastManager) {
+            window.toastManager.error(message, 'Error', 5000);
+        } else {
+            // Fallback to console if toast system not available
+            console.error('Analytics error:', message);
+        }
     }
 }
 

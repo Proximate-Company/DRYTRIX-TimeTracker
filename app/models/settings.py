@@ -40,7 +40,7 @@ class Settings(db.Model):
     invoice_notes = db.Column(db.Text, default='Thank you for your business!', nullable=False)
     
     # Privacy and analytics settings
-    allow_analytics = db.Column(db.Boolean, default=True, nullable=False)  # Controls system info sharing with license server
+    allow_analytics = db.Column(db.Boolean, default=True, nullable=False)  # Controls system info sharing for analytics
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

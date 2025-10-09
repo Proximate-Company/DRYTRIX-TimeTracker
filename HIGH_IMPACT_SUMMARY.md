@@ -9,7 +9,7 @@ Three **game-changing productivity features** are now live in your TimeTracker a
 ## 🔍 1. Enhanced Search
 
 **What**: Instant search with autocomplete, recent searches, and categorized results  
-**Activate**: `Ctrl+K` anywhere or add `data-enhanced-search` to inputs  
+**Activate**: Press `Ctrl+K` anywhere to focus search, or add `data-enhanced-search` to inputs  
 **Impact**: 60% faster search, instant results
 
 **Quick Start:**
@@ -22,12 +22,12 @@ Three **game-changing productivity features** are now live in your TimeTracker a
 ## ⌨️ 2. Keyboard Shortcuts
 
 **What**: Command palette + 50+ shortcuts for navigation and actions  
-**Activate**: Already active! Press `Ctrl+K` or `?` to explore  
+**Activate**: Already active! Press `?` for command palette or `Ctrl+K` for search  
 **Impact**: 30-50% faster navigation
 
 **Top 10 Shortcuts:**
-1. `Ctrl+K` - Open command palette
-2. `?` - Show all shortcuts
+1. `?` - Open command palette
+2. `Ctrl+K` - Focus search box
 3. `g` + `d` - Dashboard
 4. `g` + `p` - Projects
 5. `g` + `t` - Tasks
@@ -89,8 +89,8 @@ Three **game-changing productivity features** are now live in your TimeTracker a
 
 ### Try These Now:
 
-1. **Press `Ctrl+K`** - See the command palette
-2. **Press `?`** - View all keyboard shortcuts
+1. **Press `?`** - See the command palette
+2. **Press `Ctrl+K`** - Focus the search box
 3. **Go to any table** - Click column headers to sort
 4. **Type in search** - See instant autocomplete results
 
@@ -146,8 +146,8 @@ window.keyboardShortcuts.registerShortcut({
 ## 🎓 Learning Curve
 
 ### **5 Minutes to Get Started:**
-- Press `Ctrl+K` to explore
-- Press `?` to see shortcuts
+- Press `?` to explore command palette
+- Press `Ctrl+K` for quick search
 - Try sorting a table by clicking headers
 
 ### **30 Minutes to Proficiency:**
@@ -239,15 +239,19 @@ User wants to go to tasks page:
 2. Instant navigation!
 
 Alternative:
-1. Press Ctrl+K
+1. Press ? (command palette)
 2. Type "tasks"
 3. Press Enter
+
+Quick Search:
+1. Press Ctrl+K
+2. Start typing to search
 ```
 
 ### Scenario 2: Find a Project
 ```
 User needs to find "Website Redesign":
-1. Press Ctrl+K
+1. Press Ctrl+K (focus search)
 2. Type "website"
 3. See instant results
 4. Click or press Enter
@@ -325,7 +329,7 @@ User needs to fix duration:
 
 ### Start Using Today:
 
-1. **Try keyboard shortcuts** - Press `Ctrl+K` now!
+1. **Try keyboard shortcuts** - Press `?` for command palette or `Ctrl+K` for search!
 2. **Enhance a table** - Add `data-enhanced-table` to existing tables
 3. **Add search** - Implement `/api/search` endpoint for search
 4. **Customize** - Add your own shortcuts and table configs
@@ -381,5 +385,5 @@ These are production-ready foundations that can be extended based on your needs!
 
 ---
 
-**Press `Ctrl+K` right now to see the magic! ✨**
+**Press `?` for command palette or `Ctrl+K` for search to see the magic! ✨**
 
