@@ -151,10 +151,9 @@ def test_client(app, user):
             email='john@testclient.com',
             phone='+1 (555) 123-4567',
             address='123 Test Street, Test City, TC 12345',
-            default_hourly_rate=Decimal('85.00'),
-            status='active',
-            created_by=user.id
+            default_hourly_rate=Decimal('85.00')
         )
+        client.status = 'active'  # Set after creation
         db.session.add(client)
         db.session.commit()
         
@@ -166,16 +165,15 @@ def test_client(app, user):
 def multiple_clients(app, user):
     """Create multiple test clients."""
     with app.app_context():
-        clients = [
-            Client(
+        clients = []
+        for i in range(1, 4):
+            client = Client(
                 name=f'Client {i}',
                 email=f'client{i}@example.com',
-                default_hourly_rate=Decimal('75.00') + Decimal(i * 10),
-                created_by=user.id,
-                status='active'
+                default_hourly_rate=Decimal('75.00') + Decimal(i * 10)
             )
-            for i in range(1, 4)
-        ]
+            client.status = 'active'  # Set after creation
+            clients.append(client)
         db.session.add_all(clients)
         db.session.commit()
         
@@ -198,9 +196,9 @@ def project(app, test_client):
             client_id=test_client.id,
             description='Test project description',
             billable=True,
-            hourly_rate=Decimal('75.00'),
-            status='active'
+            hourly_rate=Decimal('75.00')
         )
+        project.status = 'active'  # Set after creation
         db.session.add(project)
         db.session.commit()
         
@@ -212,17 +210,17 @@ def project(app, test_client):
 def multiple_projects(app, test_client):
     """Create multiple test projects."""
     with app.app_context():
-        projects = [
-            Project(
+        projects = []
+        for i in range(1, 4):
+            project = Project(
                 name=f'Project {i}',
                 client_id=test_client.id,
                 description=f'Test project {i}',
                 billable=True,
-                hourly_rate=Decimal('75.00'),
-                status='active'
+                hourly_rate=Decimal('75.00')
             )
-            for i in range(1, 4)
-        ]
+            project.status = 'active'  # Set after creation
+            projects.append(project)
         db.session.add_all(projects)
         db.session.commit()
         
