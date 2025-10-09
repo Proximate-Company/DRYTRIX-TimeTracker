@@ -11,6 +11,11 @@ on:
         type: boolean
         default: false
 
+# Required permissions for creating releases and pushing images
+permissions:
+  contents: write
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
