@@ -6,7 +6,7 @@
 
 **Track time. Manage projects. Generate invoices. All in one place.**
 
-[🚀 Quick Start](#-quick-start) • [✨ Features](#-features) • [📸 Screenshots](#-screenshots) • [📚 Documentation](docs/) • [🐳 Deploy](#-deployment)
+[🚀 Quick Start](#-quick-start) • [✨ Features](#-features) • [📸 Screenshots](#-screenshots) • [📖 Getting Started](docs/GETTING_STARTED.md) • [📚 Documentation](docs/) • [🐳 Deploy](#-deployment)
 
 ---
 
@@ -175,6 +175,7 @@ Even if you're not billing anyone, understanding where your time goes is valuabl
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 ### Getting Started
+- **[📖 Getting Started Guide](docs/GETTING_STARTED.md)** — Complete beginner's guide (⭐ Start here!)
 - **[Installation Guide](docs/DOCKER_PUBLIC_SETUP.md)** — Detailed setup instructions
 - **[Requirements](docs/REQUIREMENTS.md)** — System requirements and dependencies
 - **[Troubleshooting](docs/DOCKER_STARTUP_TROUBLESHOOTING.md)** — Common issues and solutions

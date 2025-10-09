@@ -60,13 +60,13 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest -m smoke -v --tb=short
+          pytest -m smoke -v --tb=short --no-cov
       
       - name: Run unit tests (parallel)
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest -m unit -v -n auto --dist loadfile
+          pytest -m unit -v -n auto --dist loadfile --no-cov
       
       - name: Run critical integration tests
         env:
@@ -75,7 +75,7 @@ jobs:
           FLASK_ENV: testing
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest -m "integration and not slow" -v
+          pytest -m "integration and not slow" -v --no-cov
 
   # ============================================================================
   # Build and Push Development Image

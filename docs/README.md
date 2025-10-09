@@ -6,6 +6,7 @@ Welcome to the comprehensive TimeTracker documentation. Everything you need to i
 
 ## 📖 Quick Links
 
+- **[🚀 Getting Started Guide](GETTING_STARTED.md)** — Complete beginner tutorial (⭐ Start here!)
 - **[Main README](../README.md)** — Product overview and quick start
 - **[Installation Guide](#-installation--deployment)** — Get TimeTracker running
 - **[Feature Guides](#-feature-documentation)** — Learn what TimeTracker can do
@@ -16,6 +17,7 @@ Welcome to the comprehensive TimeTracker documentation. Everything you need to i
 ## 🚀 Installation & Deployment
 
 ### Getting Started
+- **[🚀 Getting Started Guide](GETTING_STARTED.md)** — Complete beginner tutorial (⭐ Start here!)
 - **[Requirements](REQUIREMENTS.md)** — System requirements and dependencies
 - **[Docker Public Setup](DOCKER_PUBLIC_SETUP.md)** — Production deployment with Docker
 - **[Local Testing with SQLite](LOCAL_TESTING_WITH_SQLITE.md)** — Quick test without database setup
