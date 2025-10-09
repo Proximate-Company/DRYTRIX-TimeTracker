@@ -90,9 +90,9 @@ def user(app):
         user = User(
             username='testuser',
             role='user',
-            email='testuser@example.com',
-            is_active=True
+            email='testuser@example.com'
         )
+        user.is_active = True  # Set after creation
         db.session.add(user)
         db.session.commit()
         
@@ -108,9 +108,9 @@ def admin_user(app):
         admin = User(
             username='admin',
             role='admin',
-            email='admin@example.com',
-            is_active=True
+            email='admin@example.com'
         )
+        admin.is_active = True  # Set after creation
         db.session.add(admin)
         db.session.commit()
         
@@ -122,10 +122,11 @@ def admin_user(app):
 def multiple_users(app):
     """Create multiple test users."""
     with app.app_context():
-        users = [
-            User(username=f'user{i}', role='user', email=f'user{i}@example.com', is_active=True)
-            for i in range(1, 4)
-        ]
+        users = []
+        for i in range(1, 4):
+            user = User(username=f'user{i}', role='user', email=f'user{i}@example.com')
+            user.is_active = True  # Set after creation
+            users.append(user)
         db.session.add_all(users)
         db.session.commit()
         
