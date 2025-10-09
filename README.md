@@ -91,20 +91,44 @@ TimeTracker is a **self-hosted, web-based time tracking application** designed f
 
 ---
 
-### Analytics — Insights That Matter
+### Time Tracking — Flexible & Powerful
 <div>
-  <img src="assets/screenshots/Reports.png" alt="Reports" width="45%" style="display: inline-block; margin: 5px;">
-  <img src="assets/screenshots/VisualAnalytics.png" alt="Visual Analytics" width="45%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/LogTime.png" alt="Log Time" width="45%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/Calendar.png" alt="Calendar View" width="45%" style="display: inline-block; margin: 5px;">
 </div>
 
-*Powerful reporting and visual analytics for data-driven decisions*
+*Manual time entry and visual calendar view for better planning*
 
 ---
 
-### Client Management — Know Your Business
-<img src="assets/screenshots/Clients.png" alt="Client Management" width="700">
+### Invoicing & Clients — Professional Billing
+<div>
+  <img src="assets/screenshots/Invoices.png" alt="Invoices" width="45%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/Clients.png" alt="Client Management" width="45%" style="display: inline-block; margin: 5px;">
+</div>
 
-*Track client information, projects, and billing rates in one place*
+*Generate invoices from tracked time and manage client relationships*
+
+---
+
+### Reports & Analytics — Data-Driven Insights
+<div>
+  <img src="assets/screenshots/Reports.png" alt="Reports" width="45%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/UserReports.png" alt="User Reports" width="45%" style="display: inline-block; margin: 5px;">
+</div>
+
+*Comprehensive reporting and user analytics for informed decisions*
+
+---
+
+### Easy Creation — Streamlined Workflows
+<div>
+  <img src="assets/screenshots/CreateProject.png" alt="Create Project" width="30%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/CreateTask.png" alt="Create Task" width="30%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/CreateClient.png" alt="Create Client" width="30%" style="display: inline-block; margin: 5px;">
+</div>
+
+*Simple, intuitive forms for creating projects, tasks, and clients*
 
 </div>
 
