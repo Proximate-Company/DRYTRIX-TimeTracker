@@ -62,11 +62,11 @@ jobs:
         run: |
           pytest -m smoke -v --tb=short --no-cov
       
-      - name: Run unit tests (parallel)
+      - name: Run unit tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest -m unit -v -n auto --dist loadfile --no-cov
+          pytest -m unit -v --no-cov
       
       - name: Run critical integration tests
         env:

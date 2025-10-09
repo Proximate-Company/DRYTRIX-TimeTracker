@@ -321,10 +321,10 @@ def task(app, project, user):
             name='Test Task',
             description='Test task description',
             project_id=project.id,
-            status='todo',
             priority='medium',
             created_by=user.id
         )
+        task.status = 'todo'  # Set after creation
         db.session.add(task)
         db.session.commit()
         
