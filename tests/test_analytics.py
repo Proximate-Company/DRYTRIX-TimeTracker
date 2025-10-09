@@ -50,11 +50,15 @@ def sample_data(app):
         
         return {'user': user, 'project': project}
 
+@pytest.mark.integration
+@pytest.mark.routes
 def test_analytics_dashboard_requires_login(client):
     """Test that analytics dashboard requires authentication"""
     response = client.get('/analytics')
     assert response.status_code == 302  # Redirect to login
 
+@pytest.mark.integration
+@pytest.mark.routes
 def test_analytics_dashboard_accessible_when_logged_in(client, app, sample_data):
     """Test that analytics dashboard is accessible when logged in"""
     with app.app_context():
@@ -68,6 +72,8 @@ def test_analytics_dashboard_accessible_when_logged_in(client, app, sample_data)
         assert response.status_code == 200
         assert b'Analytics Dashboard' in response.data
 
+@pytest.mark.integration
+@pytest.mark.api
 def test_hours_by_day_api(client, app, sample_data):
     """Test hours by day API endpoint"""
     with app.app_context():
@@ -84,6 +90,8 @@ def test_hours_by_day_api(client, app, sample_data):
         assert 'datasets' in data
         assert len(data['datasets']) > 0
 
+@pytest.mark.integration
+@pytest.mark.api
 def test_hours_by_project_api(client, app, sample_data):
     """Test hours by project API endpoint"""
     with app.app_context():
@@ -100,6 +108,8 @@ def test_hours_by_project_api(client, app, sample_data):
         assert 'datasets' in data
         assert len(data['labels']) > 0
 
+@pytest.mark.integration
+@pytest.mark.api
 def test_billable_vs_nonbillable_api(client, app, sample_data):
     """Test billable vs non-billable API endpoint"""
     with app.app_context():
@@ -116,6 +126,8 @@ def test_billable_vs_nonbillable_api(client, app, sample_data):
         assert 'datasets' in data
         assert len(data['labels']) == 2  # Billable and Non-Billable
 
+@pytest.mark.integration
+@pytest.mark.api
 def test_hours_by_hour_api(client, app, sample_data):
     """Test hours by hour API endpoint"""
     with app.app_context():
@@ -132,6 +144,8 @@ def test_hours_by_hour_api(client, app, sample_data):
         assert 'datasets' in data
         assert len(data['labels']) == 24  # 24 hours
 
+@pytest.mark.integration
+@pytest.mark.api
 def test_weekly_trends_api(client, app, sample_data):
     """Test weekly trends API endpoint"""
     with app.app_context():
@@ -147,6 +161,8 @@ def test_weekly_trends_api(client, app, sample_data):
         assert 'labels' in data
         assert 'datasets' in data
 
+@pytest.mark.integration
+@pytest.mark.api
 def test_project_efficiency_api(client, app, sample_data):
     """Test project efficiency API endpoint"""
     with app.app_context():
@@ -162,6 +178,9 @@ def test_project_efficiency_api(client, app, sample_data):
         assert 'labels' in data
         assert 'datasets' in data
 
+@pytest.mark.integration
+@pytest.mark.api
+@pytest.mark.security
 def test_user_performance_api_requires_admin(client, app, sample_data):
     """Test that user performance API requires admin access"""
     with app.app_context():
@@ -173,6 +192,8 @@ def test_user_performance_api_requires_admin(client, app, sample_data):
         response = client.get('/api/analytics/hours-by-user?days=7')
         assert response.status_code == 403  # Forbidden for non-admin users
 
+@pytest.mark.integration
+@pytest.mark.api
 def test_user_performance_api_accessible_by_admin(client, app, sample_data):
     """Test that user performance API is accessible by admin users"""
     with app.app_context():
@@ -192,6 +213,8 @@ def test_user_performance_api_accessible_by_admin(client, app, sample_data):
         assert 'labels' in data
         assert 'datasets' in data
 
+@pytest.mark.integration
+@pytest.mark.api
 def test_api_endpoints_with_invalid_parameters(client, app, sample_data):
     """Test API endpoints with invalid parameters"""
     with app.app_context():

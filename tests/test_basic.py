@@ -58,11 +58,15 @@ def project(app):
     db.session.commit()
     return project
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_app_creation(app):
     """Test that the app can be created"""
     assert app is not None
     assert app.config['TESTING'] is True
 
+@pytest.mark.unit
+@pytest.mark.database
 def test_database_creation(app):
     """Test that database tables can be created"""
     with app.app_context():
@@ -72,6 +76,8 @@ def test_database_creation(app):
         assert db.engine.dialect.has_table(db.engine, 'time_entries')
         assert db.engine.dialect.has_table(db.engine, 'settings')
 
+@pytest.mark.unit
+@pytest.mark.models
 def test_user_creation(app):
     """Test user creation"""
     with app.app_context():
@@ -84,6 +90,8 @@ def test_user_creation(app):
         assert user.role == 'user'
         assert user.is_admin is False
 
+@pytest.mark.unit
+@pytest.mark.models
 def test_admin_user(app):
     """Test admin user properties"""
     with app.app_context():
@@ -93,6 +101,8 @@ def test_admin_user(app):
         
         assert admin.is_admin is True
 
+@pytest.mark.unit
+@pytest.mark.models
 def test_project_creation(app):
     """Test project creation"""
     with app.app_context():
@@ -112,6 +122,8 @@ def test_project_creation(app):
         assert project.billable is True
         assert float(project.hourly_rate) == 50.00
 
+@pytest.mark.unit
+@pytest.mark.models
 def test_time_entry_creation(app, user, project):
     """Test time entry creation"""
     with app.app_context():
@@ -135,6 +147,8 @@ def test_time_entry_creation(app, user, project):
         assert entry.duration_formatted == '02:00:00'
         assert entry.tag_list == ['test', 'work']
 
+@pytest.mark.unit
+@pytest.mark.models
 def test_active_timer(app, user, project):
     """Test active timer functionality"""
     with app.app_context():
@@ -157,6 +171,8 @@ def test_active_timer(app, user, project):
         assert timer.end_time is not None
         assert timer.duration_seconds > 0
 
+@pytest.mark.unit
+@pytest.mark.models
 def test_user_active_timer_property(app, user, project):
     """Test user active timer property"""
     with app.app_context():
@@ -177,6 +193,8 @@ def test_user_active_timer_property(app, user, project):
         assert user.active_timer is not None
         assert user.active_timer.id == timer.id
 
+@pytest.mark.integration
+@pytest.mark.models
 def test_project_totals(app, user, project):
     """Test project total calculations"""
     with app.app_context():
@@ -204,6 +222,8 @@ def test_project_totals(app, user, project):
         assert project.total_billable_hours == 4.0
         assert float(project.estimated_cost) == 200.00  # 4 hours * 50 EUR
 
+@pytest.mark.unit
+@pytest.mark.models
 def test_settings_singleton(app):
     """Test settings singleton pattern"""
     with app.app_context():
@@ -214,6 +234,8 @@ def test_settings_singleton(app):
         assert settings1.id == settings2.id
         assert settings1 is settings2
 
+@pytest.mark.smoke
+@pytest.mark.routes
 def test_health_check(client):
     """Test health check endpoint"""
     response = client.get('/_health')
@@ -221,11 +243,15 @@ def test_health_check(client):
     data = response.get_json()
     assert data['status'] == 'healthy'
 
+@pytest.mark.smoke
+@pytest.mark.routes
 def test_login_page(client):
     """Test login page accessibility"""
     response = client.get('/login')
     assert response.status_code == 200
 
+@pytest.mark.unit
+@pytest.mark.routes
 def test_protected_route_redirect(client):
     """Test that protected routes redirect to login"""
     response = client.get('/dashboard', follow_redirects=False)

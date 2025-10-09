@@ -154,3 +154,24 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Test artifacts
+test.db
+test_*.db
+junit.xml
+*.xml
+test-results/
+.pytest_tmp*/
+bandit-report.json
+safety-report.json
+migration_report.md
+
+# Coverage reports
+.coverage.*
+coverage/
+htmlcov/
+.coverage
+coverage.xml
+
+# Test output
+.testmondata
