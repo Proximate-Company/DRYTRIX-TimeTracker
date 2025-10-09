@@ -349,9 +349,9 @@ def invoice(app, user, project, test_client):
             client_name=test_client.name,
             due_date=date.today() + timedelta(days=30),
             created_by=user.id,
-            status='draft',
             tax_rate=Decimal('20.00')
         )
+        invoice.status = 'draft'  # Set after creation
         db.session.add(invoice)
         db.session.commit()
         
