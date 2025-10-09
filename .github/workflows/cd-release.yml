@@ -62,12 +62,14 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run complete test suite
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           FLASK_APP: app.py
           FLASK_ENV: testing
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -v --cov=app --cov-report=xml --cov-report=html --cov-report=term \
                  --junitxml=junit.xml

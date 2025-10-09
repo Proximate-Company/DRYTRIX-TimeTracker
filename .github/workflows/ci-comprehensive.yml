@@ -33,8 +33,11 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run smoke tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m smoke -v --tb=short --no-cov
       
@@ -75,8 +78,11 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run unit tests - ${{ matrix.test-group }}
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m "unit and ${{ matrix.test-group }}" -v --cov=app --cov-report=xml --cov-report=html
       
@@ -134,12 +140,14 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run integration tests
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           FLASK_APP: app.py
           FLASK_ENV: testing
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m integration -v --cov=app --cov-report=xml --cov-report=html
       
@@ -182,8 +190,11 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run security tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m security -v --tb=short
       
@@ -242,12 +253,14 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run database tests
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           FLASK_APP: app.py
           FLASK_ENV: testing
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m database -v --cov=app --cov-report=xml
       
@@ -291,12 +304,14 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run database tests
         env:
           DATABASE_URL: sqlite:///test.db
           FLASK_APP: app.py
           FLASK_ENV: testing
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m database -v --cov=app --cov-report=xml
       
@@ -437,12 +452,14 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run full test suite
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           FLASK_APP: app.py
           FLASK_ENV: testing
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -v --cov=app --cov-report=xml --cov-report=html --cov-report=term
       

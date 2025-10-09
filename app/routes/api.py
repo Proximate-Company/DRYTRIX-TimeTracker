@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, current_app, send_from_directory
+from flask import Blueprint, jsonify, request, current_app, send_from_directory, make_response
 from flask_login import login_required, current_user
 from app import db, socketio
 from app.models import User, Project, TimeEntry, Settings, Task, FocusSession, RecurringBlock, RateOverride, SavedFilter, Client

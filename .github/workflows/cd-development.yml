@@ -54,12 +54,17 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-test.txt
+          pip install -e .
       
       - name: Run smoke tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m smoke -v --tb=short
       
       - name: Run unit tests (parallel)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m unit -v -n auto --dist loadfile
       
@@ -68,6 +73,7 @@ jobs:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
           FLASK_APP: app.py
           FLASK_ENV: testing
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest -m "integration and not slow" -v
 
