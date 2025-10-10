@@ -170,8 +170,8 @@ jobs:
         run: |
           echo "📊 Testing migration with sample data..."
           
-          # Create sample data
-          python -c "
+          # Create sample data script
+          python << 'EOF'
           from app import create_app, db
           from app.models.user import User
           from app.models.project import Project
@@ -206,10 +206,10 @@ jobs:
               
               db.session.commit()
               print('✅ Sample data created successfully')
-          "
+          EOF
           
           # Verify data integrity after migration
-          python -c "
+          python << 'EOF'
           from app import create_app, db
           from app.models.user import User
           from app.models.project import Project
@@ -227,7 +227,7 @@ jobs:
               else:
                   print('❌ Data integrity check failed')
                   exit(1)
-          "
+          EOF
 
       - name: Generate migration report
         if: steps.migration_check.outputs.migration_changes == 'true'
@@ -247,7 +247,8 @@ jobs:
           echo "" >> migration_report.md
           echo "## Current Schema" >> migration_report.md
           echo "" >> migration_report.md
-          python -c "
+          
+          python << 'EOF' >> migration_report.md
           from app import create_app, db
           from sqlalchemy import inspect
           
@@ -260,8 +261,8 @@ jobs:
                   print(f'- {table}')
                   columns = inspector.get_columns(table)
                   for column in columns:
-                      print(f'  - {column[\"name\"]}: {column[\"type\"]}')
-          " >> migration_report.md
+                      print(f'  - {column["name"]}: {column["type"]}')
+          EOF
           
           cat migration_report.md
 
