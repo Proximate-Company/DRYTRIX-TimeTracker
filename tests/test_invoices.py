@@ -32,8 +32,8 @@ def sample_invoice(app, sample_user, sample_project):
     # Create a client first
     from app.models import Client
     client = Client(
-        name='Test Client',
-        email='client@test.com'
+        name='Sample Invoice Client',
+        email='sample@test.com'
     )
     db.session.add(client)
     db.session.commit()
@@ -41,7 +41,7 @@ def sample_invoice(app, sample_user, sample_project):
     invoice = Invoice(
         invoice_number='INV-20241201-001',
         project_id=sample_project.id,
-        client_name='Test Client',
+        client_name='Sample Invoice Client',
         due_date=date.today() + timedelta(days=30),
         created_by=sample_user.id,
         client_id=client.id
@@ -57,8 +57,8 @@ def test_invoice_creation(app, sample_user, sample_project):
     # Create a client first
     from app.models import Client
     client = Client(
-        name='Test Client',
-        email='client@test.com'
+        name='Invoice Creation Test Client',
+        email='creation@test.com'
     )
     db.session.add(client)
     db.session.commit()
@@ -66,7 +66,7 @@ def test_invoice_creation(app, sample_user, sample_project):
     invoice = Invoice(
         invoice_number='INV-20241201-002',
         project_id=sample_project.id,
-        client_name='Test Client',
+        client_name='Invoice Creation Test Client',
         due_date=date.today() + timedelta(days=30),
         created_by=sample_user.id,
         client_id=client.id,
@@ -78,7 +78,7 @@ def test_invoice_creation(app, sample_user, sample_project):
     
     assert invoice.id is not None
     assert invoice.invoice_number == 'INV-20241201-002'
-    assert invoice.client_name == 'Test Client'
+    assert invoice.client_name == 'Invoice Creation Test Client'
     assert invoice.status == 'draft'
     assert invoice.tax_rate == Decimal('20.00')
 
@@ -134,8 +134,8 @@ def test_invoice_with_tax(app, sample_user, sample_project):
     # Create a client first
     from app.models import Client
     client = Client(
-        name='Test Client',
-        email='client@test.com'
+        name='Tax Test Client',
+        email='tax@test.com'
     )
     db.session.add(client)
     db.session.commit()
@@ -143,7 +143,7 @@ def test_invoice_with_tax(app, sample_user, sample_project):
     invoice = Invoice(
         invoice_number='INV-20241201-003',
         project_id=sample_project.id,
-        client_name='Test Client',
+        client_name='Tax Test Client',
         due_date=date.today() + timedelta(days=30),
         created_by=sample_user.id,
         client_id=client.id,
@@ -268,8 +268,8 @@ def test_invoice_payment_status_initialization(app, sample_user, sample_project)
     # Create a client first
     from app.models import Client
     client = Client(
-        name='Test Client',
-        email='client@test.com'
+        name='Payment Status Test Client',
+        email='payment@test.com'
     )
     db.session.add(client)
     db.session.commit()
@@ -277,7 +277,7 @@ def test_invoice_payment_status_initialization(app, sample_user, sample_project)
     invoice = Invoice(
         invoice_number='INV-20241201-005',
         project_id=sample_project.id,
-        client_name='Test Client',
+        client_name='Payment Status Test Client',
         due_date=date.today() + timedelta(days=30),
         created_by=sample_user.id,
         client_id=client.id
