@@ -37,6 +37,7 @@
     </div>
 
     <form id="form-save" method="POST" class="d-none">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <textarea id="input-html" name="invoice_pdf_template_html"></textarea>
         <textarea id="input-css" name="invoice_pdf_template_css"></textarea>
     </form>
@@ -71,6 +72,7 @@ const __INIT_HTML__ = {{ (initial_html or settings.invoice_pdf_template_html or 
 const __INIT_CSS__ = {{ (initial_css or settings.invoice_pdf_template_css or '')|tojson }};
 const __DEFAULTS_URL__ = "{{ url_for('admin.pdf_layout_default') }}";
 const __PREVIEW_URL__ = "{{ url_for('admin.pdf_layout_preview') }}";
+const __CSRF_TOKEN__ = (function(){ try { return document.querySelector('meta[name="csrf-token"]').getAttribute('content'); } catch(e) { return ''; } })();
 </script>
 {% raw %}
 <script>
@@ -155,7 +157,7 @@ const __PREVIEW_URL__ = "{{ url_for('admin.pdf_layout_preview') }}";
     const formData = new FormData();
     formData.append('html', html);
     formData.append('css', css);
-    fetch(__PREVIEW_URL__, { method:'POST', body: formData })
+    fetch(__PREVIEW_URL__, { method:'POST', headers: __CSRF_TOKEN__ ? { 'X-CSRFToken': __CSRF_TOKEN__ } : {}, body: formData })
       .then(r=>r.text()).then(html => {
         const frame = document.getElementById('preview-frame');
         const doc = frame.contentDocument || frame.contentWindow.document;

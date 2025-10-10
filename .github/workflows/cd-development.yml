@@ -1,0 +1,301 @@
+name: CD - Development Build
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build even if tests fail'
+        required: false
+        type: boolean
+        default: false
+
+# Required permissions for creating releases and pushing images
+permissions: write-all
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ============================================================================
+  # Quick Test Suite for Development
+  # ============================================================================
+  quick-tests:
+    name: Quick Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install -e .
+      
+      - name: Run smoke tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest -m smoke -v --tb=short --no-cov
+      
+      - name: Validate database migrations
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          FLASK_APP: app.py
+          FLASK_ENV: testing
+        run: |
+          echo "🔍 Validating database migrations..."
+          
+          # Check if there are migration-related changes
+          if git diff --name-only HEAD~1 2>/dev/null | grep -E "(app/models/|migrations/)" > /dev/null; then
+            echo "📋 Migration-related changes detected"
+            
+            # Initialize fresh database
+            flask db upgrade
+            
+            # Test migration rollback
+            CURRENT_MIGRATION=$(flask db current)
+            echo "Current migration: $CURRENT_MIGRATION"
+            
+            if [ -n "$CURRENT_MIGRATION" ] && [ "$CURRENT_MIGRATION" != "None" ]; then
+              echo "Testing migration operations..."
+              flask db upgrade head
+              echo "✅ Migration validation passed"
+            fi
+          else
+            echo "ℹ️ No migration-related changes detected"
+          fi
+
+  # ============================================================================
+  # Build and Push Development Image
+  # ============================================================================
+  build-and-push:
+    name: Build and Push Development Image
+    runs-on: ubuntu-latest
+    needs: quick-tests
+    if: always() && (needs.quick-tests.result == 'success' || github.event.inputs.force_build == 'true')
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=develop
+            type=raw,value=dev-{{date 'YYYYMMDD-HHmmss'}}
+            type=sha,prefix=dev-,format=short
+      
+      - name: Determine version
+        id: version
+        run: |
+          BUILD_NUMBER=${{ github.run_number }}
+          COMMIT_SHA=${GITHUB_SHA::8}
+          VERSION="dev-${BUILD_NUMBER}-${COMMIT_SHA}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Building version: $VERSION"
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+          cache-to: type=inline
+      
+      - name: Generate deployment manifest
+        run: |
+          cat > deployment-dev.yml << EOF
+          # TimeTracker Development Deployment
+          # Generated: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          # Version: ${{ steps.version.outputs.version }}
+          # Commit: ${{ github.sha }}
+          
+          version: '3.8'
+          
+          services:
+            app:
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+              container_name: timetracker-dev
+              ports:
+                - "8080:8080"
+              environment:
+                - TZ=Europe/Brussels
+                - DATABASE_URL=postgresql://timetracker:timetracker@db:5432/timetracker
+                - SECRET_KEY=\${SECRET_KEY}
+                - FLASK_ENV=development
+                - APP_VERSION=${{ steps.version.outputs.version }}
+              depends_on:
+                - db
+              restart: unless-stopped
+            
+            db:
+              image: postgres:16-alpine
+              container_name: timetracker-dev-db
+              environment:
+                - POSTGRES_DB=timetracker
+                - POSTGRES_USER=timetracker
+                - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}
+              volumes:
+                - db_data:/var/lib/postgresql/data
+              restart: unless-stopped
+          
+          volumes:
+            db_data:
+          EOF
+          
+          echo "📄 Deployment manifest created"
+          cat deployment-dev.yml
+      
+      - name: Upload deployment manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-manifest-dev
+          path: deployment-dev.yml
+      
+      - name: Create GitHub Release (Development)
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.version }}';
+            const tagName = `dev-${version}`;
+            
+            try {
+              await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tagName,
+                name: `Development Build ${version}`,
+                body: `## Development Build
+                
+                **Version:** ${version}
+                **Commit:** ${context.sha.substring(0, 7)}
+                **Branch:** develop
+                **Build:** #${context.runNumber}
+                
+                ### Docker Image
+                \`\`\`
+                ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+                \`\`\`
+                
+                ### Quick Start
+                \`\`\`bash
+                docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+                docker-compose -f deployment-dev.yml up -d
+                \`\`\`
+                
+                ### Changes
+                ${context.payload.head_commit?.message || 'See commit history'}
+                
+                ---
+                *This is an automated development build. Use at your own risk.*
+                `,
+                draft: false,
+                prerelease: true
+              });
+              
+              console.log('✅ Development release created');
+            } catch (error) {
+              if (error.status === 422) {
+                console.log('⚠️ Release already exists, skipping');
+              } else if (error.status === 403) {
+                console.log('⚠️ GitHub Actions does not have permission to create releases');
+                console.log('📝 To fix: Go to Settings → Actions → General → Workflow permissions');
+                console.log('📝 Select "Read and write permissions" and save');
+              } else {
+                throw error;
+              }
+            }
+
+  # ============================================================================
+  # Notification
+  # ============================================================================
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [quick-tests, build-and-push]
+    if: always()
+    
+    steps:
+      - name: Determine build status
+        id: status
+        run: |
+          if [ "${{ needs.build-and-push.result }}" == "success" ]; then
+            echo "status=✅ Success" >> $GITHUB_OUTPUT
+            echo "color=28a745" >> $GITHUB_OUTPUT
+          else
+            echo "status=❌ Failed" >> $GITHUB_OUTPUT
+            echo "color=dc3545" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create summary
+        run: |
+          echo "## 🚀 Development Build ${{ steps.status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** develop" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build:** #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: ${{ needs.quick-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.build-and-push.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.build-and-push.result }}" == "success" ]; then
+            echo "### 🐳 Docker Image" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+

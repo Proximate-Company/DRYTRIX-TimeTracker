@@ -2,7 +2,7 @@ import os
 import click
 from flask.cli import with_appcontext
 from app import db
-from app.models import User, Project, TimeEntry, Settings, Client
+from app.models import User, Project, TimeEntry, Settings, Client, RecurringBlock
 from datetime import datetime, timedelta
 import shutil
 from app.utils.backup import create_backup, restore_backup
@@ -166,3 +166,69 @@ def register_cli_commands(app):
         except Exception as e:
             click.echo(f"Error getting migration history: {e}")
             click.echo("Make sure Flask-Migrate is properly initialized")
+
+    @app.cli.command()
+    @with_appcontext
+    @click.option('--days', default=7, help='Generate entries for the next N days')
+    def generate_recurring(days):
+        """Expand active recurring time blocks into concrete time entries for the next N days."""
+        from datetime import date, time
+        from app.utils.timezone import get_timezone_obj
+        tz = get_timezone_obj()
+
+        today = datetime.now(tz).date()
+        end = today + timedelta(days=int(days))
+        weekday_map = { 'mon':0, 'tue':1, 'wed':2, 'thu':3, 'fri':4, 'sat':5, 'sun':6 }
+
+        blocks = RecurringBlock.query.filter_by(is_active=True).all()
+        created = 0
+        for b in blocks:
+            start_date = b.starts_on or today
+            stop_date = b.ends_on or end
+            window_start = max(today, start_date)
+            window_end = min(end, stop_date)
+            if window_end < window_start:
+                continue
+            weekdays = [(w.strip().lower()) for w in (b.weekdays or '').split(',') if w.strip()]
+            weekday_nums = { weekday_map[w] for w in weekdays if w in weekday_map }
+            cur = window_start
+            while cur <= window_end:
+                if not weekday_nums or cur.weekday() in weekday_nums:
+                    try:
+                        sh, sm = [int(x) for x in b.start_time_local.split(':')]
+                        eh, em = [int(x) for x in b.end_time_local.split(':')]
+                    except Exception:
+                        cur += timedelta(days=1)
+                        continue
+                    # Build naive datetimes in local tz then drop tzinfo for storage convention
+                    start_dt = datetime(cur.year, cur.month, cur.day, sh, sm)
+                    end_dt = datetime(cur.year, cur.month, cur.day, eh, em)
+                    if end_dt <= start_dt:
+                        cur += timedelta(days=1)
+                        continue
+                    # Avoid duplicates: skip if overlapping entry exists for same user/project in this window
+                    exists = (
+                        TimeEntry.query
+                        .filter(TimeEntry.user_id == b.user_id, TimeEntry.project_id == b.project_id)
+                        .filter(TimeEntry.start_time == start_dt, TimeEntry.end_time == end_dt)
+                        .first()
+                    )
+                    if exists:
+                        cur += timedelta(days=1)
+                        continue
+                    te = TimeEntry(
+                        user_id=b.user_id,
+                        project_id=b.project_id,
+                        task_id=b.task_id,
+                        start_time=start_dt,
+                        end_time=end_dt,
+                        notes=b.notes,
+                        tags=b.tags,
+                        source='manual',
+                        billable=b.billable,
+                    )
+                    db.session.add(te)
+                    created += 1
+                cur += timedelta(days=1)
+        db.session.commit()
+        click.echo(f"Recurring generation complete. Created {created} entries.")

@@ -5,7 +5,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-# Navbar and common
+# Navigation and Common
 msgid "Time Tracker"
 msgstr "Suivi du temps"
 
@@ -23,6 +23,12 @@ msgstr "Tâches"
 
 msgid "Log Time"
 msgstr "Enregistrer le temps"
+
+msgid "Bulk Time Entry"
+msgstr "Saisie en masse"
+
+msgid "Calendar"
+msgstr "Calendrier"
 
 msgid "Reports"
 msgstr "Rapports"
@@ -60,6 +66,397 @@ msgstr "Aide"
 msgid "Buy me a coffee"
 msgstr "Offrez-moi un café"
 
+msgid "All rights reserved."
+msgstr "Tous droits réservés."
+
+msgid "Skip to content"
+msgstr "Passer au contenu"
+
+msgid "Work"
+msgstr "Travail"
+
+msgid "Insights"
+msgstr "Aperçus"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Open Command Palette"
+msgstr "Ouvrir la palette de commandes"
+
+msgid "Ctrl"
+msgstr "Ctrl"
+
+msgid "Keyboard Shortcuts"
+msgstr "Raccourcis clavier"
+
+msgid "Install App"
+msgstr "Installer l'application"
+
+msgid "App installed"
+msgstr "Application installée"
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Confirm"
+msgstr "Confirmer"
+
+msgid "Please confirm"
+msgstr "Veuillez confirmer"
+
+# Dashboard
+msgid "Welcome back,"
+msgstr "Bon retour,"
+
+msgid "h today"
+msgstr "h aujourd'hui"
+
+msgid "Timer Status"
+msgstr "État du chronomètre"
+
+msgid "Timer Running"
+msgstr "Chronomètre en cours"
+
+msgid "No Active Timer"
+msgstr "Aucun chronomètre actif"
+
+msgid "Choose a project or one of its tasks to start tracking."
+msgstr "Choisissez un projet ou une de ses tâches pour commencer le suivi."
+
+msgid "Idle"
+msgstr "Inactif"
+
+msgid "Started at"
+msgstr "Démarré à"
+
+msgid "Stop Timer"
+msgstr "Arrêter le chronomètre"
+
+msgid "Start Timer"
+msgstr "Démarrer le chronomètre"
+
+msgid "Hours Today"
+msgstr "Heures aujourd'hui"
+
+msgid "Hours This Week"
+msgstr "Heures cette semaine"
+
+msgid "Hours This Month"
+msgstr "Heures ce mois"
+
+msgid "Quick Actions"
+msgstr "Actions rapides"
+
+msgid "Manual entry"
+msgstr "Saisie manuelle"
+
+msgid "Bulk Entry"
+msgstr "Saisie en masse"
+
+msgid "Multi-day time entry"
+msgstr "Saisie de temps multi-jours"
+
+msgid "Manage projects"
+msgstr "Gérer les projets"
+
+msgid "View analytics"
+msgstr "Voir les analyses"
+
+msgid "Find entries"
+msgstr "Trouver des entrées"
+
+msgid "Today by Task"
+msgstr "Aujourd'hui par tâche"
+
+msgid "Loading..."
+msgstr "Chargement..."
+
+msgid "Recent Entries"
+msgstr "Entrées récentes"
+
+msgid "View All"
+msgstr "Voir tout"
+
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Set Billable"
+msgstr "Marquer comme facturable"
+
+msgid "Set Non-billable"
+msgstr "Marquer comme non facturable"
+
+msgid "Project"
+msgstr "Projet"
+
+msgid "Duration"
+msgstr "Durée"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "No notes"
+msgstr "Aucune note"
+
+msgid "Edit entry"
+msgstr "Modifier l'entrée"
+
+msgid "Delete entry"
+msgstr "Supprimer l'entrée"
+
+msgid "No recent entries"
+msgstr "Aucune entrée récente"
+
+msgid "Start tracking your time to see entries here"
+msgstr "Commencez à suivre votre temps pour voir les entrées ici"
+
+msgid "Log Your First Entry"
+msgstr "Enregistrer votre première entrée"
+
+msgid "Select Project"
+msgstr "Sélectionner un projet"
+
+msgid "Choose a project..."
+msgstr "Choisissez un projet..."
+
+msgid "Select Task (Optional)"
+msgstr "Sélectionner une tâche (Optionnel)"
+
+msgid "Choose a task..."
+msgstr "Choisissez une tâche..."
+
+msgid "Tasks list updates after choosing a project. Leave empty to log at project level."
+msgstr "La liste des tâches se met à jour après avoir choisi un projet. Laissez vide pour enregistrer au niveau du projet."
+
+msgid "Notes (Optional)"
+msgstr "Notes (Optionnel)"
+
+msgid "What are you working on?"
+msgstr "Sur quoi travaillez-vous ?"
+
+msgid "Delete Time Entry"
+msgstr "Supprimer l'entrée de temps"
+
+msgid "Warning:"
+msgstr "Avertissement :"
+
+msgid "This action cannot be undone."
+msgstr "Cette action ne peut pas être annulée."
+
+msgid "Are you sure you want to delete the time entry for"
+msgstr "Êtes-vous sûr de vouloir supprimer l'entrée de temps pour"
+
+msgid "Duration:"
+msgstr "Durée :"
+
+msgid "Delete Entry"
+msgstr "Supprimer l'entrée"
+
+msgid "Please select a project"
+msgstr "Veuillez sélectionner un projet"
+
+msgid "Starting..."
+msgstr "Démarrage..."
+
+msgid "Deleting..."
+msgstr "Suppression..."
+
+msgid "No time tracked yet today"
+msgstr "Aucun temps enregistré aujourd'hui"
+
+msgid "h"
+msgstr "h"
+
+msgid "Bulk action completed"
+msgstr "Action en masse terminée"
+
+msgid "Bulk action failed"
+msgstr "Action en masse échouée"
+
+# Login
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Company Logo"
+msgstr "Logo de l'entreprise"
+
+msgid "DryTrix Logo"
+msgstr "Logo DryTrix"
+
+msgid "TimeTracker"
+msgstr "TimeTracker"
+
+msgid "Professional Time Management"
+msgstr "Gestion professionnelle du temps"
+
+msgid "Sign in to your account to start tracking your time"
+msgstr "Connectez-vous à votre compte pour commencer à suivre votre temps"
+
+msgid "Welcome to TimeTracker"
+msgstr "Bienvenue sur TimeTracker"
+
+msgid "Powered by"
+msgstr "Propulsé par"
+
+msgid "Enter your username to start tracking time"
+msgstr "Entrez votre nom d'utilisateur pour commencer le suivi du temps"
+
+msgid "Username"
+msgstr "Nom d'utilisateur"
+
+msgid "Enter your username"
+msgstr "Entrez votre nom d'utilisateur"
+
+msgid "Sign In"
+msgstr "Se connecter"
+
+msgid "Signing in..."
+msgstr "Connexion en cours..."
+
+msgid "Continue"
+msgstr "Continuer"
+
+msgid "or"
+msgstr "ou"
+
+msgid "Sign in with SSO"
+msgstr "Se connecter avec SSO"
+
+msgid "Internal Tool"
+msgstr "Outil interne"
+
+msgid "Internal Tool:"
+msgstr "Outil interne :"
+
+msgid "This is a private time tracking application for internal use only."
+msgstr "Ceci est une application privée de suivi du temps pour un usage interne uniquement."
+
+msgid "New users will be created automatically"
+msgstr "Les nouveaux utilisateurs seront créés automatiquement"
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Please enter a username"
+msgstr "Veuillez entrer un nom d'utilisateur"
+
+msgid "Signing in..."
+msgstr "Connexion en cours..."
+
+# Tasks
+msgid "Board"
+msgstr "Tableau"
+
+msgid "Table"
+msgstr "Table"
+
+msgid "New Task"
+msgstr "Nouvelle tâche"
+
+msgid "Plan and track work"
+msgstr "Planifier et suivre le travail"
+
+msgid "total"
+msgstr "total"
+
+msgid "To Do"
+msgstr "À faire"
+
+msgid "In Progress"
+msgstr "En cours"
+
+msgid "Review"
+msgstr "Révision"
+
+msgid "Completed"
+msgstr "Terminé"
+
+msgid "Filter Tasks"
+msgstr "Filtrer les tâches"
+
+msgid "Toggle Filters"
+msgstr "Basculer les filtres"
+
+msgid "Task name or description"
+msgstr "Nom de la tâche ou description"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "All Statuses"
+msgstr "Tous les statuts"
+
+msgid "Done"
+msgstr "Fait"
+
+msgid "Cancelled"
+msgstr "Annulé"
+
+msgid "Priority"
+msgstr "Priorité"
+
+msgid "All Priorities"
+msgstr "Toutes les priorités"
+
+msgid "Low"
+msgstr "Basse"
+
+msgid "Medium"
+msgstr "Moyenne"
+
+msgid "High"
+msgstr "Haute"
+
+msgid "Urgent"
+msgstr "Urgent"
+
+msgid "All Projects"
+msgstr "Tous les projets"
+
+# Command Palette
+msgid "Command Palette"
+msgstr "Palette de commandes"
+
+msgid "Type a command or search..."
+msgstr "Tapez une commande ou recherchez..."
+
+# Socket.IO messages
+msgid "Timer started for"
+msgstr "Chronomètre démarré pour"
+
+msgid "Timer stopped. Duration:"
+msgstr "Chronomètre arrêté. Durée :"
+
+# Theme toggle
+msgid "Switch to light mode"
+msgstr "Passer en mode clair"
+
+msgid "Switch to dark mode"
+msgstr "Passer en mode sombre"
+
+msgid "Light mode"
+msgstr "Mode clair"
+
+msgid "Dark mode"
+msgstr "Mode sombre"
+
+# Mobile
+msgid "Log time"
+msgstr "Enregistrer le temps"
+
 # About page
 msgid "About TimeTracker"
 msgstr "À propos de TimeTracker"
@@ -71,15 +468,13 @@ msgid "What is"
 msgstr "Qu'est-ce que"
 
 msgid "A simple, efficient time tracking solution for teams and individuals."
-msgstr "Une solution de suivi du temps simple et efficace pour les équipes et les individus."
+msgstr "Une solution simple et efficace de suivi du temps pour les équipes et les particuliers."
 
 msgid "It provides a simple and intuitive interface for tracking time spent on various projects and tasks."
-msgstr "Elle offre une interface simple et intuitive pour suivre le temps passé sur divers projets et tâches."
+msgstr "Il fournit une interface simple et intuitive pour suivre le temps passé sur divers projets et tâches."
 
 msgid "%(app)s is a web-based time tracking application designed for internal use within organizations."
-msgstr "%(app)s est une application de suivi du temps basée sur le web, conçue pour une utilisation interne au sein des organisations."
+msgstr "%(app)s est une application web de suivi du temps conçue pour un usage interne au sein des organisations."
 
 msgid "Learn more about "
 msgstr "En savoir plus sur "
-
-

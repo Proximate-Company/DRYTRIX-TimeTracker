@@ -1,0 +1,22 @@
+[run]
+source = app
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */env/*
+    # Exclude infrastructure/CLI utilities from unit test coverage
+    app/utils/backup.py
+    app/utils/cli.py
+    app/utils/pdf_generator.py
+    app/utils/pdf_generator_fallback.py
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov
+

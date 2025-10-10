@@ -168,6 +168,14 @@ If you encounter database-related errors:
 3. Verify all required tables exist
 4. Contact system administrator if issues persist
 
+## Recurring Time Blocks
+
+The system supports recurring time block templates via the `recurring_blocks` table.
+
+- Fields: `name`, `recurrence` (weekly), `weekdays` (e.g., `mon,tue`), `start_time_local`, `end_time_local`, optional `starts_on`/`ends_on`.
+- Blocks can include `notes`, `tags`, and `billable` flag and are user-owned.
+- API endpoints allow CRUD operations; a scheduler can periodically expand these into concrete `time_entries`.
+
 ## Future Enhancements
 
 Planned improvements for Task Management:

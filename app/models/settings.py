@@ -40,7 +40,7 @@ class Settings(db.Model):
     invoice_notes = db.Column(db.Text, default='Thank you for your business!', nullable=False)
     
     # Privacy and analytics settings
-    allow_analytics = db.Column(db.Boolean, default=True, nullable=False)  # Controls system info sharing with license server
+    allow_analytics = db.Column(db.Boolean, default=True, nullable=False)  # Controls system info sharing for analytics
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -149,7 +149,16 @@ class Settings(db.Model):
         if not settings:
             settings = cls()
             db.session.add(settings)
-            db.session.commit()
+            try:
+                # Try to commit, but if we're in a nested transaction or flush, just flush
+                db.session.commit()
+            except Exception:
+                # If commit fails (e.g., during a flush), just flush to get the object persisted
+                try:
+                    db.session.flush()
+                except Exception:
+                    # If even flush fails, we'll work with the transient object
+                    pass
         return settings
     
     @classmethod

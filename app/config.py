@@ -75,7 +75,7 @@ class Config:
     UPLOAD_FOLDER = '/data/uploads'
     
     # CSRF protection
-    WTF_CSRF_ENABLED = False
+    WTF_CSRF_ENABLED = True  # Enabled by default, disabled only in testing
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
     
     # Security headers
@@ -85,6 +85,10 @@ class Config:
         'X-XSS-Protection': '1; mode=block',
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
     }
+
+    # Rate limiting
+    RATELIMIT_DEFAULT = os.getenv('RATELIMIT_DEFAULT', '')  # e.g., "200 per day;50 per hour"
+    RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'memory://')
     
     # Internationalization
     LANGUAGES = {
@@ -107,14 +111,6 @@ class Config:
         github_run_number = os.getenv('GITHUB_RUN_NUMBER')
         APP_VERSION = f"dev-{github_run_number}" if github_run_number else "dev-0"
 
-    # License server settings (no license required)
-    # All settings are hardcoded since clients cannot change license server configuration
-    LICENSE_SERVER_ENABLED = os.getenv('LICENSE_SERVER_ENABLED', 'true').lower() == 'true'
-    LICENSE_SERVER_API_KEY = "no-license-required"  # Hardcoded placeholder
-    LICENSE_SERVER_APP_ID = "timetracker"  # Hardcoded app identifier
-    LICENSE_SERVER_APP_VERSION = APP_VERSION  # Match application version
-    LICENSE_SERVER_HEARTBEAT_INTERVAL = 3600  # Hardcoded heartbeat interval (1 hour)
-
 class DevelopmentConfig(Config):
     """Development configuration"""
     FLASK_DEBUG = True
@@ -127,7 +123,9 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    # Allow DATABASE_URL override for CI/CD PostgreSQL testing
+    # Default to in-memory SQLite for local unit tests
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///:memory:')
     WTF_CSRF_ENABLED = False
     SECRET_KEY = 'test-secret-key'
 
@@ -136,6 +134,8 @@ class ProductionConfig(Config):
     FLASK_DEBUG = False
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = True
+    WTF_CSRF_ENABLED = True
 
 # Configuration mapping
 config = {

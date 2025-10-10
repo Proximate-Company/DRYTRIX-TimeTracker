@@ -1,0 +1,421 @@
+/* ==========================================================================
+   Keyboard Shortcuts & Command Palette
+   Power user features for navigation and actions
+   ========================================================================== */
+
+/* Command Palette */
+.command-palette {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10vh 1rem 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.command-palette.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+[data-theme="dark"] .command-palette {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.command-palette-container {
+    width: 100%;
+    max-width: 640px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 
+                0 0 0 1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transform: translateY(-20px) scale(0.95);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.command-palette.show .command-palette-container {
+    transform: translateY(0) scale(1);
+}
+
+[data-theme="dark"] .command-palette-container {
+    background: var(--dark-color);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Search Input */
+.command-search {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--surface-variant);
+}
+
+.command-search-icon {
+    color: var(--text-muted);
+    margin-right: 1rem;
+    font-size: 1.25rem;
+}
+
+.command-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 1.125rem;
+    color: var(--text-primary);
+}
+
+.command-search input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Results List */
+.command-results {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.command-section {
+    padding: 0.75rem 0;
+}
+
+.command-section-title {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    background: var(--surface-variant);
+}
+
+/* Command Items */
+.command-item {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: var(--text-primary);
+    border-left: 3px solid transparent;
+}
+
+.command-item:hover,
+.command-item.active {
+    background: var(--surface-hover);
+}
+
+.command-item.active {
+    border-left-color: var(--primary-color);
+    background: var(--primary-50);
+}
+
+[data-theme="dark"] .command-item.active {
+    background: var(--primary-900);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.command-item-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    background: var(--surface-variant);
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.command-item:hover .command-item-icon,
+.command-item.active .command-item-icon {
+    background: var(--primary-100);
+    color: var(--primary-color);
+}
+
+[data-theme="dark"] .command-item:hover .command-item-icon,
+[data-theme="dark"] .command-item.active .command-item-icon {
+    background: var(--primary-900);
+}
+
+.command-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.command-item-title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.command-item-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.command-item-shortcut {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: auto;
+    padding-left: 1rem;
+}
+
+.command-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    font-family: var(--font-family-mono), 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--surface-variant);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    box-shadow: 0 1px 0 0 var(--border-color), 
+                0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+.command-item.active .command-kbd {
+    background: var(--primary-50);
+    color: var(--primary-color);
+    border-color: var(--primary-300);
+    box-shadow: 0 1px 0 0 var(--primary-300);
+}
+
+[data-theme="dark"] .command-item.active .command-kbd {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: var(--primary-700);
+    box-shadow: 0 1px 0 0 var(--primary-700);
+}
+
+/* Empty State */
+.command-empty {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.command-empty i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Footer */
+.command-footer {
+    padding: 0.875rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface-variant);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.command-footer-actions {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.command-footer-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Keyboard Shortcut Hint */
+.shortcut-hint {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1rem;
+    box-shadow: var(--card-shadow-lg);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: var(--z-toast);
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.shortcut-hint.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.shortcut-hint-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.5rem;
+}
+
+.shortcut-hint-close:hover {
+    color: var(--text-primary);
+}
+
+/* Help Modal for All Shortcuts */
+.shortcuts-help-modal .modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.shortcuts-category {
+    background: var(--surface-variant);
+    border-radius: var(--border-radius);
+    padding: 1.25rem;
+}
+
+.shortcuts-category-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shortcut-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.shortcut-row:last-child {
+    border-bottom: none;
+}
+
+.shortcut-label {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.shortcut-keys {
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* Quick Action Buttons with Shortcuts */
+.btn-with-shortcut {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-with-shortcut .shortcut-badge {
+    font-size: 0.7rem;
+    padding: 0.125rem 0.375rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    font-family: var(--font-family-mono);
+}
+
+/* Keyboard Navigation Indicator */
+body.keyboard-navigation *:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+body:not(.keyboard-navigation) *:focus {
+    outline: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .command-palette {
+        padding: 1rem;
+    }
+    
+    .command-palette-container {
+        max-width: 100%;
+    }
+    
+    .command-results {
+        max-height: 50vh;
+    }
+    
+    .command-item-shortcut {
+        display: none;
+    }
+    
+    .command-footer-actions {
+        display: none;
+    }
+    
+    .shortcut-hint {
+        display: none;
+    }
+    
+    .shortcuts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Scrollbar Styling */
+.command-results::-webkit-scrollbar {
+    width: 8px;
+}
+
+.command-results::-webkit-scrollbar-track {
+    background: var(--surface-variant);
+}
+
+.command-results::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.command-results::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Animation */
+@keyframes command-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.command-item-icon.pulse {
+    animation: command-pulse 0.5s ease;
+}
+

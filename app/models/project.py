@@ -15,15 +15,20 @@ class Project(db.Model):
     hourly_rate = db.Column(db.Numeric(9, 2), nullable=True)
     billing_ref = db.Column(db.String(100), nullable=True)
     status = db.Column(db.String(20), default='active', nullable=False)  # 'active' or 'archived'
+    # Estimates & budgets
+    estimated_hours = db.Column(db.Float, nullable=True)
+    budget_amount = db.Column(db.Numeric(10, 2), nullable=True)
+    budget_threshold_percent = db.Column(db.Integer, nullable=False, default=80)  # alert when exceeded
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
     time_entries = db.relationship('TimeEntry', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     tasks = db.relationship('Task', backref='project', lazy='dynamic', cascade='all, delete-orphan')
+    costs = db.relationship('ProjectCost', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     # comments relationship is defined via backref in Comment model
     
-    def __init__(self, name, client_id=None, description=None, billable=True, hourly_rate=None, billing_ref=None, client=None):
+    def __init__(self, name, client_id=None, description=None, billable=True, hourly_rate=None, billing_ref=None, client=None, budget_amount=None, budget_threshold_percent=80):
         """Create a Project.
 
         Backward-compatible initializer that accepts either client_id or client name.
@@ -37,6 +42,8 @@ class Project(db.Model):
         self.billable = billable
         self.hourly_rate = Decimal(str(hourly_rate)) if hourly_rate else None
         self.billing_ref = billing_ref.strip() if billing_ref else None
+        self.budget_amount = Decimal(str(budget_amount)) if budget_amount else None
+        self.budget_threshold_percent = budget_threshold_percent if budget_threshold_percent else 80
 
         resolved_client_id = client_id
         if resolved_client_id is None and client:
@@ -103,6 +110,66 @@ class Project(db.Model):
         if not self.billable or not self.hourly_rate:
             return 0.0
         return float(self.total_billable_hours) * float(self.hourly_rate)
+    
+    @property
+    def total_costs(self):
+        """Calculate total project costs (expenses)"""
+        from .project_cost import ProjectCost
+        total = db.session.query(
+            db.func.sum(ProjectCost.amount)
+        ).filter(
+            ProjectCost.project_id == self.id
+        ).scalar() or 0
+        return float(total)
+    
+    @property
+    def total_billable_costs(self):
+        """Calculate total billable project costs"""
+        from .project_cost import ProjectCost
+        total = db.session.query(
+            db.func.sum(ProjectCost.amount)
+        ).filter(
+            ProjectCost.project_id == self.id,
+            ProjectCost.billable == True
+        ).scalar() or 0
+        return float(total)
+    
+    @property
+    def total_project_value(self):
+        """Calculate total project value (billable hours + billable costs)"""
+        return self.estimated_cost + self.total_billable_costs
+
+    @property
+    def actual_hours(self):
+        """Alias for total hours for clarity in estimates vs actuals."""
+        return self.total_hours
+
+    @property
+    def budget_consumed_amount(self):
+        """Compute consumed budget using effective rate logic when available.
+
+        Falls back to project.hourly_rate if no overrides are present.
+        """
+        try:
+            from .rate_override import RateOverride
+            hours = self.total_billable_hours
+            # Use project-level override if present, else project rate
+            rate = RateOverride.resolve_rate(self, user_id=None)
+            return float(hours * float(rate))
+        except Exception:
+            if self.hourly_rate:
+                return float(self.total_billable_hours * float(self.hourly_rate))
+            return 0.0
+
+    @property
+    def budget_threshold_exceeded(self):
+        if not self.budget_amount:
+            return False
+        try:
+            threshold = (self.budget_threshold_percent or 0) / 100.0
+            return self.budget_consumed_amount >= float(self.budget_amount) * threshold
+        except Exception:
+            return False
     
     def get_entries_by_user(self, user_id=None, start_date=None, end_date=None):
         """Get time entries for this project, optionally filtered by user and date range"""
@@ -174,9 +241,17 @@ class Project(db.Model):
             'hourly_rate': float(self.hourly_rate) if self.hourly_rate else None,
             'billing_ref': self.billing_ref,
             'status': self.status,
+            'estimated_hours': self.estimated_hours,
+            'budget_amount': float(self.budget_amount) if self.budget_amount else None,
+            'budget_threshold_percent': self.budget_threshold_percent,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'total_hours': self.total_hours,
             'total_billable_hours': self.total_billable_hours,
-            'estimated_cost': float(self.estimated_cost) if self.estimated_cost else None
+            'estimated_cost': float(self.estimated_cost) if self.estimated_cost else None,
+            'budget_consumed_amount': self.budget_consumed_amount,
+            'budget_threshold_exceeded': self.budget_threshold_exceeded,
+            'total_costs': self.total_costs,
+            'total_billable_costs': self.total_billable_costs,
+            'total_project_value': self.total_project_value,
         }

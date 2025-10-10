@@ -5,7 +5,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# Navbar and common
+# Navigation and Common
 msgid "Time Tracker"
 msgstr "Tijdregistratie"
 
@@ -23,6 +23,12 @@ msgstr "Taken"
 
 msgid "Log Time"
 msgstr "Tijd loggen"
+
+msgid "Bulk Time Entry"
+msgstr "Bulkregistratie"
+
+msgid "Calendar"
+msgstr "Kalender"
 
 msgid "Reports"
 msgstr "Rapporten"
@@ -60,6 +66,397 @@ msgstr "Help"
 msgid "Buy me a coffee"
 msgstr "Trakteer me op een koffie"
 
+msgid "All rights reserved."
+msgstr "Alle rechten voorbehouden."
+
+msgid "Skip to content"
+msgstr "Naar inhoud"
+
+msgid "Work"
+msgstr "Werk"
+
+msgid "Insights"
+msgstr "Inzichten"
+
+msgid "Search"
+msgstr "Zoeken"
+
+msgid "Open Command Palette"
+msgstr "Commandopalet openen"
+
+msgid "Ctrl"
+msgstr "Ctrl"
+
+msgid "Keyboard Shortcuts"
+msgstr "Sneltoetsen"
+
+msgid "Install App"
+msgstr "App installeren"
+
+msgid "App installed"
+msgstr "App geïnstalleerd"
+
+msgid "Close"
+msgstr "Sluiten"
+
+msgid "Cancel"
+msgstr "Annuleren"
+
+msgid "Confirm"
+msgstr "Bevestigen"
+
+msgid "Please confirm"
+msgstr "Bevestig alstublieft"
+
+# Dashboard
+msgid "Welcome back,"
+msgstr "Welkom terug,"
+
+msgid "h today"
+msgstr "u vandaag"
+
+msgid "Timer Status"
+msgstr "Timer Status"
+
+msgid "Timer Running"
+msgstr "Timer loopt"
+
+msgid "No Active Timer"
+msgstr "Geen actieve timer"
+
+msgid "Choose a project or one of its tasks to start tracking."
+msgstr "Kies een project of een van de taken om te beginnen met bijhouden."
+
+msgid "Idle"
+msgstr "Inactief"
+
+msgid "Started at"
+msgstr "Gestart om"
+
+msgid "Stop Timer"
+msgstr "Stop timer"
+
+msgid "Start Timer"
+msgstr "Start timer"
+
+msgid "Hours Today"
+msgstr "Uren vandaag"
+
+msgid "Hours This Week"
+msgstr "Uren deze week"
+
+msgid "Hours This Month"
+msgstr "Uren deze maand"
+
+msgid "Quick Actions"
+msgstr "Snelle acties"
+
+msgid "Manual entry"
+msgstr "Handmatige invoer"
+
+msgid "Bulk Entry"
+msgstr "Bulkregistratie"
+
+msgid "Multi-day time entry"
+msgstr "Meerdaagse tijdregistratie"
+
+msgid "Manage projects"
+msgstr "Projecten beheren"
+
+msgid "View analytics"
+msgstr "Analyses bekijken"
+
+msgid "Find entries"
+msgstr "Registraties zoeken"
+
+msgid "Today by Task"
+msgstr "Vandaag per taak"
+
+msgid "Loading..."
+msgstr "Laden..."
+
+msgid "Recent Entries"
+msgstr "Recente registraties"
+
+msgid "View All"
+msgstr "Alles bekijken"
+
+msgid "Select all"
+msgstr "Alles selecteren"
+
+msgid "Delete"
+msgstr "Verwijderen"
+
+msgid "Set Billable"
+msgstr "Factureerbaar maken"
+
+msgid "Set Non-billable"
+msgstr "Niet-factureerbaar maken"
+
+msgid "Project"
+msgstr "Project"
+
+msgid "Duration"
+msgstr "Duur"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Notes"
+msgstr "Notities"
+
+msgid "Actions"
+msgstr "Acties"
+
+msgid "No notes"
+msgstr "Geen notities"
+
+msgid "Edit entry"
+msgstr "Registratie bewerken"
+
+msgid "Delete entry"
+msgstr "Registratie verwijderen"
+
+msgid "No recent entries"
+msgstr "Geen recente registraties"
+
+msgid "Start tracking your time to see entries here"
+msgstr "Begin met tijdregistratie om hier registraties te zien"
+
+msgid "Log Your First Entry"
+msgstr "Log je eerste registratie"
+
+msgid "Select Project"
+msgstr "Selecteer project"
+
+msgid "Choose a project..."
+msgstr "Kies een project..."
+
+msgid "Select Task (Optional)"
+msgstr "Selecteer taak (Optioneel)"
+
+msgid "Choose a task..."
+msgstr "Kies een taak..."
+
+msgid "Tasks list updates after choosing a project. Leave empty to log at project level."
+msgstr "De takenlijst wordt bijgewerkt na het kiezen van een project. Laat leeg om op projectniveau te loggen."
+
+msgid "Notes (Optional)"
+msgstr "Notities (Optioneel)"
+
+msgid "What are you working on?"
+msgstr "Waar werk je aan?"
+
+msgid "Delete Time Entry"
+msgstr "Tijdregistratie verwijderen"
+
+msgid "Warning:"
+msgstr "Waarschuwing:"
+
+msgid "This action cannot be undone."
+msgstr "Deze actie kan niet ongedaan worden gemaakt."
+
+msgid "Are you sure you want to delete the time entry for"
+msgstr "Weet je zeker dat je de tijdregistratie wilt verwijderen voor"
+
+msgid "Duration:"
+msgstr "Duur:"
+
+msgid "Delete Entry"
+msgstr "Registratie verwijderen"
+
+msgid "Please select a project"
+msgstr "Selecteer een project"
+
+msgid "Starting..."
+msgstr "Starten..."
+
+msgid "Deleting..."
+msgstr "Verwijderen..."
+
+msgid "No time tracked yet today"
+msgstr "Nog geen tijd geregistreerd vandaag"
+
+msgid "h"
+msgstr "u"
+
+msgid "Bulk action completed"
+msgstr "Bulkactie voltooid"
+
+msgid "Bulk action failed"
+msgstr "Bulkactie mislukt"
+
+# Login
+msgid "Login"
+msgstr "Inloggen"
+
+msgid "Company Logo"
+msgstr "Bedrijfslogo"
+
+msgid "DryTrix Logo"
+msgstr "DryTrix Logo"
+
+msgid "TimeTracker"
+msgstr "TimeTracker"
+
+msgid "Professional Time Management"
+msgstr "Professioneel tijdbeheer"
+
+msgid "Sign in to your account to start tracking your time"
+msgstr "Meld je aan bij je account om je tijd bij te houden"
+
+msgid "Welcome to TimeTracker"
+msgstr "Welkom bij TimeTracker"
+
+msgid "Powered by"
+msgstr "Mogelijk gemaakt door"
+
+msgid "Enter your username to start tracking time"
+msgstr "Voer je gebruikersnaam in om te beginnen met tijdregistratie"
+
+msgid "Username"
+msgstr "Gebruikersnaam"
+
+msgid "Enter your username"
+msgstr "Voer je gebruikersnaam in"
+
+msgid "Sign In"
+msgstr "Inloggen"
+
+msgid "Signing in..."
+msgstr "Bezig met inloggen..."
+
+msgid "Continue"
+msgstr "Doorgaan"
+
+msgid "or"
+msgstr "of"
+
+msgid "Sign in with SSO"
+msgstr "Inloggen met SSO"
+
+msgid "Internal Tool"
+msgstr "Interne tool"
+
+msgid "Internal Tool:"
+msgstr "Interne tool:"
+
+msgid "This is a private time tracking application for internal use only."
+msgstr "Dit is een privé tijdregistratie-applicatie alleen voor intern gebruik."
+
+msgid "New users will be created automatically"
+msgstr "Nieuwe gebruikers worden automatisch aangemaakt"
+
+msgid "Version"
+msgstr "Versie"
+
+msgid "Please enter a username"
+msgstr "Voer een gebruikersnaam in"
+
+msgid "Signing in..."
+msgstr "Inloggen..."
+
+# Tasks
+msgid "Board"
+msgstr "Bord"
+
+msgid "Table"
+msgstr "Tabel"
+
+msgid "New Task"
+msgstr "Nieuwe taak"
+
+msgid "Plan and track work"
+msgstr "Werk plannen en volgen"
+
+msgid "total"
+msgstr "totaal"
+
+msgid "To Do"
+msgstr "Te doen"
+
+msgid "In Progress"
+msgstr "In uitvoering"
+
+msgid "Review"
+msgstr "Beoordeling"
+
+msgid "Completed"
+msgstr "Voltooid"
+
+msgid "Filter Tasks"
+msgstr "Taken filteren"
+
+msgid "Toggle Filters"
+msgstr "Filters omschakelen"
+
+msgid "Task name or description"
+msgstr "Taaknaam of beschrijving"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "All Statuses"
+msgstr "Alle statussen"
+
+msgid "Done"
+msgstr "Klaar"
+
+msgid "Cancelled"
+msgstr "Geannuleerd"
+
+msgid "Priority"
+msgstr "Prioriteit"
+
+msgid "All Priorities"
+msgstr "Alle prioriteiten"
+
+msgid "Low"
+msgstr "Laag"
+
+msgid "Medium"
+msgstr "Gemiddeld"
+
+msgid "High"
+msgstr "Hoog"
+
+msgid "Urgent"
+msgstr "Urgent"
+
+msgid "All Projects"
+msgstr "Alle projecten"
+
+# Command Palette
+msgid "Command Palette"
+msgstr "Commandopalet"
+
+msgid "Type a command or search..."
+msgstr "Type een commando of zoek..."
+
+# Socket.IO messages
+msgid "Timer started for"
+msgstr "Timer gestart voor"
+
+msgid "Timer stopped. Duration:"
+msgstr "Timer gestopt. Duur:"
+
+# Theme toggle
+msgid "Switch to light mode"
+msgstr "Overschakelen naar lichte modus"
+
+msgid "Switch to dark mode"
+msgstr "Overschakelen naar donkere modus"
+
+msgid "Light mode"
+msgstr "Lichte modus"
+
+msgid "Dark mode"
+msgstr "Donkere modus"
+
+# Mobile
+msgid "Log time"
+msgstr "Tijd loggen"
+
 # About page
 msgid "About TimeTracker"
 msgstr "Over TimeTracker"
@@ -81,5 +478,3 @@ msgstr "%(app)s is een webgebaseerde tijdregistratie-applicatie ontworpen voor i
 
 msgid "Learn more about "
 msgstr "Meer informatie over "
-
-

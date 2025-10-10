@@ -213,6 +213,19 @@
                                                class="btn btn-sm btn-action btn-action--edit touch-target" title="{{ _('Edit project') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            {% if project.status == 'active' %}
+                                            <form method="POST" action="{{ url_for('projects.archive_project', project_id=project.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-action btn-action--more touch-target" title="{{ _('Archive project') }}">
+                                                    <i class="fas fa-archive"></i>
+                                                </button>
+                                            </form>
+                                            {% else %}
+                                            <form method="POST" action="{{ url_for('projects.unarchive_project', project_id=project.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-action btn-action--more touch-target" title="{{ _('Unarchive project') }}">
+                                                    <i class="fas fa-box-open"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
                                             <button type="button" class="btn btn-sm btn-action btn-action--danger touch-target" title="{{ _('Delete project') }}"
                                                     onclick="showDeleteProjectModal('{{ project.id }}', '{{ project.name }}')">
                                                 <i class="fas fa-trash"></i>
@@ -278,66 +291,13 @@
 </div>
 
 <style>
-/* Project-specific styles - Modern styling handled by global CSS */
-
-/* Project Badge */
-.project-badge {
-    background: var(--surface-variant);
-    color: var(--text-secondary);
-    padding: 4px 8px;
-    border-radius: var(--border-radius-sm);
-    font-size: 12px;
-    font-weight: var(--font-weight-medium);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: var(--transition);
-}
-
-.project-badge:hover {
-    background: var(--surface-hover);
-    transform: translateY(-1px);
-}
-
 /* Filter toggle styles */
-.filter-collapsed {
-    display: none !important;
-}
+.filter-collapsed { display: none !important; }
+.filter-toggle-transition { transition: var(--transition-slow); }
 
-.filter-toggle-transition {
-    transition: var(--transition-slow);
-}
-
-/* Table sorting styles */
-thead th[style*="cursor: pointer"]:hover {
-    background-color: var(--surface-hover);
-    color: var(--primary-color);
-}
-
-thead th.sorted-asc::after {
-    content: " ▲";
-    color: var(--primary-color);
-    font-weight: bold;
-}
-
-thead th.sorted-desc::after {
-    content: " ▼";
-    color: var(--primary-color);
-    font-weight: bold;
-}
-
-/* Dark theme adjustments */
-[data-theme="dark"] .project-badge {
-    background: var(--surface-variant);
-    color: var(--text-secondary);
-}
-
-[data-theme="dark"] .project-badge:hover {
-    background: var(--surface-hover);
-}
-
-[data-theme="dark"] thead th[style*="cursor: pointer"]:hover {
-    background-color: var(--surface-hover);
-}
+/* Hover effect for sortable headers */
+thead th[style*="cursor: pointer"]:hover { background-color: var(--surface-hover); color: var(--primary-color); }
+[data-theme="dark"] thead th[style*="cursor: pointer"]:hover { background-color: var(--surface-hover); }
 </style>
 
 <script type="application/json" id="i18n-json-projects-list">

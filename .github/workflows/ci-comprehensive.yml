@@ -1,0 +1,438 @@
+name: Comprehensive CI Pipeline
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  POSTGRES_VERSION: '16'
+
+jobs:
+  # ============================================================================
+  # Smoke Tests - Fast, critical tests that run first
+  # ============================================================================
+  smoke-tests:
+    name: Smoke Tests (Quick)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install -e .
+      
+      - name: Run smoke tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest -m smoke -v --tb=short --no-cov
+      
+      - name: Upload smoke test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          path: |
+            .pytest_cache/
+            test-results/
+
+  # ============================================================================
+  # Unit Tests - Fast, isolated tests
+  # ============================================================================
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+    timeout-minutes: 10
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group: [models, routes, api, utils]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install -e .
+      
+      - name: Run unit tests - ${{ matrix.test-group }}
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          if [ "${{ matrix.test-group }}" == "api" ]; then
+            pytest -m "api and integration" -v --cov=app --cov-report=xml --cov-report=html
+          else
+            pytest -m "unit and ${{ matrix.test-group }}" -v --cov=app --cov-report=xml --cov-report=html
+          fi
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unit-${{ matrix.test-group }}
+          name: unit-${{ matrix.test-group }}
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results-${{ matrix.test-group }}
+          path: |
+            htmlcov/
+            coverage.xml
+
+  # ============================================================================
+  # Integration Tests - Medium speed, component interaction tests
+  # ============================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+    timeout-minutes: 15
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install -e .
+      
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          FLASK_APP: app.py
+          FLASK_ENV: testing
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest -m integration -v --cov=app --cov-report=xml --cov-report=html
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: integration
+          name: integration-tests
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: |
+            htmlcov/
+            coverage.xml
+
+  # ============================================================================
+  # Security Tests
+  # ============================================================================
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install -e .
+      
+      - name: Run security tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest -m security -v --tb=short
+      
+      - name: Run Bandit security linter
+        run: |
+          bandit -r app/ -f json -o bandit-report.json || true
+      
+      - name: Run Safety dependency check
+        run: |
+          safety check --file requirements.txt --json > safety-report.json || true
+      
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  # ============================================================================
+  # Code Quality
+  # ============================================================================
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-test.txt
+      
+      - name: Run flake8
+        run: |
+          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  # ============================================================================
+  # Docker Build Test
+  # ============================================================================
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        run: |
+          docker build -t timetracker-test:pr-${{ github.event.pull_request.number || 'dev' }} .
+      
+      - name: Test Docker container startup
+        run: |
+          docker run -d --name test-container \
+            -p 8080:8080 \
+            -e DATABASE_URL="sqlite:////app/test.db" \
+            -e SECRET_KEY="test-secret-key-for-ci-only-$(openssl rand -hex 32)" \
+            -e FLASK_ENV="development" \
+            timetracker-test:pr-${{ github.event.pull_request.number || 'dev' }}
+          
+          # Wait for container to be ready
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/_health >/dev/null 2>&1; then
+              echo "✅ Container health check passed"
+              break
+            fi
+            echo "⏳ Waiting for container... ($i/30)"
+            sleep 2
+          done
+          
+          # Show logs
+          docker logs test-container
+          
+          # Final health check
+          curl -f http://localhost:8080/_health || exit 1
+          
+          # Cleanup
+          docker stop test-container
+          docker rm test-container
+
+  # ============================================================================
+  # Full Test Suite (for releases)
+  # ============================================================================
+  full-test-suite:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 30
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install -e .
+      
+      - name: Run full test suite
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          FLASK_APP: app.py
+          FLASK_ENV: testing
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest -v --cov=app --cov-report=xml --cov-report=html --cov-report=term
+      
+      - name: Upload full coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: full-suite
+          name: full-test-suite
+      
+      - name: Upload full test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-test-results
+          path: |
+            htmlcov/
+            coverage.xml
+
+  # ============================================================================
+  # Test Summary and PR Comment
+  # ============================================================================
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [smoke-tests, unit-tests, integration-tests, security-tests, code-quality, docker-build]
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Generate test summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const jobs = [
+              { name: 'Smoke Tests', result: '${{ needs.smoke-tests.result }}' },
+              { name: 'Unit Tests', result: '${{ needs.unit-tests.result }}' },
+              { name: 'Integration Tests', result: '${{ needs.integration-tests.result }}' },
+              { name: 'Security Tests', result: '${{ needs.security-tests.result }}' },
+              { name: 'Code Quality', result: '${{ needs.code-quality.result }}' },
+              { name: 'Docker Build', result: '${{ needs.docker-build.result }}' }
+            ];
+            
+            const passed = jobs.filter(j => j.result === 'success').length;
+            const failed = jobs.filter(j => j.result === 'failure').length;
+            const total = jobs.length;
+            
+            let emoji = failed === 0 ? '✅' : '❌';
+            let status = failed === 0 ? 'All tests passed!' : `${failed} test suite(s) failed`;
+            
+            let commentBody = `## ${emoji} CI Test Results\n\n`;
+            commentBody += `**Overall Status:** ${status}\n\n`;
+            commentBody += `**Test Results:** ${passed}/${total} passed\n\n`;
+            commentBody += `### Test Suites:\n\n`;
+            
+            for (const job of jobs) {
+              const icon = job.result === 'success' ? '✅' : 
+                          job.result === 'failure' ? '❌' : 
+                          job.result === 'skipped' ? '⏭️' : '⏸️';
+              commentBody += `- ${icon} ${job.name}: **${job.result}**\n`;
+            }
+            
+            commentBody += `\n---\n`;
+            commentBody += `*Commit: ${context.sha.substring(0, 7)}*\n`;
+            commentBody += `*Workflow: [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*`;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('CI Test Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                comment_id: botComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody,
+              });
+            }
+

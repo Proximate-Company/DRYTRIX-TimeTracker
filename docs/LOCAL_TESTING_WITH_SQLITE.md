@@ -181,22 +181,6 @@ If you encounter issues with the entrypoint script (like `su-exec: not found`), 
 
 The simplified entrypoint runs everything as root, which avoids user switching issues but is less secure (fine for local testing).
 
-### License Server Errors
-
-If you see license server 404 errors, they should be automatically disabled in the local test environment. If you still see them:
-
-1. **Verify environment variable is set**:
-   ```bash
-   docker exec timetracker-app-local-test env | grep LICENSE_SERVER_ENABLED
-   ```
-
-2. **Should show**: `LICENSE_SERVER_ENABLED=false`
-
-3. **If not set correctly, restart the container**:
-   ```bash
-   docker-compose -f docker-compose.local-test.yml restart
-   ```
-
 ## Differences from Production
 
 | Feature | Local Test | Production |

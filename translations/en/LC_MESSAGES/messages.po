@@ -4,7 +4,7 @@ msgstr ""
 "Language: en\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
-# English defaults mirror msgid; keep for completeness
+# Navigation and Common
 msgid "Time Tracker"
 msgstr "Time Tracker"
 
@@ -22,6 +22,12 @@ msgstr "Tasks"
 
 msgid "Log Time"
 msgstr "Log Time"
+
+msgid "Bulk Time Entry"
+msgstr "Bulk Time Entry"
+
+msgid "Calendar"
+msgstr "Calendar"
 
 msgid "Reports"
 msgstr "Reports"
@@ -59,6 +65,397 @@ msgstr "Help"
 msgid "Buy me a coffee"
 msgstr "Buy me a coffee"
 
+msgid "All rights reserved."
+msgstr "All rights reserved."
+
+msgid "Skip to content"
+msgstr "Skip to content"
+
+msgid "Work"
+msgstr "Work"
+
+msgid "Insights"
+msgstr "Insights"
+
+msgid "Search"
+msgstr "Search"
+
+msgid "Open Command Palette"
+msgstr "Open Command Palette"
+
+msgid "Ctrl"
+msgstr "Ctrl"
+
+msgid "Keyboard Shortcuts"
+msgstr "Keyboard Shortcuts"
+
+msgid "Install App"
+msgstr "Install App"
+
+msgid "App installed"
+msgstr "App installed"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Confirm"
+msgstr "Confirm"
+
+msgid "Please confirm"
+msgstr "Please confirm"
+
+# Dashboard
+msgid "Welcome back,"
+msgstr "Welcome back,"
+
+msgid "h today"
+msgstr "h today"
+
+msgid "Timer Status"
+msgstr "Timer Status"
+
+msgid "Timer Running"
+msgstr "Timer Running"
+
+msgid "No Active Timer"
+msgstr "No Active Timer"
+
+msgid "Choose a project or one of its tasks to start tracking."
+msgstr "Choose a project or one of its tasks to start tracking."
+
+msgid "Idle"
+msgstr "Idle"
+
+msgid "Started at"
+msgstr "Started at"
+
+msgid "Stop Timer"
+msgstr "Stop Timer"
+
+msgid "Start Timer"
+msgstr "Start Timer"
+
+msgid "Hours Today"
+msgstr "Hours Today"
+
+msgid "Hours This Week"
+msgstr "Hours This Week"
+
+msgid "Hours This Month"
+msgstr "Hours This Month"
+
+msgid "Quick Actions"
+msgstr "Quick Actions"
+
+msgid "Manual entry"
+msgstr "Manual entry"
+
+msgid "Bulk Entry"
+msgstr "Bulk Entry"
+
+msgid "Multi-day time entry"
+msgstr "Multi-day time entry"
+
+msgid "Manage projects"
+msgstr "Manage projects"
+
+msgid "View analytics"
+msgstr "View analytics"
+
+msgid "Find entries"
+msgstr "Find entries"
+
+msgid "Today by Task"
+msgstr "Today by Task"
+
+msgid "Loading..."
+msgstr "Loading..."
+
+msgid "Recent Entries"
+msgstr "Recent Entries"
+
+msgid "View All"
+msgstr "View All"
+
+msgid "Select all"
+msgstr "Select all"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "Set Billable"
+msgstr "Set Billable"
+
+msgid "Set Non-billable"
+msgstr "Set Non-billable"
+
+msgid "Project"
+msgstr "Project"
+
+msgid "Duration"
+msgstr "Duration"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "No notes"
+msgstr "No notes"
+
+msgid "Edit entry"
+msgstr "Edit entry"
+
+msgid "Delete entry"
+msgstr "Delete entry"
+
+msgid "No recent entries"
+msgstr "No recent entries"
+
+msgid "Start tracking your time to see entries here"
+msgstr "Start tracking your time to see entries here"
+
+msgid "Log Your First Entry"
+msgstr "Log Your First Entry"
+
+msgid "Select Project"
+msgstr "Select Project"
+
+msgid "Choose a project..."
+msgstr "Choose a project..."
+
+msgid "Select Task (Optional)"
+msgstr "Select Task (Optional)"
+
+msgid "Choose a task..."
+msgstr "Choose a task..."
+
+msgid "Tasks list updates after choosing a project. Leave empty to log at project level."
+msgstr "Tasks list updates after choosing a project. Leave empty to log at project level."
+
+msgid "Notes (Optional)"
+msgstr "Notes (Optional)"
+
+msgid "What are you working on?"
+msgstr "What are you working on?"
+
+msgid "Delete Time Entry"
+msgstr "Delete Time Entry"
+
+msgid "Warning:"
+msgstr "Warning:"
+
+msgid "This action cannot be undone."
+msgstr "This action cannot be undone."
+
+msgid "Are you sure you want to delete the time entry for"
+msgstr "Are you sure you want to delete the time entry for"
+
+msgid "Duration:"
+msgstr "Duration:"
+
+msgid "Delete Entry"
+msgstr "Delete Entry"
+
+msgid "Please select a project"
+msgstr "Please select a project"
+
+msgid "Starting..."
+msgstr "Starting..."
+
+msgid "Deleting..."
+msgstr "Deleting..."
+
+msgid "No time tracked yet today"
+msgstr "No time tracked yet today"
+
+msgid "h"
+msgstr "h"
+
+msgid "Bulk action completed"
+msgstr "Bulk action completed"
+
+msgid "Bulk action failed"
+msgstr "Bulk action failed"
+
+# Login
+msgid "Login"
+msgstr "Login"
+
+msgid "Company Logo"
+msgstr "Company Logo"
+
+msgid "DryTrix Logo"
+msgstr "DryTrix Logo"
+
+msgid "TimeTracker"
+msgstr "TimeTracker"
+
+msgid "Professional Time Management"
+msgstr "Professional Time Management"
+
+msgid "Sign in to your account to start tracking your time"
+msgstr "Sign in to your account to start tracking your time"
+
+msgid "Welcome to TimeTracker"
+msgstr "Welcome to TimeTracker"
+
+msgid "Powered by"
+msgstr "Powered by"
+
+msgid "Enter your username to start tracking time"
+msgstr "Enter your username to start tracking time"
+
+msgid "Username"
+msgstr "Username"
+
+msgid "Enter your username"
+msgstr "Enter your username"
+
+msgid "Sign In"
+msgstr "Sign In"
+
+msgid "Signing in..."
+msgstr "Signing in..."
+
+msgid "Continue"
+msgstr "Continue"
+
+msgid "or"
+msgstr "or"
+
+msgid "Sign in with SSO"
+msgstr "Sign in with SSO"
+
+msgid "Internal Tool"
+msgstr "Internal Tool"
+
+msgid "Internal Tool:"
+msgstr "Internal Tool:"
+
+msgid "This is a private time tracking application for internal use only."
+msgstr "This is a private time tracking application for internal use only."
+
+msgid "New users will be created automatically"
+msgstr "New users will be created automatically"
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Please enter a username"
+msgstr "Please enter a username"
+
+msgid "Signing in..."
+msgstr "Signing in..."
+
+# Tasks
+msgid "Board"
+msgstr "Board"
+
+msgid "Table"
+msgstr "Table"
+
+msgid "New Task"
+msgstr "New Task"
+
+msgid "Plan and track work"
+msgstr "Plan and track work"
+
+msgid "total"
+msgstr "total"
+
+msgid "To Do"
+msgstr "To Do"
+
+msgid "In Progress"
+msgstr "In Progress"
+
+msgid "Review"
+msgstr "Review"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Filter Tasks"
+msgstr "Filter Tasks"
+
+msgid "Toggle Filters"
+msgstr "Toggle Filters"
+
+msgid "Task name or description"
+msgstr "Task name or description"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "All Statuses"
+msgstr "All Statuses"
+
+msgid "Done"
+msgstr "Done"
+
+msgid "Cancelled"
+msgstr "Cancelled"
+
+msgid "Priority"
+msgstr "Priority"
+
+msgid "All Priorities"
+msgstr "All Priorities"
+
+msgid "Low"
+msgstr "Low"
+
+msgid "Medium"
+msgstr "Medium"
+
+msgid "High"
+msgstr "High"
+
+msgid "Urgent"
+msgstr "Urgent"
+
+msgid "All Projects"
+msgstr "All Projects"
+
+# Command Palette
+msgid "Command Palette"
+msgstr "Command Palette"
+
+msgid "Type a command or search..."
+msgstr "Type a command or search..."
+
+# Socket.IO messages
+msgid "Timer started for"
+msgstr "Timer started for"
+
+msgid "Timer stopped. Duration:"
+msgstr "Timer stopped. Duration:"
+
+# Theme toggle
+msgid "Switch to light mode"
+msgstr "Switch to light mode"
+
+msgid "Switch to dark mode"
+msgstr "Switch to dark mode"
+
+msgid "Light mode"
+msgstr "Light mode"
+
+msgid "Dark mode"
+msgstr "Dark mode"
+
+# Mobile
+msgid "Log time"
+msgstr "Log time"
+
 # About page
 msgid "About TimeTracker"
 msgstr "About TimeTracker"
@@ -80,5 +477,3 @@ msgstr "%(app)s is a web-based time tracking application designed for internal u
 
 msgid "Learn more about "
 msgstr "Learn more about "
-
-

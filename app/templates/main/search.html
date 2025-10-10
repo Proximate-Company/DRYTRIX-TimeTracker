@@ -63,6 +63,7 @@
                                             {% if current_user.is_admin or entry.user_id == current_user.id %}
                                             <form method="POST" action="{{ url_for('timer.delete_timer', timer_id=entry.id) }}" 
                                                   class="d-inline" data-confirm="{{ _('Are you sure you want to delete this time entry? This action cannot be undone.') }}">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-sm btn-action btn-action--danger" title="{{ _('Delete entry') }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>

@@ -5,12 +5,13 @@ from app.models import User
 from app.config import Config
 from app.utils.db import safe_commit
 from flask_babel import gettext as _
-from app import oauth
+from app import oauth, limiter
 
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=["POST"])  # rate limit login attempts
 def login():
     """Login page. Local username login is allowed only if AUTH_METHOD != 'oidc'."""
     if request.method == 'GET':
@@ -228,29 +229,71 @@ def oidc_callback():
         return redirect(url_for('auth.login'))
 
     try:
+        # Exchange authorization code for tokens
+        current_app.logger.info("OIDC callback: Starting token exchange")
         token = client.authorize_access_token()
+        current_app.logger.info("OIDC callback: Token exchange successful, token keys: %s", list(token.keys()) if isinstance(token, dict) else 'not-a-dict')
+        
+        # Log raw token structure (mask sensitive data)
+        if isinstance(token, dict):
+            token_info = {k: (v[:20] + '...' if isinstance(v, str) and len(v) > 20 else v) for k, v in token.items() if k not in ['access_token', 'id_token', 'refresh_token']}
+            current_app.logger.debug("OIDC callback: Token info: %s", token_info)
+        
         # Parse ID token claims
         claims = {}
+        id_token_parsed = False
         try:
-            claims = client.parse_id_token(token) or {}
-        except Exception:
-            claims = {}
+            current_app.logger.info("OIDC callback: Attempting to parse ID token")
+            parsed = client.parse_id_token(token)
+            if parsed:
+                claims = parsed
+                id_token_parsed = True
+                current_app.logger.info("OIDC callback: ID token parsed successfully, claims keys: %s", list(claims.keys()))
+            else:
+                current_app.logger.warning("OIDC callback: parse_id_token returned None/empty")
+        except Exception as e:
+            current_app.logger.error("OIDC callback: Failed to parse ID token: %s - %s", type(e).__name__, str(e))
+            # Try to decode the token manually to debug
+            try:
+                if isinstance(token, dict) and 'id_token' in token:
+                    import jwt
+                    # Decode without verification to inspect claims (for debugging only)
+                    unverified = jwt.decode(token['id_token'], options={"verify_signature": False})
+                    current_app.logger.info("OIDC callback: Unverified ID token claims: %s", list(unverified.keys()))
+                    current_app.logger.debug("OIDC callback: Unverified token content: %s", unverified)
+            except Exception as decode_err:
+                current_app.logger.error("OIDC callback: Could not decode ID token for debugging: %s", str(decode_err))
 
-        # Fetch userinfo if available
+        # Fetch userinfo endpoint as fallback or supplement
         userinfo = {}
+        userinfo_fetched = False
         try:
-            userinfo = client.userinfo(token=token) or {}
-        except Exception:
-            userinfo = {}
+            current_app.logger.info("OIDC callback: Fetching userinfo endpoint")
+            fetched = client.userinfo(token=token)
+            if fetched:
+                userinfo = fetched
+                userinfo_fetched = True
+                current_app.logger.info("OIDC callback: Userinfo fetched successfully, keys: %s", list(userinfo.keys()))
+                # If ID token parsing failed but userinfo succeeded, use userinfo for critical fields
+                if not id_token_parsed and userinfo:
+                    current_app.logger.warning("OIDC callback: ID token parsing failed, using userinfo as primary source")
+                    claims = userinfo
+            else:
+                current_app.logger.warning("OIDC callback: userinfo endpoint returned None/empty")
+        except Exception as e:
+            current_app.logger.error("OIDC callback: Failed to fetch userinfo: %s - %s", type(e).__name__, str(e))
 
         # Resolve fields from claims/userinfo
-        issuer = (claims.get('iss') or '').strip()
-        sub = (claims.get('sub') or '').strip()
+        issuer = (claims.get('iss') or userinfo.get('iss') or '').strip()
+        sub = (claims.get('sub') or userinfo.get('sub') or '').strip()
 
         username_claim = getattr(Config, 'OIDC_USERNAME_CLAIM', 'preferred_username')
         full_name_claim = getattr(Config, 'OIDC_FULL_NAME_CLAIM', 'name')
         email_claim = getattr(Config, 'OIDC_EMAIL_CLAIM', 'email')
         groups_claim = getattr(Config, 'OIDC_GROUPS_CLAIM', 'groups')
+
+        current_app.logger.info("OIDC callback: Looking for claims - username:%s, email:%s, full_name:%s, groups:%s", 
+                               username_claim, email_claim, full_name_claim, groups_claim)
 
         username = (claims.get(username_claim) or userinfo.get(username_claim) or '').strip().lower()
         email = (claims.get(email_claim) or userinfo.get(email_claim) or None)
@@ -264,9 +307,17 @@ def oidc_callback():
         if isinstance(groups, str):
             groups = [groups]
 
+        current_app.logger.info("OIDC callback: Extracted values - issuer:%s, sub:%s, username:%s, email:%s, groups:%s", 
+                               issuer[:30] if issuer else 'empty',
+                               sub[:20] if sub else 'empty', 
+                               username or 'empty',
+                               email or 'empty',
+                               len(groups) if isinstance(groups, list) else 'not-list')
+
         if not issuer or not sub:
-            current_app.logger.error("OIDC callback missing issuer/sub: claims=%s", claims)
-            flash(_('Authentication failed: invalid token'), 'error')
+            current_app.logger.error("OIDC callback missing issuer/sub - issuer:'%s' sub:'%s' - ID token parsed:%s, userinfo fetched:%s, claims keys:%s, userinfo keys:%s", 
+                                    issuer, sub, id_token_parsed, userinfo_fetched, list(claims.keys()), list(userinfo.keys()))
+            flash(_('Authentication failed: missing issuer or subject claim. Please check OIDC configuration.'), 'error')
             return redirect(url_for('auth.login'))
 
         # Determine a fallback username if not provided

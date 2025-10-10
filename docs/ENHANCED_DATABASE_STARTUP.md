@@ -33,6 +33,10 @@ This script provides comprehensive database setup:
 - `settings` - Application configuration and company branding
 - `invoices` - Invoice management
 - `invoice_items` - Individual invoice line items
+ - `focus_sessions` - Pomodoro/focus session summaries linked to `time_entries`
+ - `recurring_blocks` - Templates for recurring time blocks to auto-create entries
+ - `rate_overrides` - Per-project and per-user billable rate overrides
+ - `saved_filters` - User-defined saved filters payloads for reusable queries
 
 #### Key Features
 

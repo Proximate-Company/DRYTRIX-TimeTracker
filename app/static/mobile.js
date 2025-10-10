@@ -62,16 +62,22 @@ class MobileNavigation {
             }
         });
         
-        // Close mobile menu when clicking on nav links
+        // Close mobile menu when clicking on nav links that are not dropdown toggles
         this.navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (MobileUtils.isMobile()) {
-                    this.closeMenu();
+            link.addEventListener('click', (ev) => {
+                if (!MobileUtils.isMobile()) return;
+                // If a dropdown toggle inside the navbar, don't close the whole menu; let dropdown open
+                const isDropdownToggle = link.classList.contains('dropdown-toggle');
+                if (isDropdownToggle) {
+                    // Allow Bootstrap's dropdown to toggle; prevent nav collapse from closing immediately
+                    ev.stopPropagation();
+                    return;
                 }
+                this.closeMenu();
             });
         });
         
-        // Close mobile menu when clicking on dropdown items
+        // Close mobile menu when a dropdown item is selected (navigate)
         this.dropdownItems.forEach(item => {
             item.addEventListener('click', () => {
                 if (MobileUtils.isMobile()) {
@@ -817,13 +823,30 @@ class MobileGestures {
     }
     
     handleSwipeLeft() {
-        // Handle swipe left gesture
-        console.log('Swipe left detected');
+        // Navigate between primary sections on swipe
+        try {
+            // Prefer reports after tasks
+            const path = (location.pathname || '/').toLowerCase();
+            if (path.startsWith('/')) {
+                if (path.startsWith('/')) {
+                    if (path === '/' || path.startsWith('/dashboard')) { window.location.href = '/projects'; return; }
+                    if (path.startsWith('/projects')) { window.location.href = '/tasks'; return; }
+                    if (path.startsWith('/tasks')) { window.location.href = '/reports'; return; }
+                }
+            }
+        } catch (e) { console.log('Swipe left detected'); }
     }
     
     handleSwipeRight() {
-        // Handle swipe right gesture
-        console.log('Swipe right detected');
+        // Navigate backwards between primary sections on swipe
+        try {
+            const path = (location.pathname || '/').toLowerCase();
+            if (path.startsWith('/')) {
+                if (path.startsWith('/reports')) { window.location.href = '/tasks'; return; }
+                if (path.startsWith('/tasks')) { window.location.href = '/projects'; return; }
+                if (path.startsWith('/projects')) { window.location.href = '/'; return; }
+            }
+        } catch (e) { console.log('Swipe right detected'); }
     }
     
     preventPinchZoom() {
@@ -920,50 +943,39 @@ class MobileErrorHandling {
     }
     
     showMobileError(error) {
-        // Create mobile-friendly error message
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger mobile-error';
-        errorDiv.innerHTML = `
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>Something went wrong</strong><br>
-            <small>Please try again or contact support if the problem persists.</small>
-        `;
-        
-        // Insert at top of page
-        const container = document.querySelector('.container');
-        if (container) {
-            container.insertBefore(errorDiv, container.firstChild);
-            
-            // Auto-remove after 10 seconds
-            setTimeout(() => {
-                errorDiv.remove();
-            }, 10000);
+        // Use the new toast notification system if available
+        if (window.toastManager) {
+            const message = error.message || 'Please try again or contact support if the problem persists.';
+            window.toastManager.error(
+                message,
+                'Something went wrong',
+                10000
+            );
+        } else {
+            // Fallback to console if toast system not loaded
+            console.error('Mobile error:', error);
         }
     }
     
     showOfflineIndicator() {
-        // Create offline indicator
-        const offlineDiv = document.createElement('div');
-        offlineDiv.className = 'alert alert-warning mobile-offline';
-        offlineDiv.innerHTML = `
-            <i class="fas fa-wifi me-2"></i>
-            <strong>You're offline</strong><br>
-            <small>Some features may not work properly.</small>
-        `;
-        
-        offlineDiv.id = 'offline-indicator';
-        
-        // Insert at top of page
-        const container = document.querySelector('.container');
-        if (container && !document.getElementById('offline-indicator')) {
-            container.insertBefore(offlineDiv, container.firstChild);
+        // Use the new toast notification system if available
+        if (window.toastManager) {
+            // Store the toast ID for later dismissal
+            this.offlineToastId = window.toastManager.warning(
+                'Some features may not work properly.',
+                "You're offline",
+                0  // Don't auto-dismiss
+            );
         }
     }
     
     hideOfflineIndicator() {
-        const offlineDiv = document.getElementById('offline-indicator');
-        if (offlineDiv) {
-            offlineDiv.remove();
+        // Dismiss the offline toast if it exists
+        if (window.toastManager && this.offlineToastId) {
+            window.toastManager.dismiss(this.offlineToastId);
+            this.offlineToastId = null;
+            // Show a success message that we're back online
+            window.toastManager.success('Connection restored', "You're online", 3000);
         }
     }
 }

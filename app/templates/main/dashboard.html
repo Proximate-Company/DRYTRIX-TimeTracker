@@ -5,8 +5,7 @@
 {% block content %}
 <div class="container-fluid">
     {% from "_components.html" import page_header %}
-    <!-- Toast Container -->
-    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
+    <!-- Toast notifications handled by base template -->
 
     <!-- Template meta for JS flags -->
     <div id="dashboard-meta" data-has-active-timer="{{ 1 if active_timer else 0 }}" style="display:none;"></div>
@@ -78,6 +77,7 @@
                     <div class="col-lg-4 col-md-5 text-center">
                         {% if active_timer %}
                         <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline w-100">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-danger px-4 w-100 w-md-auto">
                                 <i class="fas fa-stop me-2"></i>{{ _('Stop Timer') }}
                             </button>
@@ -95,35 +95,40 @@
 </div>
 
 <!-- Statistics Cards -->
-<div class="row section-spacing">
+<div class="row section-spacing stagger-animation">
     <div class="col-lg-4 col-md-6 mb-3">
         {% from "_components.html" import summary_card %}
-        {{ summary_card('fas fa-calendar-day', 'primary', 'Hours Today', "%.1f"|format(today_hours)) }}
+        <div class="scale-hover">
+            {{ summary_card('fas fa-calendar-day', 'primary', _('Hours Today'), "%.1f"|format(today_hours)) }}
+        </div>
     </div>
     <div class="col-lg-4 col-md-6 mb-3">
-        {{ summary_card('fas fa-calendar-week', 'success', 'Hours This Week', "%.1f"|format(week_hours)) }}
+        <div class="scale-hover">
+            {{ summary_card('fas fa-calendar-week', 'success', _('Hours This Week'), "%.1f"|format(week_hours)) }}
+        </div>
     </div>
     <div class="col-lg-4 col-md-6 mb-3">
-        {% from "_components.html" import summary_card %}
-        {{ summary_card('fas fa-calendar-alt', 'info', 'Hours This Month', "%.1f"|format(month_hours)) }}
+        <div class="scale-hover">
+            {{ summary_card('fas fa-calendar-alt', 'info', _('Hours This Month'), "%.1f"|format(month_hours)) }}
+        </div>
     </div>
 </div>
 
 <!-- Enhanced Quick Actions -->
 <div class="row section-spacing">
     <div class="col-12">
-        <div class="card mobile-card hover-lift">
+        <div class="card mobile-card hover-lift fade-in-up">
             <div class="card-header">
                 <h5 class="mb-0 d-flex align-items-center">
-                    <i class="fas fa-bolt me-3 text-warning"></i>{{ _('Quick Actions') }}
+                    <i class="fas fa-bolt me-3 text-warning icon-pulse"></i>{{ _('Quick Actions') }}
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row g-4">
+                <div class="row g-4 stagger-animation">
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('timer.manual_entry') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
+                        <a href="{{ url_for('timer.manual_entry') }}" class="card h-100 text-decoration-none mobile-card lift-hover border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm icon-spin-hover" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-plus text-primary fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Log Time') }}</h6>
@@ -132,9 +137,9 @@
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('timer.bulk_entry') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
+                        <a href="{{ url_for('timer.bulk_entry') }}" class="card h-100 text-decoration-none mobile-card lift-hover border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm icon-spin-hover" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-calendar-plus text-success fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Bulk Entry') }}</h6>
@@ -143,9 +148,9 @@
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('projects.list_projects') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
+                        <a href="{{ url_for('projects.list_projects') }}" class="card h-100 text-decoration-none mobile-card lift-hover border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
+                                <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm icon-spin-hover" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-project-diagram text-secondary fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Projects') }}</h6>
@@ -154,9 +159,9 @@
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('reports.reports') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
+                        <a href="{{ url_for('reports.reports') }}" class="card h-100 text-decoration-none mobile-card lift-hover border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
+                                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm icon-spin-hover" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-chart-bar text-info fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Reports') }}</h6>
@@ -165,9 +170,9 @@
                         </a>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <a href="{{ url_for('main.search') }}" class="card h-100 text-decoration-none mobile-card hover-lift border-0 shadow-sm">
+                        <a href="{{ url_for('main.search') }}" class="card h-100 text-decoration-none mobile-card lift-hover border-0 shadow-sm">
                             <div class="card-body text-center py-4">
-                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
+                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm icon-spin-hover" style="width: 56px; height: 56px; backdrop-filter: blur(8px);">
                                     <i class="fas fa-search text-warning fa-lg"></i>
                                 </div>
                                 <h6 class="fw-semibold mb-2 fs-5">{{ _('Search') }}</h6>
@@ -214,9 +219,27 @@
             <div class="card-body p-0">
                 {% if recent_entries %}
                 <div class="table-responsive">
+                    <div class="d-flex align-items-center justify-content-between px-3 pt-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="selectAllEntries" class="form-check-input">
+                            <label for="selectAllEntries" class="form-check-label">{{ _('Select all') }}</label>
+                        </div>
+                        <div class="btn-group" role="group" aria-label="Bulk actions">
+                            <button id="bulkDelete" class="btn btn-sm btn-outline-danger" disabled>
+                                <i class="fas fa-trash me-1"></i>{{ _('Delete') }}
+                            </button>
+                            <button id="bulkBillable" class="btn btn-sm btn-outline-primary" disabled>
+                                <i class="fas fa-dollar-sign me-1"></i>{{ _('Set Billable') }}
+                            </button>
+                            <button id="bulkNonBillable" class="btn btn-sm btn-outline-secondary" disabled>
+                                <i class="fas fa-ban me-1"></i>{{ _('Set Non-billable') }}
+                            </button>
+                        </div>
+                    </div>
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
+                                <th class="ps-4" style="width:36px"></th>
                                 <th class="ps-4">{{ _('Project') }}</th>
                                 <th>{{ _('Duration') }}</th>
                                 <th>{{ _('Date') }}</th>
@@ -227,6 +250,9 @@
                         <tbody>
                             {% for entry in recent_entries %}
                             <tr class="hover-lift">
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input entry-select" value="{{ entry.id }}">
+                                </td>
                                 <td class="ps-4" data-label="Project">
                                     <div class="d-flex align-items-center">
                                         <div class="me-3">
@@ -302,6 +328,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <form method="POST" action="{{ url_for('timer.start_timer') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="mb-4">
                         <label for="project_id" class="form-label fw-semibold d-flex align-items-center">
@@ -369,6 +396,7 @@
                     <i class="fas fa-times me-2"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteEntryForm" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger fw-bold">
                         <i class="fas fa-trash me-2"></i>{{ _('Delete Entry') }}
                     </button>
@@ -544,6 +572,49 @@
             });
         }
     });
+
+    // Bulk selection and actions
+    (function(){
+        const selectAll = document.getElementById('selectAllEntries');
+        const checkboxes = Array.from(document.querySelectorAll('.entry-select'));
+        const btnDelete = document.getElementById('bulkDelete');
+        const btnBillable = document.getElementById('bulkBillable');
+        const btnNonBillable = document.getElementById('bulkNonBillable');
+
+        function selectedIds(){ return checkboxes.filter(cb => cb.checked).map(cb => Number(cb.value)); }
+        function updateButtons(){
+            const any = selectedIds().length > 0;
+            [btnDelete, btnBillable, btnNonBillable].forEach(btn => { if (btn) btn.disabled = !any; });
+        }
+        if (selectAll){
+            selectAll.addEventListener('change', function(){
+                checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
+                updateButtons();
+            });
+        }
+        checkboxes.forEach(cb => cb.addEventListener('change', updateButtons));
+
+        async function bulkAction(action, value){
+            const ids = selectedIds();
+            if (!ids.length) return;
+            try {
+                const res = await fetch('/api/entries/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entry_ids: ids, action, value })
+                });
+                const json = await res.json();
+                if (!res.ok || !json.success){ throw new Error(json.error || 'Bulk action failed'); }
+                showToast(`{{ _('Bulk action completed') }}`, 'success');
+                location.reload();
+            } catch(e){
+                showToast(`{{ _('Bulk action failed') }}`, 'danger');
+            }
+        }
+        if (btnDelete) btnDelete.addEventListener('click', () => bulkAction('delete'));
+        if (btnBillable) btnBillable.addEventListener('click', () => bulkAction('set_billable', true));
+        if (btnNonBillable) btnNonBillable.addEventListener('click', () => bulkAction('set_billable', false));
+    })();
 </script>
 </div>
 {% endblock %}

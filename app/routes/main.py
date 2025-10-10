@@ -6,6 +6,10 @@ import pytz
 from app import db
 from sqlalchemy import text
 
+from flask import make_response, current_app
+import json
+import os
+
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
@@ -52,23 +56,17 @@ def dashboard():
 
 @main_bp.route('/_health')
 def health_check():
-    """Health check endpoint for monitoring"""
+    """Liveness probe: shallow checks only, no DB access"""
+    return {'status': 'healthy'}, 200
+
+@main_bp.route('/_ready')
+def readiness_check():
+    """Readiness probe: verify DB connectivity and critical dependencies"""
     try:
-        # Test database connection
         db.session.execute(text('SELECT 1'))
-        return {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()}, 200
+        return {'status': 'ready', 'timestamp': datetime.utcnow().isoformat()}, 200
     except Exception as e:
-        # Try to initialize database if connection fails
-        try:
-            from flask import current_app
-            if hasattr(current_app, 'initialize_database'):
-                current_app.initialize_database()
-                # Test connection again
-                db.session.execute(text('SELECT 1'))
-                return {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat(), 'note': 'database initialized'}, 200
-        except Exception as init_error:
-            return {'status': 'unhealthy', 'error': str(e), 'init_error': str(init_error)}, 500
-        return {'status': 'unhealthy', 'error': str(e)}, 500
+        return {'status': 'not_ready', 'error': 'db_unreachable'}, 503
 
 @main_bp.route('/about')
 def about():
@@ -89,21 +87,44 @@ def set_language():
     supported = list(current_app.config.get('LANGUAGES', {}).keys()) or ['en']
     if lang not in supported:
         lang = current_app.config.get('BABEL_DEFAULT_LOCALE', 'en')
+    
+    # Make session permanent to ensure it persists across requests
+    session.permanent = True
+    
     # Persist in session for guests
     session['preferred_language'] = lang
+    session.modified = True  # Force session save
+    
     # If authenticated, persist to user profile
     try:
         from flask_login import current_user
-        from app.utils.db import safe_commit
         if current_user and getattr(current_user, 'is_authenticated', False):
-            if getattr(current_user, 'preferred_language', None) != lang:
-                current_user.preferred_language = lang
-                safe_commit('set_language', {'user_id': current_user.id, 'lang': lang})
-    except Exception:
-        pass
-    # Redirect back if referer exists
+            # Update user preference in database
+            current_user.preferred_language = lang
+            # Add to session and commit
+            db.session.add(current_user)
+            db.session.commit()
+            # Expire all cached objects to ensure fresh load on next request
+            db.session.expire_all()
+    except Exception as e:
+        # If database save fails, rollback but continue with session
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+    
+    # Redirect back if referer exists, add timestamp to force reload
     next_url = request.headers.get('Referer') or url_for('main.dashboard')
-    return redirect(next_url)
+    # Add cache-busting parameter to ensure fresh page load
+    import time
+    separator = '&' if '?' in next_url else '?'
+    next_url = f"{next_url}{separator}_lang_refresh={int(time.time())}"
+    response = make_response(redirect(next_url))
+    # Ensure no caching
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @main_bp.route('/search')
 @login_required
@@ -116,12 +137,13 @@ def search():
         return redirect(url_for('main.dashboard'))
     
     # Search in time entries
+    from sqlalchemy import or_
     entries = TimeEntry.query.filter(
         TimeEntry.user_id == current_user.id,
         TimeEntry.end_time.isnot(None),
-        db.or_(
-            TimeEntry.notes.contains(query),
-            TimeEntry.tags.contains(query)
+        or_(
+            TimeEntry.notes.ilike(f'%{query}%'),
+            TimeEntry.tags.ilike(f'%{query}%')
         )
     ).order_by(TimeEntry.start_time.desc()).paginate(
         page=page,
@@ -130,3 +152,66 @@ def search():
     )
     
     return render_template('main/search.html', entries=entries, query=query)
+
+
+@main_bp.route('/service-worker.js')
+def service_worker():
+    """Serve a minimal service worker for PWA offline caching."""
+    # Build absolute URLs for static assets to ensure proper caching
+    assets = [
+        '/',
+        url_for('static', filename='base.css'),
+        url_for('static', filename='mobile.css'),
+        url_for('static', filename='ui.css'),
+        url_for('static', filename='mobile.js'),
+        url_for('static', filename='commands.js'),
+    ]
+    preamble = "const CACHE_NAME='tt-cache-v2';\n"
+    assets_js = "const ASSETS=" + json.dumps(assets) + ";\n\n"
+    body = (
+        "self.addEventListener('install', (event)=>{ event.waitUntil(caches.open(CACHE_NAME).then((c)=>c.addAll(ASSETS))); self.skipWaiting()); });\n"
+        .replace('); );', ');')  # guard against formatting
+    )
+    body = (
+        "self.addEventListener('install', (event)=>{\n"
+        "  event.waitUntil((async()=>{\n"
+        "    const cache = await caches.open(CACHE_NAME);\n"
+        "    try { await cache.addAll(ASSETS); } catch(e) {}\n"
+        "    self.skipWaiting();\n"
+        "  })());\n"
+        "});\n"
+        "self.addEventListener('activate', (event)=>{\n"
+        "  event.waitUntil((async()=>{\n"
+        "    const keys = await caches.keys();\n"
+        "    await Promise.all(keys.map((k)=>{ if(k!==CACHE_NAME){ return caches.delete(k); } return null; }));\n"
+        "    self.clients.claim();\n"
+        "  })());\n"
+        "});\n"
+        "self.addEventListener('fetch', (event)=>{\n"
+        "  const req = event.request;\n"
+        "  if (req.method !== 'GET') { return; }\n"
+        "  const url = new URL(req.url);\n"
+        "  const sameOrigin = url.origin === self.location.origin;\n"
+        "  if (!sameOrigin) {\n"
+        "    // Do not intercept cross-origin (CDN) requests\n"
+        "    return;\n"
+        "  }\n"
+        "  event.respondWith((async()=>{\n"
+        "    const cached = await caches.match(req);\n"
+        "    if (cached) return cached;\n"
+        "    try {\n"
+        "      const res = await fetch(req);\n"
+        "      const cache = await caches.open(CACHE_NAME);\n"
+        "      cache.put(req, res.clone());\n"
+        "      return res;\n"
+        "    } catch(e) {\n"
+        "      const fallback = await caches.match('/');\n"
+        "      return fallback || new Response('', { status: 504, statusText: 'Gateway Timeout' });\n"
+        "    }\n"
+        "  })());\n"
+        "});\n"
+    )
+    sw_js = preamble + assets_js + body
+    resp = make_response(sw_js)
+    resp.headers['Content-Type'] = 'application/javascript'
+    return resp

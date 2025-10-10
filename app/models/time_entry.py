@@ -33,19 +33,43 @@ class TimeEntry(db.Model):
     # user and project relationships are defined via backref in their respective models
     # task relationship is defined via backref in Task model
     
-    def __init__(self, user_id, project_id, start_time, end_time=None, task_id=None, notes=None, tags=None, source='manual', billable=True):
-        self.user_id = user_id
-        self.project_id = project_id
-        self.task_id = task_id
-        self.start_time = start_time
-        self.end_time = end_time
+    def __init__(self, user_id=None, project_id=None, start_time=None, end_time=None, task_id=None, notes=None, tags=None, source='manual', billable=True, duration_seconds=None, **kwargs):
+        """Initialize a TimeEntry instance.
+        
+        Args:
+            user_id: ID of the user who created this entry
+            project_id: ID of the project this entry is associated with
+            start_time: When the time entry started
+            end_time: When the time entry ended (None for active timers)
+            task_id: Optional task ID
+            notes: Optional notes/description
+            tags: Optional comma-separated tags
+            source: Source of the entry ('manual' or 'auto')
+            billable: Whether this entry is billable
+            duration_seconds: Optional duration override (usually calculated automatically)
+            **kwargs: Additional keyword arguments (for SQLAlchemy compatibility)
+        """
+        if user_id is not None:
+            self.user_id = user_id
+        if project_id is not None:
+            self.project_id = project_id
+        if task_id is not None:
+            self.task_id = task_id
+        if start_time is not None:
+            self.start_time = start_time
+        if end_time is not None:
+            self.end_time = end_time
+        
         self.notes = notes.strip() if notes else None
         self.tags = tags.strip() if tags else None
         self.source = source
         self.billable = billable
         
-        # Calculate duration if end time is provided
-        if self.end_time:
+        # Allow manual duration override
+        if duration_seconds is not None:
+            self.duration_seconds = duration_seconds
+        # Otherwise, calculate duration if end time is provided
+        elif self.end_time:
             self.calculate_duration()
     
     def __repr__(self):

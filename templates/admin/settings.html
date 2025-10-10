@@ -30,6 +30,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label" for="timezone">{{ _('Timezone') }}</label>
@@ -263,6 +264,7 @@
                                                       class="d-inline"
                                                       data-confirm="{{ _('Are you sure you want to remove the current logo?') }}"
                                                       onsubmit="return confirm(this.getAttribute('data-confirm'))">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger">
                                                         <i class="fas fa-trash me-1"></i> {{ _('Remove Logo') }}
                                                     </button>
@@ -273,10 +275,10 @@
                                         
                                         <div class="upload-controls">
                                             <input type="file" class="form-control" id="logo_file" 
-                                                   accept=".png,.jpg,.jpeg,.gif,.svg,.webp" 
+                                                   accept=".png,.jpg,.jpeg,.gif,.webp" 
                                                    onchange="previewLogo(this)">
                                             <small class="form-text text-muted">
-                                                {{ _('Supported formats: PNG, JPG, JPEG, GIF, SVG, WEBP (Max size: 5MB)') }}
+                                                {{ _('Supported formats: PNG, JPG, JPEG, GIF, WEBP (Max size: 5MB)') }}
                                             </small>
                                             
                                             <div class="mt-3">
@@ -348,9 +350,9 @@
                                         </label>
                                         <div class="form-text">
                                             <i class="fas fa-info-circle me-1"></i>
-                                            {{ _('When enabled, basic system information (OS, version, etc.) may be shared with the metrics server for monitoring purposes.') }} 
+                                            {{ _('When enabled, basic system information (OS, version, etc.) may be shared for analytics purposes.') }} 
                                             <strong>{{ _('Core functionality will continue to work regardless of this setting.') }}</strong>
-                                            <br><small class="text-muted">{{ _('This helps improve the application and monitor system health.') }}</small>
+                                            <br><small class="text-muted">{{ _('This helps improve the application.') }}</small>
                                         </div>
                                     </div>
                                 </div>
@@ -407,7 +409,7 @@
                         <li>{{ _('Self Register allows new usernames to be created on login.') }}</li>
                         <li>{{ _('Company branding settings are used for PDF invoice generation.') }}</li>
                         <li>{{ _('Company logos can be uploaded directly through the interface (PNG, JPG, JPEG, GIF, SVG, WEBP formats supported).') }}</li>
-                        <li>{{ _('Analytics setting controls whether system information is shared with the metrics server for monitoring purposes.') }}</li>
+                        <li>{{ _('Analytics setting controls whether system information is shared for analytics purposes.') }}</li>
                         <li><strong>{{ _('Core functionality will continue to work regardless of the analytics setting.') }}</strong></li>
                     </ul>
                 </div>
@@ -503,7 +505,7 @@ function previewLogo(input) {
         }
         
         // Validate file type
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
             alert(i18nSettings.invalid_file_type || 'Invalid file type. Please select a valid image file.');
             input.value = '';
@@ -537,7 +539,7 @@ function uploadLogo() {
     }
     
     // Validate file type
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
         alert(i18nSettings.invalid_file_type || 'Invalid file type. Please select a valid image file.');
         return;
@@ -553,8 +555,11 @@ function uploadLogo() {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> ' + (i18nSettings.uploading || 'Uploading...');
     uploadBtn.disabled = true;
     
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrf = csrfMeta ? csrfMeta.getAttribute('content') : '';
     fetch('{{ url_for("admin.upload_logo") }}', {
         method: 'POST',
+        headers: csrf ? { 'X-CSRFToken': csrf } : {},
         body: formData
     })
     .then(response => {

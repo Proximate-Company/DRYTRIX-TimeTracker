@@ -1,962 +1,349 @@
-# TimeTracker - Professional Time Tracking Application
+# TimeTracker
 
-A comprehensive web-based time tracking application built with Flask, featuring complete project lifecycle management from time tracking to invoicing. Perfect for freelancers, teams, and businesses who need professional time tracking with client billing capabilities.
+<div align="center">
 
-## 🌟 Key Features Overview
+### Professional Time Tracking & Project Management for Teams
 
-- **⏱️ Smart Time Tracking** - Automatic timers with idle detection, manual entry, and real-time updates
-- **👥 Client & Project Management** - Complete client database with project organization and billing rates
-- **📋 Task Management** - Break down projects into manageable tasks with progress tracking
-- **🧾 Professional Invoicing** - Generate branded PDF invoices with customizable layouts
-- **📊 Analytics & Reporting** - Comprehensive reports with visual analytics and data export
-- **🔐 Multi-User Support** - Role-based access control with admin and user roles
-- **🐳 Docker Ready** - Multiple deployment options with automatic database migration
-- **📱 Mobile Optimized** - Responsive design that works perfectly on all devices
+**Track time. Manage projects. Generate invoices. All in one place.**
+
+[🚀 Quick Start](#-quick-start) • [✨ Features](#-features) • [📸 Screenshots](#-screenshots) • [📖 Getting Started](docs/GETTING_STARTED.md) • [📚 Documentation](docs/) • [🐳 Deploy](#-deployment)
+
+---
+
+</div>
+
+## 🎯 What is TimeTracker?
+
+TimeTracker is a **self-hosted, web-based time tracking application** designed for freelancers, teams, and businesses who need professional time management with complete control over their data.
+
+**Perfect for:**
+- 💼 **Freelancers** tracking billable hours across multiple clients
+- 👥 **Small Teams** managing projects and tracking productivity
+- 🏢 **Agencies** needing detailed reporting and client billing
+- 🔒 **Privacy-focused organizations** wanting self-hosted solutions
+
+---
+
+## ✨ Features
+
+### ⏱️ **Smart Time Tracking**
+- **One-Click Timers** — Start tracking with a single click
+- **Persistent Timers** — Timers keep running even after browser closes
+- **Idle Detection** — Automatic pause after configurable idle time
+- **Manual Entry** — Add historical time entries with notes and tags
+- **Real-time Updates** — See live timer updates across all devices
+
+### 📊 **Project & Task Management**
+- **Unlimited Projects & Tasks** — Organize work your way
+- **Client Management** — Store client details and billing rates
+- **Task Board** — Visual task management with priorities and assignments
+- **Status Tracking** — Monitor progress from to-do to completion
+- **Estimates vs Actuals** — Track project budgets and burn rates
+
+### 🧾 **Professional Invoicing**
+- **Generate from Time** — Convert tracked hours to invoices automatically
+- **Custom Line Items** — Add manual items for expenses or services
+- **Tax Calculation** — Automatic tax calculations with configurable rates
+- **PDF Export** — Professional invoice templates (coming soon)
+- **Status Tracking** — Track draft, sent, paid, and overdue invoices
+
+### 📈 **Analytics & Reporting**
+- **Visual Dashboards** — Charts and graphs for quick insights
+- **Detailed Reports** — Time breakdown by project, user, or date range
+- **CSV Export** — Export data for external analysis
+- **Billable vs Non-billable** — Separate tracking for accurate billing
+- **Custom Date Ranges** — Flexible reporting periods
+
+### 🔐 **Multi-User & Security**
+- **Role-Based Access** — Admin and user roles with appropriate permissions
+- **User Management** — Add team members and manage access
+- **Self-Hosted** — Complete control over your data
+- **Username-Only Login** — Simple authentication for internal use
+- **Session Management** — Secure cookies and session handling
+
+### 🛠️ **Technical Excellence**
+- **Docker Ready** — Deploy in minutes with Docker Compose
+- **Database Flexibility** — PostgreSQL for production, SQLite for testing
+- **Responsive Design** — Works perfectly on desktop, tablet, and mobile
+- **Real-time Sync** — WebSocket support for live updates
+- **Automatic Backups** — Scheduled database backups (configurable)
+
+---
 
 ## 📸 Screenshots
 
-### Core Application Views
 <div align="center">
-  <img src="assets/screenshots/Dashboard.png" alt="Dashboard" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/Projects.png" alt="Projects" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/Tasks.png" alt="Tasks" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/Clients.png" alt="Clients" width="300" style="margin: 10px;">
+
+### Dashboard — Your Command Center
+<img src="assets/screenshots/Dashboard.png" alt="Dashboard" width="700">
+
+*Start timers, view recent entries, and see your productivity at a glance*
+
+---
+
+### Projects & Tasks — Stay Organized
+<div>
+  <img src="assets/screenshots/Projects.png" alt="Projects" width="45%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/Tasks.png" alt="Tasks" width="45%" style="display: inline-block; margin: 5px;">
 </div>
 
-### Management & Analytics
-<div align="center">
-  <img src="assets/screenshots/Reports.png" alt="Reports" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/VisualAnalytics.png" alt="Visual Analytics" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/Admin.png" alt="Admin Panel" width="300" style="margin: 10px;">
+*Manage multiple projects and break them down into actionable tasks*
+
+---
+
+### Time Tracking — Flexible & Powerful
+<div>
+  <img src="assets/screenshots/LogTime.png" alt="Log Time" width="45%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/Calendar.png" alt="Calendar View" width="45%" style="display: inline-block; margin: 5px;">
 </div>
 
-### Data Entry & Creation
-<div align="center">
-  <img src="assets/screenshots/LogTime.png" alt="Log Time" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/New-Task.png" alt="New Task Creation" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/New-Client.png" alt="New Client Creation" width="300" style="margin: 10px;">
-  <img src="assets/screenshots/New-Project.png" alt="New Project Creation" width="300" style="margin: 10px;">
+*Manual time entry and visual calendar view for better planning*
+
+---
+
+### Invoicing & Clients — Professional Billing
+<div>
+  <img src="assets/screenshots/Invoices.png" alt="Invoices" width="45%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/Clients.png" alt="Client Management" width="45%" style="display: inline-block; margin: 5px;">
 </div>
 
-## 🌐 Platform Support
+*Generate invoices from tracked time and manage client relationships*
 
-**Web Application (Primary)**
-- **Desktop**: Windows, macOS, Linux with modern web browsers
-- **Mobile**: Responsive design optimized for Android and iOS devices
-- **Tablets**: Full touch-friendly interface for iPad and Android tablets
+---
 
-**Access Methods**
-- **Web Browser**: Chrome, Firefox, Safari, Edge (latest versions)
-- **Mobile Web**: Progressive Web App (PWA) capabilities
-- **API Access**: RESTful API for third-party integrations
-- **CLI Tools**: Command-line interface for administration and automation
+### Reports & Analytics — Data-Driven Insights
+<div>
+  <img src="assets/screenshots/Reports.png" alt="Reports" width="45%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/UserReports.png" alt="User Reports" width="45%" style="display: inline-block; margin: 5px;">
+</div>
 
-**Note**: This is a web-based application that runs in any modern browser. While not native mobile apps, the responsive design provides an excellent mobile experience across all devices.
+*Comprehensive reporting and user analytics for informed decisions*
 
-## 📊 Reporting Features
+---
 
-### Comprehensive Analytics Dashboard
-- **Real-time Statistics**: Live updates of current time tracking status
-- **Time Period Analysis**: Daily, weekly, and monthly hour summaries
-- **Project Performance**: Time breakdown by project with client information
-- **User Productivity**: Individual and team performance metrics
-- **Billable vs Non-billable**: Separate tracking for invoicing purposes
+### Easy Creation — Streamlined Workflows
+<div>
+  <img src="assets/screenshots/CreateProject.png" alt="Create Project" width="30%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/CreateTask.png" alt="Create Task" width="30%" style="display: inline-block; margin: 5px;">
+  <img src="assets/screenshots/CreateClient.png" alt="Create Client" width="30%" style="display: inline-block; margin: 5px;">
+</div>
 
-### Detailed Reports
-- **Project Reports**: Time analysis by project with user breakdowns
-- **User Reports**: Individual performance metrics and project allocation
-- **Summary Reports**: Key performance indicators and trends
-- **Custom Date Ranges**: Flexible reporting periods for analysis
-- **Export Capabilities**: CSV export with customizable delimiters
+*Simple, intuitive forms for creating projects, tasks, and clients*
 
-### Visual Analytics
-- **Progress Bars**: Visual representation of time allocation
-- **Statistics Cards**: Key metrics displayed prominently
-- **Trend Analysis**: Historical data visualization
-- **Mobile-Optimized Charts**: Responsive charts for all screen sizes
+</div>
 
-## ⚡ Automatic Time Tracking
+---
 
-### Smart Timer Features
-- **Idle Detection**: Automatic pause after configurable idle timeout (default: 30 minutes)
-- **Single Active Timer**: Option to allow only one active timer per user
-- **Auto-source Tracking**: Distinguishes between manual and automatic time entries
-- **Real-time Updates**: WebSocket-powered live timer updates
+## 🚀 Quick Start
 
-### Timer Management
-- **Start/Stop Controls**: Simple one-click timer management
-- **Project Association**: Automatic project linking for time entries
-- **Task Categorization**: Optional task-level time tracking
-- **Notes and Tags**: Rich metadata for time entries
-- **Duration Calculation**: Automatic time calculation and formatting
+### Docker (Recommended)
 
-### Configuration Options
-- **Idle Timeout**: Customizable idle detection (5-120 minutes)
-- **Timer Behavior**: Single vs. multiple active timers
-- **Rounding Rules**: Configurable time rounding (1-minute increments)
-- **Timezone Support**: Full timezone awareness and conversion
+Get TimeTracker running in under 2 minutes:
 
-## 🏢 Client Management System
-
-### Comprehensive Client Management
-- **Client Organization**: Create and manage client organizations with detailed information
-- **Contact Management**: Store contact person, email, phone, and address details
-- **Default Rate Setting**: Set standard hourly rates per client for automatic project population
-- **Status Management**: Active/inactive client status with archiving capabilities
-- **Project Relationships**: Clear view of all projects associated with each client
-
-### Enhanced Project Creation
-- **Client Selection**: Dropdown selection instead of manual typing to prevent errors
-- **Automatic Rate Population**: Client default rates automatically fill project hourly rates
-- **Error Prevention**: Eliminates typos and duplicate client names
-- **Quick Setup**: Faster project creation with pre-filled client information
-
-### Client Analytics
-- **Project Statistics**: Total and active project counts per client
-- **Time Tracking**: Total hours worked across all client projects
-- **Cost Estimation**: Estimated total cost based on billable hours and rates
-- **Performance Metrics**: Client-specific productivity and billing insights
-
-## 💬 Enhanced Comments System
-
-### Project & Task Discussions
-- **Contextual Comments**: Add comments directly to projects and tasks for better collaboration
-- **Threaded Conversations**: Reply to comments with nested discussions and visual hierarchy
-- **User Attribution**: Clear identification with user avatars and timestamps
-- **Real-time Interactions**: Inline editing and replying without page reloads
-
-### Comment Management
-- **Inline Editing**: Click to edit comments directly in the interface
-- **Permission System**: Users can edit/delete their own comments, admins manage all
-- **Soft Delete**: Comments with replies are preserved to maintain conversation structure
-- **Rich Formatting**: Support for line breaks and formatted text in comments
-
-### User Experience
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Dark Theme Support**: Seamless integration with the application's theme system
-- **Loading States**: Visual feedback during comment operations
-- **Accessibility**: Proper ARIA labels and semantic HTML structure
-
-### Technical Features
-- **Database Integration**: Comments stored with proper relationships and indexing
-- **API Endpoints**: RESTful API for comment operations and retrieval
-- **Internationalization**: Full support for multi-language applications
-- **Migration Support**: Alembic migration for seamless database updates
-
-## 📁 Data Standards & Import/Export
-
-### Export Formats
-- **CSV Export**: Standard comma-separated values with configurable delimiters
-- **Data Fields**: Complete time entry information including:
-  - User, Project, Client, Task details
-  - Start/End times in ISO format
-  - Duration in hours and formatted display
-  - Notes, Tags, Source, Billable status
-  - Creation and modification timestamps
-
-### Data Structure
-- **Standardized Fields**: Consistent data format across all exports
-- **ISO 8601 Timestamps**: Standard datetime format for compatibility
-- **Configurable Delimiters**: Support for different regional CSV standards
-- **UTF-8 Encoding**: Full international character support
-
-### Import Capabilities
-- **Database Schema**: PostgreSQL and SQLite support
-- **Migration System**: Flask-Migrate with version tracking and rollback support
-- **Backup/Restore**: Database backup and restoration tools
-- **CLI Management**: Command-line database operations with migration commands
-
-### API Integration
-- **RESTful Endpoints**: Standard HTTP API for external access
-- **JSON Format**: Modern data exchange format
-- **Authentication**: Secure API access with user authentication
-- **Real-time Updates**: WebSocket support for live data synchronization
-
-## 🚀 Quick Start Guide
-
-### 🐳 Docker Deployment (Recommended)
-
-#### Option 1: Local Development with PostgreSQL
 ```bash
 # Clone the repository
 git clone https://github.com/drytrix/TimeTracker.git
 cd TimeTracker
-
-# Copy and configure environment
-cp env.example .env
-# Edit .env with your settings (optional - defaults work for testing)
 
 # Start with Docker Compose
 docker-compose up -d
 
-# Access the application
-open http://localhost:8080
+# Access at http://localhost:8080
 ```
 
-#### Option 2: Quick Testing with SQLite
-```bash
-# Clone the repository
-git clone https://github.com/drytrix/TimeTracker.git
-cd TimeTracker
+**First login creates the admin account** — just enter your username!
 
-# Start with SQLite (no database setup needed)
+### Quick Test with SQLite
+
+Want to try it out without setting up a database?
+
+```bash
 docker-compose -f docker-compose.local-test.yml up --build
-
-# Access the application
-open http://localhost:8080
 ```
 
-#### Option 3: Production Deployment with Pre-built Images
-```bash
-# Use production-ready images from GitHub Container Registry
-docker-compose -f docker-compose.remote.yml up -d
-
-# Or development version for testing
-docker-compose -f docker-compose.remote-dev.yml up -d
-```
-
-### 💻 Manual Installation
-
-#### Prerequisites
-- **Python 3.8+** (3.9+ recommended)
-- **PostgreSQL 12+** (recommended) or SQLite
-- **Git** for cloning the repository
-
-#### Step-by-Step Installation
-```bash
-# 1. Clone the repository
-git clone https://github.com/drytrix/TimeTracker.git
-cd TimeTracker
-
-# 2. Create virtual environment (recommended)
-python -m venv timetracker-env
-source timetracker-env/bin/activate  # Linux/macOS
-# or
-timetracker-env\Scripts\activate     # Windows
-
-# 3. Install Python dependencies
-pip install -r requirements.txt
-
-# 4. Set up environment variables
-cp env.example .env
-# Edit .env with your database and application settings
-
-# 5. Initialize the database
-python -c "from app import create_app; app = create_app(); app.app_context().push(); app.initialize_database()"
-
-# 6. Run the application
-python app.py
-```
-
-#### Database Setup
-
-**PostgreSQL (Recommended for production):**
-```bash
-# Install PostgreSQL and create database
-sudo apt-get install postgresql postgresql-contrib  # Ubuntu/Debian
-# or
-brew install postgresql                              # macOS
-
-# Create database and user
-sudo -u postgres createdb timetracker
-sudo -u postgres createuser --interactive timetracker
-
-# Set connection in .env file
-DATABASE_URL=postgresql+psycopg2://timetracker:password@localhost:5432/timetracker
-```
-
-**SQLite (Good for development):**
-```bash
-# SQLite requires no setup - just set in .env file
-DATABASE_URL=sqlite:///timetracker.db
-```
-
-### 🎯 First Time Setup
-
-#### 1. Access the Application
-- Open your browser and navigate to `http://localhost:8080`
-- You'll be redirected to the login page
-
-#### 2. Create Admin User
-- Enter username: `admin` (or any username you prefer)
-- The first user is automatically granted admin privileges
-- Admin usernames can be configured via `ADMIN_USERNAMES` environment variable
-
-#### 3. Configure System Settings
-1. Go to **Admin → System Settings**
-2. Set your company information (name, address, logo)
-3. Configure currency and timezone
-4. Adjust timer behavior (idle timeout, single active timer)
-5. Set default invoice terms and tax rates
-
-#### 4. Create Your First Client
-1. Navigate to **Clients → Create Client**
-2. Enter client name and contact information
-3. Set default hourly rate for automatic project setup
-
-#### 5. Create Your First Project
-1. Go to **Projects → Create Project**
-2. Select the client from dropdown
-3. Set project details and billing information
-4. Mark as billable if you plan to invoice
-
-#### 6. Start Tracking Time
-1. Use the dashboard timer to start tracking
-2. Select project (and task if available)
-3. Timer continues running even if you close the browser
-4. Stop timer when finished or let idle detection handle it
-
-### 🔧 Environment Configuration Examples
-
-#### Development Setup
-```bash
-# .env for development
-SECRET_KEY=dev-secret-key
-FLASK_ENV=development
-FLASK_DEBUG=true
-DATABASE_URL=sqlite:///timetracker.db
-TZ=America/New_York
-CURRENCY=USD
-ALLOW_SELF_REGISTER=true
-```
-
-#### Production Setup
-```bash
-# .env for production
-SECRET_KEY=your-very-secure-random-key-here
-FLASK_ENV=production
-FLASK_DEBUG=false
-DATABASE_URL=postgresql+psycopg2://timetracker:secure-password@db:5432/timetracker
-SESSION_COOKIE_SECURE=true
-REMEMBER_COOKIE_SECURE=true
-TZ=Europe/London
-CURRENCY=GBP
-ADMIN_USERNAMES=admin,manager
-ALLOW_SELF_REGISTER=false
-```
-
-### 🆘 Troubleshooting Quick Start
-
-#### Common Issues
-
-**Port Already in Use:**
-```bash
-# Check what's using port 8080
-lsof -i :8080
-
-# Use different port
-docker-compose up -d -e PORT=8081
-```
-
-**Database Connection Issues:**
-```bash
-# Check PostgreSQL status
-sudo systemctl status postgresql
-
-# Reset database (⚠️ destroys data)
-docker-compose down -v
-docker-compose up -d
-```
-
-**Permission Issues:**
-```bash
-# Fix Docker permissions (Linux)
-sudo chown -R $USER:$USER .
-```
-
-**Migration Issues:**
-```bash
-# Force database recreation
-python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.drop_all(); app.initialize_database()"
-```
-
-#### Getting Help
-- Check application logs: `docker-compose logs -f app`
-- Review documentation in the `docs/` directory
-- Open an issue on GitHub with error details
-- Verify all prerequisites are installed and up to date
-
-## 📁 Project Structure
-
-The project has been organized for better maintainability:
-
-```
-TimeTracker/
-├── app/                    # Main Flask application
-│   ├── models/            # Database models (User, Project, Task, Comment, etc.)
-│   ├── routes/            # Route handlers (auth, projects, tasks, comments, etc.)
-│   ├── static/            # Static assets (CSS, JS, images)
-│   ├── templates/         # HTML templates
-│   │   ├── comments/      # Comment system templates
-│   │   ├── projects/      # Project management templates
-│   │   ├── tasks/         # Task management templates
-│   │   └── ...            # Other feature templates
-│   └── utils/             # Utility functions
-├── docs/                  # Documentation and README files
-├── docker/                # Docker-related scripts and utilities
-│   ├── config/            # Configuration files (Caddyfile, supervisord)
-│   ├── fixes/             # Database and permission fix scripts
-│   ├── startup/           # Startup and initialization scripts
-│   └── tests/             # Docker environment test scripts
-├── migrations/            # Database migrations with Flask-Migrate
-│   ├── versions/          # Migration version files
-│   ├── env.py             # Migration environment configuration
-│   ├── script.py.mako     # Migration template
-│   └── README.md          # Migration documentation
-├── scripts/                # Deployment and utility scripts
-├── tests/                  # Application test suite
-├── templates/              # Additional templates
-├── assets/                 # Project assets and screenshots
-├── logs/                   # Application logs
-├── docker-compose.yml      # Local development setup
-├── docker-compose.remote.yml      # Production deployment
-├── docker-compose.remote-dev.yml  # Development deployment
-└── Dockerfile              # Application container definition
-```
-
-## 🐳 Docker Support
-
-Multiple Docker configurations are available for different deployment scenarios:
-
-### Local Development
-- **`docker-compose.yml`** - Standard local development setup with all features
-  - Builds from local source code
-  - Includes optional Caddy reverse proxy for TLS
-  - Suitable for development and testing
-
-- **`docker-compose.local-test.yml`** - Quick local testing with SQLite
-  - Uses SQLite database (no separate database container needed)
-  - Development mode with debug logging enabled
-  - Perfect for quick testing and development
-  - See [Local Testing Documentation](docs/LOCAL_TESTING_WITH_SQLITE.md)
-
-### Remote Deployment
-- **`docker-compose.remote.yml`** - Production deployment using GitHub Container Registry
-  - Uses pre-built `ghcr.io/drytrix/timetracker:latest` image
-  - Secure cookie settings enabled
-  - Optimized for production environments
-
-- **`docker-compose.remote-dev.yml`** - Development deployment using GitHub Container Registry
-  - Uses pre-built `ghcr.io/drytrix/timetracker:development` image
-  - Secure cookie settings enabled
-  - Suitable for testing pre-release versions
-
-### Database Migration System
-
-The application now uses **Flask-Migrate** for standardized database migrations with:
-
-- **Version Tracking**: Complete history of all database schema changes
-- **Rollback Support**: Ability to revert to previous database versions
-- **Automatic Schema Detection**: Migrations generated from SQLAlchemy models
-- **Cross-Database Support**: Works with both PostgreSQL and SQLite
-- **CLI Commands**: Simple commands for migration management
-
-#### Migration Commands
-```bash
-# Initialize migrations (first time only)
-flask db init
-
-# Create a new migration
-flask db migrate -m "Description of changes"
-
-# Apply pending migrations
-flask db upgrade
-
-# Rollback last migration
-flask db downgrade
-
-# Check migration status
-flask db current
-
-# View migration history
-flask db history
-```
-
-**Note**: The Enhanced Comments System includes migration `013_add_comments_table.py` which creates the comments table with proper relationships and indexes. This migration will be automatically applied when running `flask db upgrade`.
-
-#### Quick Migration Setup
-```bash
-# Use the migration management script
-python migrations/manage_migrations.py
-
-# Or manually initialize
-flask db init
-flask db migrate -m "Initial schema"
-flask db upgrade
-```
-
-#### **Comprehensive Migration for Any Existing Database:**
-```bash
-# For ANY existing database (recommended)
-python migrations/migrate_existing_database.py
-
-# For legacy schema migration
-python migrations/legacy_schema_migration.py
-```
-
-#### **Migration Support:**
-- ✅ **Fresh Installation**: No existing database
-- ✅ **Legacy Databases**: Old custom migration systems
-- ✅ **Mixed Schema**: Some tables exist, some missing
-- ✅ **Production Data**: Existing databases with user data
-- ✅ **Cross-Version**: Databases from different TimeTracker versions
-
-#### **🚀 Automatic Container Migration:**
-- ✅ **Zero Configuration**: Container automatically detects database state
-- ✅ **Smart Strategy Selection**: Chooses best migration approach
-- ✅ **Automatic Startup**: Handles migration during container startup
-- ✅ **Production Ready**: Safe migration with automatic fallbacks
-
-See [Migration Documentation](migrations/README.md), [Complete Migration Guide](migrations/MIGRATION_GUIDE.md), and [Container Startup Configuration](docker/STARTUP_MIGRATION_CONFIG.md) for comprehensive details.
-
-### Enhanced Database Startup
-
-The application now includes an enhanced database startup procedure that automatically:
-- Creates all required tables with proper schema
-- Handles migrations and schema updates
-- Verifies database integrity before starting
-- Provides comprehensive error reporting
-
-See [Enhanced Database Startup Documentation](docs/ENHANCED_DATABASE_STARTUP.md) for detailed information.
-
-### Docker Compose Usage
-
-#### Quick Start with Local Development
-```bash
-# Clone the repository
-git clone https://github.com/drytrix/TimeTracker.git
-cd TimeTracker
-
-# Copy environment file and configure
-cp env.example .env
-# Edit .env with your settings
-
-# Start the application
-docker-compose up -d
-
-# Access the application at http://localhost:8080
-```
-
-#### Quick Start with Local Testing (SQLite)
-```bash
-# Clone the repository
-git clone https://github.com/drytrix/TimeTracker.git
-cd TimeTracker
-
-# Start with SQLite (no database setup needed)
-docker-compose -f docker-compose.local-test.yml up --build
-
-# Access the application at http://localhost:8080
-# Or use the convenience script:
-# Windows: scripts\start-local-test.bat
-# Linux/macOS: ./scripts/start-local-test.sh
-```
-
-#### Production Deployment with Remote Images
-```bash
-# Use production-ready images from GitHub Container Registry
-docker-compose -f docker-compose.remote.yml up -d
-
-# Or use development version for testing
-docker-compose -f docker-compose.remote-dev.yml up -d
-```
-
-#### Development with TLS Support
-```bash
-# Start with Caddy reverse proxy for HTTPS
-docker-compose --profile tls up -d
-
-# Access via HTTPS at https://localhost
-```
-
-#### Environment Configuration
-All docker-compose files support the following environment variables (set in `.env` file):
-
-- **`TZ`** - Timezone (default: Europe/Brussels)
-- **`CURRENCY`** - Currency symbol (default: EUR)
-- **`ROUNDING_MINUTES`** - Time rounding in minutes (default: 1)
-- **`SINGLE_ACTIVE_TIMER`** - Allow only one active timer per user (default: true)
-- **`ALLOW_SELF_REGISTER`** - Allow user self-registration (default: true)
-- **`IDLE_TIMEOUT_MINUTES`** - Auto-pause timer after idle time (default: 30)
-- **`ADMIN_USERNAMES`** - Comma-separated list of admin usernames (default: admin)
-- **`SECRET_KEY`** - Flask secret key (change this in production!)
-- **`SESSION_COOKIE_SECURE`** - Secure session cookies (default: false for local, true for remote)
-- **`REMEMBER_COOKIE_SECURE`** - Secure remember cookies (default: false for local, true for remote)
-
-#### Database Configuration
-- **`POSTGRES_DB`** - Database name (default: timetracker)
-- **`POSTGRES_USER`** - Database user (default: timetracker)
-- **`POSTGRES_PASSWORD`** - Database password (default: timetracker)
-
-#### Useful Docker Commands
-
-**Basic Operations:**
-```bash
-# View application logs
-docker-compose logs -f app
-
-# View database logs
-docker-compose logs -f db
-
-# View all services logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-
-# Stop and remove volumes (⚠️ deletes all data)
-docker-compose down -v
-
-# Rebuild and restart
-docker-compose up -d --build
-
-# Check service status
-docker-compose ps
-
-# Restart specific service
-docker-compose restart app
-```
-
-**Database Operations:**
-```bash
-# Access database directly
-docker-compose exec db psql -U timetracker -d timetracker
-
-# Create database backup
-docker-compose exec db pg_dump -U timetracker timetracker > backup.sql
-
-# Restore database backup
-docker-compose exec -T db psql -U timetracker -d timetracker < backup.sql
-
-# Check database connection
-docker-compose exec app python -c "from app import db; print('Database connected:', db.engine.execute('SELECT 1').scalar())"
-```
-
-**Troubleshooting Commands:**
-```bash
-# Check container health
-docker-compose exec app curl -f http://localhost:8080/_health
-
-# View container resource usage
-docker stats
-
-# Execute shell in container
-docker-compose exec app /bin/bash
-
-# Check environment variables
-docker-compose exec app env | grep -E "(DATABASE|SECRET|TZ)"
-
-# Test database migration
-docker-compose exec app python -c "from app import create_app; app = create_app(); app.app_context().push(); print('Migration test passed')"
-```
-
-### 🐳 Docker Troubleshooting Guide
-
-#### Common Docker Issues
-
-**1. Port Already in Use (Port 8080 Conflict)**
-```bash
-# Check what's using port 8080
-lsof -i :8080          # macOS/Linux
-netstat -ano | findstr :8080  # Windows
-
-# Solution 1: Use different port
-PORT=8081 docker-compose up -d
-
-# Solution 2: Stop conflicting service
-sudo kill -9 $(lsof -t -i:8080)  # macOS/Linux
-```
-
-**2. Database Connection Issues**
-```bash
-# Check database container status
-docker-compose ps db
-
-# Check database logs
-docker-compose logs db
-
-# Reset database (⚠️ destroys data)
-docker-compose down -v
-docker-compose up -d
-
-# Manual database initialization
-docker-compose exec app python -c "
-from app import create_app, db
-app = create_app()
-app.app_context().push()
-app.initialize_database()
-print('Database initialized successfully')
-"
-```
-
-**3. Permission Issues (Linux)**
-```bash
-# Fix file ownership
-sudo chown -R $USER:$USER .
-
-# Fix Docker socket permissions
-sudo chmod 666 /var/run/docker.sock
-
-# Fix data directory permissions
-sudo chmod -R 755 ./data
-```
-
-**4. Container Won't Start**
-```bash
-# Check container logs
-docker-compose logs app
-
-# Check for syntax errors in docker-compose.yml
-docker-compose config
-
-# Rebuild without cache
-docker-compose build --no-cache app
-docker-compose up -d
-```
-
-**5. Database Migration Failures**
-```bash
-# Manual migration reset
-docker-compose exec app python -c "
-from app import create_app, db
-from flask_migrate import stamp
-app = create_app()
-app.app_context().push()
-db.drop_all()
-db.create_all()
-stamp()
-print('Database reset complete')
-"
-
-# Check migration status
-docker-compose exec app flask db current
-
-# Force migration
-docker-compose exec app flask db upgrade
-```
-
-**6. SSL/HTTPS Issues**
-```bash
-# For development with self-signed certificates
-export PYTHONHTTPSVERIFY=0
-
-# Check SSL certificate
-openssl s_client -connect localhost:443 -servername localhost
-
-# Disable SSL verification (development only)
-curl -k https://localhost/
-```
-
-#### Docker Performance Optimization
-
-**Resource Allocation:**
-```yaml
-# docker-compose.override.yml
-services:
-  app:
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-  
-  db:
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.25'
-```
-
-**Volume Optimization:**
-```bash
-# Use named volumes for better performance
-docker volume create timetracker_data
-docker volume create timetracker_db
-
-# Check volume usage
-docker system df -v
-```
-
-#### Production Docker Deployment
-
-**Security Hardening:**
-```bash
-# Use non-root user in production
-USER_ID=$(id -u) GROUP_ID=$(id -g) docker-compose -f docker-compose.remote.yml up -d
-
-# Enable Docker secrets (Swarm mode)
-echo "your-secret-key" | docker secret create timetracker_secret -
-
-# Use environment file with restricted permissions
-chmod 600 .env
-```
-
-**Monitoring Setup:**
-```yaml
-# docker-compose.monitoring.yml
-services:
-  app:
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-  
-  db:
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-```
-
-**Backup Strategy:**
-```bash
-# Automated backup script
-#!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-docker-compose exec -T db pg_dump -U timetracker timetracker | gzip > "backup_${DATE}.sql.gz"
-
-# Automated cleanup (keep last 7 days)
-find . -name "backup_*.sql.gz" -mtime +7 -delete
-```
-
-#### Multi-Environment Setup
-
-**Development Environment:**
-```bash
-# docker-compose.dev.yml
-cp docker-compose.yml docker-compose.dev.yml
-# Edit for development settings
-
-# Use development compose
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-**Staging Environment:**
-```bash
-# docker-compose.staging.yml
-cp docker-compose.remote-dev.yml docker-compose.staging.yml
-# Edit for staging settings
-
-# Deploy to staging
-docker-compose -f docker-compose.staging.yml up -d
-```
-
-**Production Environment:**
-```bash
-# Use production compose with secrets
-docker-compose -f docker-compose.remote.yml up -d
-
-# With external database
-DATABASE_URL=postgresql://user:pass@external-db:5432/timetracker \
-docker-compose -f docker-compose.remote.yml up -d
-```
-
-### Version Management
-
-A comprehensive version management system provides flexible versioning:
-- **GitHub Releases** - Automatic versioning when creating releases
-- **Git Tags** - Manual version tagging for releases
-- **Build Numbers** - Automatic versioning for branch builds
-- **Local Tools** - Command-line version management scripts
-
-See [Version Management Documentation](docs/VERSION_MANAGEMENT.md) for detailed information.
-
-## 📚 Documentation
-
-Detailed documentation is available in the `docs/` directory:
-
-- **API Documentation**: API endpoints and usage
-- **Feature Guides**: Detailed feature explanations
-- **Troubleshooting**: Common issues and solutions
-- **Deployment**: Setup and deployment instructions
-
-### Metrics Server and Privacy
-
-This application can optionally communicate with a metrics server to help improve reliability and features. No license is required and the app works without it.
-
-- What is sent:
-  - App identifier and version
-  - Anonymous instance ID (UUID)
-  - Basic system info: OS, version, architecture, hostname, local IP, Python version
-  - Aggregate usage events (e.g., feature used). No time entry data or personal content
-- Controls:
-  - Toggle analytics in Admin → System Settings → Privacy & Analytics
-  - View status in Admin → Metrics Status
-- Configuration (env vars are optional and have sensible defaults):
-  - `METRICS_SERVER_URL` (or legacy `LICENSE_SERVER_BASE_URL`)
-  - `METRICS_SERVER_API_KEY` (or legacy `LICENSE_SERVER_API_KEY`)
-  - `METRICS_HEARTBEAT_SECONDS` (or legacy `LICENSE_HEARTBEAT_SECONDS`)
-  - `METRICS_SERVER_TIMEOUT_SECONDS` (or legacy `LICENSE_SERVER_TIMEOUT_SECONDS`)
-
-## 🚀 Deployment
-
-### Docker Deployment
-```bash
-# Local development
-docker-compose up -d
-
-# Production with remote images
-docker-compose -f docker-compose.remote.yml up -d
-
-# Development with remote images
-docker-compose -f docker-compose.remote-dev.yml up -d
-```
-
-### Manual Deployment
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Set environment variables
-cp env.example .env
-# Edit .env with your configuration
-
-# Run the application
-python app.py
-```
-
-## 🧪 Testing
-
-Run the test suite:
-```bash
-python -m pytest tests/
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-See `docs/CONTRIBUTING.md` for detailed guidelines.
-
-## 📄 License
-
-This project is licensed under the GNU General Public License v3.0 — see `LICENSE` for details.
-
-## 🆘 Support
-
-- **Issues**: Report bugs and feature requests on GitHub
-- **Documentation**: Check the `docs/` directory
-- **Troubleshooting**: See `docs/SOLUTION_GUIDE.md`
-
-## 🔄 Recent Updates
-
-- **Enhanced Comments System**: Added comprehensive commenting system for projects and tasks with threaded replies, inline editing, and real-time interactions
-- **Project Cleanup**: Reorganized project structure for better maintainability
-- **Docker Organization**: Consolidated Docker configurations and scripts
-- **Documentation**: Moved all documentation to dedicated `docs/` directory
-- **Script Organization**: Grouped utility scripts by purpose
+No configuration needed — perfect for testing!
 
 ---
 
-**Note**: This project has been cleaned up and reorganized. All files have been preserved and moved to appropriate directories for better organization and maintainability.
+## 💡 Use Cases
+
+### For Freelancers
+Track time across multiple client projects, generate professional invoices, and understand where your time goes. TimeTracker helps you bill accurately and identify your most profitable clients.
+
+### For Teams
+Assign tasks, track team productivity, and generate reports for stakeholders. See who's working on what, identify bottlenecks, and optimize team performance.
+
+### For Agencies
+Manage multiple clients and projects simultaneously. Track billable hours, generate client invoices, and analyze project profitability — all in one place.
+
+### For Personal Projects
+Even if you're not billing anyone, understanding where your time goes is valuable. Track personal projects, hobbies, and learning activities to optimize your time.
+
+---
+
+## 🌟 Why TimeTracker?
+
+| Feature | TimeTracker | Traditional Time Trackers |
+|---------|-------------|---------------------------|
+| **Self-Hosted** | ✅ Complete data control | ❌ Cloud-only, subscription fees |
+| **Open Source** | ✅ Free to use & modify | ❌ Proprietary, locked features |
+| **Persistent Timers** | ✅ Runs server-side | ❌ Browser-dependent |
+| **Docker Ready** | ✅ Deploy anywhere | ⚠️ Complex setup |
+| **Invoicing Built-in** | ✅ Track to bill workflow | ❌ Requires integration |
+| **No User Limits** | ✅ Unlimited users | ❌ Per-user pricing |
+
+---
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+### Getting Started
+- **[📖 Getting Started Guide](docs/GETTING_STARTED.md)** — Complete beginner's guide (⭐ Start here!)
+- **[Installation Guide](docs/DOCKER_PUBLIC_SETUP.md)** — Detailed setup instructions
+- **[Requirements](docs/REQUIREMENTS.md)** — System requirements and dependencies
+- **[Troubleshooting](docs/DOCKER_STARTUP_TROUBLESHOOTING.md)** — Common issues and solutions
+
+### Features
+- **[Task Management](docs/TASK_MANAGEMENT_README.md)** — Break projects into manageable tasks
+- **[Invoice System](docs/INVOICE_FEATURE_README.md)** — Generate professional invoices
+- **[Client Management](docs/CLIENT_MANAGEMENT_README.md)** — Manage client relationships
+- **[Calendar Features](docs/CALENDAR_FEATURES_README.md)** — Calendar and bulk entry features
+- **[Command Palette](docs/COMMAND_PALETTE_USAGE.md)** — Keyboard shortcuts for power users
+
+### Technical Documentation
+- **[Project Structure](docs/PROJECT_STRUCTURE.md)** — Codebase architecture
+- **[Database Migrations](migrations/README.md)** — Database schema management
+- **[Version Management](docs/VERSION_MANAGEMENT.md)** — Release and versioning
+- **[CI/CD Documentation](docs/cicd/)** — Continuous integration setup
+
+### Contributing
+- **[Contributing Guidelines](docs/CONTRIBUTING.md)** — How to contribute
+- **[Code of Conduct](docs/CODE_OF_CONDUCT.md)** — Community standards
+
+---
+
+## 🐳 Deployment
+
+### Local Development
+```bash
+docker-compose up -d
+```
+
+### Production with PostgreSQL
+```bash
+# Configure your .env file
+cp env.example .env
+# Edit .env with production settings
+
+# Start with production compose
+docker-compose -f docker-compose.remote.yml up -d
+```
+
+### Raspberry Pi
+TimeTracker runs perfectly on Raspberry Pi 4 (2GB+):
+```bash
+# Same commands work on ARM architecture
+docker-compose up -d
+```
+
+**📖 See [Deployment Guide](docs/DOCKER_PUBLIC_SETUP.md) for detailed instructions**
+
+---
+
+## 🔧 Configuration
+
+TimeTracker is highly configurable through environment variables:
+
+```bash
+# Timezone and locale
+TZ=America/New_York
+CURRENCY=USD
+
+# Timer behavior
+SINGLE_ACTIVE_TIMER=true
+IDLE_TIMEOUT_MINUTES=30
+ROUNDING_MINUTES=1
+
+# User management
+ADMIN_USERNAMES=admin,manager
+ALLOW_SELF_REGISTER=false
+
+# Security (production)
+SECRET_KEY=your-secure-random-key
+SESSION_COOKIE_SECURE=true
+```
+
+**📖 See [Configuration Guide](docs/REQUIREMENTS.md) for all options**
+
+---
+
+## 🛣️ Roadmap
+
+### Planned Features
+- 📄 **PDF Invoice Templates** — Professional PDF generation
+- 📧 **Email Integration** — Send invoices to clients
+- 📱 **Progressive Web App** — Install as mobile app
+- 🔄 **Recurring Invoices** — Automate recurring billing
+- 🎨 **Custom Themes** — Personalize your interface
+- 🔌 **API Extensions** — RESTful API for integrations
+- 📊 **Advanced Analytics** — More charts and insights
+
+### Recently Added
+- ✅ **Invoice Generation** — Complete invoicing system
+- ✅ **Task Management** — Full task tracking and management
+- ✅ **Command Palette** — Keyboard-driven navigation
+- ✅ **Calendar View** — Visual time entry calendar
+- ✅ **Bulk Operations** — Bulk time entry creation
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Whether it's:
+
+- 🐛 **Bug Reports** — Help us identify issues
+- 💡 **Feature Requests** — Share your ideas
+- 📝 **Documentation** — Improve our docs
+- 💻 **Code Contributions** — Submit pull requests
+
+**📖 See [Contributing Guidelines](docs/CONTRIBUTING.md) to get started**
+
+---
+
+## 📄 License
+
+TimeTracker is licensed under the **GNU General Public License v3.0**.
+
+This means you can:
+- ✅ Use it commercially
+- ✅ Modify and adapt it
+- ✅ Distribute it
+- ✅ Use it privately
+
+**See [LICENSE](LICENSE) for full details**
+
+---
+
+## 🆘 Support
+
+- 📖 **Documentation**: Check the [`docs/`](docs/) directory
+- 🐛 **Bug Reports**: [Open an issue](https://github.com/drytrix/TimeTracker/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/drytrix/TimeTracker/discussions)
+- 📧 **Contact**: [Create an issue](https://github.com/drytrix/TimeTracker/issues) for support
+
+---
+
+## ⭐ Star Us!
+
+If TimeTracker helps you track your time better, consider giving us a star on GitHub! It helps others discover the project.
+
+<div align="center">
+
+**[⭐ Star on GitHub](https://github.com/drytrix/TimeTracker)**
+
+---
+
+**Built with ❤️ for the time-tracking community**
+
+</div>

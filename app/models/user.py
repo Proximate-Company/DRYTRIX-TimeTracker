@@ -26,6 +26,7 @@ class User(UserMixin, db.Model):
     
     # Relationships
     time_entries = db.relationship('TimeEntry', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    project_costs = db.relationship('ProjectCost', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     
     def __init__(self, username, role='user', email=None, full_name=None):
         self.username = username.lower().strip()

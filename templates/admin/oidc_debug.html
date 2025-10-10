@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('OIDC Debug Dashboard') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-shield-alt text-primary"></i> {{ _('OIDC Debug Dashboard') }}
+                </h1>
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="btn-header btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>{{ _('Back to Dashboard') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <!-- Configuration Status -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-cog me-1"></i> {{ _('OIDC Configuration') }}</h5>
+                    <a href="{{ url_for('admin.oidc_test') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-vial me-1"></i> {{ _('Test Configuration') }}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">{{ _('Status') }}</th>
+                                <td>
+                                    {% if oidc_config.enabled %}
+                                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> {{ _('Enabled') }}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning"><i class="fas fa-exclamation-circle me-1"></i> {{ _('Disabled') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Auth Method') }}</th>
+                                <td><code>{{ oidc_config.auth_method }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Issuer') }}</th>
+                                <td>
+                                    {% if oidc_config.issuer %}
+                                        <code class="text-break">{{ oidc_config.issuer }}</code>
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Not configured') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Client ID') }}</th>
+                                <td>
+                                    {% if oidc_config.client_id %}
+                                        <code>{{ oidc_config.client_id }}</code>
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Not configured') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Client Secret') }}</th>
+                                <td>
+                                    {% if oidc_config.client_secret_set %}
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i> {{ _('Set') }}</span>
+                                    {% else %}
+                                        <span class="text-danger"><i class="fas fa-times-circle me-1"></i> {{ _('Not set') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Redirect URI') }}</th>
+                                <td>
+                                    {% if oidc_config.redirect_uri %}
+                                        <code class="text-break">{{ oidc_config.redirect_uri }}</code>
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Auto-generated') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Scopes') }}</th>
+                                <td><code>{{ oidc_config.scopes }}</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Claim Mapping -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-id-card me-1"></i> {{ _('Claim Mapping') }}</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">{{ _('Username Claim') }}</th>
+                                <td><code>{{ oidc_config.username_claim }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Email Claim') }}</th>
+                                <td><code>{{ oidc_config.email_claim }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Full Name Claim') }}</th>
+                                <td><code>{{ oidc_config.full_name_claim }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Groups Claim') }}</th>
+                                <td><code>{{ oidc_config.groups_claim }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Admin Group') }}</th>
+                                <td>
+                                    {% if oidc_config.admin_group %}
+                                        <code>{{ oidc_config.admin_group }}</code>
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Not configured') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Admin Emails') }}</th>
+                                <td>
+                                    {% if oidc_config.admin_emails %}
+                                        {% for email in oidc_config.admin_emails %}
+                                            <code class="d-block">{{ email }}</code>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Not configured') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ _('Post-Logout URI') }}</th>
+                                <td>
+                                    {% if oidc_config.post_logout_redirect %}
+                                        <code class="text-break">{{ oidc_config.post_logout_redirect }}</code>
+                                    {% else %}
+                                        <span class="text-muted">{{ _('Auto-generated') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provider Metadata -->
+    {% if oidc_config.enabled and oidc_config.issuer %}
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-server me-1"></i> {{ _('Provider Metadata') }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if metadata_error %}
+                        <div class="alert alert-danger mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>{{ _('Error loading metadata:') }}</strong> {{ metadata_error }}
+                        </div>
+                        {% if well_known_url %}
+                            <p class="mb-0">
+                                <small class="text-muted">
+                                    {{ _('Discovery endpoint:') }} <code>{{ well_known_url }}</code>
+                                </small>
+                            </p>
+                        {% endif %}
+                    {% elif metadata %}
+                        <div class="alert alert-success mb-3">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {{ _('Successfully loaded provider metadata') }}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">{{ _('Endpoints') }}</h6>
+                                <table class="table table-sm">
+                                    <tbody>
+                                        {% if metadata.authorization_endpoint %}
+                                        <tr>
+                                            <th width="40%">{{ _('Authorization') }}</th>
+                                            <td><code class="text-break small">{{ metadata.authorization_endpoint }}</code></td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if metadata.token_endpoint %}
+                                        <tr>
+                                            <th>{{ _('Token') }}</th>
+                                            <td><code class="text-break small">{{ metadata.token_endpoint }}</code></td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if metadata.userinfo_endpoint %}
+                                        <tr>
+                                            <th>{{ _('UserInfo') }}</th>
+                                            <td><code class="text-break small">{{ metadata.userinfo_endpoint }}</code></td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if metadata.end_session_endpoint %}
+                                        <tr>
+                                            <th>{{ _('End Session') }}</th>
+                                            <td><code class="text-break small">{{ metadata.end_session_endpoint }}</code></td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if metadata.jwks_uri %}
+                                        <tr>
+                                            <th>{{ _('JWKS URI') }}</th>
+                                            <td><code class="text-break small">{{ metadata.jwks_uri }}</code></td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">{{ _('Supported Features') }}</h6>
+                                <table class="table table-sm">
+                                    <tbody>
+                                        {% if metadata.scopes_supported %}
+                                        <tr>
+                                            <th width="40%">{{ _('Scopes') }}</th>
+                                            <td><small>{{ metadata.scopes_supported|join(', ') }}</small></td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if metadata.response_types_supported %}
+                                        <tr>
+                                            <th>{{ _('Response Types') }}</th>
+                                            <td><small>{{ metadata.response_types_supported|join(', ') }}</small></td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if metadata.grant_types_supported %}
+                                        <tr>
+                                            <th>{{ _('Grant Types') }}</th>
+                                            <td><small>{{ metadata.grant_types_supported|join(', ') }}</small></td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if metadata.token_endpoint_auth_methods_supported %}
+                                        <tr>
+                                            <th>{{ _('Auth Methods') }}</th>
+                                            <td><small>{{ metadata.token_endpoint_auth_methods_supported|join(', ') }}</small></td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if metadata.claims_supported %}
+                                        <tr>
+                                            <th>{{ _('Claims') }}</th>
+                                            <td><small>{{ metadata.claims_supported|join(', ') }}</small></td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {% if well_known_url %}
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                {{ _('Discovery endpoint:') }} <code>{{ well_known_url }}</code>
+                            </small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {{ _('Provider metadata not loaded. Click "Test Configuration" to fetch.') }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- OIDC Users -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users me-1"></i> {{ _('OIDC Users') }} ({{ oidc_users|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if oidc_users %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('Username') }}</th>
+                                        <th>{{ _('Email') }}</th>
+                                        <th>{{ _('Full Name') }}</th>
+                                        <th>{{ _('Role') }}</th>
+                                        <th>{{ _('Last Login') }}</th>
+                                        <th>{{ _('OIDC Subject') }}</th>
+                                        <th>{{ _('Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in oidc_users %}
+                                    <tr>
+                                        <td>
+                                            {{ user.username }}
+                                            {% if not user.is_active %}
+                                                <span class="badge bg-secondary ms-1">{{ _('Inactive') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user.email or '-' }}</td>
+                                        <td>{{ user.full_name or '-' }}</td>
+                                        <td>
+                                            {% if user.is_admin %}
+                                                <span class="badge bg-danger">{{ _('Admin') }}</span>
+                                            {% else %}
+                                                <span class="badge bg-info">{{ _('User') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.last_login %}
+                                                {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                            {% else %}
+                                                <span class="text-muted">{{ _('Never') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>
+                                                <code class="text-break">{{ user.oidc_sub[:20] }}...</code>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('admin.oidc_user_detail', user_id=user.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-info-circle me-1"></i> {{ _('Details') }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {{ _('No users have logged in via OIDC yet.') }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Environment Variables Reference -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-book me-1"></i> {{ _('Environment Variables Reference') }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ _('Configure OIDC using these environment variables:') }}</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Variable') }}</th>
+                                    <th>{{ _('Description') }}</th>
+                                    <th>{{ _('Example') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>AUTH_METHOD</code></td>
+                                    <td>{{ _('Authentication method') }}</td>
+                                    <td><code>oidc</code> or <code>both</code> or <code>local</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_ISSUER</code></td>
+                                    <td>{{ _('OIDC provider issuer URL') }}</td>
+                                    <td><code>https://auth.example.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_CLIENT_ID</code></td>
+                                    <td>{{ _('Client ID from OIDC provider') }}</td>
+                                    <td><code>timetracker</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_CLIENT_SECRET</code></td>
+                                    <td>{{ _('Client secret from OIDC provider') }}</td>
+                                    <td><code>secret123</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_REDIRECT_URI</code></td>
+                                    <td>{{ _('Callback URL (optional, auto-generated)') }}</td>
+                                    <td><code>https://app.example.com/auth/oidc/callback</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_SCOPES</code></td>
+                                    <td>{{ _('Requested scopes') }}</td>
+                                    <td><code>openid profile email groups</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_USERNAME_CLAIM</code></td>
+                                    <td>{{ _('Claim containing username') }}</td>
+                                    <td><code>preferred_username</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_EMAIL_CLAIM</code></td>
+                                    <td>{{ _('Claim containing email') }}</td>
+                                    <td><code>email</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_FULL_NAME_CLAIM</code></td>
+                                    <td>{{ _('Claim containing full name') }}</td>
+                                    <td><code>name</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_GROUPS_CLAIM</code></td>
+                                    <td>{{ _('Claim containing groups') }}</td>
+                                    <td><code>groups</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_ADMIN_GROUP</code></td>
+                                    <td>{{ _('Group name for admin role (optional)') }}</td>
+                                    <td><code>timetracker_admin</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>OIDC_ADMIN_EMAILS</code></td>
+                                    <td>{{ _('Comma-separated admin emails (optional)') }}</td>
+                                    <td><code>admin@example.com,boss@example.com</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-break {
+    word-break: break-all;
+}
+</style>
+{% endblock %}
+

@@ -1,0 +1,1007 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Analytics Dashboard') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% from "_components.html" import page_header %}
+    <div class="row">
+        <div class="col-12">
+            {% set actions %}
+            <select id="timeRange" class="form-select form-select-sm" style="width: auto;">
+                <option value="7">{{ _('Last 7 days') }}</option>
+                <option value="30" selected>{{ _('Last 30 days') }}</option>
+                <option value="90">{{ _('Last 90 days') }}</option>
+                <option value="365">{{ _('Last year') }}</option>
+            </select>
+            <button id="exportData" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-download"></i> {{ _('Export') }}
+            </button>
+            <button id="refreshCharts" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-sync-alt"></i> {{ _('Refresh') }}
+            </button>
+            {% endset %}
+            {{ page_header('fas fa-chart-line', _('Analytics Dashboard'), _('Key metrics and actionable insights'), actions) }}
+        </div>
+    </div>
+
+    <!-- Enhanced Summary Cards with Comparisons -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-center h-100 hover-lift border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <i class="fas fa-clock fa-2x text-primary"></i>
+                        <span id="totalHoursChange" class="badge bg-success">
+                            <i class="fas fa-arrow-up"></i> 0%
+                        </span>
+                    </div>
+                    <h3 class="text-primary mb-1" id="totalHours">-</h3>
+                    <p class="text-muted mb-0 small">{{ _('Total Hours') }}</p>
+                    <small class="text-muted">{{ _('vs previous period') }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-center h-100 hover-lift border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                        <span id="billableHoursChange" class="badge bg-success">
+                            <i class="fas fa-arrow-up"></i> 0%
+                        </span>
+                    </div>
+                    <h3 class="text-success mb-1" id="billableHours">-</h3>
+                    <p class="text-muted mb-0 small">{{ _('Billable Hours') }}</p>
+                    <small class="text-muted"><span id="billablePercentage">0</span>% {{ _('of total') }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-center h-100 hover-lift border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <i class="fas fa-sack-dollar fa-2x text-warning"></i>
+                        <span class="badge bg-info"><i class="fas fa-info-circle"></i></span>
+                    </div>
+                    <h3 class="text-warning mb-1" id="totalRevenue">-</h3>
+                    <p class="text-muted mb-0 small">{{ _('Potential Revenue') }}</p>
+                    <small class="text-muted">{{ _('Avg rate:') }} <span id="avgHourlyRate">-</span></small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-center h-100 hover-lift border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <i class="fas fa-chart-line fa-2x text-info"></i>
+                        <span class="badge bg-primary"><i class="fas fa-chart-bar"></i></span>
+                    </div>
+                    <h3 class="text-info mb-1" id="avgDailyHours">-</h3>
+                    <p class="text-muted mb-0 small">{{ _('Avg Daily Hours') }}</p>
+                    <small class="text-muted"><span id="activeProjects">0</span> {{ _('active projects') }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb text-warning"></i> {{ _('Insights & Recommendations') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="insightsContainer" class="row">
+                        <div class="col-12 text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{{ _('Loading...') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-area text-primary"></i> {{ _('Daily Hours Trend') }}
+                    </h5>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showCumulativeToggle">
+                        <label class="form-check-label small" for="showCumulativeToggle">{{ _('Cumulative') }}</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="dailyHoursChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie text-success"></i> {{ _('Billable Distribution') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="billableChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Tasks & Revenue -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks text-info"></i> {{ _('Task Status Overview') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container" style="position: relative; height: 250px;">
+                                <canvas id="taskStatusChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex flex-column h-100 justify-content-center">
+                                <div class="mb-3">
+                                    <h4 class="mb-0 text-success" id="tasksCompleted">0</h4>
+                                    <small class="text-muted">{{ _('Tasks Completed') }}</small>
+                                </div>
+                                <div class="mb-3">
+                                    <h4 class="mb-0 text-primary" id="tasksInProgress">0</h4>
+                                    <small class="text-muted">{{ _('In Progress') }}</small>
+                                </div>
+                                <div>
+                                    <h4 class="mb-0 text-muted" id="tasksTodo">0</h4>
+                                    <small class="text-muted">{{ _('To Do') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar text-warning"></i> {{ _('Revenue by Project') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 3 -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar text-primary"></i> {{ _('Hours by Project') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="projectChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-purple"></i> {{ _('Weekly Trends') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="weeklyTrendsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 4 -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock text-info"></i> {{ _('Hours by Time of Day') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-percentage text-success"></i> {{ _('Project Completion Rate') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="completionRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Performance Chart (Admin Only) -->
+    {% if current_user.is_admin %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users text-primary"></i> {{ _('User Performance') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 300px;">
+                        <canvas id="userChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Loading Spinner -->
+<div id="loadingSpinner" class="position-fixed top-50 start-50 translate-middle" style="display: none; z-index: 9999;">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">{{ _('Loading...') }}</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+.hover-lift {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.insight-card {
+    border-left: 4px solid;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    background: #f8f9fa;
+}
+
+.insight-card.success { border-left-color: #10b981; }
+.insight-card.warning { border-left-color: #f59e0b; }
+.insight-card.info { border-left-color: #3b82f6; }
+.insight-card.danger { border-left-color: #ef4444; }
+
+.text-purple { color: #8b5cf6; }
+</style>
+
+<script type="application/json" id="i18n-json-analytics-dashboard">
+{
+    "error_loading_charts": {{ _('Failed to load charts. Please try again.')|tojson }},
+    "error_refreshing_charts": {{ _('Failed to refresh charts. Please try again.')|tojson }},
+    "hours_label": {{ _('Hours')|tojson }},
+    "date_label": {{ _('Date')|tojson }},
+    "hour_of_day_label": {{ _('Hour of Day')|tojson }},
+    "revenue_label": {{ _('Revenue')|tojson }},
+    "billable_label": {{ _('Billable')|tojson }},
+    "non_billable_label": {{ _('Non-Billable')|tojson }},
+    "completed_label": {{ _('Completed')|tojson }},
+    "in_progress_label": {{ _('In Progress')|tojson }},
+    "todo_label": {{ _('To Do')|tojson }},
+    "review_label": {{ _('Review')|tojson }},
+    "cancelled_label": {{ _('Cancelled')|tojson }},
+    "completion_rate_label": {{ _('Completion Rate (%)')|tojson }}
+}
+</script>
+<script>
+// Ensure i18n_analytics is always defined globally
+window.i18n_analytics = (function(){
+    try {
+        var el = document.getElementById('i18n-json-analytics-dashboard');
+        return el ? JSON.parse(el.textContent) : {};
+    } catch (e) { 
+        return {};
+    }
+})();
+
+var i18n_analytics = window.i18n_analytics;
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Enhanced Analytics Dashboard Controller
+// Chart.js global defaults
+Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#64748b';
+Chart.defaults.plugins.legend.position = 'bottom';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.padding = 20;
+
+class EnhancedAnalyticsDashboard {
+    constructor() {
+        this.timeRange = 30;
+        this.charts = {};
+        this.summaryData = null;
+        this.currency = 'EUR';
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        this.loadAllData();
+    }
+
+    bindEvents() {
+        document.getElementById('timeRange').addEventListener('change', (e) => {
+            this.timeRange = parseInt(e.target.value);
+            this.refreshAllCharts();
+        });
+
+        document.getElementById('refreshCharts').addEventListener('click', () => {
+            this.refreshAllCharts();
+        });
+
+        document.getElementById('exportData')?.addEventListener('click', () => {
+            this.exportData();
+        });
+
+        document.getElementById('showCumulativeToggle')?.addEventListener('change', (e) => {
+            this.toggleCumulative(e.target.checked);
+        });
+    }
+
+    showLoading() {
+        document.getElementById('loadingSpinner').style.display = 'block';
+    }
+
+    hideLoading() {
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+
+    async loadAllData() {
+        this.showLoading();
+        
+        try {
+            await Promise.all([
+                this.loadSummaryCards(),
+                this.loadInsights(),
+                this.loadCharts()
+            ]);
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            this.showError(i18n_analytics.error_loading_charts || 'Failed to load analytics');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async refreshAllCharts() {
+        this.showLoading();
+        
+        try {
+            // Destroy all existing charts
+            Object.values(this.charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            this.charts = {};
+            
+            await this.loadAllData();
+        } catch (error) {
+            console.error('Error refreshing charts:', error);
+            this.showError(i18n_analytics.error_refreshing_charts || 'Failed to refresh charts');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async loadSummaryCards() {
+        try {
+            const [summaryResponse, revenueResponse] = await Promise.all([
+                fetch(`/api/analytics/summary-with-comparison?days=${this.timeRange}`),
+                fetch(`/api/analytics/revenue-metrics?days=${this.timeRange}`)
+            ]);
+            
+            const summaryData = await summaryResponse.json();
+            const revenueData = await revenueResponse.json();
+            
+            this.summaryData = summaryData;
+            this.currency = revenueData.currency || 'EUR';
+            
+            // Update total hours
+            document.getElementById('totalHours').textContent = `${summaryData.total_hours}h`;
+            this.updateChangeIndicator('totalHoursChange', summaryData.total_hours_change);
+            
+            // Update billable hours
+            document.getElementById('billableHours').textContent = `${summaryData.billable_hours}h`;
+            this.updateChangeIndicator('billableHoursChange', summaryData.billable_hours_change);
+            document.getElementById('billablePercentage').textContent = summaryData.billable_percentage;
+            
+            // Update revenue
+            document.getElementById('totalRevenue').textContent = 
+                `${this.currency} ${this.formatNumber(revenueData.total_revenue)}`;
+            document.getElementById('avgHourlyRate').textContent = 
+                `${this.currency} ${this.formatNumber(revenueData.avg_hourly_rate)}/h`;
+            
+            // Update avg daily hours
+            document.getElementById('avgDailyHours').textContent = `${summaryData.avg_daily_hours}h`;
+            document.getElementById('activeProjects').textContent = summaryData.active_projects;
+            
+        } catch (error) {
+            console.error('Error loading summary cards:', error);
+        }
+    }
+
+    updateChangeIndicator(elementId, change) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const isPositive = change >= 0;
+        element.className = `badge bg-${isPositive ? 'success' : 'danger'}`;
+        element.innerHTML = `
+            <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${Math.abs(change).toFixed(1)}%
+        `;
+    }
+
+    async loadInsights() {
+        try {
+            const response = await fetch(`/api/analytics/insights?days=${this.timeRange}`);
+            const data = await response.json();
+            
+            const container = document.getElementById('insightsContainer');
+            
+            if (!data.insights || data.insights.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center py-3">
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            ${i18n_analytics.no_insights || 'Everything looks good! Keep up the great work.'}
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.insights.map(insight => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="insight-card ${insight.type}">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="${insight.icon} fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">${insight.title}</h6>
+                                <small>${insight.message}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Error loading insights:', error);
+        }
+    }
+
+    async loadCharts() {
+        const chartPromises = [
+            this.loadDailyHoursChart(),
+            this.loadBillableChart(),
+            this.loadTaskStatusChart(),
+            this.loadRevenueChart(),
+            this.loadProjectChart(),
+            this.loadWeeklyTrendsChart(),
+            this.loadHourlyChart(),
+            this.loadCompletionRateChart()
+        ];
+        
+        {% if current_user.is_admin %}
+        chartPromises.push(this.loadUserChart());
+        {% endif %}
+        
+        await Promise.all(chartPromises);
+    }
+
+    async loadDailyHoursChart() {
+        const response = await fetch(`/api/analytics/hours-by-day?days=${this.timeRange}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('dailyHoursChart').getContext('2d');
+        this.charts.dailyHours = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#6b7280',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
+                        callbacks: {
+                            label: (context) => {
+                                return `${context.parsed.y.toFixed(1)}h`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: i18n_analytics.hours_label || 'Hours'
+                        },
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: i18n_analytics.date_label || 'Date'
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    async loadBillableChart() {
+        const response = await fetch(`/api/analytics/billable-vs-nonbillable?days=${this.timeRange}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('billableChart').getContext('2d');
+        this.charts.billable = new Chart(ctx, {
+            type: 'doughnut',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#6b7280',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value.toFixed(1)}h (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async loadTaskStatusChart() {
+        const response = await fetch(`/api/analytics/task-completion?days=${this.timeRange}`);
+        const data = await response.json();
+        
+        // Update task stats
+        document.getElementById('tasksCompleted').textContent = data.status_breakdown.done || 0;
+        document.getElementById('tasksInProgress').textContent = data.status_breakdown.in_progress || 0;
+        document.getElementById('tasksTodo').textContent = data.status_breakdown.todo || 0;
+        
+        const ctx = document.getElementById('taskStatusChart').getContext('2d');
+        this.charts.taskStatus = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    i18n_analytics.completed_label || 'Completed',
+                    i18n_analytics.in_progress_label || 'In Progress',
+                    i18n_analytics.todo_label || 'To Do',
+                    i18n_analytics.review_label || 'Review'
+                ],
+                datasets: [{
+                    data: [
+                        data.status_breakdown.done || 0,
+                        data.status_breakdown.in_progress || 0,
+                        data.status_breakdown.todo || 0,
+                        data.status_breakdown.review || 0
+                    ],
+                    backgroundColor: [
+                        '#10b981',
+                        '#3b82f6',
+                        '#94a3b8',
+                        '#f59e0b'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            font: { size: 10 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async loadRevenueChart() {
+        const response = await fetch(`/api/analytics/revenue-metrics?days=${this.timeRange}`);
+        const data = await response.json();
+        
+        if (!data.project_labels || data.project_labels.length === 0) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            ctx.font = '14px sans-serif';
+            ctx.fillStyle = '#6b7280';
+            ctx.textAlign = 'center';
+            ctx.fillText('No revenue data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+            return;
+        }
+        
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        this.charts.revenue = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.project_labels,
+                datasets: [{
+                    label: `${i18n_analytics.revenue_label || 'Revenue'} (${this.currency})`,
+                    data: data.project_revenue,
+                    backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                    borderColor: '#f59e0b',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#6b7280',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: (context) => {
+                                return `${this.currency} ${this.formatNumber(context.parsed.y)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: `${i18n_analytics.revenue_label || 'Revenue'} (${this.currency})`
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async loadProjectChart() {
+        const response = await fetch(`/api/analytics/hours-by-project?days=${this.timeRange}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('projectChart').getContext('2d');
+        this.charts.project = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#6b7280',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: i18n_analytics.hours_label || 'Hours'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async loadWeeklyTrendsChart() {
+        const response = await fetch(`/api/analytics/weekly-trends?weeks=${Math.min(12, Math.ceil(this.timeRange / 7))}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('weeklyTrendsChart').getContext('2d');
+        this.charts.weeklyTrends = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: i18n_analytics.hours_label || 'Hours'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async loadHourlyChart() {
+        const response = await fetch(`/api/analytics/hours-by-hour?days=${this.timeRange}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('hourlyChart').getContext('2d');
+        this.charts.hourly = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: i18n_analytics.hours_label || 'Hours'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: i18n_analytics.hour_of_day_label || 'Hour of Day'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async loadCompletionRateChart() {
+        const response = await fetch(`/api/analytics/task-completion?days=${this.timeRange}`);
+        const data = await response.json();
+        
+        if (!data.project_labels || data.project_labels.length === 0) {
+            return;
+        }
+        
+        const ctx = document.getElementById('completionRateChart').getContext('2d');
+        this.charts.completionRate = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.project_labels,
+                datasets: [{
+                    label: i18n_analytics.completion_rate_label || 'Completion Rate (%)',
+                    data: data.project_completion_rates,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: '#10b981',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: '%'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    {% if current_user.is_admin %}
+    async loadUserChart() {
+        const response = await fetch(`/api/analytics/hours-by-user?days=${this.timeRange}`);
+        const data = await response.json();
+        
+        const ctx = document.getElementById('userChart').getContext('2d');
+        this.charts.user = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: i18n_analytics.hours_label || 'Hours'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    toggleCumulative(enabled) {
+        // This would toggle between regular and cumulative view for daily hours
+        // Implementation could be added based on requirements
+        console.log('Cumulative view:', enabled);
+    }
+
+    exportData() {
+        // Export analytics data as CSV
+        if (!this.summaryData) return;
+        
+        const csvContent = [
+            ['Metric', 'Value'],
+            ['Total Hours', this.summaryData.total_hours],
+            ['Billable Hours', this.summaryData.billable_hours],
+            ['Average Daily Hours', this.summaryData.avg_daily_hours],
+            ['Active Projects', this.summaryData.active_projects],
+            ['Billable Percentage', this.summaryData.billable_percentage + '%']
+        ].map(row => row.join(',')).join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `analytics-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    formatNumber(num) {
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(num);
+    }
+
+    showError(message) {
+        // Use the new toast notification system if available
+        if (window.toastManager) {
+            window.toastManager.error(message, 'Error', 5000);
+        } else {
+            // Fallback to alert
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            errorDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            errorDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 5000);
+        }
+    }
+}
+
+// Initialize dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new EnhancedAnalyticsDashboard();
+});
+</script>
+{% endblock %}
+
