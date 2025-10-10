@@ -85,19 +85,20 @@ def test_project(app, test_client):
 
 
 @pytest.fixture
-def test_invoice(app, test_client, test_user):
+def test_invoice(app, test_client, test_project, test_user):
     """Create a test invoice."""
     with app.app_context():
+        # Get the client to retrieve client_name
+        client = db.session.get(Client, test_client)
         invoice = Invoice(
             invoice_number='INV-TEST-001',
-            client_id=test_client,
-            created_by=test_user,
-            invoice_date=date.today(),
+            project_id=test_project,
+            client_name=client.name,
             due_date=date.today() + timedelta(days=30),
-            status='draft',
-            subtotal=Decimal('0.00'),
-            tax_amount=Decimal('0.00'),
-            total=Decimal('0.00')
+            created_by=test_user,
+            client_id=test_client,
+            issue_date=date.today(),
+            status='draft'
         )
         db.session.add(invoice)
         db.session.commit()
