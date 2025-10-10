@@ -73,6 +73,8 @@ def sample_invoice(app, sample_user, sample_project):
     db.session.commit()
     return invoice
 
+@pytest.mark.smoke
+@pytest.mark.invoices
 def test_invoice_creation(app, sample_user, sample_project):
     """Test that invoices can be created correctly."""
     # Create a client first
@@ -104,6 +106,8 @@ def test_invoice_creation(app, sample_user, sample_project):
     assert invoice.status == 'draft'
     assert invoice.tax_rate == Decimal('20.00')
 
+@pytest.mark.smoke
+@pytest.mark.invoices
 def test_invoice_item_creation(app, sample_invoice):
     """Test that invoice items can be created correctly."""
     item = InvoiceItem(
@@ -120,6 +124,8 @@ def test_invoice_item_creation(app, sample_invoice):
     assert item.total_amount == Decimal('750.00')
     assert item.invoice_id == sample_invoice.id
 
+@pytest.mark.smoke
+@pytest.mark.invoices
 def test_invoice_totals_calculation(app, sample_invoice):
     """Test that invoice totals are calculated correctly."""
     # Add multiple items

@@ -75,7 +75,7 @@ class Config:
     UPLOAD_FOLDER = '/data/uploads'
     
     # CSRF protection
-    WTF_CSRF_ENABLED = False
+    WTF_CSRF_ENABLED = True  # Enabled by default, disabled only in testing
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
     
     # Security headers
@@ -132,6 +132,7 @@ class ProductionConfig(Config):
     FLASK_DEBUG = False
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = True
     WTF_CSRF_ENABLED = True
 
 # Configuration mapping

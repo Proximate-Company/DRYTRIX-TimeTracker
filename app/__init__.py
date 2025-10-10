@@ -290,6 +290,9 @@ def create_app(config=None):
     app.register_blueprint(clients_bp)
     app.register_blueprint(comments_bp)
     
+    # Exempt API blueprint from CSRF protection (JSON API uses authentication, not CSRF tokens)
+    csrf.exempt(api_bp)
+    
     # Register OAuth OIDC client if enabled
     try:
         auth_method = (app.config.get('AUTH_METHOD') or 'local').strip().lower()
