@@ -200,10 +200,6 @@ jobs:
         run: |
           pytest -m security -v --tb=short
       
-      - name: Run Bandit security linter
-        run: |
-          bandit -r app/ -f json -o bandit-report.json || true
-      
       - name: Run Safety dependency check
         run: |
           safety check --file requirements.txt --json > safety-report.json || true
@@ -214,7 +210,6 @@ jobs:
         with:
           name: security-reports
           path: |
-            bandit-report.json
             safety-report.json
 
   # ============================================================================

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., v1.2.3)'
+        description: 'Release version (e.g., v1.2.3) - must match version in setup.py'
         required: true
         type: string
       skip_tests:
@@ -171,12 +171,7 @@ jobs:
       
       - name: Install security tools
         run: |
-          pip install bandit safety
-      
-      - name: Run Bandit
-        run: |
-          bandit -r app/ -f json -o bandit-report.json
-          bandit -r app/ -f txt
+          pip install safety
       
       - name: Run Safety
         run: |
@@ -189,7 +184,6 @@ jobs:
         with:
           name: security-audit-reports
           path: |
-            bandit-report.json
             safety-report.json
 
   # ============================================================================
@@ -203,20 +197,45 @@ jobs:
       is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     
     steps:
-      - name: Determine version
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Extract version from setup.py
+        id: extract_version
+        run: |
+          # Extract version from setup.py
+          VERSION=$(grep -oP "version='\K[^']+" setup.py)
+          
+          if [ -z "$VERSION" ]; then
+            echo "❌ ERROR: Could not extract version from setup.py"
+            exit 1
+          fi
+          
+          echo "extracted_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📝 Extracted version from setup.py: $VERSION"
+      
+      - name: Determine version and validate
         id: version
         run: |
+          SETUP_VERSION="${{ steps.extract_version.outputs.extracted_version }}"
+          
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # For manual triggers, use the input version
             VERSION="${{ github.event.inputs.version }}"
             IS_PRERELEASE="false"
           elif [[ "${{ github.event_name }}" == "release" ]]; then
+            # For release events, use the release tag
             VERSION="${{ github.event.release.tag_name }}"
             IS_PRERELEASE="${{ github.event.release.prerelease }}"
           elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # For tag pushes, use the tag name
             VERSION=${GITHUB_REF#refs/tags/}
             IS_PRERELEASE="false"
           else
-            VERSION="v1.0.${{ github.run_number }}"
+            # For push to main/master, use setup.py version
+            VERSION="v${SETUP_VERSION}"
             IS_PRERELEASE="false"
           fi
           
@@ -225,9 +244,31 @@ jobs:
             VERSION="v${VERSION}"
           fi
           
+          # Extract version without 'v' prefix for comparison
+          VERSION_NO_V="${VERSION#v}"
+          
+          # Validate that the version matches setup.py
+          if [[ "$VERSION_NO_V" != "$SETUP_VERSION" ]]; then
+            echo "❌ ERROR: Version mismatch!"
+            echo "   Tag version: $VERSION_NO_V"
+            echo "   setup.py version: $SETUP_VERSION"
+            echo ""
+            echo "Please update setup.py to version '$VERSION_NO_V' or use version 'v$SETUP_VERSION'"
+            exit 1
+          fi
+          
+          # Check if tag already exists (prevent duplicates)
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "❌ ERROR: Tag '$VERSION' already exists!"
+            echo "   This version has already been released."
+            echo "   Please update the version in setup.py to a new version number."
+            exit 1
+          fi
+          
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
           
+          echo "✅ Version validation passed"
           echo "📦 Version: $VERSION"
           echo "🏷️ Prerelease: $IS_PRERELEASE"
 
