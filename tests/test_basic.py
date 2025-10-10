@@ -222,3 +222,28 @@ def test_protected_route_redirect(client):
     response = client.get('/dashboard', follow_redirects=False)
     assert response.status_code == 302
     assert '/login' in response.location
+
+@pytest.mark.smoke
+@pytest.mark.unit
+def test_testing_config_respects_database_url():
+    """Test that TestingConfig respects DATABASE_URL environment variable
+    
+    This test verifies the fix for GitHub Actions migration validation where
+    DATABASE_URL is set to PostgreSQL but TestingConfig was hardcoded to SQLite.
+    
+    Note: This test runs with whatever DATABASE_URL is currently set in the environment.
+    In CI/CD with DATABASE_URL set to PostgreSQL, it will use PostgreSQL.
+    Locally without DATABASE_URL, it will use SQLite.
+    """
+    import os
+    from app.config import TestingConfig
+    
+    config = TestingConfig()
+    
+    # Verify that the config uses the DATABASE_URL if set, otherwise defaults to SQLite
+    if 'DATABASE_URL' in os.environ:
+        # In CI/CD or when DATABASE_URL is explicitly set
+        assert config.SQLALCHEMY_DATABASE_URI == os.environ['DATABASE_URL']
+    else:
+        # Local development/testing without DATABASE_URL
+        assert config.SQLALCHEMY_DATABASE_URI == 'sqlite:///:memory:'

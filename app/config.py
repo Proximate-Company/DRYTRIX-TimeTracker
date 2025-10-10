@@ -123,7 +123,9 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    # Allow DATABASE_URL override for CI/CD PostgreSQL testing
+    # Default to in-memory SQLite for local unit tests
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///:memory:')
     WTF_CSRF_ENABLED = False
     SECRET_KEY = 'test-secret-key'
 

@@ -268,7 +268,7 @@ jobs:
         run: |
           docker run -d --name test-container \
             -p 8080:8080 \
-            -e DATABASE_URL="sqlite:///test.db" \
+            -e DATABASE_URL="sqlite:////app/test.db" \
             timetracker-test:pr-${{ github.event.pull_request.number || 'dev' }}
           
           # Wait for container to be ready
