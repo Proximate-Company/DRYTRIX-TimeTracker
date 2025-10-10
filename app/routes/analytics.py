@@ -30,7 +30,11 @@ def analytics_dashboard():
 @login_required
 def hours_by_day():
     """Get hours worked per day for the last 30 days"""
-    days = int(request.args.get('days', 30))
+    try:
+        days = int(request.args.get('days', 30))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid days parameter'}), 400
+    
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
     
@@ -59,7 +63,12 @@ def hours_by_day():
     # Fill in actual data
     for date_str, total_seconds in results:
         if date_str:
-            date_data[date_str.strftime('%Y-%m-%d')] = round(total_seconds / 3600, 2)
+            # Handle both string and date object returns from different databases
+            if isinstance(date_str, str):
+                formatted_date = date_str
+            else:
+                formatted_date = date_str.strftime('%Y-%m-%d')
+            date_data[formatted_date] = round(total_seconds / 3600, 2)
     
     return jsonify({
         'labels': list(date_data.keys()),
@@ -239,13 +248,18 @@ def billable_vs_nonbillable():
 @login_required
 def weekly_trends():
     """Get weekly trends over the last 12 weeks"""
-    weeks = int(request.args.get('weeks', 12))
+    try:
+        weeks = int(request.args.get('weeks', 12))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid weeks parameter'}), 400
+    
     end_date = datetime.now().date()
     start_date = end_date - timedelta(weeks=weeks)
     
+    # Get all time entries and group by week in Python (database-agnostic)
     query = db.session.query(
-        func.date_trunc('week', TimeEntry.start_time).label('week'),
-        func.sum(TimeEntry.duration_seconds).label('total_seconds')
+        TimeEntry.start_time,
+        TimeEntry.duration_seconds
     ).filter(
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
@@ -255,17 +269,30 @@ def weekly_trends():
     if not current_user.is_admin:
         query = query.filter(TimeEntry.user_id == current_user.id)
     
-    results = query.group_by(func.date_trunc('week', TimeEntry.start_time)).order_by(func.date_trunc('week', TimeEntry.start_time)).all()
+    results = query.all()
     
+    # Group by week in Python
+    from collections import defaultdict
+    week_data = defaultdict(float)
+    
+    for start_time, duration_seconds in results:
+        # Get the start of the week (Monday) for this entry
+        if isinstance(start_time, str):
+            entry_date = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S').date()
+        else:
+            entry_date = start_time.date() if hasattr(start_time, 'date') else start_time
+        
+        # Calculate Monday of that week
+        week_start = entry_date - timedelta(days=entry_date.weekday())
+        week_data[week_start] += duration_seconds or 0
+    
+    # Sort by week and format output
     labels = []
     data = []
     
-    for week, total_seconds in results:
-        if week:
-            # Format week as "MMM DD" (e.g., "Jan 01")
-            week_date = week.date()
-            labels.append(week_date.strftime('%b %d'))
-            data.append(round(total_seconds / 3600, 2))
+    for week_start in sorted(week_data.keys()):
+        labels.append(week_start.strftime('%b %d'))
+        data.append(round(week_data[week_start] / 3600, 2))
     
     return jsonify({
         'labels': labels,

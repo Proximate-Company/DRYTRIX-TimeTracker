@@ -499,12 +499,17 @@ def test_project_requires_name(app, test_client):
 @pytest.mark.models
 def test_time_entry_requires_start_time(app, user, project):
     """Test that time entry requires start time."""
-    # TimeEntry __init__ requires user_id, project_id, and start_time
-    # This test verifies the API enforces this requirement
-    with pytest.raises(TypeError):
+    # TimeEntry requires start_time at database level (nullable=False)
+    # This test verifies the database enforces this requirement
+    from sqlalchemy.exc import IntegrityError
+    from app import db
+    
+    with pytest.raises(IntegrityError):
         entry = TimeEntry(
             user_id=user.id,
             project_id=project.id,
             source='manual'
         )
+        db.session.add(entry)
+        db.session.commit()
 
