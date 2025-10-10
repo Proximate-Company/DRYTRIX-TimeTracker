@@ -1,30 +1,8 @@
 import pytest
 from datetime import datetime, date, timedelta
 from decimal import Decimal
-from app import create_app, db
+from app import db
 from app.models import User, Project, Invoice, InvoiceItem, Settings
-
-@pytest.fixture
-def app():
-    """Create and configure a new app instance for each test."""
-    app = create_app()
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    
-    with app.app_context():
-        db.create_all()
-        yield app
-        db.drop_all()
-
-@pytest.fixture
-def client(app):
-    """A test client for the app."""
-    return app.test_client()
-
-@pytest.fixture
-def runner(app):
-    """A test runner for the app's Click commands."""
-    return app.test_cli_runner()
 
 @pytest.fixture
 def sample_user(app):
