@@ -33,8 +33,7 @@ def sample_invoice(app, sample_user, sample_project):
     from app.models import Client
     client = Client(
         name='Test Client',
-        email='client@test.com',
-        created_by=sample_user.id
+        email='client@test.com'
     )
     db.session.add(client)
     db.session.commit()
@@ -59,8 +58,7 @@ def test_invoice_creation(app, sample_user, sample_project):
     from app.models import Client
     client = Client(
         name='Test Client',
-        email='client@test.com',
-        created_by=sample_user.id
+        email='client@test.com'
     )
     db.session.add(client)
     db.session.commit()
@@ -137,8 +135,7 @@ def test_invoice_with_tax(app, sample_user, sample_project):
     from app.models import Client
     client = Client(
         name='Test Client',
-        email='client@test.com',
-        created_by=sample_user.id
+        email='client@test.com'
     )
     db.session.add(client)
     db.session.commit()
@@ -272,8 +269,7 @@ def test_invoice_payment_status_initialization(app, sample_user, sample_project)
     from app.models import Client
     client = Client(
         name='Test Client',
-        email='client@test.com',
-        created_by=sample_user.id
+        email='client@test.com'
     )
     db.session.add(client)
     db.session.commit()
