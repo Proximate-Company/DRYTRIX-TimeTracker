@@ -18,8 +18,13 @@ help:
 	@echo "  make test-smoke     - Run smoke tests (< 1 min)"
 	@echo "  make test-unit      - Run unit tests (2-5 min)"
 	@echo "  make test-integration - Run integration tests"
+	@echo "  make test-routes    - Run route/endpoint tests"
+	@echo "  make test-models    - Run model tests"
+	@echo "  make test-api       - Run API tests"
 	@echo "  make test-security  - Run security tests"
-	@echo "  make test-coverage  - Run tests with coverage"
+	@echo "  make test-database  - Run database tests"
+	@echo "  make test-coverage  - Run tests with 50% coverage requirement"
+	@echo "  make test-coverage-report - Generate coverage report (no minimum)"
 	@echo "  make test-fast      - Run tests in parallel"
 	@echo "  make test-parallel  - Run tests with 4 workers"
 	@echo "  make test-failed    - Re-run last failed tests"
@@ -70,9 +75,23 @@ test-security:
 test-database:
 	pytest -m database -v
 
+test-routes:
+	pytest -m routes -v
+
+test-models:
+	pytest -m models -v
+
+test-api:
+	pytest -m api -v
+
 test-coverage:
-	pytest --cov=app --cov-report=html --cov-report=term-missing --cov-report=xml
+	pytest --cov=app --cov-report=html --cov-report=term-missing --cov-report=xml --cov-fail-under=50
 	@echo "Coverage report: htmlcov/index.html"
+
+test-coverage-report:
+	pytest --cov=app --cov-report=html --cov-report=term-missing
+	@echo "Coverage report: htmlcov/index.html"
+	@echo "Note: No minimum coverage threshold enforced"
 
 test-fast:
 	pytest -n auto -v

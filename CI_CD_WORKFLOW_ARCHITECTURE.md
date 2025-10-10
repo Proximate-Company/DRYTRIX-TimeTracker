@@ -85,16 +85,17 @@ graph LR
 #### **Job 1: quick-tests** ⚡
 ```yaml
 Duration: ~2-5 minutes
-Runs: Smoke tests only
+Runs: Smoke tests + database migration validation
 Services: PostgreSQL 16
 Purpose: Fast feedback for developers
 ```
 
 **Steps:**
-1. 📥 Checkout code
+1. 📥 Checkout code (full history)
 2. 🐍 Set up Python 3.11
 3. 📦 Install dependencies (cached)
 4. 🧪 Run smoke tests (`pytest -m smoke`)
+5. 🔍 Validate database migrations (if model/migration changes detected)
 
 #### **Job 2: build-and-push** 🐳
 ```yaml
@@ -175,12 +176,13 @@ graph TD
 #### **Job 1: full-test-suite** 🧪
 ```yaml
 Duration: ~15-25 minutes
-Runs: ALL tests with coverage
+Runs: Database migration validation + ALL tests with coverage
 Services: PostgreSQL 16
 Skippable: via skip_tests input
 ```
 
 **Tests Include:**
+- 🔍 Database migration validation (if changes detected)
 - ✅ Smoke tests
 - ✅ Unit tests
 - ✅ Integration tests
@@ -381,7 +383,8 @@ coverage-report job:
   - `app/models/**`
   - `migrations/**`
   - `requirements.txt`
-- ✅ Push to `main` with same paths
+
+**Note:** Migration validation also runs automatically in CD workflows when merging to `develop` or `main` branches.
 
 ### **Flow Diagram:**
 
@@ -537,6 +540,7 @@ sequenceDiagram
     
     Repo->>CD: Trigger Development CD
     CD->>CD: Quick smoke tests
+    CD->>CD: Validate database migrations
     CD->>CD: Build Docker image
     CD->>GHCR: Push dev image
     CD->>Repo: Create dev release
@@ -549,6 +553,7 @@ sequenceDiagram
     Dev->>Repo: 7. Merge PR to main
     
     Repo->>CD: Trigger Release CD
+    CD->>CD: Validate database migrations
     CD->>CD: Full test suite
     CD->>CD: Build multi-platform image
     CD->>CD: Security scan
@@ -566,8 +571,8 @@ sequenceDiagram
 
 | Feature | Development CD | Release CD | Comprehensive CI | Migration Check | GitHub Pages |
 |---------|---------------|------------|------------------|----------------|--------------|
-| **Trigger** | Push to `develop` | Push to `main`/tags | Pull requests | Model changes | Release published |
-| **Test Level** | Smoke only | Full suite | All tests | Migration tests | None |
+| **Trigger** | Push to `develop` | Push to `main`/tags | Pull requests | PR model changes only | Release published |
+| **Test Level** | Smoke + migrations | Full suite + migrations | All tests | Migration tests | None |
 | **Duration** | ~5-10 min | ~40-60 min | ~30-45 min | ~5-10 min | ~3 min |
 | **Docker Build** | ✅ Single platform | ✅ Multi-platform | ❌ No | ❌ No | ❌ No |
 | **Security Scan** | ❌ No | ✅ Trivy | ✅ Bandit | ❌ No | ❌ No |
@@ -575,6 +580,7 @@ sequenceDiagram
 | **Release Created** | ✅ Pre-release | ✅ Production | ❌ No | ❌ No | ❌ No |
 | **PR Comments** | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ❌ No |
 | **Artifacts** | Docker image | Docker + Manifests | Test reports | Migration report | Documentation |
+| **Migration Validation** | ✅ Integrated | ✅ Integrated | ❌ No | ✅ Yes (PR only) | ❌ No |
 
 ---
 
@@ -584,11 +590,13 @@ sequenceDiagram
 - Smoke tests run in ~5 minutes
 - Parallel test execution
 - Early failure detection
+- Integrated migration validation on merge
 
 ### **2. Comprehensive Coverage** 📊
 - 137 tests across all layers
 - Unit, integration, security tests
 - Database and migration validation
+- Automatic migration checks in CD workflows
 
 ### **3. Security First** 🔒
 - Code scanning (Bandit)
@@ -734,6 +742,7 @@ Actions → Select workflow run → Select job → View logs
 ---
 
 **Last Updated:** October 10, 2025  
-**Version:** 1.0.0  
-**Status:** ✅ All workflows operational
+**Version:** 1.1.0  
+**Status:** ✅ All workflows operational  
+**Recent Changes:** Integrated database migration validation into CD workflows
 

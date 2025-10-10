@@ -149,7 +149,16 @@ class Settings(db.Model):
         if not settings:
             settings = cls()
             db.session.add(settings)
-            db.session.commit()
+            try:
+                # Try to commit, but if we're in a nested transaction or flush, just flush
+                db.session.commit()
+            except Exception:
+                # If commit fails (e.g., during a flush), just flush to get the object persisted
+                try:
+                    db.session.flush()
+                except Exception:
+                    # If even flush fails, we'll work with the transient object
+                    pass
         return settings
     
     @classmethod

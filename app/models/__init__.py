@@ -19,8 +19,28 @@ from .saved_filter import SavedFilter
 from .project_cost import ProjectCost
 
 __all__ = [
-    'User', 'Project', 'TimeEntry', 'Task', 'Settings', 'Invoice', 'InvoiceItem', 'Client', 'TaskActivity', 'Comment',
-    'FocusSession', 'RecurringBlock', 'RateOverride', 'SavedFilter', 'ProjectCost',
-    'InvoiceTemplate', 'Currency', 'ExchangeRate', 'TaxRule', 'Payment', 'CreditNote', 'InvoiceReminderSchedule',
-    'SavedReportView', 'ReportEmailSchedule'
+    "User",
+    "Project",
+    "TimeEntry",
+    "Task",
+    "Settings",
+    "Invoice",
+    "InvoiceItem",
+    "Client",
+    "TaskActivity",
+    "Comment",
+    "FocusSession",
+    "RecurringBlock",
+    "RateOverride",
+    "SavedFilter",
+    "ProjectCost",
+    "InvoiceTemplate",
+    "Currency",
+    "ExchangeRate",
+    "TaxRule",
+    "Payment",
+    "CreditNote",
+    "InvoiceReminderSchedule",
+    "SavedReportView",
+    "ReportEmailSchedule",
 ]

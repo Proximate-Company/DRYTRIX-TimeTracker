@@ -44,11 +44,9 @@ def app(app_config):
         db.create_all()
         
         # Create default settings
-        settings = Settings.get_settings()
-        if not settings:
-            settings = Settings()
-            db.session.add(settings)
-            db.session.commit()
+        settings = Settings()
+        db.session.add(settings)
+        db.session.commit()
         
         yield app
         
@@ -86,54 +84,51 @@ def db_session(app):
 @pytest.fixture
 def user(app):
     """Create a regular test user."""
-    with app.app_context():
-        user = User(
-            username='testuser',
-            role='user',
-            email='testuser@example.com'
-        )
-        user.is_active = True  # Set after creation
-        db.session.add(user)
-        db.session.commit()
-        
-        # Refresh to ensure all relationships are loaded
-        db.session.refresh(user)
-        return user
+    user = User(
+        username='testuser',
+        role='user',
+        email='testuser@example.com'
+    )
+    user.is_active = True  # Set after creation
+    db.session.add(user)
+    db.session.commit()
+    
+    # Refresh to ensure all relationships are loaded
+    db.session.refresh(user)
+    return user
 
 
 @pytest.fixture
 def admin_user(app):
     """Create an admin test user."""
-    with app.app_context():
-        admin = User(
-            username='admin',
-            role='admin',
-            email='admin@example.com'
-        )
-        admin.is_active = True  # Set after creation
-        db.session.add(admin)
-        db.session.commit()
-        
-        db.session.refresh(admin)
-        return admin
+    admin = User(
+        username='admin',
+        role='admin',
+        email='admin@example.com'
+    )
+    admin.is_active = True  # Set after creation
+    db.session.add(admin)
+    db.session.commit()
+    
+    db.session.refresh(admin)
+    return admin
 
 
 @pytest.fixture
 def multiple_users(app):
     """Create multiple test users."""
-    with app.app_context():
-        users = []
-        for i in range(1, 4):
-            user = User(username=f'user{i}', role='user', email=f'user{i}@example.com')
-            user.is_active = True  # Set after creation
-            users.append(user)
-        db.session.add_all(users)
-        db.session.commit()
-        
-        for user in users:
-            db.session.refresh(user)
-        
-        return users
+    users = []
+    for i in range(1, 4):
+        user = User(username=f'user{i}', role='user', email=f'user{i}@example.com')
+        user.is_active = True  # Set after creation
+        users.append(user)
+    db.session.add_all(users)
+    db.session.commit()
+    
+    for user in users:
+        db.session.refresh(user)
+    
+    return users
 
 
 # ============================================================================
@@ -143,44 +138,42 @@ def multiple_users(app):
 @pytest.fixture
 def test_client(app, user):
     """Create a test client (business client, not test client)."""
-    with app.app_context():
-        client = Client(
-            name='Test Client Corp',
-            description='Test client for integration tests',
-            contact_person='John Doe',
-            email='john@testclient.com',
-            phone='+1 (555) 123-4567',
-            address='123 Test Street, Test City, TC 12345',
-            default_hourly_rate=Decimal('85.00')
-        )
-        client.status = 'active'  # Set after creation
-        db.session.add(client)
-        db.session.commit()
-        
-        db.session.refresh(client)
-        return client
+    client = Client(
+        name='Test Client Corp',
+        description='Test client for integration tests',
+        contact_person='John Doe',
+        email='john@testclient.com',
+        phone='+1 (555) 123-4567',
+        address='123 Test Street, Test City, TC 12345',
+        default_hourly_rate=Decimal('85.00')
+    )
+    client.status = 'active'  # Set after creation
+    db.session.add(client)
+    db.session.commit()
+    
+    db.session.refresh(client)
+    return client
 
 
 @pytest.fixture
 def multiple_clients(app, user):
     """Create multiple test clients."""
-    with app.app_context():
-        clients = []
-        for i in range(1, 4):
-            client = Client(
-                name=f'Client {i}',
-                email=f'client{i}@example.com',
-                default_hourly_rate=Decimal('75.00') + Decimal(i * 10)
-            )
-            client.status = 'active'  # Set after creation
-            clients.append(client)
-        db.session.add_all(clients)
-        db.session.commit()
-        
-        for client in clients:
-            db.session.refresh(client)
-        
-        return clients
+    clients = []
+    for i in range(1, 4):
+        client = Client(
+            name=f'Client {i}',
+            email=f'client{i}@example.com',
+            default_hourly_rate=Decimal('75.00') + Decimal(i * 10)
+        )
+        client.status = 'active'  # Set after creation
+        clients.append(client)
+    db.session.add_all(clients)
+    db.session.commit()
+    
+    for client in clients:
+        db.session.refresh(client)
+    
+    return clients
 
 
 # ============================================================================
@@ -190,44 +183,42 @@ def multiple_clients(app, user):
 @pytest.fixture
 def project(app, test_client):
     """Create a test project."""
-    with app.app_context():
-        project = Project(
-            name='Test Project',
-            client_id=test_client.id,
-            description='Test project description',
-            billable=True,
-            hourly_rate=Decimal('75.00')
-        )
-        project.status = 'active'  # Set after creation
-        db.session.add(project)
-        db.session.commit()
-        
-        db.session.refresh(project)
-        return project
+    project = Project(
+        name='Test Project',
+        client_id=test_client.id,
+        description='Test project description',
+        billable=True,
+        hourly_rate=Decimal('75.00')
+    )
+    project.status = 'active'  # Set after creation
+    db.session.add(project)
+    db.session.commit()
+    
+    db.session.refresh(project)
+    return project
 
 
 @pytest.fixture
 def multiple_projects(app, test_client):
     """Create multiple test projects."""
-    with app.app_context():
-        projects = []
-        for i in range(1, 4):
-            project = Project(
-                name=f'Project {i}',
-                client_id=test_client.id,
-                description=f'Test project {i}',
-                billable=True,
-                hourly_rate=Decimal('75.00')
-            )
-            project.status = 'active'  # Set after creation
-            projects.append(project)
-        db.session.add_all(projects)
-        db.session.commit()
-        
-        for proj in projects:
-            db.session.refresh(proj)
-        
-        return projects
+    projects = []
+    for i in range(1, 4):
+        project = Project(
+            name=f'Project {i}',
+            client_id=test_client.id,
+            description=f'Test project {i}',
+            billable=True,
+            hourly_rate=Decimal('75.00')
+        )
+        project.status = 'active'  # Set after creation
+        projects.append(project)
+    db.session.add_all(projects)
+    db.session.commit()
+    
+    for proj in projects:
+        db.session.refresh(proj)
+    
+    return projects
 
 
 # ============================================================================
@@ -237,76 +228,73 @@ def multiple_projects(app, test_client):
 @pytest.fixture
 def time_entry(app, user, project):
     """Create a single time entry."""
-    with app.app_context():
-        start_time = datetime.utcnow() - timedelta(hours=2)
-        end_time = datetime.utcnow()
-        
-        entry = TimeEntry(
-            user_id=user.id,
-            project_id=project.id,
-            start_time=start_time,
-            end_time=end_time,
-            notes='Test time entry',
-            tags='test,development',
-            source='manual',
-            billable=True
-        )
-        db.session.add(entry)
-        db.session.commit()
-        
-        db.session.refresh(entry)
-        return entry
+    start_time = datetime.utcnow() - timedelta(hours=2)
+    end_time = datetime.utcnow()
+    
+    entry = TimeEntry(
+        user_id=user.id,
+        project_id=project.id,
+        start_time=start_time,
+        end_time=end_time,
+        notes='Test time entry',
+        tags='test,development',
+        source='manual',
+        billable=True
+    )
+    db.session.add(entry)
+    db.session.commit()
+    
+    db.session.refresh(entry)
+    return entry
 
 
 @pytest.fixture
 def multiple_time_entries(app, user, project):
     """Create multiple time entries."""
-    with app.app_context():
-        base_time = datetime.utcnow() - timedelta(days=7)
-        entries = []
+    base_time = datetime.utcnow() - timedelta(days=7)
+    entries = []
+    
+    for i in range(5):
+        start = base_time + timedelta(days=i, hours=9)
+        end = base_time + timedelta(days=i, hours=17)
         
-        for i in range(5):
-            start = base_time + timedelta(days=i, hours=9)
-            end = base_time + timedelta(days=i, hours=17)
-            
-            entry = TimeEntry(
-                user_id=user.id,
-                project_id=project.id,
-                start_time=start,
-                end_time=end,
-                notes=f'Work day {i+1}',
-                tags='development,testing',
-                source='manual',
-                billable=True
-            )
-            entries.append(entry)
-        
-        db.session.add_all(entries)
-        db.session.commit()
-        
-        for entry in entries:
-            db.session.refresh(entry)
-        
-        return entries
+        entry = TimeEntry(
+            user_id=user.id,
+            project_id=project.id,
+            start_time=start,
+            end_time=end,
+            notes=f'Work day {i+1}',
+            tags='development,testing',
+            source='manual',
+            billable=True
+        )
+        entries.append(entry)
+    
+    db.session.add_all(entries)
+    db.session.commit()
+    
+    for entry in entries:
+        db.session.refresh(entry)
+    
+    return entries
 
 
 @pytest.fixture
 def active_timer(app, user, project):
     """Create an active timer (time entry without end time)."""
-    with app.app_context():
-        timer = TimeEntry(
-            user_id=user.id,
-            project_id=project.id,
-            start_time=datetime.utcnow(),
-            notes='Active timer',
-            source='auto',
-            billable=True
-        )
-        db.session.add(timer)
-        db.session.commit()
-        
-        db.session.refresh(timer)
-        return timer
+    timer = TimeEntry(
+        user_id=user.id,
+        project_id=project.id,
+        start_time=datetime.utcnow(),
+        notes='Active timer',
+        source='auto',
+        billable=True
+    )
+    db.session.add(timer)
+    db.session.commit()
+    
+    db.session.refresh(timer)
+    return timer
 
 
 # ============================================================================
@@ -316,20 +304,19 @@ def active_timer(app, user, project):
 @pytest.fixture
 def task(app, project, user):
     """Create a test task."""
-    with app.app_context():
-        task = Task(
-            name='Test Task',
-            description='Test task description',
-            project_id=project.id,
-            priority='medium',
-            created_by=user.id
-        )
-        task.status = 'todo'  # Set after creation
-        db.session.add(task)
-        db.session.commit()
-        
-        db.session.refresh(task)
-        return task
+    task = Task(
+        name='Test Task',
+        description='Test task description',
+        project_id=project.id,
+        priority='medium',
+        created_by=user.id
+    )
+    task.status = 'todo'  # Set after creation
+    db.session.add(task)
+    db.session.commit()
+    
+    db.session.refresh(task)
+    return task
 
 
 # ============================================================================
@@ -339,56 +326,54 @@ def task(app, project, user):
 @pytest.fixture
 def invoice(app, user, project, test_client):
     """Create a test invoice."""
-    with app.app_context():
-        from datetime import date
-        
-        invoice = Invoice(
-            invoice_number=Invoice.generate_invoice_number(),
-            project_id=project.id,
-            client_id=test_client.id,
-            client_name=test_client.name,
-            due_date=date.today() + timedelta(days=30),
-            created_by=user.id,
-            tax_rate=Decimal('20.00')
-        )
-        invoice.status = 'draft'  # Set after creation
-        db.session.add(invoice)
-        db.session.commit()
-        
-        db.session.refresh(invoice)
-        return invoice
+    from datetime import date
+    
+    invoice = Invoice(
+        invoice_number=Invoice.generate_invoice_number(),
+        project_id=project.id,
+        client_id=test_client.id,
+        client_name=test_client.name,
+        due_date=date.today() + timedelta(days=30),
+        created_by=user.id,
+        tax_rate=Decimal('20.00')
+    )
+    invoice.status = 'draft'  # Set after creation
+    db.session.add(invoice)
+    db.session.commit()
+    
+    db.session.refresh(invoice)
+    return invoice
 
 
 @pytest.fixture
 def invoice_with_items(app, invoice):
     """Create an invoice with items."""
-    with app.app_context():
-        items = [
-            InvoiceItem(
-                invoice_id=invoice.id,
-                description='Development work',
-                quantity=Decimal('10.00'),
-                unit_price=Decimal('75.00')
-            ),
-            InvoiceItem(
-                invoice_id=invoice.id,
-                description='Testing work',
-                quantity=Decimal('5.00'),
-                unit_price=Decimal('60.00')
-            )
-        ]
-        
-        db.session.add_all(items)
-        db.session.commit()
-        
-        invoice.calculate_totals()
-        db.session.commit()
-        
-        db.session.refresh(invoice)
-        for item in items:
-            db.session.refresh(item)
-        
-        return invoice, items
+    items = [
+        InvoiceItem(
+            invoice_id=invoice.id,
+            description='Development work',
+            quantity=Decimal('10.00'),
+            unit_price=Decimal('75.00')
+        ),
+        InvoiceItem(
+            invoice_id=invoice.id,
+            description='Testing work',
+            quantity=Decimal('5.00'),
+            unit_price=Decimal('60.00')
+        )
+    ]
+    
+    db.session.add_all(items)
+    db.session.commit()
+    
+    invoice.calculate_totals()
+    db.session.commit()
+    
+    db.session.refresh(invoice)
+    for item in items:
+        db.session.refresh(item)
+    
+    return invoice, items
 
 
 # ============================================================================

@@ -29,6 +29,23 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
     
+    # Determine database dialect for proper default values
+    dialect_name = bind.dialect.name
+    
+    # Set appropriate boolean defaults based on database
+    if dialect_name == 'sqlite':
+        bool_true_default = '1'
+        bool_false_default = '0'
+        timestamp_default = "(datetime('now'))"
+    elif dialect_name == 'postgresql':
+        bool_true_default = 'true'
+        bool_false_default = 'false'
+        timestamp_default = 'CURRENT_TIMESTAMP'
+    else:  # MySQL/MariaDB and others
+        bool_true_default = '1'
+        bool_false_default = '0'
+        timestamp_default = 'CURRENT_TIMESTAMP'
+    
     # Create project_costs table if it doesn't exist
     if not _has_table(inspector, 'project_costs'):
         op.create_table(
@@ -40,14 +57,14 @@ def upgrade() -> None:
             sa.Column('category', sa.String(length=50), nullable=False),
             sa.Column('amount', sa.Numeric(precision=10, scale=2), nullable=False),
             sa.Column('currency_code', sa.String(length=3), nullable=False, server_default='EUR'),
-            sa.Column('billable', sa.Boolean(), nullable=False, server_default=sa.text('true')),
-            sa.Column('invoiced', sa.Boolean(), nullable=False, server_default=sa.text('false')),
+            sa.Column('billable', sa.Boolean(), nullable=False, server_default=sa.text(bool_true_default)),
+            sa.Column('invoiced', sa.Boolean(), nullable=False, server_default=sa.text(bool_false_default)),
             sa.Column('invoice_id', sa.Integer(), nullable=True),
             sa.Column('cost_date', sa.Date(), nullable=False),
             sa.Column('notes', sa.Text(), nullable=True),
             sa.Column('receipt_path', sa.String(length=500), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text(timestamp_default)),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text(timestamp_default)),
         )
         
         # Create indexes

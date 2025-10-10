@@ -6,11 +6,6 @@ on:
       - 'app/models/**'
       - 'migrations/**'
       - 'requirements.txt'
-  push:
-    branches: [ main ]
-    paths:
-      - 'app/models/**'
-      - 'migrations/**'
 
 jobs:
   validate-migrations:

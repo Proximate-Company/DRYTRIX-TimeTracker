@@ -84,6 +84,25 @@ class Client(db.Model):
         self.status = 'active'
         self.updated_at = datetime.utcnow()
     
+    def to_dict(self):
+        """Convert client to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'contact_person': self.contact_person,
+            'email': self.email,
+            'phone': self.phone,
+            'address': self.address,
+            'default_hourly_rate': str(self.default_hourly_rate) if self.default_hourly_rate else None,
+            'status': self.status,
+            'is_active': self.is_active,
+            'total_projects': self.total_projects,
+            'active_projects': self.active_projects,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
     @classmethod
     def get_active_clients(cls):
         """Get all active clients ordered by name"""
