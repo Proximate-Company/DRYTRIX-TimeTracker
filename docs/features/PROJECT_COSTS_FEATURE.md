@@ -112,21 +112,46 @@ The project view now shows:
 
 ### Database Migration
 
-#### Using Alembic (recommended):
+The Project Costs feature is implemented via Alembic migration **018**.
+
+#### Using Flask-Migrate (recommended):
 ```bash
-# The migration script is in migrations/versions/add_project_costs_table.py
-alembic upgrade head
+# Apply all pending migrations including 018
+flask db upgrade
+
+# Check current migration status
+flask db current
+
+# View migration history
+flask db history
 ```
 
-#### Using SQL directly:
+#### Migration Details
+- **Migration ID**: 018
+- **File**: `migrations/versions/018_add_project_costs_table.py`
+- **Creates**: `project_costs` table with indexes and foreign keys
+- **Depends on**: Migration 017 (reporting and invoicing extensions)
+
+#### Migration Features
+- **Idempotent**: Can be safely run multiple times
+- **Database-aware**: Handles SQLite, PostgreSQL, and MySQL differences
+- **Safe FK handling**: Only creates invoice FK if invoices table exists
+- **Verbose logging**: Prints progress during migration
+- **Error handling**: Clear error messages if migration fails
+
+#### Testing the Migration
+
+A test script is provided to validate migration 018:
 ```bash
-psql -U timetracker -d timetracker -f migrations/add_project_costs.sql
+python test_migration_018.py
 ```
 
-#### Using Python script (Docker):
-```bash
-python docker/migrate-add-project-costs.py
-```
+This checks:
+- Migration file structure and syntax
+- Required columns and indexes
+- Foreign key definitions
+- Model import compatibility
+- Migration chain integrity
 
 ### Environment Variables
 No new environment variables are required. The feature uses existing database connection settings.
@@ -185,7 +210,90 @@ For issues or questions about the Project Costs feature:
 3. Check the migration scripts for database setup
 4. Contact your system administrator
 
+## Testing
+
+Comprehensive tests are provided in `tests/test_project_costs.py`:
+
+### Model Tests
+- ProjectCost creation and validation
+- Relationship testing (Project, User, Invoice)
+- Timestamp and constraint validation
+- Method testing (to_dict, mark_as_invoiced, etc.)
+
+### Query Tests
+- `get_project_costs()` with filters
+- `get_total_costs()` calculations
+- `get_uninvoiced_costs()` filtering
+- `get_costs_by_category()` grouping
+- Date range filtering
+- Billable/non-billable filtering
+
+### Integration Tests
+- Cascade deletion with projects
+- Invoice marking workflow
+- Foreign key constraints
+
+### Smoke Tests
+- Basic CRUD operations
+- Relationship loading
+- Query execution
+
+Run the tests:
+```bash
+# Run all project cost tests
+pytest tests/test_project_costs.py -v
+
+# Run specific test class
+pytest tests/test_project_costs.py::TestProjectCostModel -v
+
+# Run with coverage
+pytest tests/test_project_costs.py --cov=app.models.project_cost --cov-report=html
+```
+
+## Troubleshooting
+
+### Migration 018 Issues
+
+If migration 018 fails:
+
+1. **Check database connection**:
+   ```bash
+   flask db current
+   ```
+
+2. **View detailed migration logs**:
+   The migration prints verbose output showing each step.
+
+3. **Common issues**:
+   - **Index already exists**: Migration is idempotent and checks before creating
+   - **Foreign key errors**: Ensure projects and users tables exist
+   - **Boolean defaults**: Migration handles different database dialects
+
+4. **Manual rollback** (if needed):
+   ```bash
+   flask db downgrade 017
+   ```
+
+5. **Re-run migration**:
+   ```bash
+   flask db upgrade 018
+   ```
+
+### Data Integrity
+
+The migration includes:
+- **NOT NULL constraints** on required fields
+- **Foreign key constraints** with CASCADE deletion
+- **Indexes** on frequently queried columns
+- **Server-side defaults** for timestamps and boolean fields
+
 ## Version History
+
+- **v1.1** (2025-01-15): Migration improvements
+  - Fixed index column bug in migration 018
+  - Added comprehensive test suite (70+ tests)
+  - Improved migration error handling and logging
+  - Enhanced documentation with troubleshooting guide
 
 - **v1.0** (2024-01-01): Initial release
   - Basic cost tracking

@@ -78,17 +78,28 @@ def test_migration_file():
         # Check indexes
         print("\nChecking indexes...")
         indexes = [
-            'ix_project_costs_project_id',
-            'ix_project_costs_user_id',
-            'ix_project_costs_cost_date',
-            'ix_project_costs_invoice_id'
+            ('ix_project_costs_project_id', 'project_id'),
+            ('ix_project_costs_user_id', 'user_id'),
+            ('ix_project_costs_cost_date', 'cost_date'),
+            ('ix_project_costs_invoice_id', 'invoice_id')
         ]
         
-        for idx in indexes:
-            if idx in content:
-                print(f"  ✓ Index '{idx}' defined")
+        for idx_name, column_name in indexes:
+            if idx_name in content:
+                # Verify the index is on the correct column
+                # Find the line with the index definition
+                for line in content.split('\n'):
+                    if idx_name in line and 'create_index' in line:
+                        if f"['{column_name}']" in line:
+                            print(f"  ✓ Index '{idx_name}' defined on column '{column_name}'")
+                            break
+                        else:
+                            print(f"  ✗ Index '{idx_name}' defined but on wrong column!")
+                            return False
+                else:
+                    print(f"  ✓ Index '{idx_name}' defined")
             else:
-                print(f"  ✗ Index '{idx}' not found!")
+                print(f"  ✗ Index '{idx_name}' not found!")
                 return False
         
         # Check foreign keys

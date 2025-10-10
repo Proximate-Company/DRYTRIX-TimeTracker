@@ -63,8 +63,25 @@ jobs:
         run: |
           echo "🔍 Validating migration consistency..."
           
-          # Initialize fresh database
-          flask db upgrade
+          # Show current directory and check for migration files
+          echo "Current directory: $(pwd)"
+          echo "Migration files:"
+          ls -la migrations/versions/ | tail -5
+          
+          # Initialize fresh database with verbose output
+          echo "Running flask db upgrade..."
+          if ! flask db upgrade; then
+            echo ""
+            echo "❌ Migration failed!"
+            echo "Checking database state..."
+            flask db current || true
+            echo ""
+            echo "Checking migration history..."
+            flask db history | tail -10 || true
+            exit 1
+          fi
+          
+          echo "✅ Migrations completed successfully"
           
           # Generate a new migration from current models
           flask db migrate -m "Test migration consistency" --rev-id test_consistency

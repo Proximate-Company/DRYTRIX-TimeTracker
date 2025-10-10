@@ -26,7 +26,6 @@ def sample_data(app):
                 project_id=project.id,
                 start_time=base_time + timedelta(days=i),
                 end_time=base_time + timedelta(days=i, hours=8),
-                duration_seconds=28800,  # 8 hours
                 billable=True
             )
             db.session.add(entry)

@@ -23,6 +23,7 @@ from app.utils.db import safe_commit
 # ============================================================================
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_local_datetime_filter(app):
     """Test local_datetime filter with valid datetime."""
     register_template_filters(app)
@@ -35,6 +36,7 @@ def test_local_datetime_filter(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_local_datetime_filter_none(app):
     """Test local_datetime filter with None."""
     register_template_filters(app)
@@ -45,6 +47,7 @@ def test_local_datetime_filter_none(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_local_date_filter(app):
     """Test local_date filter."""
     register_template_filters(app)
@@ -57,6 +60,7 @@ def test_local_date_filter(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_local_date_filter_none(app):
     """Test local_date filter with None."""
     register_template_filters(app)
@@ -67,6 +71,7 @@ def test_local_date_filter_none(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_local_time_filter(app):
     """Test local_time filter."""
     register_template_filters(app)
@@ -79,6 +84,7 @@ def test_local_time_filter(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_local_time_filter_none(app):
     """Test local_time filter with None."""
     register_template_filters(app)
@@ -89,6 +95,7 @@ def test_local_time_filter_none(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_local_datetime_short_filter(app):
     """Test local_datetime_short filter."""
     register_template_filters(app)
@@ -101,6 +108,7 @@ def test_local_datetime_short_filter(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_local_datetime_short_filter_none(app):
     """Test local_datetime_short filter with None."""
     register_template_filters(app)
@@ -111,6 +119,7 @@ def test_local_datetime_short_filter_none(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_nl2br_filter(app):
     """Test nl2br filter converts newlines to br tags."""
     register_template_filters(app)
@@ -123,6 +132,7 @@ def test_nl2br_filter(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_nl2br_filter_none(app):
     """Test nl2br filter with None."""
     register_template_filters(app)
@@ -133,6 +143,7 @@ def test_nl2br_filter_none(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_markdown_filter_empty(app):
     """Test markdown filter with empty text."""
     register_template_filters(app)
@@ -145,6 +156,7 @@ def test_markdown_filter_empty(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_markdown_filter_with_text(app):
     """Test markdown filter with actual markdown."""
     register_template_filters(app)
@@ -157,6 +169,7 @@ def test_markdown_filter_with_text(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_format_date_filter_with_datetime(app):
     """Test format_date filter with datetime object."""
     register_template_filters(app)
@@ -169,6 +182,7 @@ def test_format_date_filter_with_datetime(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_format_date_filter_with_date(app):
     """Test format_date filter with date object."""
     register_template_filters(app)
@@ -181,6 +195,7 @@ def test_format_date_filter_with_date(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_format_date_filter_formats(app):
     """Test format_date filter with different formats."""
     register_template_filters(app)
@@ -198,6 +213,7 @@ def test_format_date_filter_formats(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_format_date_filter_none(app):
     """Test format_date filter with None."""
     register_template_filters(app)
@@ -208,6 +224,7 @@ def test_format_date_filter_none(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_format_date_filter_non_date(app):
     """Test format_date filter with non-date value."""
     register_template_filters(app)
@@ -218,6 +235,7 @@ def test_format_date_filter_non_date(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_format_money_filter(app):
     """Test format_money filter."""
     register_template_filters(app)
@@ -238,6 +256,7 @@ def test_format_money_filter(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_format_money_filter_invalid(app):
     """Test format_money filter with invalid input."""
     register_template_filters(app)
@@ -252,6 +271,7 @@ def test_format_money_filter_invalid(app):
 # ============================================================================
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_inject_settings(app, client):
     """Test inject_settings context processor."""
     register_context_processors(app)
@@ -262,6 +282,7 @@ def test_inject_settings(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_inject_globals(app, client):
     """Test inject_globals context processor."""
     register_context_processors(app)
@@ -271,6 +292,7 @@ def test_inject_globals(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_before_request(app, client):
     """Test before_request function."""
     register_context_processors(app)
@@ -286,6 +308,7 @@ def test_before_request(app, client):
 # ============================================================================
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_404_error_html(app, client):
     """Test 404 error handler returns HTML for non-API routes."""
     register_error_handlers(app)
@@ -294,6 +317,7 @@ def test_404_error_html(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_404_error_api(app, client):
     """Test 404 error handler returns JSON for API routes."""
     register_error_handlers(app)
@@ -306,6 +330,7 @@ def test_404_error_api(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_500_error_html(app, client):
     """Test 500 error handler returns HTML for non-API routes."""
     register_error_handlers(app)
@@ -319,6 +344,7 @@ def test_500_error_html(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_500_error_api(app, client):
     """Test 500 error handler returns JSON for API routes."""
     register_error_handlers(app)
@@ -335,6 +361,7 @@ def test_500_error_api(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_403_error_html(app, client):
     """Test 403 error handler returns HTML for non-API routes."""
     register_error_handlers(app)
@@ -348,6 +375,7 @@ def test_403_error_html(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_403_error_api(app, client):
     """Test 403 error handler returns JSON for API routes."""
     register_error_handlers(app)
@@ -364,6 +392,7 @@ def test_403_error_api(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_400_error_html(app, client):
     """Test 400 error handler returns HTML for non-API routes."""
     register_error_handlers(app)
@@ -377,6 +406,7 @@ def test_400_error_html(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_400_error_api(app, client):
     """Test 400 error handler returns JSON for API routes."""
     register_error_handlers(app)
@@ -393,6 +423,7 @@ def test_400_error_api(app, client):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_http_exception_handler(app, client):
     """Test generic HTTP exception handler."""
     register_error_handlers(app)
@@ -410,6 +441,7 @@ def test_http_exception_handler(app, client):
 # ============================================================================
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_needs_compile_mo_missing():
     """Test _needs_compile returns True when .mo file is missing."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -425,6 +457,7 @@ def test_needs_compile_mo_missing():
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_needs_compile_po_newer():
     """Test _needs_compile returns True when .po is newer than .mo."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -445,6 +478,7 @@ def test_needs_compile_po_newer():
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_needs_compile_mo_current():
     """Test _needs_compile returns False when .mo is current."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -465,6 +499,7 @@ def test_needs_compile_mo_current():
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_compile_po_to_mo_success():
     """Test compile_po_to_mo successfully compiles a valid .po file."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -489,6 +524,7 @@ msgstr "Hallo"
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_compile_po_to_mo_invalid_file():
     """Test compile_po_to_mo handles invalid .po files."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -501,6 +537,7 @@ def test_compile_po_to_mo_invalid_file():
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_ensure_translations_compiled_empty_dir():
     """Test ensure_translations_compiled with empty directory."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -509,6 +546,7 @@ def test_ensure_translations_compiled_empty_dir():
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_ensure_translations_compiled_valid_structure():
     """Test ensure_translations_compiled with valid translation structure."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -536,6 +574,7 @@ msgstr "Hallo"
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_ensure_translations_compiled_none():
     """Test ensure_translations_compiled with None path."""
     # Should not raise any errors
@@ -543,6 +582,7 @@ def test_ensure_translations_compiled_none():
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_ensure_translations_compiled_relative_path():
     """Test ensure_translations_compiled with relative path."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -560,6 +600,7 @@ def test_ensure_translations_compiled_relative_path():
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_ensure_translations_compiled_nonexistent_dir():
     """Test ensure_translations_compiled with nonexistent directory."""
     # Should not raise any errors
@@ -571,6 +612,7 @@ def test_ensure_translations_compiled_nonexistent_dir():
 # ============================================================================
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_safe_commit_success(app):
     """Test safe_commit with successful commit."""
     with app.app_context():
@@ -581,6 +623,7 @@ def test_safe_commit_success(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_safe_commit_with_context(app):
     """Test safe_commit with context information."""
     with app.app_context():
@@ -591,6 +634,7 @@ def test_safe_commit_with_context(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_safe_commit_sqlalchemy_error(app):
     """Test safe_commit handles SQLAlchemyError."""
     with app.app_context():
@@ -601,6 +645,7 @@ def test_safe_commit_sqlalchemy_error(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_safe_commit_sqlalchemy_error_with_context(app):
     """Test safe_commit handles SQLAlchemyError with context."""
     with app.app_context():
@@ -610,6 +655,7 @@ def test_safe_commit_sqlalchemy_error_with_context(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_safe_commit_sqlalchemy_error_no_action(app):
     """Test safe_commit handles SQLAlchemyError without action."""
     with app.app_context():
@@ -619,6 +665,7 @@ def test_safe_commit_sqlalchemy_error_no_action(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_safe_commit_generic_exception(app):
     """Test safe_commit handles generic exceptions."""
     with app.app_context():
@@ -629,6 +676,7 @@ def test_safe_commit_generic_exception(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_safe_commit_rollback_error(app):
     """Test safe_commit handles errors during rollback."""
     with app.app_context():
@@ -646,6 +694,7 @@ def test_safe_commit_rollback_error(app):
 
 
 @pytest.mark.unit
+@pytest.mark.utils
 def test_safe_commit_logging_error(app):
     """Test safe_commit handles errors during logging."""
     with app.app_context():

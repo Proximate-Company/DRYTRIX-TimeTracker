@@ -276,34 +276,24 @@ graph TD
     
     B -->|Pass| C1[Unit: models]
     B -->|Pass| C2[Unit: routes]
-    B -->|Pass| C3[Unit: api]
-    B -->|Pass| C4[Unit: utils]
+    B -->|Pass| C3[API Tests]
     
-    C1 --> D1[Integration: auth]
+    C1 --> D1[Integration Tests]
     C2 --> D1
     C3 --> D1
-    C4 --> D1
     
-    D1 --> D2[Integration: timer]
-    D1 --> D3[Integration: projects]
-    D1 --> D4[Integration: invoices]
-    
-    D2 --> E[Database Tests]
-    D3 --> E
-    D4 --> E
+    D1 --> E[Database Tests]
     
     E --> F[Security Tests]
     F --> G[Code Quality]
     
-    G --> H1[Black Format]
-    G --> H2[Flake8 Lint]
-    G --> H3[Bandit Security]
-    G --> H4[Safety Check]
+    G --> H1[Flake8 Lint]
+    G --> H2[Bandit Security]
+    G --> H3[Safety Check]
     
     H1 --> I[Coverage Report]
     H2 --> I
     H3 --> I
-    H4 --> I
     
     I --> J[Comment on PR]
     
@@ -320,17 +310,16 @@ Fast critical tests for immediate feedback
 
 #### **Job 2: unit-tests** 🧩 (~10 min)
 Parallel matrix testing:
-- `models` - User, Client, Project, TimeEntry, Invoice, Task
-- `routes` - Page routes, navigation
-- `api` - API endpoints
-- `utils` - Helper functions
+- `models` - User, Client, Project, TimeEntry, Invoice, Task (unit tests)
+- `routes` - Page routes, navigation (unit tests)
+- `api` - API endpoints (integration tests with `api` + `integration` markers)
 
 #### **Job 3: integration-tests** 🔗 (~15 min)
-Parallel matrix testing:
-- `auth` - Login, logout, permissions
-- `timer` - Start/stop timer, time tracking
-- `projects` - Project CRUD, relationships
-- `invoices` - Invoice generation, PDF export
+Tests component interactions with database:
+- Authentication and authorization
+- Timer workflows
+- Project CRUD operations
+- Invoice generation
 
 #### **Job 4: database-tests** 🗄️ (~10 min)
 - Schema validation
@@ -347,7 +336,6 @@ Parallel matrix testing:
 
 #### **Job 6: code-quality** 🎨 (~5 min)
 Parallel checks:
-- **Black** - Code formatting
 - **Flake8** - Style & error checking
 - **Bandit** - Security vulnerabilities
 - **Safety** - Dependency vulnerabilities
@@ -629,8 +617,8 @@ Total Tests: 137
 
 By Type:
   - Smoke Tests: 13 (critical paths)
-  - Unit Tests: 40+ (models, utils)
-  - Integration Tests: 30+ (routes, API)
+  - Unit Tests: 40+ (models, routes)
+  - Integration Tests: 30+ (workflows, API)
   - Security Tests: 25+ (auth, XSS, CSRF)
   - Database Tests: 15+ (schema, migrations)
   - API Tests: 14+ (endpoints)
