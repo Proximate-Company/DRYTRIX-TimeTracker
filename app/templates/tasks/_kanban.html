@@ -865,8 +865,14 @@
 <script>
 // Global function to open task modal
 window.openTaskModal = async function(taskId) {
-  const modal = new bootstrap.Modal(document.getElementById('taskQuickViewModal'));
   const modalEl = document.getElementById('taskQuickViewModal');
+  
+  // Ensure modal is attached to body to avoid stacking/pointer issues
+  if (modalEl && modalEl.parentElement !== document.body) {
+    document.body.appendChild(modalEl);
+  }
+  
+  const modal = new bootstrap.Modal(modalEl);
   
   // Show loading state
   document.querySelector('.task-modal-loading').style.display = 'block';
