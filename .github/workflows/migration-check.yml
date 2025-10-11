@@ -172,62 +172,62 @@ jobs:
           
           # Create sample data script
           python << 'EOF'
-          from app import create_app, db
-          from app.models.user import User
-          from app.models.project import Project
-          from app.models.client import Client
-          import datetime
-          
-          app = create_app()
-          with app.app_context():
-              # Create test user
-              user = User(
-                  username='test_user',
-                  role='user'
-              )
-              db.session.add(user)
-              db.session.commit()  # Commit to get user ID
-              
-              # Create test client
-              client = Client(
-                  name='Test Client',
-                  description='Test client for migration validation'
-              )
-              db.session.add(client)
-              db.session.commit()  # Commit to get client ID
-              
-              # Create test project
-              project = Project(
-                  name='Test Project',
-                  client_id=client.id,
-                  description='Test project for migration validation'
-              )
-              db.session.add(project)
-              
-              db.session.commit()
-              print('✅ Sample data created successfully')
-          EOF
+from app import create_app, db
+from app.models.user import User
+from app.models.project import Project
+from app.models.client import Client
+import datetime
+
+app = create_app()
+with app.app_context():
+    # Create test user
+    user = User(
+        username='test_user',
+        role='user'
+    )
+    db.session.add(user)
+    db.session.commit()  # Commit to get user ID
+    
+    # Create test client
+    client = Client(
+        name='Test Client',
+        description='Test client for migration validation'
+    )
+    db.session.add(client)
+    db.session.commit()  # Commit to get client ID
+    
+    # Create test project
+    project = Project(
+        name='Test Project',
+        client_id=client.id,
+        description='Test project for migration validation'
+    )
+    db.session.add(project)
+    
+    db.session.commit()
+    print('✅ Sample data created successfully')
+EOF
           
           # Verify data integrity after migration
           python << 'EOF'
-          from app import create_app, db
-          from app.models.user import User
-          from app.models.project import Project
-          from app.models.client import Client
-          
-          app = create_app()
-          with app.app_context():
-              user_count = User.query.count()
-              project_count = Project.query.count()
-              client_count = Client.query.count()
-              print(f'Users: {user_count}, Projects: {project_count}, Clients: {client_count}')
-              
-              if user_count > 0 and project_count > 0 and client_count > 0:
-                  print('✅ Data integrity verified after migration')
-              else:
-                  print('❌ Data integrity check failed')
-                  exit(1)
-          EOF
+from app import create_app, db
+from app.models.user import User
+from app.models.project import Project
+from app.models.client import Client
+
+app = create_app()
+with app.app_context():
+    user_count = User.query.count()
+    project_count = Project.query.count()
+    client_count = Client.query.count()
+    print(f'Users: {user_count}, Projects: {project_count}, Clients: {client_count}')
+    
+    if user_count > 0 and project_count > 0 and client_count > 0:
+        print('✅ Data integrity verified after migration')
+    else:
+        print('❌ Data integrity check failed')
+        exit(1)
+EOF
 
       - name: Generate migration report
         if: steps.migration_check.outputs.migration_changes == 'true'
@@ -249,20 +249,20 @@ jobs:
           echo "" >> migration_report.md
           
           python << 'EOF' >> migration_report.md
-          from app import create_app, db
-          from sqlalchemy import inspect
-          
-          app = create_app()
-          with app.app_context():
-              inspector = inspect(db.engine)
-              tables = inspector.get_table_names()
-              print('### Tables:')
-              for table in sorted(tables):
-                  print(f'- {table}')
-                  columns = inspector.get_columns(table)
-                  for column in columns:
-                      print(f'  - {column["name"]}: {column["type"]}')
-          EOF
+from app import create_app, db
+from sqlalchemy import inspect
+
+app = create_app()
+with app.app_context():
+    inspector = inspect(db.engine)
+    tables = inspector.get_table_names()
+    print('### Tables:')
+    for table in sorted(tables):
+        print(f'- {table}')
+        columns = inspector.get_columns(table)
+        for column in columns:
+            print(f'  - {column["name"]}: {column["type"]}')
+EOF
           
           cat migration_report.md
 
