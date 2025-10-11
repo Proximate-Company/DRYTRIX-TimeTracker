@@ -507,6 +507,7 @@
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('invoices.update_invoice_status', invoice_id=invoice.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="new_status" class="form-label">{{ _('New Status') }}</label>
                         <select class="form-select" id="new_status" name="new_status" required>

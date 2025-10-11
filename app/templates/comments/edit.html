@@ -60,6 +60,7 @@
                     
                     <!-- Edit form -->
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <label for="content" class="form-label">
                                 <i class="fas fa-comment me-1"></i>{{ _('Comment Content') }}

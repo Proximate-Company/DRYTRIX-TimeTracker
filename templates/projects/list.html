@@ -215,12 +215,14 @@
                                             </a>
                                             {% if project.status == 'active' %}
                                             <form method="POST" action="{{ url_for('projects.archive_project', project_id=project.id) }}" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-sm btn-action btn-action--more touch-target" title="{{ _('Archive project') }}">
                                                     <i class="fas fa-archive"></i>
                                                 </button>
                                             </form>
                                             {% else %}
                                             <form method="POST" action="{{ url_for('projects.unarchive_project', project_id=project.id) }}" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-sm btn-action btn-action--more touch-target" title="{{ _('Unarchive project') }}">
                                                     <i class="fas fa-box-open"></i>
                                                 </button>
@@ -281,6 +283,7 @@
                     <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteProjectForm" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger touch-target">
                         <i class="fas fa-trash me-2"></i>{{ _('Delete Project') }}
                     </button>

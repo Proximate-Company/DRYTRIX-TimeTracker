@@ -49,6 +49,7 @@
     <!-- Edit form (initially hidden) -->
     <div class="comment-edit-form d-none" id="edit-form-{{ comment.id }}">
         <form method="POST" action="{{ url_for('comments.edit_comment', comment_id=comment.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
                 <textarea name="content" class="form-control" rows="3" required>{{ comment.content }}</textarea>
             </div>
@@ -66,6 +67,7 @@
     <!-- Reply form (initially hidden) -->
     <div class="comment-reply-form d-none mt-3" id="reply-form-{{ comment.id }}">
         <form method="POST" action="{{ url_for('comments.create_comment') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% if comment.project_id %}
             <input type="hidden" name="project_id" value="{{ comment.project_id }}">
             {% else %}

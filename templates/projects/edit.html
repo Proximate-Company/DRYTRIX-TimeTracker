@@ -38,6 +38,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('projects.edit_project', project_id=project.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">

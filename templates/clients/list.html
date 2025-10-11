@@ -201,6 +201,14 @@ function confirmArchiveClient(clientId, clientName) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/archive`;
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        form.appendChild(csrfInput);
+        
         document.body.appendChild(form);
         form.submit();
     });
@@ -213,6 +221,14 @@ function confirmActivateClient(clientId, clientName) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/activate`;
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        form.appendChild(csrfInput);
+        
         document.body.appendChild(form);
         form.submit();
     });
@@ -225,6 +241,14 @@ function confirmDeleteClient(clientId, clientName) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/clients/${clientId}/delete`;
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        form.appendChild(csrfInput);
+        
         document.body.appendChild(form);
         form.submit();
     });

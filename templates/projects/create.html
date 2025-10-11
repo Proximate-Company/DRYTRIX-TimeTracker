@@ -34,6 +34,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('projects.create_project') }}" novalidate id="createProjectForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Project Name and Client -->
                         <div class="row mb-4">
                             <div class="col-md-8">
