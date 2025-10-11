@@ -1,9 +1,4 @@
 {# Reusable Kanban board for tasks. Expects `tasks` and `kanban_columns` in context. #}
-{# Load kanban columns from database if not provided #}
-{% if not kanban_columns %}
-  {% from 'app.models' import KanbanColumn %}
-  {% set kanban_columns = KanbanColumn.get_active_columns() %}
-{% endif %}
 
 <div class="kanban-board-wrapper">
   <div class="kanban-toolbar d-flex justify-content-between align-items-center mb-4">
