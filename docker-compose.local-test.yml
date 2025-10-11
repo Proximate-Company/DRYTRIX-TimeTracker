@@ -10,10 +10,18 @@ services:
       - ALLOW_SELF_REGISTER=${ALLOW_SELF_REGISTER:-true}
       - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
       - ADMIN_USERNAMES=${ADMIN_USERNAMES:-admin}
+      # TROUBLESHOOTING: If forms fail with "CSRF token missing or invalid":
+      # 1. For local testing, you can disable CSRF: WTF_CSRF_ENABLED=false
+      # 2. Or ensure SECRET_KEY doesn't change: set a fixed value in .env
+      # 3. Enable CSRF for production-like testing: WTF_CSRF_ENABLED=true
+      # For details: docs/CSRF_CONFIGURATION.md
       - SECRET_KEY=${SECRET_KEY:-local-test-secret-key}
       # Use SQLite database for local testing
       - DATABASE_URL=sqlite:////data/timetracker.db
       - LOG_FILE=/app/logs/timetracker.log
+      # CSRF Protection (can be disabled for local testing)
+      - WTF_CSRF_ENABLED=${WTF_CSRF_ENABLED:-false}
+      - WTF_CSRF_TIME_LIMIT=${WTF_CSRF_TIME_LIMIT:-3600}
       # Disable secure cookies for local testing
       - SESSION_COOKIE_SECURE=false
       - REMEMBER_COOKIE_SECURE=false

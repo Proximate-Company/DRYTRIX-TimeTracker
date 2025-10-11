@@ -203,6 +203,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - **[Installation Guide](docs/DOCKER_PUBLIC_SETUP.md)** — Detailed setup instructions
 - **[Requirements](docs/REQUIREMENTS.md)** — System requirements and dependencies
 - **[Troubleshooting](docs/DOCKER_STARTUP_TROUBLESHOOTING.md)** — Common issues and solutions
+- **[CSRF Token Issues](CSRF_TROUBLESHOOTING.md)** — Fix "CSRF token missing or invalid" errors
 
 ### Features
 - **[Task Management](docs/TASK_MANAGEMENT_README.md)** — Break projects into manageable tasks
@@ -215,6 +216,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - **[Project Structure](docs/PROJECT_STRUCTURE.md)** — Codebase architecture
 - **[Database Migrations](migrations/README.md)** — Database schema management
 - **[Version Management](docs/VERSION_MANAGEMENT.md)** — Release and versioning
+- **[CSRF Configuration](docs/CSRF_CONFIGURATION.md)** — Security and CSRF token setup for Docker
 - **[CI/CD Documentation](docs/cicd/)** — Continuous integration setup
 
 ### Contributing
@@ -235,10 +237,14 @@ docker-compose up -d
 # Configure your .env file
 cp env.example .env
 # Edit .env with production settings
+# IMPORTANT: Set a secure SECRET_KEY for CSRF tokens and sessions
+# Generate one with: python -c "import secrets; print(secrets.token_hex(32))"
 
 # Start with production compose
 docker-compose -f docker-compose.remote.yml up -d
 ```
+
+> **⚠️ Security Note:** Always set a unique `SECRET_KEY` in production! See [CSRF Configuration](docs/CSRF_CONFIGURATION.md) for details.
 
 ### Raspberry Pi
 TimeTracker runs perfectly on Raspberry Pi 4 (2GB+):

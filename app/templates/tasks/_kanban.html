@@ -1,10 +1,9 @@
-{# Reusable Kanban board for tasks. Expects `tasks` in context. #}
-{% set kanban_statuses = [
-  {'key': 'todo', 'label': _('To Do'), 'icon': 'fas fa-list-check', 'accent': 'secondary'},
-  {'key': 'in_progress', 'label': _('In Progress'), 'icon': 'fas fa-spinner', 'accent': 'warning'},
-  {'key': 'review', 'label': _('Review'), 'icon': 'fas fa-user-check', 'accent': 'info'},
-  {'key': 'done', 'label': _('Done'), 'icon': 'fas fa-check-circle', 'accent': 'success'}
-] %}
+{# Reusable Kanban board for tasks. Expects `tasks` and `kanban_columns` in context. #}
+{# Load kanban columns from database if not provided #}
+{% if not kanban_columns %}
+  {% from 'app.models' import KanbanColumn %}
+  {% set kanban_columns = KanbanColumn.get_active_columns() %}
+{% endif %}
 
 <div class="kanban-board-wrapper">
   <div class="kanban-toolbar d-flex justify-content-between align-items-center mb-4">
@@ -14,15 +13,22 @@
       </div>
       <h5 class="kanban-toolbar-title mb-0">{{ _('Kanban Board') }}</h5>
     </div>
+    {% if current_user.is_admin %}
+    <div>
+      <a href="{{ url_for('kanban.list_columns') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-cog"></i> {{ _('Manage Columns') }}
+      </a>
+    </div>
+    {% endif %}
   </div>
 
   <div id="kanbanBoard" class="kanban-board">
-    {% for col in kanban_statuses %}
-    <div class="kanban-column" data-status="{{ col.key }}">
+    {% for col in kanban_columns %}
+    <div class="kanban-column" data-status="{{ col.key }}" data-column-color="{{ col.color }}">
       <div class="kanban-column-header">
         <div class="d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
-            <div class="kanban-status-icon kanban-status-{{ col.key }}">
+            <div class="kanban-status-icon kanban-status-{{ col.key }}" style="--column-color: {{ col.color }};">
               <i class="{{ col.icon }}"></i>
             </div>
             <h6 class="kanban-column-title mb-0">{{ col.label }}</h6>
@@ -774,13 +780,75 @@
   if (!board) return;
 
   const statusLabels = { 
-    todo: '{{ _('To Do') }}', 
-    in_progress: '{{ _('In Progress') }}', 
-    review: '{{ _('Review') }}', 
-    done: '{{ _('Done') }}', 
-    cancelled: '{{ _('Cancelled') }}' 
+    {% for col in kanban_columns %}
+    '{{ col.key }}': '{{ col.label }}'{% if not loop.last %},{% endif %}
+    {% endfor %}
   };
   const updateUrlTemplate = "{{ url_for('tasks.api_update_status', task_id=0) }}"; // will replace 0 with actual id
+  // Track columns signature to avoid redundant rebuilds
+  let lastColumnsSignature = null;
+
+  function computeColumnsSignature(columns){
+    try {
+      return (columns || []).map(c => [c.key, c.label, c.icon, c.color, c.is_active ? 1 : 0].join('|')).join(',');
+    } catch(_) { return null; }
+  }
+
+  async function fetchColumnsNoStore(){
+    const resp = await fetch('/api/kanban/columns?_=' + Date.now(), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Cache-Control': 'no-cache' },
+      cache: 'no-store'
+    });
+    if (!resp.ok) throw new Error('Failed to fetch columns');
+    const payload = await resp.json();
+    return Array.isArray(payload.columns) ? payload.columns : [];
+  }
+
+  function rebuildBoardColumns(columns){
+    const existingCardsByStatus = {};
+    document.querySelectorAll('.kanban-column-body').forEach(body => {
+      const status = body.getAttribute('data-status');
+      existingCardsByStatus[status] = Array.from(body.querySelectorAll('.kanban-card'));
+    });
+
+    const boardEl = document.getElementById('kanbanBoard');
+    if (!boardEl) return;
+    boardEl.innerHTML = '';
+
+    columns.forEach(col => {
+      const colEl = document.createElement('div');
+      colEl.className = 'kanban-column';
+      colEl.setAttribute('data-status', col.key);
+      colEl.setAttribute('data-column-color', col.color || 'secondary');
+
+      const header = document.createElement('div');
+      header.className = 'kanban-column-header';
+      header.innerHTML = `
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <div class="kanban-status-icon kanban-status-${col.key}" style="--column-color: ${col.color || 'var(--primary-color)'};">
+              <i class="${col.icon || 'fas fa-circle'}"></i>
+            </div>
+            <h6 class="kanban-column-title mb-0">${col.label}</h6>
+          </div>
+          <span class="kanban-count kanban-count-${col.key}">0</span>
+        </div>`;
+
+      const body = document.createElement('div');
+      body.className = 'kanban-column-body';
+      body.setAttribute('data-status', col.key);
+
+      const cards = existingCardsByStatus[col.key] || [];
+      cards.forEach(card => { body.appendChild(card); });
+
+      colEl.appendChild(header);
+      colEl.appendChild(body);
+      boardEl.appendChild(colEl);
+    });
+
+    bindDragAndDrop();
+    updateCounts();
+  }
 
 
   function updateCounts() {
@@ -858,6 +926,98 @@
   });
 
   updateCounts();
+
+  // Live handler for Kanban column updates, invoked by base listener
+  window.handleKanbanColumnsUpdated = async function(data){
+    try {
+      // Use global toast system
+      if (window.toastManager) {
+        const action = (data && data.action) ? String(data.action) : 'updated';
+        const msg = action === 'created' ? '{{ _('Kanban column created') }}'
+                  : action === 'deleted' ? '{{ _('Kanban column deleted') }}'
+                  : action === 'reordered' ? '{{ _('Kanban columns reordered') }}'
+                  : action === 'toggled' ? '{{ _('Kanban column visibility changed') }}'
+                  : '{{ _('Kanban columns updated') }}';
+        window.toastManager.info(msg, '{{ _('Update') }}', 3000);
+      } else {
+        try { showToast('{{ _('Kanban columns updated') }}', 'info'); } catch(_) {}
+      }
+
+      const columns = await fetchColumnsNoStore();
+      const sig = computeColumnsSignature(columns);
+      if (sig && sig !== lastColumnsSignature) {
+        rebuildBoardColumns(columns);
+        lastColumnsSignature = sig;
+      }
+    } catch (e) {
+      console.warn('Failed to update Kanban columns live:', e);
+      try { showToast('{{ _('Failed to refresh kanban columns') }}', 'warning'); } catch(_) {}
+    }
+  };
+
+  // Extract drag/drop binding into a function so we can reapply after DOM rebuilds
+  function bindDragAndDrop(){
+    document.querySelectorAll('.kanban-column-body').forEach(body => {
+      // Remove old listeners by cloning
+      const clone = body.cloneNode(true);
+      body.parentNode.replaceChild(clone, body);
+    });
+    document.querySelectorAll('.kanban-column-body').forEach(body => {
+      body.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        body.classList.add('drag-over');
+      });
+      body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
+      body.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        body.classList.remove('drag-over');
+        const targetStatus = body.dataset.status;
+        const taskId = e.dataTransfer.getData('text/plain');
+        const card = dragCard || board.querySelector(`.kanban-card[data-task-id="${taskId}"]`);
+        if (!card) return;
+        const originalParent = card.parentElement;
+        const originalStatus = card.dataset.status;
+        if (targetStatus === originalStatus) { body.appendChild(card); return; }
+        body.appendChild(card);
+        updateCounts();
+        card.dataset.status = targetStatus;
+        const url = updateUrlTemplate.replace('/0/', `/${taskId}/`);
+        try {
+          const resp = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ status: targetStatus })
+          });
+          if (!resp.ok) throw new Error('Failed');
+          const data = await resp.json();
+          if (!data.success) throw new Error(data.error || 'Rejected');
+        } catch (err) {
+          if (originalParent) originalParent.appendChild(card);
+          card.dataset.status = originalStatus;
+          updateCounts();
+          try { showToast('{{ _('Failed to update task status') }}', 'error'); } catch(_) { alert('{{ _('Failed to update task status') }}'); }
+        }
+      });
+    });
+  }
+
+  // Initial bind of drag/drop now that function exists
+  bindDragAndDrop();
+  // Background polling fallback to catch missed events
+  try {
+    setInterval(async () => {
+      try {
+        const columns = await fetchColumnsNoStore();
+        const sig = computeColumnsSignature(columns);
+        if (sig && sig !== lastColumnsSignature) {
+          rebuildBoardColumns(columns);
+          lastColumnsSignature = sig;
+          if (window.toastManager) window.toastManager.info('{{ _('Kanban columns updated') }}', '{{ _('Update') }}', 2000);
+        }
+      } catch(_) {}
+    }, 15000);
+  } catch(_) {}
 })();
 </script>
 

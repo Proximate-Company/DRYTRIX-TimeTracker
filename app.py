@@ -66,5 +66,8 @@ def create_admin():
     db.session.commit()
     print(f"Created admin user: {username}")
 
+# Initialize kanban columns on startup if they don't exist
+# This is handled by the migration system, so we skip it here
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true')

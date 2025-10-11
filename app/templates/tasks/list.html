@@ -2,6 +2,13 @@
 
 {% block title %}{{ _('Tasks') }} - Time Tracker{% endblock %}
 
+{% block head_extra %}
+<!-- Prevent page caching for kanban board -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     {% from "_components.html" import page_header %}
@@ -337,5 +344,8 @@ document.addEventListener('DOMContentLoaded', function() {
         filterBody.classList.add('filter-toggle-transition');
     }, 100);
 });
+
+// Kanban column updates are handled by global socket in base.html
+console.log('Task list page loaded - listening for kanban updates via global socket');
 </script>
 {% endblock %}

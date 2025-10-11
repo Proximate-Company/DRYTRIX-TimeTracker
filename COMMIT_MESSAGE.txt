@@ -1,23 +1,178 @@
-fix: Resolve CI/CD workflow duplication and test failures
+feat: Add customizable Kanban board columns and enhance CSRF configuration
 
-- Remove develop push trigger from ci-comprehensive workflow to prevent duplicate runs
-- Fix User fixtures to set is_active after instantiation (3 fixtures)
-- Fix Client fixtures to set status after instantiation (2 fixtures)
-- Fix Project fixtures to set status after instantiation (2 fixtures)
-- Fix Invoice fixture to set status after instantiation (1 fixture)
-- Update security test to accept 404 as valid status code for API endpoints
-- Document Black formatting requirements
+This commit introduces a comprehensive Kanban board customization system and 
+improves CSRF token configuration for Docker deployments.
 
-Fixes:
-- Duplicate workflow runs when pushing to develop branch
-- TypeError: User.__init__() got unexpected keyword argument 'is_active' (3 fixtures)
-- TypeError: Client.__init__() got unexpected keyword argument 'status' (2 fixtures)
-- TypeError: Project.__init__() got unexpected keyword argument 'status' (2 fixtures)
-- TypeError: Invoice.__init__() got unexpected keyword argument 'status' (1 fixture)
-- test_unauthenticated_cannot_access_api status code mismatch (404 vs 302/401/403)
-- SQLAlchemy InvalidRequestError in test_invoice_creation
+## Major Features
 
-Total: 8 fixture errors fixed across User, Client, Project, and Invoice models
+### 1. Customizable Kanban Board Columns
+Add complete kanban column customization system allowing users to define 
+custom workflow states beyond the default columns.
 
-NOTE: Black formatting still needs to be applied locally with: black app/
+**New Components:**
+- Add KanbanColumn model with full CRUD operations (app/models/kanban_column.py)
+- Add kanban routes blueprint with admin endpoints (app/routes/kanban.py)
+- Add kanban column management templates (app/templates/kanban/)
+- Add migration 019 for kanban_columns table (migrations/)
 
+**Features:**
+- Create unlimited custom columns with unique keys, labels, icons, and colors
+- Drag-and-drop column reordering with position persistence
+- Toggle column visibility without deletion
+- Protected system columns (todo, in_progress, done) prevent accidental deletion
+- Complete state marking for columns that should mark tasks as done
+- Real-time updates via SocketIO broadcasts when columns change
+- Font Awesome icon support (5000+ icons)
+- Bootstrap color scheme integration
+- Comprehensive validation and error handling
+
+**Integration:**
+- Update Task model to work with dynamic column statuses (app/models/task.py)
+- Update task routes to use kanban column API (app/routes/tasks.py)
+- Update project routes to fetch active columns (app/routes/projects.py)
+- Add kanban column management links to base template (app/templates/base.html)
+- Update kanban board templates to render dynamic columns (app/templates/tasks/)
+- Add cache prevention headers to force fresh column data
+
+**API Endpoints:**
+- GET /api/kanban/columns - Fetch all active columns
+- POST /api/kanban/columns/reorder - Reorder columns
+- GET /kanban/columns - Column management interface (admin only)
+- POST /kanban/columns/create - Create new column (admin only)
+- POST /kanban/columns/<id>/edit - Edit column (admin only)
+- POST /kanban/columns/<id>/delete - Delete column (admin only)
+- POST /kanban/columns/<id>/toggle - Toggle column visibility (admin only)
+
+### 2. Enhanced CSRF Configuration
+Improve CSRF token configuration and documentation for Docker deployments.
+
+**Configuration Updates:**
+- Add WTF_CSRF_ENABLED environment variable to all docker-compose files
+- Add WTF_CSRF_TIME_LIMIT environment variable with 1-hour default
+- Update app/config.py to read CSRF settings from environment
+- Add SECRET_KEY validation in app/__init__.py to prevent production deployment 
+  with default keys
+
+**Docker Compose Updates:**
+- docker-compose.yml: CSRF enabled by default for security testing
+- docker-compose.remote.yml: CSRF always enabled in production
+- docker-compose.remote-dev.yml: CSRF enabled with production-like settings
+- docker-compose.local-test.yml: CSRF can be disabled for local testing
+- Add helpful comments explaining each CSRF-related environment variable
+- Update env.example with CSRF configuration examples
+
+**Verification Scripts:**
+- Add scripts/verify_csrf_config.sh for Unix systems
+- Add scripts/verify_csrf_config.bat for Windows systems
+- Scripts check SECRET_KEY, CSRF_ENABLED, and CSRF_TIME_LIMIT settings
+
+### 3. Database Initialization Improvements
+- Update app/__init__.py to run pending migrations on startup
+- Add automatic kanban column initialization after migrations
+- Improve error handling and logging during database setup
+
+### 4. Configuration Management
+- Update app/config.py with new CSRF and kanban-related settings
+- Add environment variable parsing with sensible defaults
+- Improve configuration validation and error messages
+
+## Documentation
+
+### New Documentation Files
+- CUSTOM_KANBAN_README.md: Quick start guide for kanban customization
+- KANBAN_CUSTOMIZATION.md: Detailed technical documentation
+- IMPLEMENTATION_SUMMARY.md: Implementation details and architecture
+- KANBAN_AUTO_REFRESH_COMPLETE.md: Real-time update system documentation
+- KANBAN_REFRESH_FINAL_FIX.md: Cache and refresh troubleshooting
+- KANBAN_REFRESH_SOLUTION.md: Technical solution for data freshness
+- docs/CSRF_CONFIGURATION.md: Comprehensive CSRF setup guide
+- CSRF_DOCKER_CONFIGURATION_SUMMARY.md: Docker-specific CSRF setup
+- CSRF_TROUBLESHOOTING.md: Common CSRF issues and solutions
+- APPLY_KANBAN_MIGRATION.md: Migration application guide
+- APPLY_FIXES_NOW.md: Quick fix reference
+- DEBUG_KANBAN_COLUMNS.md: Debugging guide
+- DIAGNOSIS_STEPS.md: System diagnosis procedures
+- BROWSER_CACHE_FIX.md: Browser cache troubleshooting
+- FORCE_NO_CACHE_FIX.md: Cache prevention solutions
+- SESSION_CLOSE_ERROR_FIX.md: Session handling fixes
+- QUICK_FIX.md: Quick reference for common fixes
+
+### Updated Documentation
+- README.md: Add kanban customization feature description
+- Update project documentation with new features
+
+## Testing
+
+### New Test Files
+- test_kanban_refresh.py: Test kanban column refresh functionality
+
+## Technical Details
+
+**Database Changes:**
+- New table: kanban_columns with 11 columns
+- Indexes on: key, position
+- Default data: 4 system columns (todo, in_progress, review, done)
+- Support for both SQLite (development) and PostgreSQL (production)
+
+**Real-Time Updates:**
+- SocketIO events: 'kanban_columns_updated' with action type
+- Automatic page refresh when columns are created/updated/deleted/reordered
+- Prevents stale data by expiring SQLAlchemy caches after changes
+
+**Security:**
+- Admin-only access to column management
+- CSRF protection on all column mutation endpoints
+- API endpoints exempt from CSRF (use JSON and other auth mechanisms)
+- System column protection prevents data integrity issues
+- Validation prevents deletion of columns with active tasks
+
+**Performance:**
+- Efficient querying with position-based ordering
+- Cached column data with cache invalidation on changes
+- No-cache headers on API responses to prevent stale data
+- Optimized database indexes for fast lookups
+
+## Breaking Changes
+
+None. This is a fully backward-compatible addition.
+
+Existing workflows continue to work with the default columns.
+Custom columns are opt-in via the admin interface.
+
+## Migration Notes
+
+1. Run migration 019 to create kanban_columns table
+2. Default columns are initialized automatically on first run
+3. No data migration needed for existing tasks
+4. Existing task statuses map to new column keys
+
+## Environment Variables
+
+New environment variables (all optional with defaults):
+- WTF_CSRF_ENABLED: Enable/disable CSRF protection (default: true)
+- WTF_CSRF_TIME_LIMIT: CSRF token expiration in seconds (default: 3600)
+- SECRET_KEY: Required in production, must be cryptographically secure
+
+See env.example for complete configuration reference.
+
+## Deployment Notes
+
+1. Ensure SECRET_KEY is set to a secure value in production
+2. Keep WTF_CSRF_ENABLED=true in production
+3. Run migration 019 before starting the application
+4. Clear browser cache if kanban board doesn't update
+
+## Future Enhancements
+
+Potential future improvements documented in implementation notes:
+- Column-specific permissions and access control
+- Column templates for common workflows
+- Import/export of column configurations
+- Column usage analytics and reporting
+- Workflow automation based on column transitions
+
+---
+
+This commit represents a major enhancement to the task management system,
+providing flexibility for teams to define their own workflows while
+maintaining security and data integrity.

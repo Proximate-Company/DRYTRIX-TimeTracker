@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Create Kanban Column') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="mb-4">
+        <h2>
+          <i class="fas fa-plus-circle text-primary"></i> {{ _('Create Kanban Column') }}
+        </h2>
+        <p class="text-muted">{{ _('Add a new column to your kanban board') }}</p>
+      </div>
+
+      <!-- Flash messages are globally converted to toasts in base.html -->
+
+      <div class="card">
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('kanban.create_column') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-3">
+              <label for="label" class="form-label">
+                {{ _('Column Label') }} <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control" 
+                     id="label" 
+                     name="label" 
+                     required 
+                     placeholder="{{ _('e.g., In Review, Blocked, Testing') }}"
+                     autofocus>
+              <small class="form-text text-muted">
+                {{ _('The display name shown on the kanban board') }}
+              </small>
+            </div>
+
+            <div class="mb-3">
+              <label for="key" class="form-label">
+                {{ _('Column Key') }} <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control" 
+                     id="key" 
+                     name="key" 
+                     required 
+                     pattern="[a-z0-9_]+" 
+                     placeholder="{{ _('e.g., in_review, blocked, testing') }}">
+              <small class="form-text text-muted">
+                {{ _('Unique identifier (lowercase, no spaces, use underscores). Auto-generated from label if empty.') }}
+              </small>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="icon" class="form-label">
+                    {{ _('Icon Class') }}
+                  </label>
+                  <input type="text" 
+                         class="form-control" 
+                         id="icon" 
+                         name="icon" 
+                         value="fas fa-circle"
+                         placeholder="fas fa-circle">
+                  <small class="form-text text-muted">
+                    {{ _('Font Awesome icon class') }} 
+                    <a href="https://fontawesome.com/icons" target="_blank">{{ _('Browse icons') }}</a>
+                  </small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="color" class="form-label">
+                    {{ _('Color') }}
+                  </label>
+                  <select class="form-select" id="color" name="color">
+                    <option value="primary">{{ _('Primary (Blue)') }}</option>
+                    <option value="secondary" selected>{{ _('Secondary (Gray)') }}</option>
+                    <option value="success">{{ _('Success (Green)') }}</option>
+                    <option value="danger">{{ _('Danger (Red)') }}</option>
+                    <option value="warning">{{ _('Warning (Yellow)') }}</option>
+                    <option value="info">{{ _('Info (Cyan)') }}</option>
+                    <option value="dark">{{ _('Dark') }}</option>
+                  </select>
+                  <small class="form-text text-muted">
+                    {{ _('Bootstrap color class for styling') }}
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       id="is_complete_state" 
+                       name="is_complete_state">
+                <label class="form-check-label" for="is_complete_state">
+                  {{ _('Mark as Complete State') }}
+                </label>
+                <small class="form-text text-muted d-block">
+                  {{ _('Tasks moved to this column will be marked as completed') }}
+                </small>
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between">
+              <a href="{{ url_for('kanban.list_columns') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> {{ _('Cancel') }}
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> {{ _('Create Column') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="alert alert-info mt-4">
+        <i class="fas fa-info-circle"></i>
+        <strong>{{ _('Note:') }}</strong>
+        {{ _('The column will be added at the end of the board. You can reorder columns later from the management page.') }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-generate key from label
+document.getElementById('label').addEventListener('input', function(e) {
+  const keyInput = document.getElementById('key');
+  if (!keyInput.value || keyInput.dataset.autoGenerated !== 'false') {
+    const generatedKey = e.target.value
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '_');
+    keyInput.value = generatedKey;
+  }
+});
+
+document.getElementById('key').addEventListener('input', function() {
+  this.dataset.autoGenerated = 'false';
+});
+</script>
+{% endblock %}
+
