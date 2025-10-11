@@ -75,8 +75,8 @@ class Config:
     UPLOAD_FOLDER = '/data/uploads'
     
     # CSRF protection
-    WTF_CSRF_ENABLED = True  # Enabled by default, disabled only in testing
-    WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
+    WTF_CSRF_ENABLED = os.getenv('WTF_CSRF_ENABLED', 'true').lower() == 'true'
+    WTF_CSRF_TIME_LIMIT = int(os.getenv('WTF_CSRF_TIME_LIMIT', 3600))  # Default: 1 hour
     
     # Security headers
     SECURITY_HEADERS = {
@@ -118,7 +118,8 @@ class DevelopmentConfig(Config):
         'DATABASE_URL',
         'postgresql+psycopg2://timetracker:timetracker@localhost:5432/timetracker'
     )
-    WTF_CSRF_ENABLED = False
+    # CSRF can be overridden via env var, defaults to False for dev convenience
+    WTF_CSRF_ENABLED = os.getenv('WTF_CSRF_ENABLED', 'false').lower() == 'true'
 
 class TestingConfig(Config):
     """Testing configuration"""

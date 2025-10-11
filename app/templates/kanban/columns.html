@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Manage Kanban Columns') }}{% endblock %}
+
+{% block head_extra %}
+<!-- Prevent page caching -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2>
+        <i class="fas fa-columns text-primary"></i> {{ _('Manage Kanban Columns') }}
+      </h2>
+      <p class="text-muted">{{ _('Customize your kanban board columns and task states') }}</p>
+    </div>
+    <a href="{{ url_for('kanban.create_column') }}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> {{ _('Add Column') }}
+    </a>
+  </div>
+
+  <!-- Flash messages are globally converted to toasts in base.html -->
+
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th width="50">#</th>
+              <th width="120">{{ _('Key') }}</th>
+              <th>{{ _('Label') }}</th>
+              <th width="150">{{ _('Icon') }}</th>
+              <th width="100">{{ _('Color') }}</th>
+              <th width="100">{{ _('Status') }}</th>
+              <th width="120">{{ _('Complete?') }}</th>
+              <th width="100">{{ _('System') }}</th>
+              <th width="200">{{ _('Actions') }}</th>
+            </tr>
+          </thead>
+          <tbody id="columnsList">
+            {% for column in columns %}
+            <tr data-column-id="{{ column.id }}">
+              <td>
+                <i class="fas fa-grip-vertical text-muted" style="cursor: move;"></i>
+              </td>
+              <td>
+                <code>{{ column.key }}</code>
+              </td>
+              <td>
+                <strong>{{ column.label }}</strong>
+              </td>
+              <td>
+                <i class="{{ column.icon }}"></i>
+                <span class="text-muted small">{{ column.icon }}</span>
+              </td>
+              <td>
+                <span class="badge bg-{{ column.color }}">{{ column.color }}</span>
+              </td>
+              <td>
+                {% if column.is_active %}
+                  <span class="badge bg-success">{{ _('Active') }}</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ _('Inactive') }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if column.is_complete_state %}
+                  <i class="fas fa-check-circle text-success"></i> {{ _('Yes') }}
+                {% else %}
+                  <i class="fas fa-circle text-muted"></i> {{ _('No') }}
+                {% endif %}
+              </td>
+              <td>
+                {% if column.is_system %}
+                  <span class="badge bg-info">{{ _('System') }}</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">{{ _('Custom') }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <a href="{{ url_for('kanban.edit_column', column_id=column.id) }}" 
+                     class="btn btn-outline-primary" 
+                     title="{{ _('Edit') }}">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <form method="POST" 
+                        action="{{ url_for('kanban.toggle_column', column_id=column.id) }}" 
+                        class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            class="btn btn-outline-{{ 'secondary' if column.is_active else 'success' }}" 
+                            title="{{ _('Deactivate') if column.is_active else _('Activate') }}">
+                      <i class="fas fa-{{ 'eye-slash' if column.is_active else 'eye' }}"></i>
+                    </button>
+                  </form>
+                  {% if not column.is_system %}
+                  <button type="button" 
+                          class="btn btn-outline-danger" 
+                          title="{{ _('Delete') }}"
+                          onclick="showDeleteModal({{ column.id }}, '{{ column.label }}', '{{ column.key }}')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if not columns %}
+      <div class="text-center py-5">
+        <i class="fas fa-columns fa-3x text-muted mb-3"></i>
+        <p class="text-muted">{{ _('No kanban columns found. Create your first column to get started.') }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="alert alert-info mt-4">
+    <i class="fas fa-info-circle"></i>
+    <strong>{{ _('Tips:') }}</strong>
+    <ul class="mb-0 mt-2">
+      <li>{{ _('Drag and drop rows to reorder columns') }}</li>
+      <li>{{ _('System columns (todo, in_progress, done) cannot be deleted but can be customized') }}</li>
+      <li>{{ _('Columns marked as "Complete" will mark tasks as completed when dragged to that column') }}</li>
+      <li>{{ _('Inactive columns are hidden from the kanban board but tasks with that status remain accessible') }}</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Delete Column Modal -->
+<div class="modal fade" id="deleteColumnModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-trash me-2 text-danger"></i>{{ _('Delete Kanban Column') }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>{{ _('Warning:') }}</strong> {{ _('This action cannot be undone.') }}
+        </div>
+        <p>{{ _('Are you sure you want to delete the column') }} <strong id="deleteColumnLabel"></strong>?</p>
+        <p class="text-muted mb-0">
+          <small>{{ _('Key:') }} <code id="deleteColumnKey"></code></small>
+        </p>
+        <p class="text-muted mb-0 mt-2">
+          <small>{{ _('Note: Tasks with this status will remain accessible but the column will no longer appear on the kanban board.') }}</small>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
+        </button>
+        <form method="POST" id="deleteColumnForm" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash me-2"></i>{{ _('Delete Column') }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+// Show delete modal
+function showDeleteModal(columnId, label, key) {
+  const labelEl = document.getElementById('deleteColumnLabel');
+  const keyEl = document.getElementById('deleteColumnKey');
+  const formEl = document.getElementById('deleteColumnForm');
+  
+  if (labelEl) labelEl.textContent = label;
+  if (keyEl) keyEl.textContent = key;
+  if (formEl) formEl.action = "{{ url_for('kanban.delete_column', column_id=0) }}".replace('0', columnId);
+  
+  const modal = document.getElementById('deleteColumnModal');
+  if (modal) new bootstrap.Modal(modal).show();
+}
+
+// Loading state on delete submit
+document.addEventListener('DOMContentLoaded', function() {
+  const deleteForm = document.getElementById('deleteColumnForm');
+  if (deleteForm) {
+    deleteForm.addEventListener('submit', function() {
+      const btn = deleteForm.querySelector('button[type="submit"]');
+      if (btn) {
+        btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"><span class="visually-hidden">Loading...</span></div>Deleting...';
+        btn.disabled = true;
+      }
+    });
+  }
+});
+
+// Enable drag-and-drop reordering
+const tbody = document.getElementById('columnsList');
+if (tbody) {
+  const sortable = new Sortable(tbody, {
+    handle: '.fa-grip-vertical',
+    animation: 150,
+    onEnd: async function(evt) {
+      const columnIds = Array.from(tbody.querySelectorAll('tr')).map(row => 
+        parseInt(row.dataset.columnId)
+      );
+      
+      try {
+        const response = await fetch('/api/kanban/columns/reorder', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': '{{ csrf_token() }}'
+          },
+          body: JSON.stringify({ column_ids: columnIds })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to reorder columns');
+        }
+        
+        const data = await response.json();
+        if (data.success) {
+          // Use global toast, no hard reload required; Kanban board will live-refresh via socket
+          if (window.toastManager) {
+            window.toastManager.success(data.message || '{{ _('Columns reordered successfully') }}', '{{ _('Success') }}');
+          } else {
+            try { showToast(data.message || '{{ _('Columns reordered successfully') }}', 'success'); } catch(_) {}
+          }
+          // Broadcast to other tabs as a fallback (if Socket.IO not connected there)
+          try {
+            if (window._kanbanBroadcastChannel) {
+              window._kanbanBroadcastChannel.postMessage({ type: 'columns_updated', action: 'reordered' });
+            } else {
+              localStorage.setItem('kanban_columns_updated', JSON.stringify({ type: 'columns_updated', action: 'reordered', ts: Date.now() }));
+              setTimeout(() => localStorage.removeItem('kanban_columns_updated'), 1000);
+            }
+          } catch(_) {}
+        }
+      } catch (error) {
+        console.error('Error reordering columns:', error);
+        try { showToast('{{ _('Failed to reorder columns. Please try again.') }}', 'error'); } catch(_) { alert('{{ _('Failed to reorder columns. Please try again.') }}'); }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}
+

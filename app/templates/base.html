@@ -455,13 +455,85 @@
                 }
                 if (typeof updateTimerDisplay === 'function') updateTimerDisplay();
             });
+            
+            // Listen for kanban column updates; prefer live in-page handler, fallback to reload
+            socket.on('kanban_columns_updated', (data) => {
+                console.log('Kanban columns updated:', data);
+                try {
+                    if (typeof window.handleKanbanColumnsUpdated === 'function') {
+                        // Let the active page update its DOM live
+                        window.handleKanbanColumnsUpdated(data);
+                    } else {
+                        // Fallback: show toast and hard-reload to reflect changes
+                        if (window.toastManager) {
+                            window.toastManager.info('{{ _('Kanban columns updated. Refreshing...') }}', '{{ _('Update') }}');
+                        } else {
+                            try { showToast('{{ _('Kanban columns updated. Refreshing...') }}', 'info'); } catch(_) {}
+                        }
+                        setTimeout(() => {
+                            if ('caches' in window) {
+                                caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
+                            }
+                            window.location.reload(true);
+                        }, 500);
+                    }
+                } catch (e) {
+                    console.warn('Kanban update handler failed, reloading:', e);
+                    setTimeout(() => window.location.reload(true), 500);
+                }
+            });
+            
+            // Make socket globally available
+            window.appSocket = socket;
             console.log('Base template initialized - Socket.IO and global functions ready');
         } catch (e) {
             console.warn('Socket.IO init failed:', e);
         }
     </script>
     {% endif %}
-    
+    <script>
+        // Cross-tab Kanban update fallbacks: BroadcastChannel + localStorage
+        (function(){
+            try {
+                function triggerKanbanUpdate(data){
+                    try {
+                        if (typeof window.handleKanbanColumnsUpdated === 'function') {
+                            window.handleKanbanColumnsUpdated(data || { source: 'broadcast' });
+                        } else if (window.toastManager) {
+                            window.toastManager.info('{{ _('Kanban columns updated') }}', '{{ _('Update') }}');
+                        } else {
+                            try { showToast('{{ _('Kanban columns updated') }}', 'info'); } catch(_) {}
+                        }
+                    } catch(e) { console.warn('Kanban update trigger failed', e); }
+                }
+
+                // BroadcastChannel listener
+                try {
+                    if ('BroadcastChannel' in window) {
+                        var kanbanChannel = new BroadcastChannel('kanban');
+                        kanbanChannel.onmessage = function(ev){
+                            var msg = ev && ev.data || {};
+                            if (msg && (msg.type === 'columns_updated')) {
+                                triggerKanbanUpdate(msg);
+                            }
+                        };
+                        window._kanbanBroadcastChannel = kanbanChannel;
+                    }
+                } catch(_) {}
+
+                // localStorage fallback
+                window.addEventListener('storage', function(ev){
+                    try {
+                        if (ev && ev.key === 'kanban_columns_updated' && ev.newValue) {
+                            var data = null;
+                            try { data = JSON.parse(ev.newValue); } catch(e) {}
+                            triggerKanbanUpdate(data || { type: 'columns_updated' });
+                        }
+                    } catch(_) {}
+                });
+            } catch(e) {}
+        })();
+    </script>
     {% block scripts_extra %}{% endblock %}
     {% block extra_js %}{% endblock %}
     <script>
@@ -544,23 +616,41 @@
         })();
     </script>
     <script>
-        // CSRF auto-injection for forms and AJAX/fetch
+        // CSRF auto-injection for forms and AJAX/fetch + optional token refresh
         (function(){
             try {
                 var meta = document.querySelector('meta[name="csrf-token"]');
-                var token = meta ? meta.getAttribute('content') : '';
-                if (!token) return;
-
-                // Add hidden CSRF inputs to all POST forms that lack one
-                document.querySelectorAll('form[method="post"]:not([data-no-csrf-auto])').forEach(function(form){
-                    if (!form.querySelector('input[name="csrf_token"]')) {
-                        var input = document.createElement('input');
+                function getToken(){
+                    return meta ? (meta.getAttribute('content') || '') : '';
+                }
+                function setToken(t){
+                    if (meta && typeof t === 'string' && t) meta.setAttribute('content', t);
+                }
+                function isPostForm(form){
+                    var m = (form.getAttribute('method') || form.method || '').toString().toUpperCase();
+                    return m === 'POST';
+                }
+                function ensureFormHasToken(form, token){
+                    if (!isPostForm(form) || form.hasAttribute('data-no-csrf-auto')) return;
+                    var input = form.querySelector('input[name="csrf_token"]');
+                    if (!input) {
+                        input = document.createElement('input');
                         input.type = 'hidden';
                         input.name = 'csrf_token';
-                        input.value = token;
                         form.insertBefore(input, form.firstChild);
                     }
-                });
+                    input.value = token;
+                }
+                function updateAllCsrfInputs(token){
+                    // Update existing CSRF inputs
+                    document.querySelectorAll('input[name="csrf_token"]').forEach(function(i){ i.value = token; });
+                    // Ensure all POST forms have a token
+                    Array.prototype.forEach.call(document.forms, function(form){ ensureFormHasToken(form, token); });
+                }
+
+                var initial = getToken();
+                if (!initial) return;
+                updateAllCsrfInputs(initial);
 
                 // jQuery AJAX: attach header automatically for same-origin, non-GET
                 if (window.$ && $.ajaxSetup) {
@@ -571,7 +661,7 @@
                                 var url = settings.url || '';
                                 var sameOrigin = url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0 || url.indexOf(location.origin) === 0;
                                 if (sameOrigin && ['GET','HEAD','OPTIONS','TRACE'].indexOf(method) === -1) {
-                                    xhr.setRequestHeader('X-CSRFToken', token);
+                                    xhr.setRequestHeader('X-CSRFToken', getToken());
                                 }
                             } catch(e) {}
                         }
@@ -589,7 +679,7 @@
                             var method = (req.method || '').toUpperCase();
                             if (sameOrigin && ['GET','HEAD','OPTIONS','TRACE'].indexOf(method) === -1) {
                                 var headers = new Headers(req.headers || {});
-                                if (!headers.has('X-CSRFToken')) headers.set('X-CSRFToken', token);
+                                if (!headers.has('X-CSRFToken')) headers.set('X-CSRFToken', getToken());
                                 return _origFetch(new Request(req, { headers: headers }));
                             }
                             return _origFetch(req);
@@ -598,8 +688,32 @@
                         }
                     };
                 }
+
+                // Periodic CSRF token refresh (avoids expiry on long-lived pages)
+                var csrfRefreshUrl = "{{ url_for('get_csrf_token') }}";
+                function refreshCsrfToken(){
+                    try {
+                        if (!csrfRefreshUrl) return;
+                        return fetch(csrfRefreshUrl, { credentials: 'same-origin', cache: 'no-store' })
+                            .then(function(r){ return r.ok ? r.json() : null; })
+                            .then(function(data){
+                                if (data && data.csrf_token) {
+                                    setToken(data.csrf_token);
+                                    updateAllCsrfInputs(data.csrf_token);
+                                }
+                            })
+                            .catch(function(){});
+                    } catch(e) {}
+                }
+                // Refresh when tab becomes visible and on an interval
+                document.addEventListener('visibilitychange', function(){
+                    if (!document.hidden) refreshCsrfToken();
+                });
+                // Refresh every 20 minutes (default token TTL is 60 minutes)
+                try { setInterval(refreshCsrfToken, 20 * 60 * 1000); } catch(e) {}
             } catch(e) {}
         })();
     </script>
 </body>
 </html>
+

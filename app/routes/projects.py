@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify, make_response
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
-from app.models import Project, TimeEntry, Task, Client, ProjectCost
+from app.models import Project, TimeEntry, Task, Client, ProjectCost, KanbanColumn
 from datetime import datetime
 from decimal import Decimal
 from app.utils.db import safe_commit
@@ -197,7 +197,12 @@ def view_project(project_id):
     # Get total cost count
     total_costs_count = ProjectCost.query.filter_by(project_id=project_id).count()
     
-    return render_template('projects/view.html', 
+    # Get kanban columns - force fresh data
+    db.session.expire_all()
+    kanban_columns = KanbanColumn.get_active_columns() if KanbanColumn else []
+    
+    # Prevent browser caching of kanban board
+    response = render_template('projects/view.html', 
                          project=project, 
                          entries=entries_pagination.items,
                          pagination=entries_pagination,
@@ -205,7 +210,13 @@ def view_project(project_id):
                          user_totals=user_totals,
                          comments=comments,
                          recent_costs=recent_costs,
-                         total_costs_count=total_costs_count)
+                         total_costs_count=total_costs_count,
+                         kanban_columns=kanban_columns)
+    resp = make_response(response)
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 @projects_bp.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
 @login_required

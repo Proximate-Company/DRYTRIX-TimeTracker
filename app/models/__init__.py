@@ -17,6 +17,7 @@ from .recurring_block import RecurringBlock
 from .rate_override import RateOverride
 from .saved_filter import SavedFilter
 from .project_cost import ProjectCost
+from .kanban_column import KanbanColumn
 
 __all__ = [
     "User",
@@ -43,4 +44,5 @@ __all__ = [
     "InvoiceReminderSchedule",
     "SavedReportView",
     "ReportEmailSchedule",
+    "KanbanColumn",
 ]

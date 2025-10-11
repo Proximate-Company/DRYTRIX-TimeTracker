@@ -4145,6 +4145,39 @@ h6 {
     pointer-events: auto;
 }
 
+/* Modal z-index fix for task quick view */
+#taskQuickViewModal {
+    z-index: 1056 !important;
+}
+
+/* Ensure modal dialog is above backdrop and clickable */
+#taskQuickViewModal .modal-dialog {
+    pointer-events: auto !important;
+    z-index: 1057 !important;
+}
+
+/* Ensure all modal content is interactive */
+#taskQuickViewModal .modal-content {
+    pointer-events: auto !important;
+}
+
+/* Global modal fixes to prevent interaction issues */
+.modal.show {
+    display: block !important;
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-dialog {
+    pointer-events: auto !important;
+}
+
 /* ===== MODERN UI ENHANCEMENTS ===== */
 
 /* Enhanced Navigation */

@@ -112,7 +112,12 @@ class Task(db.Model):
     
     @property
     def status_display(self):
-        """Get human-readable status"""
+        """Get human-readable status from kanban columns"""
+        from .kanban_column import KanbanColumn
+        column = KanbanColumn.get_column_by_key(self.status)
+        if column:
+            return column.label
+        # Fallback to hardcoded map if column not found
         status_map = {
             'todo': 'To Do',
             'in_progress': 'In Progress',
@@ -120,7 +125,7 @@ class Task(db.Model):
             'done': 'Done',
             'cancelled': 'Cancelled'
         }
-        return status_map.get(self.status, self.status)
+        return status_map.get(self.status, self.status.replace('_', ' ').title())
     
     @property
     def priority_display(self):

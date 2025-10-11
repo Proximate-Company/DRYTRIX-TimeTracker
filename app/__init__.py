@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import timedelta
-from flask import Flask, request, session
+from flask import Flask, request, session, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -14,6 +14,7 @@ from flask_limiter.util import get_remote_address
 from authlib.integrations.flask_client import OAuth
 import re
 from jinja2 import ChoiceLoader, FileSystemLoader
+from urllib.parse import urlparse
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Load environment variables
@@ -272,10 +273,39 @@ def create_app(config=None):
             pass
         return response
 
-    # CSRF error handler
+    # CSRF error handler with HTML-friendly fallback
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
-        return ({"error": "csrf_token_missing_or_invalid"}, 400)
+        try:
+            wants_json = (
+                request.is_json
+                or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+                or request.accept_mimetypes["application/json"]
+                >= request.accept_mimetypes["text/html"]
+            )
+        except Exception:
+            wants_json = False
+
+        if wants_json:
+            return jsonify(error="csrf_token_missing_or_invalid"), 400
+
+        try:
+            flash(_("Your session expired or the page was open too long. Please try again."), "warning")
+        except Exception:
+            flash("Your session expired or the page was open too long. Please try again.", "warning")
+
+        # Redirect back to a safe same-origin referrer if available, else to dashboard
+        dest = url_for("main.dashboard")
+        try:
+            ref = request.referrer
+            if ref:
+                ref_host = urlparse(ref).netloc
+                cur_host = urlparse(request.host_url).netloc
+                if ref_host and ref_host == cur_host:
+                    dest = ref
+        except Exception:
+            pass
+        return redirect(dest)
 
     # Expose csrf_token() in Jinja templates even without FlaskForm
     try:
@@ -287,6 +317,22 @@ def create_app(config=None):
 
     except Exception:
         pass
+
+    # CSRF token refresh endpoint (GET)
+    @app.route("/auth/csrf-token", methods=["GET"])
+    def get_csrf_token():
+        try:
+            from flask_wtf.csrf import generate_csrf
+
+            token = generate_csrf()
+        except Exception:
+            token = ""
+        resp = jsonify(csrf_token=token)
+        try:
+            resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        except Exception:
+            pass
+        return resp
 
     # Register blueprints
     from app.routes.auth import auth_bp
@@ -301,6 +347,7 @@ def create_app(config=None):
     from app.routes.invoices import invoices_bp
     from app.routes.clients import clients_bp
     from app.routes.comments import comments_bp
+    from app.routes.kanban import kanban_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -314,6 +361,7 @@ def create_app(config=None):
     app.register_blueprint(invoices_bp)
     app.register_blueprint(clients_bp)
     app.register_blueprint(comments_bp)
+    app.register_blueprint(kanban_bp)
 
     # Exempt API blueprint from CSRF protection (JSON API uses authentication, not CSRF tokens)
     csrf.exempt(api_bp)

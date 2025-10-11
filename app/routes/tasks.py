@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, make_response
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from app import db
-from app.models import Task, Project, User, TimeEntry, TaskActivity
+from app.models import Task, Project, User, TimeEntry, TaskActivity, KanbanColumn
 from datetime import datetime, date
 from decimal import Decimal
 from app.utils.db import safe_commit
@@ -73,13 +73,18 @@ def list_tasks():
     # Get filter options
     projects = Project.query.filter_by(status='active').order_by(Project.name).all()
     users = User.query.order_by(User.username).all()
+    # Force fresh kanban columns from database (no cache)
+    db.session.expire_all()
+    kanban_columns = KanbanColumn.get_active_columns() if KanbanColumn else []
     
-    return render_template(
+    # Prevent browser caching of kanban board
+    response = render_template(
         'tasks/list.html',
         tasks=tasks.items,
         pagination=tasks,
         projects=projects,
         users=users,
+        kanban_columns=kanban_columns,
         status=status,
         priority=priority,
         project_id=project_id,
@@ -87,6 +92,11 @@ def list_tasks():
         search=search,
         overdue=overdue
     )
+    resp = make_response(response)
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 @tasks_bp.route('/tasks/create', methods=['GET', 'POST'])
 @login_required
@@ -225,7 +235,7 @@ def edit_task(task_id):
         task.assigned_to = assigned_to
         # Handle status update (including reopening from done)
         selected_status = request.form.get('status', '').strip()
-        valid_statuses = ['todo', 'in_progress', 'review', 'done', 'cancelled']
+        valid_statuses = KanbanColumn.get_valid_status_keys()
         if selected_status and selected_status in valid_statuses and selected_status != task.status:
             try:
                 previous_status = task.status
@@ -297,11 +307,11 @@ def update_task_status(task_id):
         flash('You do not have permission to update this task', 'error')
         return redirect(url_for('tasks.view_task', task_id=task.id))
     
-    # Validate status
-    valid_statuses = ['todo', 'in_progress', 'review', 'done', 'cancelled']
-    if new_status not in valid_statuses:
-        flash('Invalid status', 'error')
-        return redirect(url_for('tasks.view_task', task_id=task.id))
+        # Validate status against configured kanban columns
+        valid_statuses = KanbanColumn.get_valid_status_keys()
+        if new_status not in valid_statuses:
+            flash('Invalid status', 'error')
+            return redirect(url_for('tasks.view_task', task_id=task.id))
     
     # Update status
     try:
@@ -492,12 +502,17 @@ def my_tasks():
 
     # Provide projects for filter dropdown
     projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # Force fresh kanban columns from database (no cache)
+    db.session.expire_all()
+    kanban_columns = KanbanColumn.get_active_columns() if KanbanColumn else []
 
-    return render_template(
+    # Prevent browser caching of kanban board
+    response = render_template(
         'tasks/my_tasks.html',
         tasks=tasks.items,
         pagination=tasks,
         projects=projects,
+        kanban_columns=kanban_columns,
         status=status,
         priority=priority,
         project_id=project_id,
@@ -505,6 +520,11 @@ def my_tasks():
         task_type=task_type,
         overdue=overdue
     )
+    resp = make_response(response)
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 @tasks_bp.route('/tasks/overdue')
 @login_required
@@ -515,8 +535,9 @@ def overdue_tasks():
         return redirect(url_for('tasks.list_tasks'))
     
     tasks = Task.get_overdue_tasks()
+    kanban_columns = KanbanColumn.get_active_columns() if KanbanColumn else []
     
-    return render_template('tasks/overdue.html', tasks=tasks)
+    return render_template('tasks/overdue.html', tasks=tasks, kanban_columns=kanban_columns)
 
 @tasks_bp.route('/api/tasks/<int:task_id>')
 @login_required
@@ -542,8 +563,8 @@ def api_update_status(task_id):
     if not current_user.is_admin and task.assigned_to != current_user.id and task.created_by != current_user.id:
         return jsonify({'error': 'Access denied'}), 403
     
-    # Validate status
-    valid_statuses = ['todo', 'in_progress', 'review', 'done', 'cancelled']
+    # Validate status against configured kanban columns
+    valid_statuses = KanbanColumn.get_valid_status_keys()
     if new_status not in valid_statuses:
         return jsonify({'error': 'Invalid status'}), 400
     
