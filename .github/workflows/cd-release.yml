@@ -332,6 +332,8 @@ jobs:
       - name: Generate deployment manifests
         run: |
           VERSION="${{ needs.determine-version.outputs.version }}"
+          # Remove 'v' prefix for image tag
+          VERSION_NO_V="${VERSION#v}"
           
           # Docker Compose deployment
           cat > docker-compose.production.yml << EOF
@@ -344,19 +346,40 @@ jobs:
           
           services:
             app:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION_NO_V}
               container_name: timetracker-prod
               ports:
                 - "8080:8080"
               environment:
                 - TZ=\${TZ:-Europe/Brussels}
                 - CURRENCY=\${CURRENCY:-EUR}
-                - DATABASE_URL=postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/\${POSTGRES_DB}
-                - SECRET_KEY=\${SECRET_KEY}
-                - FLASK_ENV=production
-                - APP_VERSION=${VERSION}
-                - SESSION_COOKIE_SECURE=true
-                - REMEMBER_COOKIE_SECURE=true
+                - ROUNDING_MINUTES=\${ROUNDING_MINUTES:-1}
+                - SINGLE_ACTIVE_TIMER=\${SINGLE_ACTIVE_TIMER:-true}
+                - ALLOW_SELF_REGISTER=\${ALLOW_SELF_REGISTER:-true}
+                - IDLE_TIMEOUT_MINUTES=\${IDLE_TIMEOUT_MINUTES:-30}
+                - ADMIN_USERNAMES=\${ADMIN_USERNAMES:-admin}
+                # IMPORTANT: Change SECRET_KEY in production! Used for sessions and CSRF tokens.
+                # Generate a secure key: python -c "import secrets; print(secrets.token_hex(32))"
+                # 
+                # TROUBLESHOOTING: If forms fail with "CSRF token missing or invalid":
+                # 1. Verify SECRET_KEY is set and doesn't change between restarts
+                # 2. Check CSRF is enabled: WTF_CSRF_ENABLED=true
+                # 3. Ensure cookies are enabled in your browser
+                # 4. If behind a reverse proxy, ensure it forwards cookies correctly
+                # 5. Check the token hasn't expired (increase WTF_CSRF_TIME_LIMIT if needed)
+                # For details: docs/CSRF_CONFIGURATION.md
+                - SECRET_KEY=\${SECRET_KEY:-your-secret-key-change-this}
+                - DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
+                - LOG_FILE=/app/logs/timetracker.log
+                # CSRF Protection (enabled by default for security)
+                - WTF_CSRF_ENABLED=\${WTF_CSRF_ENABLED:-true}
+                - WTF_CSRF_TIME_LIMIT=\${WTF_CSRF_TIME_LIMIT:-3600}
+                # Ensure cookies work over HTTP (disable Secure for local/dev or non-TLS proxies)
+                - SESSION_COOKIE_SECURE=\${SESSION_COOKIE_SECURE:-false}
+                - REMEMBER_COOKIE_SECURE=\${REMEMBER_COOKIE_SECURE:-false}
+              volumes:
+                - app_data:/data
+                - ./logs:/app/logs
               depends_on:
                 db:
                   condition: service_healthy
@@ -367,26 +390,29 @@ jobs:
                 timeout: 10s
                 retries: 3
                 start_period: 40s
-            
+          
             db:
               image: postgres:16-alpine
-              container_name: timetracker-prod-db
+              container_name: timetracker-db
               environment:
                 - POSTGRES_DB=\${POSTGRES_DB:-timetracker}
                 - POSTGRES_USER=\${POSTGRES_USER:-timetracker}
-                - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}
+                - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD:-timetracker}
                 - TZ=\${TZ:-Europe/Brussels}
               volumes:
                 - db_data:/var/lib/postgresql/data
-              restart: unless-stopped
               healthcheck:
                 test: ["CMD-SHELL", "pg_isready -U \$\$POSTGRES_USER -d \$\$POSTGRES_DB"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
                 start_period: 30s
+              restart: unless-stopped
+           
           
           volumes:
+            app_data:
+              driver: local
             db_data:
               driver: local
           EOF
