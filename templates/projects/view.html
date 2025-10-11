@@ -35,12 +35,14 @@
                     </a>
                     {% if project.status == 'active' %}
                     <form method="POST" action="{{ url_for('projects.archive_project', project_id=project.id) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-outline-secondary" data-confirm="{{ _('Archive this project?') }}">
                             <i class="fas fa-archive me-1"></i> {{ _('Archive') }}
                         </button>
                     </form>
                     {% else %}
                     <form method="POST" action="{{ url_for('projects.unarchive_project', project_id=project.id) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-outline-secondary" data-confirm="{{ _('Unarchive this project?') }}">
                             <i class="fas fa-box-open me-1"></i> {{ _('Unarchive') }}
                         </button>
@@ -542,6 +544,7 @@
                     <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteEntryForm" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash me-2"></i>{{ _('Delete Entry') }}
                     </button>
@@ -577,6 +580,7 @@
                     <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteCommentForm" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash me-2"></i>{{ _('Delete Comment') }}
                     </button>
@@ -610,6 +614,7 @@
                     <i class="fas fa-times me-1"></i>{{ _('Cancel') }}
                 </button>
                 <form method="POST" id="deleteCostForm" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash me-2"></i>{{ _('Delete Cost') }}
                     </button>

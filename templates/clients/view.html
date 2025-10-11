@@ -188,12 +188,14 @@
                 <div class="card-body">
                     {% if client.status == 'active' %}
                     <form method="POST" action="{{ url_for('clients.archive_client', client_id=client.id) }}" class="mb-2" data-confirm="{{ _('Are you sure you want to archive this client?') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-archive me-2"></i>{{ _('Archive Client') }}
                         </button>
                     </form>
                     {% else %}
                     <form method="POST" action="{{ url_for('clients.activate_client', client_id=client.id) }}" class="mb-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-check me-2"></i>{{ _('Activate Client') }}
                         </button>

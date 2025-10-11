@@ -315,6 +315,7 @@
                         </a>
                         {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
                         <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-danger btn-sm">
                                 <i class="fas fa-stop me-2"></i>{{ _('Stop Timer') }}
                             </button>

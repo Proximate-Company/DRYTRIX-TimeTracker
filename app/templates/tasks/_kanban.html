@@ -46,12 +46,14 @@
             <div class="kanban-card-actions">
                 {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
                 <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="kanban-action-btn kanban-action-stop" title="{{ _('Stop Timer') }}">
                   <i class="fas fa-stop"></i>
                   </button>
                 </form>
                 {% else %}
                 <form method="POST" action="{{ url_for('timer.start_timer') }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="project_id" value="{{ task.project_id }}">
                   <input type="hidden" name="task_id" value="{{ task.id }}">
                 <button type="submit" class="kanban-action-btn kanban-action-play" title="{{ _('Start Timer') }}">

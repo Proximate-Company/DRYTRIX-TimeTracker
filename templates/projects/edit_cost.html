@@ -29,6 +29,7 @@
                     {% endif %}
                     
                     <form method="POST" action="{{ url_for('projects.edit_cost', project_id=project.id, cost_id=cost.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label for="description" class="form-label">{{ _('Description') }} <span class="text-danger">*</span></label>
