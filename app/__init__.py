@@ -16,6 +16,7 @@ import re
 from jinja2 import ChoiceLoader, FileSystemLoader
 from urllib.parse import urlparse
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.http import parse_options_header
 
 # Load environment variables
 load_dotenv()
@@ -233,13 +234,13 @@ def create_app(config=None):
     # Setup logging
     setup_logging(app)
 
-    # Fail-fast on weak secret in production
+    # Fail-fast on weak/missing secret in production
     if not app.debug and app.config.get("FLASK_ENV", "production") == "production":
-        if app.config.get("SECRET_KEY") == "dev-secret-key-change-in-production":
-            app.logger.error(
-                "Weak SECRET_KEY configured in production; refusing to start"
-            )
-            raise RuntimeError("Weak SECRET_KEY in production")
+        secret = app.config.get("SECRET_KEY")
+        placeholder_values = {"dev-secret-key-change-in-production", "your-secret-key-change-this", "your-secret-key-here"}
+        if (not secret) or (secret in placeholder_values) or (isinstance(secret, str) and len(secret) < 32):
+            app.logger.error("Invalid SECRET_KEY configured in production; refusing to start")
+            raise RuntimeError("Invalid SECRET_KEY in production")
 
     # Apply security headers and a basic CSP
     @app.after_request
@@ -276,6 +277,53 @@ def create_app(config=None):
     # CSRF error handler with HTML-friendly fallback
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
+        # Prefer HTML flow for classic form posts regardless of Accept header quirks
+        try:
+            mimetype, _ = parse_options_header(request.headers.get("Content-Type", ""))
+            is_classic_form = mimetype in ("application/x-www-form-urlencoded", "multipart/form-data")
+        except Exception:
+            is_classic_form = False
+
+        # Log details for diagnostics
+        try:
+            try:
+                from flask_login import current_user as _cu
+                user_id = getattr(_cu, "id", None) if getattr(_cu, "is_authenticated", False) else None
+            except Exception:
+                user_id = None
+            app.logger.warning(
+                "CSRF failure: path=%s method=%s form=%s json=%s ref=%s user=%s reason=%s",
+                request.path,
+                request.method,
+                bool(request.form),
+                request.is_json,
+                request.referrer,
+                user_id,
+                getattr(e, "description", "")
+            )
+        except Exception:
+            pass
+
+        if request.method == "POST" and (is_classic_form or (request.form and not request.is_json)):
+            try:
+                flash(_("Your session expired or the page was open too long. Please try again."), "warning")
+            except Exception:
+                flash("Your session expired or the page was open too long. Please try again.", "warning")
+
+            # Redirect back to a safe same-origin referrer if available, else to dashboard
+            dest = url_for("main.dashboard")
+            try:
+                ref = request.referrer
+                if ref:
+                    ref_host = urlparse(ref).netloc
+                    cur_host = urlparse(request.host_url).netloc
+                    if ref_host and ref_host == cur_host:
+                        dest = ref
+            except Exception:
+                pass
+            return redirect(dest)
+
+        # JSON/XHR fall-through
         try:
             wants_json = (
                 request.is_json
@@ -289,12 +337,11 @@ def create_app(config=None):
         if wants_json:
             return jsonify(error="csrf_token_missing_or_invalid"), 400
 
+        # Default to HTML-friendly behavior
         try:
             flash(_("Your session expired or the page was open too long. Please try again."), "warning")
         except Exception:
             flash("Your session expired or the page was open too long. Please try again.", "warning")
-
-        # Redirect back to a safe same-origin referrer if available, else to dashboard
         dest = url_for("main.dashboard")
         try:
             ref = request.referrer
