@@ -198,6 +198,9 @@ def edit_task(task_id):
         return redirect(url_for('tasks.view_task', task_id=task.id))
     
     if request.method == 'POST':
+        # Preload context for potential validation errors
+        projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+        users = User.query.order_by(User.username).all()
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
         priority = request.form.get('priority', 'medium')
@@ -208,14 +211,14 @@ def edit_task(task_id):
         # Validate required fields
         if not name:
             flash('Task name is required', 'error')
-            return render_template('tasks/edit.html', task=task)
+            return render_template('tasks/edit.html', task=task, projects=projects, users=users)
         
         # Parse estimated hours
         try:
             estimated_hours = float(estimated_hours) if estimated_hours else None
         except ValueError:
             flash('Invalid estimated hours format', 'error')
-            return render_template('tasks/edit.html', task=task)
+            return render_template('tasks/edit.html', task=task, projects=projects, users=users)
         
         # Parse due date
         due_date = None
@@ -224,7 +227,7 @@ def edit_task(task_id):
                 due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
             except ValueError:
                 flash('Invalid due date format', 'error')
-                return render_template('tasks/edit.html', task=task)
+                return render_template('tasks/edit.html', task=task, projects=projects, users=users)
         
         # Update task
         task.name = name
@@ -250,7 +253,7 @@ def edit_task(task_id):
                         db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='reopen', details='Task reopened to In Progress'))
                         if not safe_commit('edit_task_reopen_in_progress', {'task_id': task.id}):
                             flash('Could not update status due to a database error. Please check server logs.', 'error')
-                            return render_template('tasks/edit.html', task=task)
+                        return render_template('tasks/edit.html', task=task, projects=projects, users=users)
                     else:
                         task.start_task()
                         db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event='start', details=f"Task moved from {previous_status} to In Progress"))
@@ -274,17 +277,17 @@ def edit_task(task_id):
                     db.session.add(TaskActivity(task_id=task.id, user_id=current_user.id, event=event_name, details=f"Task moved from {previous_status} to {selected_status}"))
                     if not safe_commit('edit_task_status_change', {'task_id': task.id, 'status': selected_status}):
                         flash('Could not update status due to a database error. Please check server logs.', 'error')
-                        return render_template('tasks/edit.html', task=task)
+                        return render_template('tasks/edit.html', task=task, projects=projects, users=users)
             except ValueError as e:
                 flash(str(e), 'error')
-                return render_template('tasks/edit.html', task=task)
+                return render_template('tasks/edit.html', task=task, projects=projects, users=users)
 
         # Always update the updated_at timestamp to local time after edits
         task.updated_at = now_in_app_timezone()
         
         if not safe_commit('edit_task', {'task_id': task.id}):
             flash('Could not update task due to a database error. Please check server logs.', 'error')
-            return render_template('tasks/edit.html', task=task)
+            return render_template('tasks/edit.html', task=task, projects=projects, users=users)
         
         flash(f'Task "{name}" updated successfully', 'success')
         return redirect(url_for('tasks.view_task', task_id=task.id))

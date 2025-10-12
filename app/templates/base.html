@@ -616,15 +616,16 @@
         })();
     </script>
     <script>
-        // CSRF auto-injection for forms and AJAX/fetch + optional token refresh
+        // CSRF auto-injection for forms and AJAX/fetch + token refresh & robustness
         (function(){
             try {
                 var meta = document.querySelector('meta[name="csrf-token"]');
+                var lastRefreshAt = Date.now();
                 function getToken(){
                     return meta ? (meta.getAttribute('content') || '') : '';
                 }
                 function setToken(t){
-                    if (meta && typeof t === 'string' && t) meta.setAttribute('content', t);
+                    if (meta && typeof t === 'string' && t) { meta.setAttribute('content', t); lastRefreshAt = Date.now(); }
                 }
                 function isPostForm(form){
                     var m = (form.getAttribute('method') || form.method || '').toString().toUpperCase();
@@ -711,6 +712,37 @@
                 });
                 // Refresh every 20 minutes (default token TTL is 60 minutes)
                 try { setInterval(refreshCsrfToken, 20 * 60 * 1000); } catch(e) {}
+
+                // Also refresh on window focus (covers cases visibility doesn't fire)
+                window.addEventListener('focus', function(){ try { refreshCsrfToken(); } catch(_) {} }, { passive: true });
+
+                // Observe dynamically added forms and ensure token present
+                try {
+                    new MutationObserver(function(muts){
+                        var token = getToken();
+                        muts.forEach(function(m){
+                            Array.prototype.forEach.call(m.addedNodes || [], function(n){
+                                if (n && n.nodeType === 1) {
+                                    if (n.tagName === 'FORM') ensureFormHasToken(n, token);
+                                    n.querySelectorAll && n.querySelectorAll('form').forEach(function(f){ ensureFormHasToken(f, token); });
+                                }
+                            });
+                        });
+                    }).observe(document.body, { childList: true, subtree: true });
+                } catch(_) {}
+
+                // Pre-submit refresh if token is stale (>15 minutes old)
+                document.addEventListener('submit', function(ev){
+                    var form = ev.target;
+                    if (!form || form.tagName !== 'FORM') return;
+                    var now = Date.now();
+                    if (now - lastRefreshAt > 15 * 60 * 1000) {
+                        try {
+                            ev.preventDefault();
+                            refreshCsrfToken().then(function(){ try { form.submit(); } catch(_) {} });
+                        } catch(_) {}
+                    }
+                }, true);
             } catch(e) {}
         })();
     </script>
