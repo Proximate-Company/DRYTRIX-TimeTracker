@@ -379,6 +379,36 @@ def create_app(config=None):
             resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         except Exception:
             pass
+        # Also set/update a CSRF cookie for double-submit pattern and SPA helpers
+        try:
+            cookie_name = app.config.get("CSRF_COOKIE_NAME", "XSRF-TOKEN")
+            # Derive defaults from session cookie flags if not explicitly set
+            cookie_secure = bool(
+                app.config.get(
+                    "CSRF_COOKIE_SECURE",
+                    app.config.get("SESSION_COOKIE_SECURE", False),
+                )
+            )
+            cookie_httponly = bool(app.config.get("CSRF_COOKIE_HTTPONLY", False))
+            cookie_samesite = app.config.get("CSRF_COOKIE_SAMESITE", "Lax")
+            cookie_domain = app.config.get("CSRF_COOKIE_DOMAIN") or None
+            cookie_path = app.config.get("CSRF_COOKIE_PATH", "/")
+            try:
+                max_age = int(app.config.get("WTF_CSRF_TIME_LIMIT", 3600))
+            except Exception:
+                max_age = 3600
+            resp.set_cookie(
+                cookie_name,
+                token or "",
+                max_age=max_age,
+                secure=cookie_secure,
+                httponly=cookie_httponly,
+                samesite=cookie_samesite,
+                domain=cookie_domain,
+                path=cookie_path,
+            )
+        except Exception:
+            pass
         return resp
 
     # Register blueprints

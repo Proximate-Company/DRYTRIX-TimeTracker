@@ -66,6 +66,11 @@
             
             <input type="text" id="filterTags" class="form-control form-control-sm calendar-filter-tags" placeholder="{{ _('Filter by tags...') }}">
             
+            <!-- Quick Filter: Billable Only -->
+            <button class="btn btn-sm btn-outline-success" id="filterBillableOnly" title="{{ _('Show billable entries only') }}">
+              <i class="fas fa-dollar-sign me-1"></i>{{ _('Billable Only') }}
+            </button>
+            
             <button class="btn btn-sm btn-outline-danger" id="clearFilters">
               <i class="fas fa-times me-1"></i>{{ _('Clear') }}
             </button>
@@ -76,6 +81,12 @@
               <option value="{{ p.id }}">{{ p.name }} ({{ p.client.name if p.client else 'No Client' }})</option>
               {% endfor %}
             </select>
+            
+            <!-- Total Hours Display -->
+            <div class="calendar-hours-summary">
+              <span class="text-muted small">{{ _('Total Hours:') }}</span>
+              <strong id="totalHoursDisplay" class="ms-1 text-primary">0h</strong>
+            </div>
           </div>
         </div>
         
@@ -83,6 +94,17 @@
           <!-- Loading Indicator -->
           <div class="calendar-loading" id="calendarLoading">
             <div class="calendar-spinner"></div>
+          </div>
+          
+          <!-- Daily Capacity Bar -->
+          <div id="dailyCapacityBar" class="daily-capacity-bar" style="display: none;">
+            <div class="capacity-bar-header">
+              <span id="capacityDateLabel" class="fw-semibold"></span>
+              <span id="capacityHoursLabel" class="ms-2"></span>
+            </div>
+            <div class="capacity-bar-container">
+              <div id="capacityBarFill" class="capacity-bar-fill"></div>
+            </div>
           </div>
           
           <!-- Calendar View -->
@@ -96,19 +118,7 @@
           </div>
           
           <!-- Legend -->
-          <div class="calendar-legend">
-            <div class="legend-item">
-              <div class="legend-color" style="background: #3b82f6;"></div>
-              <span>{{ _('Project 1') }}</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background: #ef4444;"></div>
-              <span>{{ _('Project 2') }}</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background: #10b981;"></div>
-              <span>{{ _('Project 3') }}</span>
-            </div>
+          <div class="calendar-legend" id="calendarLegend">
             <div class="legend-item">
               <i class="fas fa-info-circle me-1 text-muted"></i>
               <span class="text-muted small">{{ _('Colors assigned by project') }}</span>
@@ -212,6 +222,9 @@
         <i class="fas fa-trash me-1"></i>{{ _('Delete') }}
       </button>
       <button type="button" class="btn btn-secondary" onclick="closeModal('eventDetailModal')">{{ _('Close') }}</button>
+      <button type="button" class="btn btn-outline-primary" id="duplicateEventBtn">
+        <i class="fas fa-copy me-1"></i>{{ _('Duplicate') }}
+      </button>
       <a href="#" class="btn btn-primary" id="editEventBtn">
         <i class="fas fa-edit me-1"></i>{{ _('Edit') }}
       </a>
@@ -241,6 +254,90 @@
   </div>
 </div>
 
+<!-- Keyboard Shortcuts Help Modal -->
+<div class="event-modal" id="keyboardShortcutsModal">
+  <div class="event-modal-content">
+    <div class="event-modal-header">
+      <h3><i class="fas fa-keyboard me-2 text-primary"></i>{{ _('Keyboard Shortcuts') }}</h3>
+      <button class="event-modal-close" onclick="closeModal('keyboardShortcutsModal')">&times;</button>
+    </div>
+    <div class="event-modal-body">
+      <div class="shortcuts-grid">
+        <div class="shortcut-section">
+          <h5 class="text-muted mb-3">{{ _('Navigation') }}</h5>
+          <div class="shortcut-item">
+            <kbd>T</kbd>
+            <span>{{ _('Jump to Today') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>N</kbd>
+            <span>{{ _('Next Week/Month') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>P</kbd>
+            <span>{{ _('Previous Week/Month') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>←</kbd><kbd>→</kbd>
+            <span>{{ _('Navigate Days') }}</span>
+          </div>
+        </div>
+        
+        <div class="shortcut-section">
+          <h5 class="text-muted mb-3">{{ _('Views') }}</h5>
+          <div class="shortcut-item">
+            <kbd>D</kbd>
+            <span>{{ _('Day View') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>W</kbd>
+            <span>{{ _('Week View') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>M</kbd>
+            <span>{{ _('Month View') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>A</kbd>
+            <span>{{ _('Agenda View') }}</span>
+          </div>
+        </div>
+        
+        <div class="shortcut-section">
+          <h5 class="text-muted mb-3">{{ _('Actions') }}</h5>
+          <div class="shortcut-item">
+            <kbd>C</kbd>
+            <span>{{ _('Create New Entry') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>F</kbd>
+            <span>{{ _('Focus Filter') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Shift</kbd>+<kbd>C</kbd>
+            <span>{{ _('Clear All Filters') }}</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Esc</kbd>
+            <span>{{ _('Close Modal') }}</span>
+          </div>
+        </div>
+        
+        <div class="shortcut-section">
+          <h5 class="text-muted mb-3">{{ _('Help') }}</h5>
+          <div class="shortcut-item">
+            <kbd>?</kbd>
+            <span>{{ _('Show This Help') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="event-modal-footer">
+      <button type="button" class="btn btn-primary" onclick="closeModal('keyboardShortcutsModal')">{{ _('Got it!') }}</button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -259,8 +356,10 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentFilters = {
     project_id: null,
     task_id: null,
-    tags: null
+    tags: null,
+    billable_only: false
   };
+  let currentEventForDuplication = null;
 
   // Initialize FullCalendar
   const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -289,12 +388,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const res = await fetch(url);
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed');
-        success(json.events || []);
+        
+        let events = json.events || [];
+        
+        // Apply billable-only filter (client-side)
+        if (currentFilters.billable_only) {
+          events = events.filter(e => e.extendedProps.billable === true);
+        }
+        
+        // Update total hours display
+        updateTotalHours(events);
+        
+        // Update capacity bar for current view
+        updateCapacityDisplay(events, info);
+        
+        // Update legend with actual projects
+        updateLegend(events);
+        
+        success(events);
       } catch(e) {
+        console.error('Calendar events error:', e);
         showToast('{{ _("Failed to load events") }}', 'danger');
         failure(e);
       } finally {
+        // Clear loading state immediately
         showLoading(false);
+        // Reset button states immediately
+        resetAllButtonStates();
       }
     },
     
@@ -327,14 +447,50 @@ document.addEventListener('DOMContentLoaded', function() {
     
     eventDrop: async function(info) {
       await updateEventTime(info.event);
+      // Clear any loading states immediately after drag
+      resetAllButtonStates();
     },
     
     eventResize: async function(info) {
       await updateEventTime(info.event);
+      // Clear any loading states immediately after resize
+      resetAllButtonStates();
     }
   });
   
   calendar.render();
+  
+  // Clear any stuck loading states on initialization
+  setTimeout(() => {
+    showLoading(false);
+    // Reset ALL buttons that might be stuck in loading state
+    resetAllButtonStates();
+  }, 100);
+  
+  // Function to reset all button states
+  function resetAllButtonStates() {
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(btn => {
+      // Remove any processing classes
+      btn.classList.remove('processing', 'loading', 'disabled');
+      
+      // Restore original text if it was saved
+      const originalText = btn.getAttribute('data-original-text');
+      if (originalText) {
+        btn.innerHTML = originalText;
+        btn.removeAttribute('data-original-text');
+      }
+      
+      // Re-enable button if it was disabled
+      btn.disabled = false;
+      
+      // Remove any spinner icons
+      const spinner = btn.querySelector('.fa-spinner, .fa-spin');
+      if (spinner) {
+        spinner.remove();
+      }
+    });
+  }
 
   // View Controls
   document.getElementById('todayBtn').addEventListener('click', () => calendar.today());
@@ -375,6 +531,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('createEndTime').value = later.toTimeString().slice(0, 5);
     
     openModal('eventCreateModal');
+    
+    // Ensure loading state is cleared
+    showLoading(false);
   });
 
   // Event Create Form
@@ -419,13 +578,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
   });
 
+  // Billable Only Filter
+  document.getElementById('filterBillableOnly').addEventListener('click', function() {
+    currentFilters.billable_only = !currentFilters.billable_only;
+    
+    if (currentFilters.billable_only) {
+      this.classList.remove('btn-outline-success');
+      this.classList.add('btn-success');
+      showToast('{{ _("Showing billable entries only") }}', 'info');
+    } else {
+      this.classList.remove('btn-success');
+      this.classList.add('btn-outline-success');
+    }
+    
+    calendar.refetchEvents();
+  });
+
   // Clear Filters
   document.getElementById('clearFilters').addEventListener('click', () => {
     filterProject.value = '';
     filterTask.value = '';
     filterTask.disabled = true;
     filterTags.value = '';
-    currentFilters = { project_id: null, task_id: null, tags: null };
+    currentFilters = { project_id: null, task_id: null, tags: null, billable_only: false };
+    
+    // Reset billable button
+    const billableBtn = document.getElementById('filterBillableOnly');
+    billableBtn.classList.remove('btn-success');
+    billableBtn.classList.add('btn-outline-success');
+    
     calendar.refetchEvents();
   });
 
@@ -454,10 +635,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Helper Functions
   function showLoading(show) {
     const loader = document.getElementById('calendarLoading');
-    if (show) {
-      loader.classList.add('show');
-    } else {
-      loader.classList.remove('show');
+    if (loader) {
+      if (show) {
+        loader.classList.add('show');
+      } else {
+        loader.classList.remove('show');
+      }
     }
   }
 
@@ -479,6 +662,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function loadTasksForProject(projectId, prefix) {
     const taskSelect = document.getElementById(prefix + 'Task');
+    if (!taskSelect) return;
+    
     taskSelect.innerHTML = '<option value="">{{ _("Loading...") }}</option>';
     
     if (!projectId) {
@@ -500,8 +685,12 @@ document.addEventListener('DOMContentLoaded', function() {
           taskSelect.appendChild(option);
         });
         taskSelect.disabled = false;
+      } else {
+        taskSelect.innerHTML = '<option value="">{{ _("No task") }}</option>';
+        taskSelect.disabled = true;
       }
     } catch(e) {
+      console.error('Error loading tasks:', e);
       taskSelect.innerHTML = '<option value="">{{ _("No task") }}</option>';
       taskSelect.disabled = true;
     }
@@ -537,8 +726,13 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Reset form
       document.getElementById('eventCreateForm').reset();
+      
+      // Clear loading states immediately
+      resetAllButtonStates();
     } catch(e) {
       showToast(e.message || '{{ _("Failed to create entry") }}', 'danger');
+      // Clear loading states even on error
+      resetAllButtonStates();
     }
   }
 
@@ -560,15 +754,22 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       showToast('{{ _("Entry updated") }}', 'success');
+      // Clear loading states immediately
+      resetAllButtonStates();
     } catch(e) {
       showToast(e.message || '{{ _("Failed to update entry") }}', 'danger');
       calendar.refetchEvents();
+      // Clear loading states even on error
+      resetAllButtonStates();
     }
   }
 
   function showEventDetails(event) {
     const props = event.extendedProps;
     const content = document.getElementById('eventDetailContent');
+    
+    // Store current event for duplication
+    currentEventForDuplication = event;
     
     const formatDate = (date) => {
       return new Date(date).toLocaleString('{{ current_user.preferred_language or "en" }}', {
@@ -645,6 +846,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     };
     
+    // Set up duplicate button
+    document.getElementById('duplicateEventBtn').onclick = async () => {
+      await duplicateEvent(event);
+    };
+    
     openModal('eventDetailModal');
   }
 
@@ -660,8 +866,12 @@ document.addEventListener('DOMContentLoaded', function() {
       showToast('{{ _("Entry deleted") }}', 'success');
       closeModal('eventDetailModal');
       calendar.refetchEvents();
+      // Clear loading states immediately
+      resetAllButtonStates();
     } catch(e) {
       showToast(e.message || '{{ _("Failed to delete entry") }}', 'danger');
+      // Clear loading states even on error
+      resetAllButtonStates();
     }
   }
 
@@ -852,6 +1062,285 @@ document.addEventListener('DOMContentLoaded', function() {
       showToast(e.message || '{{ _("Failed to delete recurring block") }}', 'danger');
     }
   };
+  
+  // Quick Win: Duplicate Event
+  async function duplicateEvent(event) {
+    try {
+      const props = event.extendedProps;
+      const duration = (new Date(event.end) - new Date(event.start)) / (1000 * 60 * 60); // hours
+      
+      // Ask for new date/time
+      const newStartStr = prompt('{{ _("Enter new start time (YYYY-MM-DD HH:MM):") }}', '');
+      if (!newStartStr) return;
+      
+      const newStart = new Date(newStartStr);
+      if (isNaN(newStart.getTime())) {
+        showToast('{{ _("Invalid date format") }}', 'danger');
+        return;
+      }
+      
+      const newEnd = new Date(newStart.getTime() + (duration * 60 * 60 * 1000));
+      
+      const data = {
+        project_id: props.project_id,
+        task_id: props.task_id,
+        start_time: newStart.toISOString().slice(0, 16),
+        end_time: newEnd.toISOString().slice(0, 16),
+        notes: props.notes,
+        tags: props.tags,
+        billable: props.billable
+      };
+      
+      const res = await fetch('/api/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const json = await res.json();
+      
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Duplication failed');
+      }
+      
+      showToast('{{ _("Entry duplicated successfully") }}', 'success');
+      closeModal('eventDetailModal');
+      calendar.refetchEvents();
+      // Clear loading states immediately
+      resetAllButtonStates();
+    } catch(e) {
+      showToast(e.message || '{{ _("Failed to duplicate entry") }}', 'danger');
+      // Clear loading states even on error
+      resetAllButtonStates();
+    }
+  }
+  
+  // Quick Win: Update Total Hours Display
+  function updateTotalHours(events) {
+    const totalHours = events.reduce((sum, event) => {
+      return sum + (event.extendedProps.duration_hours || 0);
+    }, 0);
+    
+    const displayEl = document.getElementById('totalHoursDisplay');
+    if (displayEl) {
+      displayEl.textContent = `${totalHours.toFixed(1)}h`;
+    }
+  }
+  
+  // Quick Win: Update Legend with Actual Projects
+  function updateLegend(events) {
+    const legendEl = document.getElementById('calendarLegend');
+    if (!legendEl) return;
+    
+    // Get unique projects from events
+    const projectMap = new Map();
+    events.forEach(event => {
+      const projectId = event.extendedProps.project_id;
+      const projectName = event.extendedProps.project_name;
+      const color = event.backgroundColor;
+      
+      if (projectId && projectName && color) {
+        projectMap.set(projectId, {
+          name: projectName,
+          color: color
+        });
+      }
+    });
+    
+    // Create legend items
+    const legendItems = Array.from(projectMap.values())
+      .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
+      .slice(0, 8) // Limit to 8 projects to avoid clutter
+      .map(project => `
+        <div class="legend-item">
+          <div class="legend-color" style="background: ${project.color};"></div>
+          <span>${project.name}</span>
+        </div>
+      `).join('');
+    
+    // Update legend content
+    const infoItem = `
+      <div class="legend-item">
+        <i class="fas fa-info-circle me-1 text-muted"></i>
+        <span class="text-muted small">{{ _('Colors assigned by project') }}</span>
+      </div>
+    `;
+    
+    legendEl.innerHTML = legendItems + infoItem;
+    
+    // Show/hide legend based on whether we have projects
+    if (projectMap.size === 0) {
+      legendEl.style.display = 'none';
+    } else {
+      legendEl.style.display = 'flex';
+    }
+  }
+  
+  // Quick Win: Update Capacity Display
+  function updateCapacityDisplay(events, info) {
+    const view = calendar.view;
+    
+    // Only show for day view for now
+    if (view.type !== 'timeGridDay') {
+      document.getElementById('dailyCapacityBar').style.display = 'none';
+      return;
+    }
+    
+    // Calculate hours for the visible day
+    const dayStart = new Date(view.currentStart);
+    const dayEnd = new Date(view.currentEnd);
+    
+    const dayEvents = events.filter(e => {
+      const eventStart = new Date(e.start);
+      return eventStart >= dayStart && eventStart < dayEnd;
+    });
+    
+    const dayHours = dayEvents.reduce((sum, event) => {
+      return sum + (event.extendedProps.duration_hours || 0);
+    }, 0);
+    
+    const capacity = 8.0; // Default capacity, can be made dynamic later
+    const percentage = Math.min((dayHours / capacity) * 100, 100);
+    
+    // Update display
+    const barEl = document.getElementById('dailyCapacityBar');
+    const fillEl = document.getElementById('capacityBarFill');
+    const dateLabel = document.getElementById('capacityDateLabel');
+    const hoursLabel = document.getElementById('capacityHoursLabel');
+    
+    if (barEl && fillEl && dateLabel && hoursLabel) {
+      barEl.style.display = 'block';
+      fillEl.style.width = `${percentage}%`;
+      
+      // Color based on capacity
+      if (percentage < 90) {
+        fillEl.className = 'capacity-bar-fill capacity-ok';
+      } else if (percentage < 100) {
+        fillEl.className = 'capacity-bar-fill capacity-warning';
+      } else {
+        fillEl.className = 'capacity-bar-fill capacity-over';
+      }
+      
+      dateLabel.textContent = dayStart.toLocaleDateString('{{ current_user.preferred_language or "en" }}', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      hoursLabel.textContent = `${dayHours.toFixed(1)}h / ${capacity.toFixed(0)}h (${percentage.toFixed(0)}%)`;
+    }
+  }
+  
+  // Quick Win: Keyboard Shortcuts
+  document.addEventListener('keydown', function(e) {
+    // Don't trigger shortcuts when typing in input fields
+    if (e.target.matches('input, textarea, select')) {
+      // Allow Escape to work in modals even from inputs
+      if (e.key === 'Escape') {
+        const activeModal = document.querySelector('.event-modal.show');
+        if (activeModal) {
+          closeModal(activeModal.id);
+        }
+      }
+      return;
+    }
+    
+    const key = e.key.toLowerCase();
+    
+    switch(key) {
+      // Navigation
+      case 't':
+        calendar.today();
+        showToast('{{ _("Jumped to today") }}', 'info');
+        break;
+        
+      case 'n':
+        calendar.next();
+        break;
+        
+      case 'p':
+        calendar.prev();
+        break;
+        
+      case 'arrowleft':
+        calendar.prev();
+        e.preventDefault();
+        break;
+        
+      case 'arrowright':
+        calendar.next();
+        e.preventDefault();
+        break;
+      
+      // Views
+      case 'd':
+        calendar.changeView('timeGridDay');
+        setActiveView('calendar');
+        document.getElementById('dayBtn').classList.add('active');
+        document.getElementById('weekBtn').classList.remove('active');
+        document.getElementById('monthBtn').classList.remove('active');
+        break;
+        
+      case 'w':
+        calendar.changeView('timeGridWeek');
+        setActiveView('calendar');
+        document.getElementById('weekBtn').classList.add('active');
+        document.getElementById('dayBtn').classList.remove('active');
+        document.getElementById('monthBtn').classList.remove('active');
+        break;
+        
+      case 'm':
+        calendar.changeView('dayGridMonth');
+        setActiveView('calendar');
+        document.getElementById('monthBtn').classList.add('active');
+        document.getElementById('dayBtn').classList.remove('active');
+        document.getElementById('weekBtn').classList.remove('active');
+        break;
+        
+      case 'a':
+        setActiveView('agenda');
+        renderAgendaView();
+        break;
+      
+      // Actions
+      case 'c':
+        if (e.shiftKey) {
+          // Shift+C: Clear filters
+          document.getElementById('clearFilters').click();
+        } else {
+          // C: Create new entry
+          document.getElementById('newEventBtn').click();
+        }
+        break;
+        
+      case 'f':
+        // Focus filter input
+        document.getElementById('filterProject').focus();
+        break;
+        
+      case '?':
+        // Show keyboard shortcuts help
+        openModal('keyboardShortcutsModal');
+        break;
+        
+      case 'escape':
+        // Close active modal
+        const activeModal = document.querySelector('.event-modal.show');
+        if (activeModal) {
+          closeModal(activeModal.id);
+        }
+        break;
+    }
+  });
+  
+  // Show toast message on page load to inform about shortcuts
+  setTimeout(() => {
+    showToast('{{ _("💡 Press ? to see keyboard shortcuts") }}', 'info');
+  }, 1000);
+  
+  // Global function to reset all button states (can be called from console if needed)
+  window.resetCalendarButtons = resetAllButtonStates;
 });
 
 // Modal helpers
@@ -865,16 +1354,7 @@ function closeModal(modalId) {
   document.body.style.overflow = '';
 }
 
-// Toast notification
-function showToast(message, type = 'info') {
-  // Use existing toast system if available
-  if (typeof window.showToast === 'function') {
-    window.showToast(message, type);
-    return;
-  }
-  
-  // Fallback to alert
-  alert(message);
-}
+// Note: showToast is provided by the global toast-notifications.js
+// No need to define it here - it's already available as window.showToast
 </script>
 {% endblock %}

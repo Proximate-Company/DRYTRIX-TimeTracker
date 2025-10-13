@@ -77,6 +77,17 @@ class Config:
     # CSRF protection
     WTF_CSRF_ENABLED = os.getenv('WTF_CSRF_ENABLED', 'true').lower() == 'true'
     WTF_CSRF_TIME_LIMIT = int(os.getenv('WTF_CSRF_TIME_LIMIT', 3600))  # Default: 1 hour
+    # If true, rejects requests considered insecure for CSRF; keep strict in prod, relaxed in dev
+    WTF_CSRF_SSL_STRICT = os.getenv('WTF_CSRF_SSL_STRICT', 'true').lower() == 'true'
+    # CSRF cookie settings (for double-submit cookie pattern and SPA helpers)
+    CSRF_COOKIE_NAME = os.getenv('CSRF_COOKIE_NAME', 'XSRF-TOKEN')
+    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', '').lower()
+    # default secure flag: inherit from SESSION_COOKIE_SECURE if unset
+    CSRF_COOKIE_SECURE = (CSRF_COOKIE_SECURE == 'true') if CSRF_COOKIE_SECURE in ('true','false') else SESSION_COOKIE_SECURE
+    CSRF_COOKIE_HTTPONLY = os.getenv('CSRF_COOKIE_HTTPONLY', 'false').lower() == 'true'
+    CSRF_COOKIE_SAMESITE = os.getenv('CSRF_COOKIE_SAMESITE', 'Lax')
+    CSRF_COOKIE_DOMAIN = os.getenv('CSRF_COOKIE_DOMAIN')
+    CSRF_COOKIE_PATH = os.getenv('CSRF_COOKIE_PATH', '/')
     
     # Security headers
     SECURITY_HEADERS = {
@@ -120,6 +131,8 @@ class DevelopmentConfig(Config):
     )
     # CSRF can be overridden via env var, defaults to False for dev convenience
     WTF_CSRF_ENABLED = os.getenv('WTF_CSRF_ENABLED', 'false').lower() == 'true'
+    # Relax SSL strictness by default in dev to avoid false negatives on http
+    WTF_CSRF_SSL_STRICT = os.getenv('WTF_CSRF_SSL_STRICT', 'false').lower() == 'true'
 
 class TestingConfig(Config):
     """Testing configuration"""
@@ -129,6 +142,7 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///:memory:')
     WTF_CSRF_ENABLED = False
     SECRET_KEY = 'test-secret-key'
+    WTF_CSRF_SSL_STRICT = False
 
 class ProductionConfig(Config):
     """Production configuration"""
@@ -137,6 +151,7 @@ class ProductionConfig(Config):
     SESSION_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SECURE = True
     WTF_CSRF_ENABLED = True
+    WTF_CSRF_SSL_STRICT = True
 
 # Configuration mapping
 config = {
