@@ -161,7 +161,34 @@ docker-compose restart app
 
 ---
 
-#### ✅ 8. Development/Testing: Just Disable CSRF
+#### ✅ 8. Accessing via IP Address (Not Localhost)
+**Symptom:** Works on localhost but CSRF cookie not created when accessing via IP (e.g., 192.168.1.100)
+
+**Cause:** `WTF_CSRF_SSL_STRICT=true` blocks cookies on HTTP connections to non-localhost addresses
+
+**Check:**
+```bash
+docker-compose exec app env | grep WTF_CSRF_SSL_STRICT
+```
+
+**Solution:**
+```bash
+# In .env file
+WTF_CSRF_SSL_STRICT=false
+SESSION_COOKIE_SECURE=false
+CSRF_COOKIE_SECURE=false
+
+# Restart
+docker-compose restart app
+```
+
+**Note:** Only use these settings for development/testing on trusted networks. Production should use HTTPS with strict settings.
+
+**See:** `docs/CSRF_IP_ACCESS_GUIDE.md` for detailed explanation
+
+---
+
+#### ✅ 9. Development/Testing: Just Disable CSRF
 **⚠️ WARNING: Only for local development/testing!**
 
 ```bash
@@ -290,6 +317,7 @@ docker-compose up -d
 ## 🔗 Related Documentation
 
 - [Detailed CSRF Configuration Guide](docs/CSRF_CONFIGURATION.md)
+- [CSRF IP Access Guide](docs/CSRF_IP_ACCESS_GUIDE.md) - **For localhost vs IP address issues**
 - [Original CSRF Implementation](CSRF_TOKEN_FIX_SUMMARY.md)
 - [Docker Setup Guide](docs/DOCKER_PUBLIC_SETUP.md)
 - [Troubleshooting Guide](docs/DOCKER_STARTUP_TROUBLESHOOTING.md)

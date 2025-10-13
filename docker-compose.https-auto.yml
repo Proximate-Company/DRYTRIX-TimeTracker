@@ -1,0 +1,35 @@
+services:
+  # Certificate generator - runs once to create certificates
+  certgen:
+    image: alpine:latest
+    container_name: timetracker-certgen
+    volumes:
+      - ./nginx/ssl:/certs
+      - ./scripts:/scripts:ro
+    command: sh /scripts/generate-certs.sh
+    restart: "no"
+
+  nginx:
+    image: nginx:alpine
+    container_name: timetracker-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      certgen:
+        condition: service_completed_successfully
+      app:
+        condition: service_started
+    restart: unless-stopped
+
+  app:
+    ports: []  # nginx handles all ports
+    environment:
+      - WTF_CSRF_SSL_STRICT=true
+      - SESSION_COOKIE_SECURE=true
+      - CSRF_COOKIE_SECURE=true
+    restart: unless-stopped
+

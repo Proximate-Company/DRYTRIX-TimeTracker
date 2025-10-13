@@ -1,0 +1,17 @@
+FROM alpine:latest
+
+# Install mkcert
+RUN apk add --no-cache \
+    ca-certificates \
+    curl \
+    nss-tools \
+    && curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64" \
+    && chmod +x mkcert-v*-linux-amd64 \
+    && mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+
+# Create certificate generation script
+COPY docker/generate-mkcert-certs.sh /generate-mkcert-certs.sh
+RUN chmod +x /generate-mkcert-certs.sh
+
+CMD ["/generate-mkcert-certs.sh"]
+

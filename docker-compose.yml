@@ -1,4 +1,31 @@
 services:
+  # Certificate generator - runs once to create self-signed certs with SANs
+  certgen:
+    image: alpine:latest
+    container_name: timetracker-certgen
+    volumes:
+      - ./nginx/ssl:/certs
+      - ./scripts:/scripts:ro
+    command: sh /scripts/generate-certs.sh
+    restart: "no"
+
+  # HTTPS reverse proxy (TLS terminates here)
+  nginx:
+    image: nginx:alpine
+    container_name: timetracker-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      certgen:
+        condition: service_completed_successfully
+      app:
+        condition: service_started
+    restart: unless-stopped
+
   app:
     build: .
     container_name: timetracker-app
@@ -13,17 +40,36 @@ services:
       # IMPORTANT: Change SECRET_KEY in production! Used for sessions and CSRF tokens.
       # Generate a secure key: python -c "import secrets; print(secrets.token_hex(32))"
       # 
+      # CSRF CONFIGURATION:
+      # - WTF_CSRF_SSL_STRICT: Set to 'false' for HTTP access (localhost or IP address)
+      #   Set to 'true' only when using HTTPS in production
+      # - If accessing via IP address (e.g., 192.168.1.100), also set:
+      #   SESSION_COOKIE_SECURE=false and CSRF_COOKIE_SECURE=false
+      # 
       # TROUBLESHOOTING: If forms fail with "CSRF token missing or invalid":
       # 1. Verify SECRET_KEY is set and doesn't change between restarts
       # 2. Check CSRF is enabled: WTF_CSRF_ENABLED=true
       # 3. Ensure cookies are enabled in your browser
       # 4. If behind a reverse proxy, ensure it forwards cookies correctly
       # 5. Check the token hasn't expired (increase WTF_CSRF_TIME_LIMIT if needed)
-      # For details: docs/CSRF_CONFIGURATION.md
+      # 6. If accessing via IP (not localhost): WTF_CSRF_SSL_STRICT=false
+      # For details: docs/CSRF_CONFIGURATION.md and docs/CSRF_IP_ACCESS_GUIDE.md
+      # Disable strict Referer check by default to avoid privacy/port issues
+      - WTF_CSRF_SSL_STRICT=${WTF_CSRF_SSL_STRICT:-true}
+      - WTF_CSRF_ENABLED=${WTF_CSRF_ENABLED:-true}
+      - WTF_CSRF_TIME_LIMIT=${WTF_CSRF_TIME_LIMIT:-3600}
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-true}
+      - SESSION_COOKIE_SAMESITE=${SESSION_COOKIE_SAMESITE:-Lax}
+      - REMEMBER_COOKIE_SECURE=${REMEMBER_COOKIE_SECURE:-true}
+      - CSRF_COOKIE_SECURE=${CSRF_COOKIE_SECURE:-true}
+      - CSRF_COOKIE_HTTPONLY=${CSRF_COOKIE_HTTPONLY:-false}
+      - CSRF_COOKIE_SAMESITE=${CSRF_COOKIE_SAMESITE:-Lax}
+      - CSRF_COOKIE_NAME=${CSRF_COOKIE_NAME:-XSRF-TOKEN}
+      - PREFERRED_URL_SCHEME=${PREFERRED_URL_SCHEME:-https}
       - DATABASE_URL=postgresql+psycopg2://timetracker:timetracker@db:5432/timetracker
       - LOG_FILE=/app/logs/timetracker.log
-    ports:
-      - "8080:8080"
+    # Expose only internally; nginx publishes ports
+    ports: []
     volumes:
       - app_data:/data
       - ./logs:/app/logs
