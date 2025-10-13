@@ -1,0 +1,44 @@
+services:
+  # mkcert certificate manager - auto-generates trusted certificates
+  mkcert:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mkcert
+    container_name: timetracker-mkcert
+    volumes:
+      - ./nginx/ssl:/certs
+      - mkcert-ca:/root/.local/share/mkcert
+    environment:
+      - HOST_IP=${HOST_IP:-192.168.1.100}
+      - CERT_DOMAINS=localhost 127.0.0.1 ::1 ${HOST_IP:-192.168.1.100} *.local timetracker.local
+    command: /generate-mkcert-certs.sh
+    restart: "no"
+
+  nginx:
+    image: nginx:alpine
+    container_name: timetracker-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      mkcert:
+        condition: service_completed_successfully
+      app:
+        condition: service_started
+    restart: unless-stopped
+
+  app:
+    ports: []  # nginx handles all ports
+    environment:
+      - WTF_CSRF_SSL_STRICT=true
+      - SESSION_COOKIE_SECURE=true
+      - CSRF_COOKIE_SECURE=true
+    restart: unless-stopped
+
+volumes:
+  mkcert-ca:
+    driver: local
+

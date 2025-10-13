@@ -36,9 +36,9 @@ def create_app(config=None):
     """Application factory pattern"""
     app = Flask(__name__)
 
-    # Make app aware of reverse proxy (scheme/host) for correct URL generation & cookies
+    # Make app aware of reverse proxy (scheme/host/port) for correct URL generation & cookies
     # Trust a single proxy by default; adjust via env if needed
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
     # Configuration
     # Load env-specific config class
@@ -270,6 +270,48 @@ def create_app(config=None):
                 response.headers["Permissions-Policy"] = (
                     "geolocation=(), microphone=(), camera=()"
                 )
+        except Exception:
+            pass
+
+        # Ensure CSRF cookie is present for HTML GET responses (helps login page)
+        try:
+            # Only for safe, HTML page responses
+            if request.method == "GET":
+                content_type = response.headers.get("Content-Type", "")
+                if isinstance(content_type, str) and content_type.startswith("text/html"):
+                    cookie_name = app.config.get("CSRF_COOKIE_NAME", "XSRF-TOKEN")
+                    has_cookie = bool(request.cookies.get(cookie_name))
+                    if not has_cookie:
+                        # Generate a CSRF token and set cookie using same settings as /auth/csrf-token
+                        try:
+                            from flask_wtf.csrf import generate_csrf
+                            token = generate_csrf()
+                        except Exception:
+                            token = ""
+                        cookie_secure = bool(
+                            app.config.get(
+                                "CSRF_COOKIE_SECURE",
+                                app.config.get("SESSION_COOKIE_SECURE", False),
+                            )
+                        )
+                        cookie_httponly = bool(app.config.get("CSRF_COOKIE_HTTPONLY", False))
+                        cookie_samesite = app.config.get("CSRF_COOKIE_SAMESITE", "Lax")
+                        cookie_domain = app.config.get("CSRF_COOKIE_DOMAIN") or None
+                        cookie_path = app.config.get("CSRF_COOKIE_PATH", "/")
+                        try:
+                            max_age = int(app.config.get("WTF_CSRF_TIME_LIMIT", 3600))
+                        except Exception:
+                            max_age = 3600
+                        response.set_cookie(
+                            cookie_name,
+                            token or "",
+                            max_age=max_age,
+                            secure=cookie_secure,
+                            httponly=cookie_httponly,
+                            samesite=cookie_samesite,
+                            domain=cookie_domain,
+                            path=cookie_path,
+                        )
         except Exception:
             pass
         return response

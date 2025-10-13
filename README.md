@@ -204,6 +204,9 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - **[Requirements](docs/REQUIREMENTS.md)** — System requirements and dependencies
 - **[Troubleshooting](docs/DOCKER_STARTUP_TROUBLESHOOTING.md)** — Common issues and solutions
 - **[CSRF Token Issues](CSRF_TROUBLESHOOTING.md)** — Fix "CSRF token missing or invalid" errors
+- **[CSRF IP Access Fix](CSRF_IP_ACCESS_FIX.md)** — 🔥 Fix cookies not working when accessing via IP address
+- **[HTTPS Auto-Setup](README_HTTPS_AUTO.md)** — 🚀 Automatic HTTPS at startup (one command!)
+- **[HTTPS Manual Setup (mkcert)](README_HTTPS.md)** — 🔒 Manual HTTPS with no certificate warnings
 
 ### Features
 - **[Task Management](docs/TASK_MANAGEMENT_README.md)** — Break projects into manageable tasks
