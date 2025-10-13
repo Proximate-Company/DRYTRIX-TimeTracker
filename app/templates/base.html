@@ -341,6 +341,54 @@
             // Temporary implementation until toast-notifications.js loads
             console.log('Toast:', type, message);
         }
+        // Show a persistent top banner when cookies are disabled or blocked
+        (function(){
+            try {
+                var cookiesEnabled = navigator.cookieEnabled;
+                if (!cookiesEnabled) {
+                    renderCookieWarningBanner();
+                    return;
+                }
+                // Double-check by attempting to set and read a test cookie
+                document.cookie = 'tt_cookie_check=1; path=/';
+                var hasTest = document.cookie.indexOf('tt_cookie_check=1') !== -1;
+                if (!hasTest) {
+                    renderCookieWarningBanner();
+                } else {
+                    // Clean up test cookie
+                    document.cookie = 'tt_cookie_check=; Max-Age=0; path=/';
+                }
+            } catch (e) {
+                // If access throws, assume cookies are blocked
+                renderCookieWarningBanner();
+            }
+
+            function renderCookieWarningBanner(){
+                try {
+                    var existing = document.getElementById('cookie-disabled-banner');
+                    if (existing) return;
+                    var banner = document.createElement('div');
+                    banner.id = 'cookie-disabled-banner';
+                    banner.setAttribute('role','status');
+                    banner.setAttribute('aria-live','polite');
+                    banner.style.position = 'fixed';
+                    banner.style.top = '0';
+                    banner.style.left = '0';
+                    banner.style.right = '0';
+                    banner.style.zIndex = '1100';
+                    banner.style.padding = '10px 16px';
+                    banner.style.background = '#b91c1c';
+                    banner.style.color = 'white';
+                    banner.style.display = 'flex';
+                    banner.style.alignItems = 'center';
+                    banner.style.justifyContent = 'center';
+                    banner.style.gap = '8px';
+                    banner.innerHTML = '<strong>Cookies are disabled or blocked.</strong> ' +
+                        'This app requires cookies for secure login and CSRF protection.';
+                    document.body.appendChild(banner);
+                } catch (_) {}
+            }
+        })();
         
         // Navbar scrolled shadow behavior
         document.addEventListener('scroll', function() {
@@ -626,6 +674,14 @@
                 }
                 function setToken(t){
                     if (meta && typeof t === 'string' && t) { meta.setAttribute('content', t); lastRefreshAt = Date.now(); }
+                    // Best-effort sync: put token into CSRF cookie for frameworks/tools that read it from cookies
+                    try {
+                        var cookieName = (document.documentElement.getAttribute('data-csrf-cookie-name') || 'XSRF-TOKEN');
+                        if (t && cookieName) {
+                            // Write a non-HttpOnly cookie; flags controlled server-side for secure contexts
+                            document.cookie = cookieName + '=' + encodeURIComponent(t) + '; path=/';
+                        }
+                    } catch(e) {}
                 }
                 function isPostForm(form){
                     var m = (form.getAttribute('method') || form.method || '').toString().toUpperCase();
@@ -681,7 +737,11 @@
                             if (sameOrigin && ['GET','HEAD','OPTIONS','TRACE'].indexOf(method) === -1) {
                                 var headers = new Headers(req.headers || {});
                                 if (!headers.has('X-CSRFToken')) headers.set('X-CSRFToken', getToken());
-                                return _origFetch(new Request(req, { headers: headers }));
+                                // Ensure cookies are sent with same-origin requests
+                                var opts = { headers: headers };
+                                // Preserve explicit credentials if caller set them; otherwise default to same-origin
+                                if (!('credentials' in req)) { opts.credentials = 'same-origin'; }
+                                return _origFetch(new Request(req, opts));
                             }
                             return _origFetch(req);
                         } catch(e) {
@@ -731,12 +791,14 @@
                     }).observe(document.body, { childList: true, subtree: true });
                 } catch(_) {}
 
-                // Pre-submit refresh if token is stale (>15 minutes old)
+                // Pre-submit: if token missing or stale (>15 minutes), refresh before submit
                 document.addEventListener('submit', function(ev){
                     var form = ev.target;
                     if (!form || form.tagName !== 'FORM') return;
                     var now = Date.now();
-                    if (now - lastRefreshAt > 15 * 60 * 1000) {
+                    var token = getToken();
+                    var needsRefresh = !token || (now - lastRefreshAt > 15 * 60 * 1000);
+                    if (needsRefresh) {
                         try {
                             ev.preventDefault();
                             refreshCsrfToken().then(function(){ try { form.submit(); } catch(_) {} });
