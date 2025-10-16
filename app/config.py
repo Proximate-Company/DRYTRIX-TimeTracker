@@ -79,6 +79,13 @@ class Config:
     WTF_CSRF_TIME_LIMIT = int(os.getenv('WTF_CSRF_TIME_LIMIT', 3600))  # Default: 1 hour
     # If true, rejects requests considered insecure for CSRF; keep strict in prod, relaxed in dev
     WTF_CSRF_SSL_STRICT = os.getenv('WTF_CSRF_SSL_STRICT', 'true').lower() == 'true'
+    # Allow trusted cross-origin posts (behind proxies or when Referer/Origin host differs)
+    # Comma-separated list of origins, e.g. "https://track.example.com,https://admin.example.com"
+    WTF_CSRF_TRUSTED_ORIGINS = [
+        o.strip() for o in os.getenv(
+            'WTF_CSRF_TRUSTED_ORIGINS', 'https://track.example.com'
+        ).split(',') if o.strip()
+    ]
     # CSRF cookie settings (for double-submit cookie pattern and SPA helpers)
     CSRF_COOKIE_NAME = os.getenv('CSRF_COOKIE_NAME', 'XSRF-TOKEN')
     CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', '').lower()
