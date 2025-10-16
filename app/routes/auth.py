@@ -244,13 +244,24 @@ def oidc_callback():
         id_token_parsed = False
         try:
             current_app.logger.info("OIDC callback: Attempting to parse ID token")
-            parsed = client.parse_id_token(token)
-            if parsed:
-                claims = parsed
+            # Authlib already validates and parses the ID token during authorize_access_token()
+            # The parsed claims should be available in the token dict under 'userinfo' key
+            if isinstance(token, dict) and 'userinfo' in token:
+                claims = token.get('userinfo', {})
                 id_token_parsed = True
-                current_app.logger.info("OIDC callback: ID token parsed successfully, claims keys: %s", list(claims.keys()))
+                current_app.logger.info("OIDC callback: ID token claims available from token, claims keys: %s", list(claims.keys()))
             else:
-                current_app.logger.warning("OIDC callback: parse_id_token returned None/empty")
+                # If not available, parse it manually with nonce from session
+                # Authlib stores the nonce in session during authorize_redirect()
+                nonce = session.get('_oidc_authlib_nonce_')
+                current_app.logger.debug("OIDC callback: Nonce from session: %s", 'present' if nonce else 'missing')
+                parsed = client.parse_id_token(token, nonce=nonce)
+                if parsed:
+                    claims = parsed
+                    id_token_parsed = True
+                    current_app.logger.info("OIDC callback: ID token parsed successfully, claims keys: %s", list(claims.keys()))
+                else:
+                    current_app.logger.warning("OIDC callback: parse_id_token returned None/empty")
         except Exception as e:
             current_app.logger.error("OIDC callback: Failed to parse ID token: %s - %s", type(e).__name__, str(e))
             # Try to decode the token manually to debug
