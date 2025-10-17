@@ -35,12 +35,15 @@ def sample_data(app):
             db.session.add(entry)
         
         # Create some tasks for task-completion endpoint
-        t1 = Task(project_id=project_id, name='T1', status='done', created_by=user_id, assigned_to=user_id)
+        t1 = Task(project_id=project_id, name='T1', created_by=user_id, assigned_to=user_id)
+        t1.status = 'done'
         t1.completed_at = datetime.now() - timedelta(days=1)
         db.session.add(t1)
-        t2 = Task(project_id=project_id, name='T2', status='in_progress', created_by=user_id, assigned_to=user_id)
+        t2 = Task(project_id=project_id, name='T2', created_by=user_id, assigned_to=user_id)
+        t2.status = 'in_progress'
         db.session.add(t2)
-        t3 = Task(project_id=project_id, name='T3', status='todo', created_by=user_id, assigned_to=user_id)
+        t3 = Task(project_id=project_id, name='T3', created_by=user_id, assigned_to=user_id)
+        t3.status = 'todo'
         db.session.add(t3)
 
         db.session.commit()
