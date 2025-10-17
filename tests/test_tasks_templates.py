@@ -33,7 +33,7 @@ def test_edit_task_page_has_tips(client, app):
         db.session.add_all([user, project])
         db.session.commit()
 
-        task = Task(project_id=project.id, name='Edit Me', status='todo', created_by=user.id, assigned_to=user.id)
+        task = Task(project_id=project.id, name='Edit Me', created_by=user.id, assigned_to=user.id)
         db.session.add(task)
         db.session.commit()
 
