@@ -118,22 +118,24 @@ def logout():
     flash(_('Goodbye, %(username)s!', username=username), 'info')
 
     if auth_method in ('oidc', 'both'):
-        client = oauth.create_client('oidc')
-        if client:
-            try:
-                # Build end-session URL if provider supports it
-                metadata = client.load_server_metadata()
-                end_session_endpoint = metadata.get('end_session_endpoint') or metadata.get('revocation_endpoint')
-                if end_session_endpoint:
-                    params = {}
-                    if id_token:
-                        params['id_token_hint'] = id_token
-                    post_logout = getattr(Config, 'OIDC_POST_LOGOUT_REDIRECT_URI', None) or url_for('auth.login', _external=True)
-                    params['post_logout_redirect_uri'] = post_logout
-                    from urllib.parse import urlencode
-                    return redirect(f"{end_session_endpoint}?{urlencode(params)}")
-            except Exception:
-                pass
+        # Only perform RP-Initiated Logout if OIDC_POST_LOGOUT_REDIRECT_URI is explicitly configured
+        post_logout = getattr(Config, 'OIDC_POST_LOGOUT_REDIRECT_URI', None)
+        if post_logout:
+            client = oauth.create_client('oidc')
+            if client:
+                try:
+                    # Build end-session URL if provider supports it
+                    metadata = client.load_server_metadata()
+                    end_session_endpoint = metadata.get('end_session_endpoint') or metadata.get('revocation_endpoint')
+                    if end_session_endpoint:
+                        params = {}
+                        if id_token:
+                            params['id_token_hint'] = id_token
+                        params['post_logout_redirect_uri'] = post_logout
+                        from urllib.parse import urlencode
+                        return redirect(f"{end_session_endpoint}?{urlencode(params)}")
+                except Exception:
+                    pass
 
     return redirect(url_for('auth.login'))
 
