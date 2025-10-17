@@ -34,6 +34,16 @@
         init() {
             this.createSearchUI();
             this.bindEvents();
+            // Proactively disable native autofill/auto-complete behaviors
+            try {
+                this.input.setAttribute('autocomplete', 'off');
+                this.input.setAttribute('autocapitalize', 'off');
+                this.input.setAttribute('autocorrect', 'off');
+                this.input.setAttribute('spellcheck', 'false');
+                // Trick some Chromium versions
+                this.input.setAttribute('name', 'q_search');
+                this.input.setAttribute('data-lpignore', 'true');
+            } catch(e) {}
         }
 
         createSearchUI() {
@@ -46,7 +56,7 @@
             const inputWrapper = document.createElement('div');
             inputWrapper.className = 'search-input-wrapper';
             inputWrapper.innerHTML = `
-                <i class="fas fa-search search-icon"></i>
+                <i class="fas fa-search search-icon" aria-hidden="true"></i>
             `;
 
             // Move input into wrapper
@@ -57,8 +67,8 @@
             const actions = document.createElement('div');
             actions.className = 'search-actions';
             actions.innerHTML = `
-                <button type="button" class="search-clear-btn" style="display: none;">
-                    <i class="fas fa-times"></i>
+                <button type="button" class="search-clear-btn" style="display: none;" aria-label="{{ _('Clear search') if false else 'Clear search' }}">
+                    <i class="fas fa-xmark"></i>
                 </button>
                 <span class="search-kbd">Ctrl+K</span>
             `;

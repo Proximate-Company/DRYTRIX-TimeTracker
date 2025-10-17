@@ -2,6 +2,7 @@ import pytest
 from app import db
 from app.models import User, Project, TimeEntry
 from datetime import datetime, timedelta
+from app.models import Task
 
 @pytest.fixture
 def sample_data(app):
@@ -33,6 +34,15 @@ def sample_data(app):
             )
             db.session.add(entry)
         
+        # Create some tasks for task-completion endpoint
+        t1 = Task(project_id=project_id, name='T1', status='done', created_by=user_id, assigned_to=user_id)
+        t1.completed_at = datetime.now() - timedelta(days=1)
+        db.session.add(t1)
+        t2 = Task(project_id=project_id, name='T2', status='in_progress', created_by=user_id, assigned_to=user_id)
+        db.session.add(t2)
+        t3 = Task(project_id=project_id, name='T3', status='todo', created_by=user_id, assigned_to=user_id)
+        db.session.add(t3)
+
         db.session.commit()
         
         return {'user_id': user_id, 'project_id': project_id}
@@ -141,6 +151,25 @@ def test_weekly_trends_api(client, app, sample_data):
         data = response.get_json()
         assert 'labels' in data
         assert 'datasets' in data
+
+@pytest.mark.integration
+@pytest.mark.api
+def test_task_completion_api(client, app, sample_data):
+    """Test task completion analytics API endpoint structure"""
+    with app.app_context():
+        with client.session_transaction() as sess:
+            sess['_user_id'] = str(sample_data['user_id'])
+            sess['_fresh'] = True
+
+        response = client.get('/api/analytics/task-completion?days=7')
+        assert response.status_code == 200
+
+        data = response.get_json()
+        assert 'status_breakdown' in data
+        sb = data['status_breakdown'] or {}
+        # Ensure essential keys exist
+        for key in ['done', 'in_progress', 'todo', 'review', 'cancelled']:
+            assert key in sb
 
 @pytest.mark.integration
 @pytest.mark.api

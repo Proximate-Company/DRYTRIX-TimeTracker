@@ -46,13 +46,35 @@ def dashboard():
         user_id=current_user.id
     )
     
+    # Build Top Projects (last 30 days) based on user's activity
+    period_start = today - timedelta(days=30)
+    entries_30 = TimeEntry.query.filter(
+        TimeEntry.end_time.isnot(None),
+        TimeEntry.start_time >= period_start,
+        TimeEntry.user_id == current_user.id
+    ).all()
+    project_hours = {}
+    for e in entries_30:
+        if not e.project:
+            continue
+        project_hours.setdefault(e.project.id, {
+            'project': e.project,
+            'hours': 0.0,
+            'billable_hours': 0.0
+        })
+        project_hours[e.project.id]['hours'] += e.duration_hours
+        if e.billable and e.project.billable:
+            project_hours[e.project.id]['billable_hours'] += e.duration_hours
+    top_projects = sorted(project_hours.values(), key=lambda x: x['hours'], reverse=True)[:5]
+
     return render_template('main/dashboard.html',
                          active_timer=active_timer,
                          recent_entries=recent_entries,
                          active_projects=active_projects,
                          today_hours=today_hours,
                          week_hours=week_hours,
-                         month_hours=month_hours)
+                         month_hours=month_hours,
+                         top_projects=top_projects)
 
 @main_bp.route('/_health')
 def health_check():

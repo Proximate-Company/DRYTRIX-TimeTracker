@@ -1,0 +1,86 @@
+{# Reusable Kanban board for tasks. Expects `tasks` and `kanban_columns` in context. #}
+
+<div class="kanban-board-wrapper p-4">
+    <div id="kanbanBoard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" role="list" aria-label="{{ _('Kanban board columns') }}">
+        {% for col in kanban_columns %}
+        <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm ring-1 ring-border-light/60 dark:ring-border-dark/60 flex flex-col" role="region" aria-labelledby="col-{{ col.key }}-title">
+            <div class="p-4 border-b border-border-light dark:border-border-dark flex justify-between items-center bg-gradient-to-b from-background-light/60 dark:from-background-dark/40 to-transparent rounded-t-xl">
+                <h3 id="col-{{ col.key }}-title" class="text-base font-semibold flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full" style="background-color: {{ col.color or '#4A90E2' }}"></span>
+                    <span>{{ col.label }}</span>
+                </h3>
+                <div class="flex items-center gap-2">
+                    <span class="kanban-count bg-gray-200 dark:bg-gray-700 text-xs font-semibold px-2 py-1 rounded-full" data-status="{{ col.key }}" aria-live="polite" aria-atomic="true">
+                        {{ tasks|selectattr('status', 'equalto', col.key)|list|length }}
+                    </span>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('kanban.edit_column', column_id=col.id) }}" class="text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors" title="{{ _('Edit swimlane') }}">
+                        <i class="fas fa-pen"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="kanban-column-body p-3 space-y-3 overflow-y-auto h-96 flex-grow" data-status="{{ col.key }}" role="list" aria-label="{{ _('Column') }}: {{ col.label }}" tabindex="0">
+                {% set column_tasks = tasks|selectattr('status', 'equalto', col.key)|list %}
+                {% if column_tasks %}
+                    {% for task in column_tasks %}
+                    <div class="kanban-card group bg-background-light dark:bg-background-dark p-4 rounded-lg shadow-sm border border-border-light dark:border-border-dark hover:shadow-md transition-all cursor-grab active:cursor-grabbing" draggable="true" data-task-id="{{ task.id }}" data-status="{{ task.status }}" data-project-id="{{ task.project_id }}" role="listitem" aria-grabbed="false" aria-label="{{ _('Task') }}: {{ task.name }} — {{ _('Status') }}: {{ col.label }}">
+                        <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="block">
+                            <h4 class="font-semibold mb-2 group-hover:text-primary transition-colors">{{ task.name }}</h4>
+                            {% if task.description %}
+                            <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-4">{{ task.description | truncate(80) }}</p>
+                            {% endif %}
+                            
+                            <div class="flex items-center justify-between text-sm text-text-muted-light dark:text-text-muted-dark">
+                                <span class="text-sm font-semibold px-2 py-1 rounded-full
+                                    {% if task.priority == 'urgent' %} bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                                    {% elif task.priority == 'high' %} bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                    {% elif task.priority == 'medium' %} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                                    {% else %} bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 {% endif %}">
+                                    {{ task.priority | capitalize }}
+                                </span>
+                                {% if task.due_date %}
+                                <span class="{{ 'text-red-500' if task.is_overdue else '' }}">
+                                    <i class="fas fa-calendar-alt mr-1"></i>
+                                    {{ task.due_date.strftime('%b %d') }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        
+                        <div class="mt-4 flex justify-between items-center">
+                            {% if task.assigned_user %}
+                            <img src="https://i.pravatar.cc/40?u={{ task.assigned_user.id }}" alt="{{ task.assigned_user.display_name }}" class="w-8 h-8 rounded-full" title="{{ task.assigned_user.display_name }}">
+                            {% else %}
+                            <div class="w-8"></div> <!-- Placeholder for alignment -->
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-3 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs text-text-muted-light dark:text-text-muted-dark" for="status-{{ task.id }}">{{ _('Status') }}</label>
+                                <select id="status-{{ task.id }}" class="kanban-status bg-background-light dark:bg-gray-700 border border-transparent dark:border-transparent rounded px-2 py-1 text-xs" data-task-id="{{ task.id }}">
+                                    {% for st in kanban_columns %}
+                                    <option value="{{ st.key }}" {% if task.status == st.key %}selected{% endif %}>{{ st.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ url_for('timer.start_timer_for_project', project_id=task.project_id) }}?task_id={{ task.id }}" class="text-xs px-2 py-1 rounded bg-primary text-white hover:opacity-90">{{ _('Start') }}</a>
+                                <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="text-xs px-2 py-1 rounded border border-border-light dark:border-border-dark hover:bg-background-light dark:hover:bg-background-dark">{{ _('View') }}</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="kanban-empty text-center text-text-muted-light dark:text-text-muted-dark py-10 border border-dashed border-border-light dark:border-border-dark rounded-lg" aria-live="polite">
+                    <p>{{ _('No tasks in this column.') }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+

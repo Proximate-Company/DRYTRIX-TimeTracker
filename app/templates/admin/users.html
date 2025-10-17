@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Manage Users</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">Add, edit, or remove user accounts.</p>
+    </div>
+    <a href="{{ url_for('admin.create_user') }}" class="bg-primary text-white px-4 py-2 rounded-lg mt-4 md:mt-0">Create User</a>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow overflow-x-auto">
+    <table class="w-full text-left">
+        <thead class="border-b border-border-light dark:border-border-dark">
+            <tr>
+                <th class="p-4">Username</th>
+                <th class="p-4">Role</th>
+                <th class="p-4">Status</th>
+                <th class="p-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr class="border-b border-border-light dark:border-border-dark">
+                <td class="p-4">{{ user.username }}</td>
+                <td class="p-4">{{ user.role | capitalize }}</td>
+                <td class="p-4">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ 'bg-green-100 text-green-800' if user.is_active else 'bg-red-100 text-red-800' }}">
+                        {{ 'Active' if user.is_active else 'Inactive' }}
+                    </span>
+                </td>
+                <td class="p-4">
+                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="text-primary hover:underline">Edit</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="p-4 text-center text-text-muted-light dark:text-text-muted-dark">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

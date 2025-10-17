@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Kanban') }} - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold"><i class="fas fa-columns mr-2"></i>{{ _('Kanban') }}</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">{{ _('Drag tasks between columns. Filter by project.') }}</p>
+    </div>
+    <div class="mt-3 md:mt-0 flex items-center gap-3">
+        <form method="get" class="flex items-center gap-2">
+            <label for="project_id" class="text-sm text-text-muted-light dark:text-text-muted-dark">{{ _('Project') }}</label>
+            <select id="project_id" name="project_id" class="bg-background-light dark:bg-gray-700 border border-transparent dark:border-transparent rounded-lg py-2 px-3 text-sm text-text-light dark:text-text-dark" onchange="this.form.submit()">
+                <option value="">{{ _('All') }}</option>
+                {% for p in projects %}
+                <option value="{{ p.id }}" {% if project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('kanban.list_columns') }}" class="inline-flex items-center gap-2 bg-primary text-white text-sm px-3 py-2 rounded hover:opacity-90">
+            <i class="fas fa-sliders-h"></i> {{ _('Manage Kanban Columns') }}
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark rounded-lg shadow" role="application" aria-label="{{ _('Kanban board') }}">
+    {% include 'projects/_kanban_tailwind.html' %}
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const board = document.getElementById('kanbanBoard');
+    if (!board) return;
+
+    let dragCard = null;
+    board.addEventListener('dragstart', (e) => {
+        const card = e.target.closest('.kanban-card');
+        if (card) {
+            dragCard = card;
+            card.classList.add('opacity-50');
+            card.setAttribute('aria-grabbed', 'true');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', card.dataset.taskId);
+        }
+    });
+    board.addEventListener('dragend', () => {
+        if (dragCard) {
+            dragCard.classList.remove('opacity-50');
+            dragCard.setAttribute('aria-grabbed', 'false');
+        }
+        dragCard = null;
+        document.querySelectorAll('.kanban-column-body').forEach(b => b.classList.remove('bg-blue-100','dark:bg-blue-900'));
+    });
+    document.querySelectorAll('.kanban-column-body').forEach(body => {
+        body.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; body.classList.add('bg-blue-100','dark:bg-blue-900'); body.setAttribute('aria-dropeffect', 'move'); });
+        body.addEventListener('dragleave', () => { body.classList.remove('bg-blue-100','dark:bg-blue-900'); body.removeAttribute('aria-dropeffect'); });
+        body.addEventListener('drop', async (e) => {
+            e.preventDefault(); body.classList.remove('bg-blue-100','dark:bg-blue-900');
+            body.removeAttribute('aria-dropeffect');
+            const targetStatus = body.dataset.status;
+            const taskId = e.dataTransfer.getData('text/plain');
+            const card = dragCard || board.querySelector(`[data-task-id="${taskId}"]`);
+            if (card && card.dataset.status !== targetStatus) {
+                const originalParent = card.parentElement;
+                // Hide target empty placeholder before inserting
+                const targetEmpty = body.querySelector('.kanban-empty');
+                if (targetEmpty) targetEmpty.style.display = 'none';
+                body.appendChild(card);
+                try {
+                    const res = await fetch(`/api/tasks/${taskId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', body: JSON.stringify({ status: targetStatus }) });
+                    if (!res.ok) throw new Error('Failed'); card.dataset.status = targetStatus;
+                    updateColumnCounts();
+                    toggleEmptyStatesForBodies([body, originalParent]);
+                    announce(`${card.querySelector('h4, .kanban-card-title')?.textContent || 'Task'} {{ _('moved to') }} ${targetStatus}`);
+                } catch (err) {
+                    // Revert DOM move and empty states
+                    originalParent.appendChild(card);
+                    toggleEmptyStatesForBodies([body, originalParent]);
+                }
+            }
+        });
+    });
+
+    // Inline status select changes
+    document.querySelectorAll('.kanban-status').forEach(sel => {
+        sel.addEventListener('change', async (e) => {
+            const select = e.target;
+            const taskId = select.dataset.taskId;
+            const newStatus = select.value;
+            try {
+                const res = await fetch(`/api/tasks/${taskId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', body: JSON.stringify({ status: newStatus }) });
+                if (!res.ok) throw new Error('Failed');
+                // Move the card to target column
+                const card = document.querySelector(`.kanban-card[data-task-id="${taskId}"]`);
+                const originalParent = card ? card.parentElement : null;
+                const target = document.querySelector(`.kanban-column-body[data-status="${newStatus}"]`);
+                if (card && target) {
+                    // Hide target empty placeholder
+                    const targetEmpty = target.querySelector('.kanban-empty');
+                    if (targetEmpty) targetEmpty.style.display = 'none';
+                    target.appendChild(card);
+                    card.dataset.status = newStatus;
+                    updateColumnCounts();
+                    toggleEmptyStatesForBodies([target, originalParent]);
+                    announce(`${card.querySelector('h4, .kanban-card-title')?.textContent || 'Task'} {{ _('moved to') }} ${newStatus}`);
+                }
+            } catch (err) {
+                // revert select silently
+                const card = document.querySelector(`.kanban-card[data-task-id="${taskId}"]`);
+                if (card) select.value = card.dataset.status;
+            }
+        });
+    });
+
+    function updateColumnCounts(){
+        document.querySelectorAll('.kanban-count').forEach(span => {
+            const status = span.getAttribute('data-status');
+            const count = document.querySelectorAll(`.kanban-card[data-status="${status}"]`).length;
+            span.textContent = count;
+        });
+        // Also toggle empty placeholders after any count recalculation
+        document.querySelectorAll('.kanban-column-body').forEach(body => toggleEmptyStateForBody(body));
+    }
+
+    function toggleEmptyStatesForBodies(bodies){
+        if (!Array.isArray(bodies)) return;
+        bodies.forEach(b => { if (b) toggleEmptyStateForBody(b); });
+    }
+
+    function toggleEmptyStateForBody(body){
+        const cards = body.querySelectorAll('.kanban-card');
+        let empty = body.querySelector('.kanban-empty');
+        if (cards.length === 0) {
+            if (!empty) {
+                empty = document.createElement('div');
+                empty.className = 'kanban-empty text-center text-text-muted-light dark:text-text-muted-dark py-10';
+                empty.innerHTML = '<p>{{ _('No tasks in this column.') }}</p>';
+                body.appendChild(empty);
+            }
+            empty.style.display = '';
+        } else if (empty) {
+            empty.style.display = 'none';
+        }
+    }
+
+    // Simple aria-live region for announcements
+    function announce(message){
+        try {
+            let live = document.getElementById('kanban-live-region');
+            if (!live) {
+                live = document.createElement('div');
+                live.id = 'kanban-live-region';
+                live.setAttribute('aria-live', 'polite');
+                live.setAttribute('aria-atomic', 'true');
+                live.className = 'sr-only';
+                document.body.appendChild(live);
+            }
+            live.textContent = message;
+        } catch(_) {}
+    }
+});
+</script>
+{% endblock %}
+
+

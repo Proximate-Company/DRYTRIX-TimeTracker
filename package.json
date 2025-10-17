@@ -1,0 +1,24 @@
+{
+  "name": "timetracker-frontend",
+  "version": "1.0.0",
+  "description": "Frontend assets for TimeTracker",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install && npm install -D tailwindcss postcss autoprefixer",
+    "install:cmdk": "npm install cmdk",
+    "build:css": "tailwindcss -i ./app/static/src/input.css -o ./app/static/dist/output.css --watch",
+    "build:docker": "npx tailwindcss -i ./app/static/src/input.css -o ./app/static/dist/output.css"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5"
+  },
+  "dependencies": {
+    "cmdk": "^1.1.1",
+    "framer-motion": "^12.23.24"
+  }
+}

@@ -258,7 +258,7 @@ def create_app(config=None):
                     "img-src 'self' data: https:; "
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.datatables.net; "
                     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; "
-                    "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+                    "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh; "
                     "connect-src 'self' ws: wss:; "
                     "frame-ancestors 'none'"
                 )

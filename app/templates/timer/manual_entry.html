@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Log Time Manually</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">Create a new time entry.</p>
+    </div>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow max-w-3xl mx-auto">
+    <form method="POST" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="project_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project</label>
+                    <select name="project_id" id="project_id" required class="form-input">
+                        <option value="">Select a project</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}" {% if selected_project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="task_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Task (optional)</label>
+                    <select name="task_id" id="task_id" class="form-input" data-selected-task-id="{{ selected_task_id or '' }}" {% if not selected_project_id %}disabled{% endif %}>
+                        <option value="">No task</option>
+                    </select>
+                    <p class="text-xs text-text-muted-light dark:text-text-muted-dark mt-1">Tasks load after selecting a project</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
+                    <input type="date" name="start_date" id="start_date" required class="form-input">
+                </div>
+                <div>
+                    <label for="start_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Time</label>
+                    <input type="time" name="start_time" id="start_time" required class="form-input">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
+                    <input type="date" name="end_date" id="end_date" required class="form-input">
+                </div>
+                <div>
+                    <label for="end_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">End Time</label>
+                    <input type="time" name="end_time" id="end_time" required class="form-input">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                    <textarea name="notes" id="notes" rows="4" class="form-input" placeholder="What did you work on?"></textarea>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags</label>
+                        <input type="text" name="tags" id="tags" class="form-input" placeholder="tag1, tag2">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="billable" name="billable" class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0" checked>
+                        <label for="billable" class="text-sm text-gray-700 dark:text-gray-300">Billable</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 border-t border-border-light dark:border-border-dark pt-6 flex justify-end gap-3">
+            <button type="reset" class="px-4 py-2 rounded-lg border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-background-dark">Clear</button>
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">Log Time</button>
+        </div>
+    </form>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    // Default values for date/time to now
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    const startTime = document.getElementById('start_time');
+    const endTime = document.getElementById('end_time');
+    if (startDate && !startDate.value) startDate.value = today;
+    if (endDate && !endDate.value) endDate.value = today;
+    if (startTime && !startTime.value) startTime.value = `${hh}:${mm}`;
+    if (endTime && !endTime.value) endTime.value = `${hh}:${mm}`;
+
+    // Dynamic task loading when a project is chosen
+    const projectSelect = document.getElementById('project_id');
+    const taskSelect = document.getElementById('task_id');
+    async function loadTasks(projectId){
+        if (!taskSelect) return;
+        if (!projectId){
+            taskSelect.innerHTML = '<option value="">No task</option>';
+            taskSelect.disabled = true;
+            return;
+        }
+        try{
+            const resp = await fetch(`/api/tasks?project_id=${projectId}`);
+            if (!resp.ok) throw new Error('Failed to load tasks');
+            const data = await resp.json();
+            const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+            taskSelect.innerHTML = '<option value="">No task</option>';
+            tasks.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = String(t.id);
+                opt.textContent = t.name;
+                taskSelect.appendChild(opt);
+            });
+            const pre = taskSelect.getAttribute('data-selected-task-id');
+            if (pre){
+                const found = Array.from(taskSelect.options).some(o => o.value === pre);
+                if (found) taskSelect.value = pre;
+                taskSelect.setAttribute('data-selected-task-id','');
+            }
+            taskSelect.disabled = false;
+        }catch(e){
+            taskSelect.innerHTML = '<option value="">No task</option>';
+            taskSelect.disabled = true;
+        }
+    }
+    if (projectSelect){
+        if (projectSelect.value){ loadTasks(projectSelect.value); }
+        projectSelect.addEventListener('change', () => loadTasks(projectSelect.value));
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "components/cards.html" import info_card %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">System Information</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">Key metrics and statistics about the application.</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    {{ info_card("Total Users", total_users, "All time") }}
+    {{ info_card("Total Projects", total_projects, "All time") }}
+    {{ info_card("Total Time Entries", total_entries, "All time") }}
+    {{ info_card("Active Timers", active_timers, "Currently running") }}
+    {{ info_card("Database Size (MB)", db_size_mb, "Current size") }}
+</div>
+{% endblock %}

@@ -186,3 +186,10 @@ nginx/ssl/*.crt
 
 # Environment backups
 .env.backup
+
+# Node.js / Frontend build
+node_modules/
+package-lock.json
+
+# Tailwind CSS build output (keep source in git)
+app/static/dist/

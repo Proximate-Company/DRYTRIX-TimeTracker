@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">{{ client.name }}</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">Client details and associated projects.</p>
+    </div>
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('clients.edit_client', client_id=client.id) }}" class="bg-primary text-white px-4 py-2 rounded-lg mt-4 md:mt-0">Edit Client</a>
+    {% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: Client Details -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+            <h2 class="text-lg font-semibold mb-4">Contact Information</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">Contact Person</h3>
+                    <p>{{ client.contact_person or 'N/A' }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">Email</h3>
+                    <p>{{ client.email or 'N/A' }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">Phone</h3>
+                    <p>{{ client.phone or 'N/A' }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">Address</h3>
+                    <p>{{ client.address or 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Projects -->
+    <div class="lg:col-span-2">
+        <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+            <h2 class="text-lg font-semibold mb-4">Projects</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="border-b border-border-light dark:border-border-dark">
+                        <tr>
+                            <th class="p-4">Name</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr class="border-b border-border-light dark:border-border-dark">
+                            <td class="p-4">{{ project.name }}</td>
+                            <td class="p-4">{{ project.status | capitalize }}</td>
+                            <td class="p-4">
+                                <a href="{{ url_for('projects.view_project', project_id=project.id) }}" class="text-primary hover:underline">View</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="p-4 text-center text-text-muted-light dark:text-text-muted-dark">No projects found for this client.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
