@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "components/cards.html" import info_card %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Invoices</h1>
+    <a href="{{ url_for('invoices.create_invoice') }}" class="bg-primary text-white px-4 py-2 rounded-lg">Create Invoice</a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    {{ info_card("Total Invoiced", "%.2f"|format(summary.total_amount), "All time") }}
+    {{ info_card("Total Paid", "%.2f"|format(summary.paid_amount), "All time") }}
+    {{ info_card("Outstanding", "%.2f"|format(summary.outstanding_amount), "All time") }}
+    {{ info_card("Overdue", "%.2f"|format(summary.overdue_amount), "All time") }}
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+    <table class="w-full text-left">
+        <thead>
+            <tr>
+                <th class="p-2">Number</th>
+                <th class="p-2">Client</th>
+                <th class="p-2">Status</th>
+                <th class="p-2">Total</th>
+                <th class="p-2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr class="border-b border-border-light dark:border-border-dark">
+                <td class="p-2">{{ invoice.invoice_number }}</td>
+                <td class="p-2">{{ invoice.client_name }}</td>
+                <td class="p-2">{{ invoice.status }}</td>
+                <td class="p-2">{{ "%.2f"|format(invoice.total_amount) }}</td>
+                <td class="p-2">
+                    <a href="{{ url_for('invoices.view_invoice', invoice_id=invoice.id) }}" class="text-primary">View</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="p-4 text-center">No invoices found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

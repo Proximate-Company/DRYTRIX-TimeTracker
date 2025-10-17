@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Edit Invoice {{ invoice.invoice_number }}</h1>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="client_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Name</label>
+                <input type="text" name="client_name" id="client_name" value="{{ invoice.client_name }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+            </div>
+            <div>
+                <label for="client_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Email</label>
+                <input type="email" name="client_email" id="client_email" value="{{ invoice.client_email }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+            </div>
+            <div>
+                <label for="due_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</label>
+                <input type="date" name="due_date" id="due_date" value="{{ invoice.due_date.strftime('%Y-%m-%d') }}" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+            </div>
+            <div class="md:col-span-2">
+                <label for="client_address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Address</label>
+                <textarea name="client_address" id="client_address" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">{{ invoice.client_address }}</textarea>
+            </div>
+            <div>
+                <label for="tax_rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tax Rate (%)</label>
+                <input type="number" name="tax_rate" id="tax_rate" value="{{ invoice.tax_rate }}" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <h2 class="text-lg font-semibold mb-4">Items</h2>
+            <div id="invoice-items">
+                {% for item in invoice.items %}
+                <div class="grid grid-cols-4 gap-4 mb-4">
+                    <input type="text" name="description[]" placeholder="Description" value="{{ item.description }}" class="col-span-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+                    <input type="number" name="quantity[]" placeholder="Quantity" value="{{ item.quantity }}" step="0.01" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+                    <input type="number" name="unit_price[]" placeholder="Unit Price" value="{{ item.unit_price }}" step="0.01" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add-item" class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-lg">Add Item</button>
+        </div>
+
+        <div class="mt-6">
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+    document.getElementById('add-item').addEventListener('click', function() {
+        var itemsContainer = document.getElementById('invoice-items');
+        var newItem = document.createElement('div');
+        newItem.className = 'grid grid-cols-4 gap-4 mb-4';
+        newItem.innerHTML = `
+            <input type="text" name="description[]" placeholder="Description" class="col-span-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+            <input type="number" name="quantity[]" placeholder="Quantity" step="0.01" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+            <input type="number" name="unit_price[]" placeholder="Unit Price" step="0.01" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600">
+        `;
+        itemsContainer.appendChild(newItem);
+    });
+</script>
+{% endblock %}

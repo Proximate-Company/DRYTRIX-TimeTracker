@@ -3,320 +3,174 @@
 {% block title %}{{ _('Analytics Dashboard') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    {% from "_components.html" import page_header %}
-    <div class="row">
-        <div class="col-12">
-            {% set actions %}
-            <select id="timeRange" class="form-select form-select-sm" style="width: auto;">
-                <option value="7">{{ _('Last 7 days') }}</option>
-                <option value="30" selected>{{ _('Last 30 days') }}</option>
-                <option value="90">{{ _('Last 90 days') }}</option>
-                <option value="365">{{ _('Last year') }}</option>
-            </select>
-            <button id="exportData" class="btn btn-outline-light btn-sm">
-                <i class="fas fa-download"></i> {{ _('Export') }}
-            </button>
-            <button id="refreshCharts" class="btn btn-outline-light btn-sm">
-                <i class="fas fa-sync-alt"></i> {{ _('Refresh') }}
-            </button>
-            {% endset %}
-            {{ page_header('fas fa-chart-line', _('Analytics Dashboard'), _('Key metrics and actionable insights'), actions) }}
-        </div>
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold"><i class="fas fa-chart-line mr-2"></i>{{ _('Analytics Dashboard') }}</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">{{ _('Key metrics and actionable insights') }}</p>
     </div>
-
-    <!-- Enhanced Summary Cards with Comparisons -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card text-center h-100 hover-lift border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <i class="fas fa-clock fa-2x text-primary"></i>
-                        <span id="totalHoursChange" class="badge bg-success">
-                            <i class="fas fa-arrow-up"></i> 0%
-                        </span>
-                    </div>
-                    <h3 class="text-primary mb-1" id="totalHours">-</h3>
-                    <p class="text-muted mb-0 small">{{ _('Total Hours') }}</p>
-                    <small class="text-muted">{{ _('vs previous period') }}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card text-center h-100 hover-lift border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <i class="fas fa-dollar-sign fa-2x text-success"></i>
-                        <span id="billableHoursChange" class="badge bg-success">
-                            <i class="fas fa-arrow-up"></i> 0%
-                        </span>
-                    </div>
-                    <h3 class="text-success mb-1" id="billableHours">-</h3>
-                    <p class="text-muted mb-0 small">{{ _('Billable Hours') }}</p>
-                    <small class="text-muted"><span id="billablePercentage">0</span>% {{ _('of total') }}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card text-center h-100 hover-lift border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <i class="fas fa-sack-dollar fa-2x text-warning"></i>
-                        <span class="badge bg-info"><i class="fas fa-info-circle"></i></span>
-                    </div>
-                    <h3 class="text-warning mb-1" id="totalRevenue">-</h3>
-                    <p class="text-muted mb-0 small">{{ _('Potential Revenue') }}</p>
-                    <small class="text-muted">{{ _('Avg rate:') }} <span id="avgHourlyRate">-</span></small>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card text-center h-100 hover-lift border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <i class="fas fa-chart-line fa-2x text-info"></i>
-                        <span class="badge bg-primary"><i class="fas fa-chart-bar"></i></span>
-                    </div>
-                    <h3 class="text-info mb-1" id="avgDailyHours">-</h3>
-                    <p class="text-muted mb-0 small">{{ _('Avg Daily Hours') }}</p>
-                    <small class="text-muted"><span id="activeProjects">0</span> {{ _('active projects') }}</small>
-                </div>
-            </div>
-        </div>
+    <div class="mt-3 md:mt-0 flex items-center gap-2">
+        <select id="timeRange" class="bg-background-light dark:bg-gray-700 border border-transparent dark:border-transparent rounded-lg py-2 px-3 text-sm text-text-light dark:text-text-dark">
+            <option value="7">{{ _('Last 7 days') }}</option>
+            <option value="30" selected>{{ _('Last 30 days') }}</option>
+            <option value="90">{{ _('Last 90 days') }}</option>
+            <option value="365">{{ _('Last year') }}</option>
+        </select>
+        <button id="exportData" class="px-3 py-2 rounded-lg border border-border-light dark:border-border-dark text-sm hover:bg-background-light dark:hover:bg-background-dark">
+            <i class="fas fa-download mr-1"></i>{{ _('Export') }}
+        </button>
+        <button id="refreshCharts" class="px-3 py-2 rounded-lg bg-primary text-white text-sm hover:opacity-90">
+            <i class="fas fa-sync-alt mr-1"></i>{{ _('Refresh') }}
+        </button>
     </div>
-
-    <!-- Insights Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-lightbulb text-warning"></i> {{ _('Insights & Recommendations') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="insightsContainer" class="row">
-                        <div class="col-12 text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">{{ _('Loading...') }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Row 1 -->
-    <div class="row mb-4">
-        <div class="col-lg-8 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-area text-primary"></i> {{ _('Daily Hours Trend') }}
-                    </h5>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="showCumulativeToggle">
-                        <label class="form-check-label small" for="showCumulativeToggle">{{ _('Cumulative') }}</label>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="dailyHoursChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-pie text-success"></i> {{ _('Billable Distribution') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="billableChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Row 2: Tasks & Revenue -->
-    <div class="row mb-4">
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-tasks text-info"></i> {{ _('Task Status Overview') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="chart-container" style="position: relative; height: 250px;">
-                                <canvas id="taskStatusChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex flex-column h-100 justify-content-center">
-                                <div class="mb-3">
-                                    <h4 class="mb-0 text-success" id="tasksCompleted">0</h4>
-                                    <small class="text-muted">{{ _('Tasks Completed') }}</small>
-                                </div>
-                                <div class="mb-3">
-                                    <h4 class="mb-0 text-primary" id="tasksInProgress">0</h4>
-                                    <small class="text-muted">{{ _('In Progress') }}</small>
-                                </div>
-                                <div>
-                                    <h4 class="mb-0 text-muted" id="tasksTodo">0</h4>
-                                    <small class="text-muted">{{ _('To Do') }}</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar text-warning"></i> {{ _('Revenue by Project') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Row 3 -->
-    <div class="row mb-4">
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar text-primary"></i> {{ _('Hours by Project') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="projectChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-line text-purple"></i> {{ _('Weekly Trends') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="weeklyTrendsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Row 4 -->
-    <div class="row mb-4">
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-clock text-info"></i> {{ _('Hours by Time of Day') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="hourlyChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-percentage text-success"></i> {{ _('Project Completion Rate') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                        <canvas id="completionRateChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- User Performance Chart (Admin Only) -->
-    {% if current_user.is_admin %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-users text-primary"></i> {{ _('User Performance') }}
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height: 300px;">
-                        <canvas id="userChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 
-<!-- Loading Spinner -->
-<div id="loadingSpinner" class="position-fixed top-50 start-50 translate-middle" style="display: none; z-index: 9999;">
-    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-        <span class="visually-hidden">{{ _('Loading...') }}</span>
+<!-- Summary cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-clock text-primary"></i>
+            <span id="totalHoursChange" class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700">+0%</span>
+        </div>
+        <div class="text-2xl font-semibold text-primary" id="totalHours">-</div>
+        <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Total Hours') }}</div>
+        <div class="text-[11px] text-text-muted-light dark:text-text-muted-dark">{{ _('vs previous period') }}</div>
+    </div>
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-dollar-sign text-green-600"></i>
+            <span id="billableHoursChange" class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700">+0%</span>
+        </div>
+        <div class="text-2xl font-semibold text-green-600" id="billableHours">-</div>
+        <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Billable Hours') }}</div>
+        <div class="text-[11px] text-text-muted-light dark:text-text-muted-dark"><span id="billablePercentage">0</span>% {{ _('of total') }}</div>
+    </div>
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-sack-dollar text-amber-500"></i>
+            <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-sky-100 text-sky-700"><i class="fas fa-info-circle mr-1"></i>Info</span>
+        </div>
+        <div class="text-2xl font-semibold text-amber-600" id="totalRevenue">-</div>
+        <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Potential Revenue') }}</div>
+        <div class="text-[11px] text-text-muted-light dark:text-text-muted-dark">{{ _('Avg rate:') }} <span id="avgHourlyRate">-</span></div>
+    </div>
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-chart-line text-sky-600"></i>
+            <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary"><i class="fas fa-chart-bar mr-1"></i>{{ _('Trend') }}</span>
+        </div>
+        <div class="text-2xl font-semibold text-sky-600" id="avgDailyHours">-</div>
+        <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Avg Daily Hours') }}</div>
+        <div class="text-[11px] text-text-muted-light dark:text-text-muted-dark"><span id="activeProjects">0</span> {{ _('active projects') }}</div>
+    </div>
+</div>
+
+<!-- Insights -->
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold"><i class="fas fa-lightbulb text-amber-500 mr-2"></i>{{ _('Insights & Recommendations') }}</h2>
+    </div>
+    <div id="insightsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="col-span-1 text-center py-6">
+            <i class="fas fa-circle-notch fa-spin text-primary"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Charts: Daily Hours + Billable -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div class="lg:col-span-2 bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold"><i class="fas fa-chart-area text-primary mr-2"></i>{{ _('Daily Hours Trend') }}</h3>
+            <label class="flex items-center text-sm gap-2">
+                <input class="rounded" type="checkbox" id="showCumulativeToggle">
+                <span>{{ _('Cumulative') }}</span>
+            </label>
+        </div>
+        <div class="relative h-[300px]">
+            <canvas id="dailyHoursChart"></canvas>
+        </div>
+    </div>
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <h3 class="font-semibold mb-3"><i class="fas fa-chart-pie text-green-600 mr-2"></i>{{ _('Billable Distribution') }}</h3>
+        <div class="relative h-[300px]">
+            <canvas id="billableChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Charts: Tasks & Revenue -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <h3 class="font-semibold mb-3"><i class="fas fa-tasks text-sky-600 mr-2"></i>{{ _('Task Status Overview') }}</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div class="relative h-[250px]"><canvas id="taskStatusChart"></canvas></div>
+            <div class="space-y-3">
+                <div>
+                    <div class="text-lg font-semibold text-green-600" id="tasksCompleted">0</div>
+                    <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Tasks Completed') }}</div>
+                </div>
+                <div>
+                    <div class="text-lg font-semibold text-primary" id="tasksInProgress">0</div>
+                    <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('In Progress') }}</div>
+                </div>
+                <div>
+                    <div class="text-lg font-semibold text-text-muted-light dark:text-text-muted-dark" id="tasksTodo">0</div>
+                    <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('To Do') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <h3 class="font-semibold mb-3"><i class="fas fa-chart-bar text-amber-500 mr-2"></i>{{ _('Revenue by Project') }}</h3>
+        <div class="relative h-[300px]"><canvas id="revenueChart"></canvas></div>
+    </div>
+</div>
+
+<!-- Charts: Hours by Project & Weekly Trends -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <h3 class="font-semibold mb-3"><i class="fas fa-chart-bar text-primary mr-2"></i>{{ _('Hours by Project') }}</h3>
+        <div class="relative h-[300px]"><canvas id="projectChart"></canvas></div>
+    </div>
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <h3 class="font-semibold mb-3"><i class="fas fa-chart-line text-purple mr-2"></i>{{ _('Weekly Trends') }}</h3>
+        <div class="relative h-[300px]"><canvas id="weeklyTrendsChart"></canvas></div>
+    </div>
+</div>
+
+<!-- Charts: Hours by Time of Day & Completion Rate -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <h3 class="font-semibold mb-3"><i class="fas fa-clock text-sky-600 mr-2"></i>{{ _('Hours by Time of Day') }}</h3>
+        <div class="relative h-[300px]"><canvas id="hourlyChart"></canvas></div>
+    </div>
+    <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+        <h3 class="font-semibold mb-3"><i class="fas fa-percentage text-green-600 mr-2"></i>{{ _('Project Completion Rate') }}</h3>
+        <div class="relative h-[300px]"><canvas id="completionRateChart"></canvas></div>
+    </div>
+</div>
+
+{% if current_user.is_admin %}
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow mb-6">
+    <h3 class="font-semibold mb-3"><i class="fas fa-users text-primary mr-2"></i>{{ _('User Performance') }}</h3>
+    <div class="relative h-[300px]"><canvas id="userChart"></canvas></div>
+</div>
+{% endif %}
+
+<!-- Loading overlay -->
+<div id="loadingSpinner" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div class="flex items-center gap-3 bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark border border-border-light dark:border-border-dark px-4 py-3 rounded-lg shadow">
+        <i class="fas fa-circle-notch fa-spin text-primary"></i>
+        <span>{{ _('Loading...') }}</span>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_head %}
-<!-- Chart.js library -->
+{% block extra_css %}{% endblock %}
+
+{% block scripts_extra %}
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-<style>
-.hover-lift {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-
-.insight-card {
-    border-left: 4px solid;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 0.5rem;
-    background: #f8f9fa;
-}
-
-.insight-card.success { border-left-color: #10b981; }
-.insight-card.warning { border-left-color: #f59e0b; }
-.insight-card.info { border-left-color: #3b82f6; }
-.insight-card.danger { border-left-color: #ef4444; }
-
-.text-purple { color: #8b5cf6; }
-</style>
 
 <script type="application/json" id="i18n-json-analytics-dashboard">
 {
@@ -336,25 +190,15 @@
     "completion_rate_label": {{ _('Completion Rate (%)')|tojson }}
 }
 </script>
+
 <script>
-// Ensure i18n_analytics is always defined globally
+// Ensure i18n_analytics is globally available
 window.i18n_analytics = (function(){
-    try {
-        var el = document.getElementById('i18n-json-analytics-dashboard');
-        return el ? JSON.parse(el.textContent) : {};
-    } catch (e) { 
-        return {};
-    }
+    try { var el = document.getElementById('i18n-json-analytics-dashboard'); return el ? JSON.parse(el.textContent) : {}; } catch(e){ return {}; }
 })();
-
 var i18n_analytics = window.i18n_analytics;
-</script>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-// Enhanced Analytics Dashboard Controller
-// Chart.js global defaults
+// Chart.js defaults
 Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 Chart.defaults.font.size = 12;
 Chart.defaults.color = '#64748b';
@@ -377,35 +221,34 @@ class EnhancedAnalyticsDashboard {
     }
 
     bindEvents() {
-        document.getElementById('timeRange').addEventListener('change', (e) => {
+        const timeRangeEl = document.getElementById('timeRange');
+        timeRangeEl && timeRangeEl.addEventListener('change', (e) => {
             this.timeRange = parseInt(e.target.value);
             this.refreshAllCharts();
         });
 
-        document.getElementById('refreshCharts').addEventListener('click', () => {
-            this.refreshAllCharts();
-        });
+        const refreshBtn = document.getElementById('refreshCharts');
+        refreshBtn && refreshBtn.addEventListener('click', () => this.refreshAllCharts());
 
-        document.getElementById('exportData')?.addEventListener('click', () => {
-            this.exportData();
-        });
+        const exportBtn = document.getElementById('exportData');
+        exportBtn && exportBtn.addEventListener('click', () => this.exportData());
 
-        document.getElementById('showCumulativeToggle')?.addEventListener('change', (e) => {
-            this.toggleCumulative(e.target.checked);
-        });
+        const cumToggle = document.getElementById('showCumulativeToggle');
+        cumToggle && cumToggle.addEventListener('change', (e) => this.toggleCumulative(e.target.checked));
     }
 
     showLoading() {
-        document.getElementById('loadingSpinner').style.display = 'block';
+        const el = document.getElementById('loadingSpinner');
+        if (el) el.classList.remove('hidden');
     }
 
     hideLoading() {
-        document.getElementById('loadingSpinner').style.display = 'none';
+        const el = document.getElementById('loadingSpinner');
+        if (el) el.classList.add('hidden');
     }
 
     async loadAllData() {
         this.showLoading();
-        
         try {
             await Promise.all([
                 this.loadSummaryCards(),
@@ -422,14 +265,9 @@ class EnhancedAnalyticsDashboard {
 
     async refreshAllCharts() {
         this.showLoading();
-        
         try {
-            // Destroy all existing charts
-            Object.values(this.charts).forEach(chart => {
-                if (chart) chart.destroy();
-            });
+            Object.values(this.charts).forEach(chart => { if (chart) chart.destroy(); });
             this.charts = {};
-            
             await this.loadAllData();
         } catch (error) {
             console.error('Error refreshing charts:', error);
@@ -445,32 +283,24 @@ class EnhancedAnalyticsDashboard {
                 fetch(`/api/analytics/summary-with-comparison?days=${this.timeRange}`),
                 fetch(`/api/analytics/revenue-metrics?days=${this.timeRange}`)
             ]);
-            
             const summaryData = await summaryResponse.json();
             const revenueData = await revenueResponse.json();
-            
             this.summaryData = summaryData;
             this.currency = revenueData.currency || 'EUR';
-            
-            // Update total hours
+
+            // totals
             document.getElementById('totalHours').textContent = `${summaryData.total_hours}h`;
             this.updateChangeIndicator('totalHoursChange', summaryData.total_hours_change);
-            
-            // Update billable hours
+
             document.getElementById('billableHours').textContent = `${summaryData.billable_hours}h`;
             this.updateChangeIndicator('billableHoursChange', summaryData.billable_hours_change);
             document.getElementById('billablePercentage').textContent = summaryData.billable_percentage;
-            
-            // Update revenue
-            document.getElementById('totalRevenue').textContent = 
-                `${this.currency} ${this.formatNumber(revenueData.total_revenue)}`;
-            document.getElementById('avgHourlyRate').textContent = 
-                `${this.currency} ${this.formatNumber(revenueData.avg_hourly_rate)}/h`;
-            
-            // Update avg daily hours
+
+            document.getElementById('totalRevenue').textContent = `${this.currency} ${this.formatNumber(revenueData.total_revenue)}`;
+            document.getElementById('avgHourlyRate').textContent = `${this.currency} ${this.formatNumber(revenueData.avg_hourly_rate)}/h`;
+
             document.getElementById('avgDailyHours').textContent = `${summaryData.avg_daily_hours}h`;
             document.getElementById('activeProjects').textContent = summaryData.active_projects;
-            
         } catch (error) {
             console.error('Error loading summary cards:', error);
         }
@@ -479,56 +309,41 @@ class EnhancedAnalyticsDashboard {
     updateChangeIndicator(elementId, change) {
         const element = document.getElementById(elementId);
         if (!element) return;
-        
-        const isPositive = change >= 0;
-        element.className = `badge bg-${isPositive ? 'success' : 'danger'}`;
-        element.innerHTML = `
-            <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${Math.abs(change).toFixed(1)}%
-        `;
+        const isPositive = Number(change) >= 0;
+        element.className = `inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+        element.innerHTML = `<i class="fas fa-arrow-${isPositive ? 'up' : 'down'} mr-1"></i>${Math.abs(change || 0).toFixed(1)}%`;
     }
 
     async loadInsights() {
         try {
             const response = await fetch(`/api/analytics/insights?days=${this.timeRange}`);
             const data = await response.json();
-            
             const container = document.getElementById('insightsContainer');
-            
             if (!data.insights || data.insights.length === 0) {
                 container.innerHTML = `
-                    <div class="col-12 text-center py-3">
-                        <p class="text-muted mb-0">
-                            <i class="fas fa-check-circle text-success me-2"></i>
-                            ${i18n_analytics.no_insights || 'Everything looks good! Keep up the great work.'}
-                        </p>
-                    </div>
-                `;
+                    <div class="col-span-full text-center py-3 text-text-muted-light dark:text-text-muted-dark">
+                        <i class="fas fa-check-circle text-green-600 mr-1"></i>
+                        ${i18n_analytics.no_insights || 'Everything looks good! Keep up the great work.'}
+                    </div>`;
                 return;
             }
-            
             container.innerHTML = data.insights.map(insight => `
-                <div class="col-md-6 col-lg-4">
-                    <div class="insight-card ${insight.type}">
-                        <div class="d-flex align-items-start">
-                            <div class="me-3">
-                                <i class="${insight.icon} fa-2x"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">${insight.title}</h6>
-                                <small>${insight.message}</small>
-                            </div>
+                <div class="bg-background-light dark:bg-background-dark/40 p-4 rounded border border-border-light dark:border-border-dark">
+                    <div class="flex items-start gap-3">
+                        <i class="${insight.icon} text-xl"></i>
+                        <div>
+                            <div class="font-semibold mb-1">${insight.title}</div>
+                            <div class="text-sm text-text-muted-light dark:text-text-muted-dark">${insight.message}</div>
                         </div>
                     </div>
-                </div>
-            `).join('');
-            
+                </div>`).join('');
         } catch (error) {
             console.error('Error loading insights:', error);
         }
     }
 
     async loadCharts() {
-        const chartPromises = [
+        const tasks = [
             this.loadDailyHoursChart(),
             this.loadBillableChart(),
             this.loadTaskStatusChart(),
@@ -538,73 +353,26 @@ class EnhancedAnalyticsDashboard {
             this.loadHourlyChart(),
             this.loadCompletionRateChart()
         ];
-        
         {% if current_user.is_admin %}
-        chartPromises.push(this.loadUserChart());
+        tasks.push(this.loadUserChart());
         {% endif %}
-        
-        await Promise.all(chartPromises);
+        await Promise.all(tasks);
     }
 
     async loadDailyHoursChart() {
         const response = await fetch(`/api/analytics/hours-by-day?days=${this.timeRange}`);
         const data = await response.json();
-        
         const ctx = document.getElementById('dailyHoursChart').getContext('2d');
         this.charts.dailyHours = new Chart(ctx, {
-            type: 'line',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        titleColor: '#1f2937',
-                        bodyColor: '#6b7280',
-                        borderColor: '#e5e7eb',
-                        borderWidth: 1,
-                        padding: 12,
-                        displayColors: true,
-                        callbacks: {
-                            label: (context) => {
-                                return `${context.parsed.y.toFixed(1)}h`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: i18n_analytics.hours_label || 'Hours'
-                        },
-                        grid: {
-                            color: '#f3f4f6'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: i18n_analytics.date_label || 'Date'
-                        },
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                }
+            type: 'line', data, options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: {
+                    mode: 'index', intersect: false,
+                    backgroundColor: 'rgba(255,255,255,0.9)', titleColor: '#111827', bodyColor: '#6b7280', borderColor: '#e5e7eb', borderWidth: 1, padding: 12,
+                    callbacks: { label: (c) => `${c.parsed.y.toFixed(1)}h` }
+                }},
+                scales: { y: { beginAtZero: true, title: { display: true, text: i18n_analytics.hours_label || 'Hours' }, grid: { color: '#f3f4f6' } }, x: { title: { display: true, text: i18n_analytics.date_label || 'Date' }, grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } } },
+                interaction: { intersect: false, mode: 'index' }
             }
         });
     }
@@ -612,396 +380,117 @@ class EnhancedAnalyticsDashboard {
     async loadBillableChart() {
         const response = await fetch(`/api/analytics/billable-vs-nonbillable?days=${this.timeRange}`);
         const data = await response.json();
-        
         const ctx = document.getElementById('billableChart').getContext('2d');
-        this.charts.billable = new Chart(ctx, {
-            type: 'doughnut',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        titleColor: '#1f2937',
-                        bodyColor: '#6b7280',
-                        borderColor: '#e5e7eb',
-                        borderWidth: 1,
-                        padding: 12,
-                        callbacks: {
-                            label: (context) => {
-                                const label = context.label || '';
-                                const value = context.parsed || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ${value.toFixed(1)}h (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        this.charts.billable = new Chart(ctx, { type: 'doughnut', data, options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' }, tooltip: {
+                backgroundColor: 'rgba(255,255,255,0.9)', titleColor: '#111827', bodyColor: '#6b7280', borderColor: '#e5e7eb', borderWidth: 1, padding: 12,
+                callbacks: { label: (ctx) => {
+                    const label = ctx.label || ''; const value = ctx.parsed || 0; const total = ctx.dataset.data.reduce((a,b)=>a+b,0); const pct = total>0 ? ((value/total)*100).toFixed(1) : 0; return `${label}: ${value.toFixed(1)}h (${pct}%)`;
+                } }
+            }}
+        }});
     }
 
     async loadTaskStatusChart() {
         const response = await fetch(`/api/analytics/task-completion?days=${this.timeRange}`);
-        const data = await response.json();
-        
-        // Update task stats
-        document.getElementById('tasksCompleted').textContent = data.status_breakdown.done || 0;
-        document.getElementById('tasksInProgress').textContent = data.status_breakdown.in_progress || 0;
-        document.getElementById('tasksTodo').textContent = data.status_breakdown.todo || 0;
-        
+        let data = {};
+        try {
+            data = await response.json();
+        } catch (e) {
+            data = {};
+        }
+        const status = (data && typeof data === 'object' && data.status_breakdown && typeof data.status_breakdown === 'object') ? data.status_breakdown : {};
+        document.getElementById('tasksCompleted').textContent = (status.done || 0);
+        document.getElementById('tasksInProgress').textContent = (status.in_progress || 0);
+        document.getElementById('tasksTodo').textContent = (status.todo || 0);
         const ctx = document.getElementById('taskStatusChart').getContext('2d');
-        this.charts.taskStatus = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: [
-                    i18n_analytics.completed_label || 'Completed',
-                    i18n_analytics.in_progress_label || 'In Progress',
-                    i18n_analytics.todo_label || 'To Do',
-                    i18n_analytics.review_label || 'Review'
-                ],
-                datasets: [{
-                    data: [
-                        data.status_breakdown.done || 0,
-                        data.status_breakdown.in_progress || 0,
-                        data.status_breakdown.todo || 0,
-                        data.status_breakdown.review || 0
-                    ],
-                    backgroundColor: [
-                        '#10b981',
-                        '#3b82f6',
-                        '#94a3b8',
-                        '#f59e0b'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 10,
-                            font: { size: 10 }
-                        }
-                    }
-                }
-            }
-        });
+        this.charts.taskStatus = new Chart(ctx, { type: 'doughnut', data: {
+            labels: [i18n_analytics.completed_label || 'Completed', i18n_analytics.in_progress_label || 'In Progress', i18n_analytics.todo_label || 'To Do', i18n_analytics.review_label || 'Review'],
+            datasets: [{ data: [status.done||0, status.in_progress||0, status.todo||0, status.review||0], backgroundColor: ['#10b981','#3b82f6','#94a3b8','#f59e0b'], borderWidth: 2, borderColor: '#fff' }]
+        }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 10, font: { size: 10 } } } } } });
     }
 
     async loadRevenueChart() {
         const response = await fetch(`/api/analytics/revenue-metrics?days=${this.timeRange}`);
         const data = await response.json();
-        
         if (!data.project_labels || data.project_labels.length === 0) {
             const ctx = document.getElementById('revenueChart').getContext('2d');
-            ctx.font = '14px sans-serif';
-            ctx.fillStyle = '#6b7280';
-            ctx.textAlign = 'center';
-            ctx.fillText('No revenue data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
-            return;
+            ctx.font = '14px sans-serif'; ctx.fillStyle = '#6b7280'; ctx.textAlign = 'center'; ctx.fillText('No revenue data available', ctx.canvas.width/2, ctx.canvas.height/2); return;
         }
-        
         const ctx = document.getElementById('revenueChart').getContext('2d');
-        this.charts.revenue = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.project_labels,
-                datasets: [{
-                    label: `${i18n_analytics.revenue_label || 'Revenue'} (${this.currency})`,
-                    data: data.project_revenue,
-                    backgroundColor: 'rgba(245, 158, 11, 0.8)',
-                    borderColor: '#f59e0b',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        titleColor: '#1f2937',
-                        bodyColor: '#6b7280',
-                        borderColor: '#e5e7eb',
-                        borderWidth: 1,
-                        padding: 12,
-                        callbacks: {
-                            label: (context) => {
-                                return `${this.currency} ${this.formatNumber(context.parsed.y)}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: `${i18n_analytics.revenue_label || 'Revenue'} (${this.currency})`
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                }
-            }
-        });
+        this.charts.revenue = new Chart(ctx, { type: 'bar', data: { labels: data.project_labels, datasets: [{ label: `${i18n_analytics.revenue_label || 'Revenue'} (${this.currency})`, data: data.project_revenue, backgroundColor: 'rgba(245, 158, 11, 0.8)', borderColor: '#f59e0b', borderWidth: 2 }] }, options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(255,255,255,0.9)', titleColor: '#111827', bodyColor: '#6b7280', borderColor: '#e5e7eb', borderWidth: 1, padding: 12, callbacks: { label: (c) => `${this.currency} ${this.formatNumber(c.parsed.y)}` } } },
+            scales: { y: { beginAtZero: true, title: { display: true, text: `${i18n_analytics.revenue_label || 'Revenue'} (${this.currency})` } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } }
+        }});
     }
 
     async loadProjectChart() {
         const response = await fetch(`/api/analytics/hours-by-project?days=${this.timeRange}`);
         const data = await response.json();
-        
         const ctx = document.getElementById('projectChart').getContext('2d');
-        this.charts.project = new Chart(ctx, {
-            type: 'bar',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        titleColor: '#1f2937',
-                        bodyColor: '#6b7280',
-                        borderColor: '#e5e7eb',
-                        borderWidth: 1,
-                        padding: 12
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: i18n_analytics.hours_label || 'Hours'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                }
-            }
-        });
+        this.charts.project = new Chart(ctx, { type: 'bar', data, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(255,255,255,0.9)', titleColor: '#111827', bodyColor: '#6b7280', borderColor: '#e5e7eb', borderWidth: 1, padding: 12 } }, scales: { y: { beginAtZero: true, title: { display: true, text: i18n_analytics.hours_label || 'Hours' } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } } }});
     }
 
     async loadWeeklyTrendsChart() {
         const response = await fetch(`/api/analytics/weekly-trends?weeks=${Math.min(12, Math.ceil(this.timeRange / 7))}`);
         const data = await response.json();
-        
         const ctx = document.getElementById('weeklyTrendsChart').getContext('2d');
-        this.charts.weeklyTrends = new Chart(ctx, {
-            type: 'line',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: i18n_analytics.hours_label || 'Hours'
-                        }
-                    }
-                }
-            }
-        });
+        this.charts.weeklyTrends = new Chart(ctx, { type: 'line', data, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: i18n_analytics.hours_label || 'Hours' } } } } });
     }
 
     async loadHourlyChart() {
         const response = await fetch(`/api/analytics/hours-by-hour?days=${this.timeRange}`);
         const data = await response.json();
-        
         const ctx = document.getElementById('hourlyChart').getContext('2d');
-        this.charts.hourly = new Chart(ctx, {
-            type: 'bar',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: i18n_analytics.hours_label || 'Hours'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: i18n_analytics.hour_of_day_label || 'Hour of Day'
-                        }
-                    }
-                }
-            }
-        });
+        this.charts.hourly = new Chart(ctx, { type: 'bar', data, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: i18n_analytics.hours_label || 'Hours' } }, x: { title: { display: true, text: i18n_analytics.hour_of_day_label || 'Hour of Day' } } } } });
     }
 
     async loadCompletionRateChart() {
         const response = await fetch(`/api/analytics/task-completion?days=${this.timeRange}`);
         const data = await response.json();
-        
-        if (!data.project_labels || data.project_labels.length === 0) {
-            return;
-        }
-        
+        if (!data.project_labels || data.project_labels.length === 0) return;
         const ctx = document.getElementById('completionRateChart').getContext('2d');
-        this.charts.completionRate = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.project_labels,
-                datasets: [{
-                    label: i18n_analytics.completion_rate_label || 'Completion Rate (%)',
-                    data: data.project_completion_rates,
-                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                    borderColor: '#10b981',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        title: {
-                            display: true,
-                            text: '%'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                }
-            }
-        });
+        this.charts.completionRate = new Chart(ctx, { type: 'bar', data: { labels: data.project_labels, datasets: [{ label: i18n_analytics.completion_rate_label || 'Completion Rate (%)', data: data.project_completion_rates, backgroundColor: 'rgba(16, 185, 129, 0.8)', borderColor: '#10b981', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: '%' } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } } } });
     }
 
     {% if current_user.is_admin %}
     async loadUserChart() {
         const response = await fetch(`/api/analytics/hours-by-user?days=${this.timeRange}`);
         const data = await response.json();
-        
         const ctx = document.getElementById('userChart').getContext('2d');
-        this.charts.user = new Chart(ctx, {
-            type: 'bar',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: i18n_analytics.hours_label || 'Hours'
-                        }
-                    }
-                }
-            }
-        });
+        this.charts.user = new Chart(ctx, { type: 'bar', data, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: i18n_analytics.hours_label || 'Hours' } } } } });
     }
     {% endif %}
 
-    toggleCumulative(enabled) {
-        // This would toggle between regular and cumulative view for daily hours
-        // Implementation could be added based on requirements
-        console.log('Cumulative view:', enabled);
-    }
+    toggleCumulative(enabled) { console.log('Cumulative view:', enabled); }
 
     exportData() {
-        // Export analytics data as CSV
         if (!this.summaryData) return;
-        
         const csvContent = [
-            ['Metric', 'Value'],
+            ['Metric','Value'],
             ['Total Hours', this.summaryData.total_hours],
             ['Billable Hours', this.summaryData.billable_hours],
             ['Average Daily Hours', this.summaryData.avg_daily_hours],
             ['Active Projects', this.summaryData.active_projects],
             ['Billable Percentage', this.summaryData.billable_percentage + '%']
-        ].map(row => row.join(',')).join('\n');
-        
+        ].map(r => r.join(',')).join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `analytics-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+        const a = document.createElement('a'); a.href = url; a.download = `analytics-${new Date().toISOString().split('T')[0]}.csv`; a.click(); window.URL.revokeObjectURL(url);
     }
 
-    formatNumber(num) {
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(num);
-    }
+    formatNumber(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num); }
 
     showError(message) {
-        // Use the new toast notification system if available
-        if (window.toastManager) {
-            window.toastManager.error(message, 'Error', 5000);
-        } else {
-            // Fallback to alert
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
-            errorDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            errorDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(errorDiv);
-            
-            setTimeout(() => {
-                if (errorDiv.parentNode) {
-                    errorDiv.parentNode.removeChild(errorDiv);
-                }
-            }, 5000);
-        }
+        if (window.toastManager) { window.toastManager.error(message, 'Error', 5000); return; }
+        alert(message);
     }
 }
 
-// Initialize dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new EnhancedAnalyticsDashboard();
-});
+// Initialize
+document.addEventListener('DOMContentLoaded', () => { new EnhancedAnalyticsDashboard(); });
 </script>
 {% endblock %}
 

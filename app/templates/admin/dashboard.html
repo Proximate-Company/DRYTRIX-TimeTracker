@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "components/cards.html" import info_card %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">System overview and management.</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    {{ info_card("Total Users", stats.total_users, "All time") }}
+    {{ info_card("Active Users", stats.active_users, "Currently active") }}
+    {{ info_card("Total Projects", stats.total_projects, "All time") }}
+    {{ info_card("Active Projects", stats.active_projects, "Currently active") }}
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow mb-6">
+    <h2 class="text-lg font-semibold mb-4">Admin Sections</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{{ url_for('admin.list_users') }}" class="bg-primary text-white p-4 rounded-lg text-center hover:bg-blue-600">Manage Users</a>
+        <a href="{{ url_for('admin.settings') }}" class="bg-primary text-white p-4 rounded-lg text-center hover:bg-blue-600">Settings</a>
+        <a href="{{ url_for('admin.system_info') }}" class="bg-primary text-white p-4 rounded-lg text-center hover:bg-blue-600">System Info</a>
+    </div>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow overflow-x-auto">
+    <h2 class="text-lg font-semibold mb-4">Recent Activity</h2>
+    <table class="w-full text-left">
+        <thead class="border-b border-border-light dark:border-border-dark">
+            <tr>
+                <th class="p-4">User</th>
+                <th class="p-4">Project</th>
+                <th class="p-4">Duration</th>
+                <th class="p-4">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in recent_entries %}
+            <tr class="border-b border-border-light dark:border-border-dark">
+                <td class="p-4">{{ entry.user.username }}</td>
+                <td class="p-4">{{ entry.project.name }}</td>
+                <td class="p-4">{{ entry.duration }}</td>
+                <td class="p-4">{{ entry.start_time.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="p-4 text-center text-text-muted-light dark:text-text-muted-dark">No recent activity.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

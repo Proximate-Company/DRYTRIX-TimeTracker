@@ -217,6 +217,26 @@ def test_analytics_page(authenticated_client):
     response = authenticated_client.get('/analytics')
     assert response.status_code == 200
 
+@pytest.mark.integration
+@pytest.mark.routes
+def test_dashboard_contains_start_timer_modal(authenticated_client):
+    """Dashboard should render Start Timer modal container in new UI."""
+    response = authenticated_client.get('/dashboard')
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'id="startTimerModal"' in html
+    assert 'id="openStartTimer"' in html
+
+@pytest.mark.smoke
+@pytest.mark.routes
+def test_base_layout_has_sidebar_toggle(authenticated_client):
+    """Ensure sidebar collapse toggle is present on pages."""
+    response = authenticated_client.get('/dashboard')
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'id="sidebarCollapseBtn"' in html
+    assert 'id="mobileSidebarBtn"' in html
+
 
 @pytest.mark.integration
 @pytest.mark.routes
@@ -410,14 +430,17 @@ def test_create_task_api(authenticated_client, project, user, app):
 @pytest.mark.integration
 @pytest.mark.routes
 @pytest.mark.api
-@pytest.mark.xfail(reason="PATCH /api/tasks/{id}/status endpoint may not exist or not allow PATCH method")
-def test_update_task_status_api(authenticated_client, task, app):
-    """Test updating task status via API."""
+def test_update_task_status_api_put(authenticated_client, task, app):
+    """Test updating task status via API using PUT (current behavior)."""
     with app.app_context():
-        response = authenticated_client.patch(f'/api/tasks/{task.id}/status', json={
+        response = authenticated_client.put(f'/api/tasks/{task.id}/status', json={
             'status': 'in_progress'
         })
-        assert response.status_code in [200, 400, 404]
+        assert response.status_code in [200, 400, 403, 404]
+        if response.status_code == 200:
+            data = response.get_json()
+            assert data.get('success') is True
+            assert data.get('task', {}).get('status') == 'in_progress'
 
 
 # ============================================================================

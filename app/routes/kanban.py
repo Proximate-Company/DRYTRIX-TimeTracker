@@ -7,6 +7,29 @@ from app.utils.db import safe_commit
 from app.routes.admin import admin_required
 
 kanban_bp = Blueprint('kanban', __name__)
+@kanban_bp.route('/kanban')
+@login_required
+def board():
+    """Kanban board page with optional project filter"""
+    project_id = request.args.get('project_id', type=int)
+    query = Task.query
+    if project_id:
+        query = query.filter_by(project_id=project_id)
+    # Order tasks for stable rendering
+    tasks = query.order_by(Task.priority.desc(), Task.due_date.asc(), Task.created_at.asc()).all()
+    # Fresh columns
+    db.session.expire_all()
+    columns = KanbanColumn.get_active_columns()
+    # Provide projects for filter dropdown
+    from app.models import Project
+    projects = Project.query.filter_by(status='active').order_by(Project.name).all()
+    # No-cache
+    response = render_template('kanban/board.html', tasks=tasks, kanban_columns=columns, projects=projects, project_id=project_id)
+    resp = make_response(response)
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 @kanban_bp.route('/kanban/columns')
 @login_required

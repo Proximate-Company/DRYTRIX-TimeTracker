@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "components/cards.html" import info_card %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Reports</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    {{ info_card("Total Hours", "%.2f"|format(summary.total_hours), "All time") }}
+    {{ info_card("Billable Hours", "%.2f"|format(summary.billable_hours), "All time") }}
+    {{ info_card("Active Projects", summary.active_projects, "Currently active") }}
+    {{ info_card("Active Users", summary.total_users, "Currently active") }}
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow mb-6">
+    <h2 class="text-lg font-semibold mb-4">Report Types</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{{ url_for('reports.project_report') }}" class="bg-primary text-white p-4 rounded-lg text-center">Project Report</a>
+        <a href="{{ url_for('reports.user_report') }}" class="bg-primary text-white p-4 rounded-lg text-center">User Report</a>
+        <a href="{{ url_for('reports.summary_report') }}" class="bg-primary text-white p-4 rounded-lg text-center">Summary Report</a>
+        <a href="{{ url_for('reports.task_report') }}" class="bg-primary text-white p-4 rounded-lg text-center">Task Report</a>
+        <a href="{{ url_for('reports.export_csv') }}" class="bg-secondary text-white p-4 rounded-lg text-center">Export CSV</a>
+    </div>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+    <h2 class="text-lg font-semibold mb-4">Recent Entries</h2>
+    <table class="w-full text-left">
+        <thead>
+            <tr>
+                <th class="p-2">Project</th>
+                <th class="p-2">Duration</th>
+                <th class="p-2">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in recent_entries %}
+            <tr class="border-b border-border-light dark:border-border-dark">
+                <td class="p-2">{{ entry.project.name }}</td>
+                <td class="p-2">{{ entry.duration }}</td>
+                <td class="p-2">{{ entry.start_time.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" class="p-4 text-center">No recent entries.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

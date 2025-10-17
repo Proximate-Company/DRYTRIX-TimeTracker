@@ -3,228 +3,92 @@
 {% block title %}{{ _('OIDC User Details') }} - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-user-shield text-primary"></i> {{ _('OIDC User Details') }}
-                </h1>
-                <a href="{{ url_for('admin.oidc_debug') }}" class="btn-header btn-outline-primary">
-                    <i class="fas fa-arrow-left me-2"></i>{{ _('Back to OIDC Debug') }}
-                </a>
-            </div>
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold"><i class="fas fa-user-shield mr-2"></i>{{ _('OIDC User Details') }}</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">{{ _('Profile and OIDC identity for this user') }}</p>
+    </div>
+    <div class="mt-3 md:mt-0">
+        <a href="{{ url_for('admin.oidc_debug') }}" class="px-3 py-2 rounded-lg border border-border-light dark:border-border-dark text-sm hover:bg-background-light dark:hover:bg-background-dark">
+            <i class="fas fa-arrow-left mr-1"></i>{{ _('Back to OIDC Debug') }}
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- User Profile -->
+    <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark p-6 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-4"><i class="fas fa-user mr-2"></i>{{ _('User Profile') }}</h2>
+        <div class="text-sm divide-y divide-border-light dark:divide-border-dark">
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Username') }}</div><div class="flex-1 font-semibold">{{ user.username }}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Email') }}</div><div class="flex-1">{{ user.email or '-' }}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Full Name') }}</div><div class="flex-1">{{ user.full_name or '-' }}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Role') }}</div><div class="flex-1">{% if user.is_admin %}<span class="inline-flex items-center rounded px-1.5 py-0.5 bg-red-100 text-red-700 text-xs">{{ _('Admin') }}</span>{% else %}<span class="inline-flex items-center rounded px-1.5 py-0.5 bg-sky-100 text-sky-700 text-xs">{{ _('User') }}</span>{% endif %}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Status') }}</div><div class="flex-1">{% if user.is_active %}<span class="inline-flex items-center rounded px-1.5 py-0.5 bg-green-100 text-green-700 text-xs">{{ _('Active') }}</span>{% else %}<span class="inline-flex items-center rounded px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-xs">{{ _('Inactive') }}</span>{% endif %}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Preferred Language') }}</div><div class="flex-1">{{ user.preferred_language or 'en' }}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Theme') }}</div><div class="flex-1">{{ user.theme_preference or 'system' }}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Created At') }}</div><div class="flex-1">{% if user.created_at %}{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}{% else %}<span class="text-text-muted-light dark:text-text-muted-dark">{{ _('Unknown') }}</span>{% endif %}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-40 text-text-muted-light dark:text-text-muted-dark">{{ _('Last Login') }}</div><div class="flex-1">{% if user.last_login %}{{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}{% else %}<span class="text-text-muted-light dark:text-text-muted-dark">{{ _('Never') }}</span>{% endif %}</div></div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- User Profile -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-user me-1"></i> {{ _('User Profile') }}</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-sm">
-                        <tbody>
-                            <tr>
-                                <th width="40%">{{ _('Username') }}</th>
-                                <td><strong>{{ user.username }}</strong></td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Email') }}</th>
-                                <td>{{ user.email or '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Full Name') }}</th>
-                                <td>{{ user.full_name or '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Role') }}</th>
-                                <td>
-                                    {% if user.is_admin %}
-                                        <span class="badge bg-danger">{{ _('Admin') }}</span>
-                                    {% else %}
-                                        <span class="badge bg-info">{{ _('User') }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Status') }}</th>
-                                <td>
-                                    {% if user.is_active %}
-                                        <span class="badge bg-success">{{ _('Active') }}</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ _('Inactive') }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Preferred Language') }}</th>
-                                <td>{{ user.preferred_language or 'en' }}</td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Theme') }}</th>
-                                <td>{{ user.theme_preference or 'system' }}</td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Created At') }}</th>
-                                <td>
-                                    {% if user.created_at %}
-                                        {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
-                                    {% else %}
-                                        <span class="text-muted">{{ _('Unknown') }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Last Login') }}</th>
-                                <td>
-                                    {% if user.last_login %}
-                                        {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
-                                    {% else %}
-                                        <span class="text-muted">{{ _('Never') }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <!-- OIDC Information -->
+    <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark p-6 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-4"><i class="fas fa-shield-alt mr-2"></i>{{ _('OIDC Information') }}</h2>
+        <div class="text-sm divide-y divide-border-light dark:divide-border-dark">
+            <div class="py-2 flex justify-between gap-6"><div class="w-48 text-text-muted-light dark:text-text-muted-dark">{{ _('OIDC Issuer') }}</div><div class="flex-1">{% if user.oidc_issuer %}<code class="break-all">{{ user.oidc_issuer }}</code>{% else %}<span class="text-text-muted-light dark:text-text-muted-dark">{{ _('Not set') }}</span>{% endif %}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-48 text-text-muted-light dark:text-text-muted-dark">{{ _('OIDC Subject (sub)') }}</div><div class="flex-1">{% if user.oidc_sub %}<code class="break-all">{{ user.oidc_sub }}</code>{% else %}<span class="text-text-muted-light dark:text-text-muted-dark">{{ _('Not set') }}</span>{% endif %}</div></div>
+            <div class="py-2 flex justify-between gap-6"><div class="w-48 text-text-muted-light dark:text-text-muted-dark">{{ _('Authentication Method') }}</div><div class="flex-1">{% if user.oidc_issuer and user.oidc_sub %}<span class="inline-flex items-center rounded px-1.5 py-0.5 bg-primary/10 text-primary text-xs">OIDC</span>{% else %}<span class="inline-flex items-center rounded px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-xs">{{ _('Local') }}</span>{% endif %}</div></div>
         </div>
-
-        <!-- OIDC Information -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-shield-alt me-1"></i> {{ _('OIDC Information') }}</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-sm">
-                        <tbody>
-                            <tr>
-                                <th width="40%">{{ _('OIDC Issuer') }}</th>
-                                <td>
-                                    {% if user.oidc_issuer %}
-                                        <code class="text-break">{{ user.oidc_issuer }}</code>
-                                    {% else %}
-                                        <span class="text-muted">{{ _('Not set') }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('OIDC Subject (sub)') }}</th>
-                                <td>
-                                    {% if user.oidc_sub %}
-                                        <code class="text-break">{{ user.oidc_sub }}</code>
-                                    {% else %}
-                                        <span class="text-muted">{{ _('Not set') }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>{{ _('Authentication Method') }}</th>
-                                <td>
-                                    {% if user.oidc_issuer and user.oidc_sub %}
-                                        <span class="badge bg-primary">OIDC</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ _('Local') }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    {% if user.oidc_issuer and user.oidc_sub %}
-                        <div class="alert alert-info mt-3 mb-0">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <small>
-                                {{ _('This user was created or linked via OIDC. The issuer and subject are used to uniquely identify the user across login sessions.') }}
-                            </small>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-warning mt-3 mb-0">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <small>
-                                {{ _('This user has no OIDC information. They may have been created manually or via self-registration without OIDC.') }}
-                            </small>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+        {% if user.oidc_issuer and user.oidc_sub %}
+        <div class="mt-3 p-3 rounded border border-sky-600/30 bg-sky-50 dark:bg-sky-900/20 text-xs text-text-muted-light dark:text-text-muted-dark">
+            <i class="fas fa-info-circle mr-1"></i>{{ _('This user was created or linked via OIDC. The issuer and subject are used to uniquely identify the user across login sessions.') }}
         </div>
+        {% else %}
+        <div class="mt-3 p-3 rounded border border-amber-600/30 bg-amber-50 dark:bg-amber-900/20 text-xs text-text-muted-light dark:text-text-muted-dark">
+            <i class="fas fa-exclamation-triangle mr-1"></i>{{ _('This user has no OIDC information. They may have been created manually or via self-registration without OIDC.') }}
+        </div>
+        {% endif %}
     </div>
+</div>
 
-    <!-- Activity Statistics -->
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-chart-line me-1"></i> {{ _('Activity Statistics') }}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <div class="text-center">
-                                <h3 class="mb-0">{{ user.projects.count() }}</h3>
-                                <small class="text-muted">{{ _('Projects') }}</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="text-center">
-                                <h3 class="mb-0">{{ user.time_entries.count() }}</h3>
-                                <small class="text-muted">{{ _('Time Entries') }}</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="text-center">
-                                <h3 class="mb-0">
-                                    {% set active_timer = user.time_entries.filter_by(end_time=None).first() %}
-                                    {% if active_timer %}
-                                        <span class="badge bg-success">{{ _('Active') }}</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ _('None') }}</span>
-                                    {% endif %}
-                                </h3>
-                                <small class="text-muted">{{ _('Active Timer') }}</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="text-center">
-                                <h3 class="mb-0">{{ user.created_tasks.count() }}</h3>
-                                <small class="text-muted">{{ _('Tasks Created') }}</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- Activity Statistics -->
+<div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark p-6 rounded-lg shadow mb-6">
+    <h2 class="text-lg font-semibold mb-4"><i class="fas fa-chart-line mr-2"></i>{{ _('Activity Statistics') }}</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div>
+            <div class="text-2xl font-semibold">{{ user.projects.count() }}</div>
+            <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Projects') }}</div>
         </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-tools me-1"></i> {{ _('Actions') }}</h5>
-                </div>
-                <div class="card-body">
-                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-primary">
-                        <i class="fas fa-edit me-2"></i>{{ _('Edit User') }}
-                    </a>
-                    <a href="{{ url_for('admin.list_users') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-users me-2"></i>{{ _('View All Users') }}
-                    </a>
-                </div>
+        <div>
+            <div class="text-2xl font-semibold">{{ user.time_entries.count() }}</div>
+            <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Time Entries') }}</div>
+        </div>
+        <div>
+            <div class="text-2xl font-semibold">
+                {% set active_timer = user.time_entries.filter_by(end_time=None).first() %}
+                {% if active_timer %}
+                    <span class="inline-flex items-center rounded px-1.5 py-0.5 bg-green-100 text-green-700 text-xs">{{ _('Active') }}</span>
+                {% else %}
+                    <span class="inline-flex items-center rounded px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-xs">{{ _('None') }}</span>
+                {% endif %}
             </div>
+            <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Active Timer') }}</div>
+        </div>
+        <div>
+            <div class="text-2xl font-semibold">{{ user.created_tasks.count() }}</div>
+            <div class="text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Tasks Created') }}</div>
         </div>
     </div>
 </div>
 
-<style>
-.text-break {
-    word-break: break-all;
-}
-</style>
+<!-- Actions -->
+<div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark p-6 rounded-lg shadow">
+    <h2 class="text-lg font-semibold mb-4"><i class="fas fa-tools mr-2"></i>{{ _('Actions') }}</h2>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:opacity-90"><i class="fas fa-edit mr-1"></i>{{ _('Edit User') }}</a>
+        <a href="{{ url_for('admin.list_users') }}" class="px-4 py-2 rounded-lg border border-border-light dark:border-border-dark text-sm hover:bg-background-light dark:hover:bg-background-dark"><i class="fas fa-users mr-1"></i>{{ _('View All Users') }}</a>
+    </div>
+</div>
 {% endblock %}
 

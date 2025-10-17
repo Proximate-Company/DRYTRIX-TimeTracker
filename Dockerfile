@@ -1,4 +1,14 @@
 # syntax=docker/dockerfile:1.4
+
+# --- Stage 1: Frontend Build ---
+FROM node:18-slim as frontend
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build:docker
+
+# --- Stage 2: Python Application ---
 FROM python:3.11-slim-bullseye
 
 # Build-time version argument with safe default
@@ -57,6 +67,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # Copy project files
 COPY . .
+
+# Copy compiled assets from frontend stage (overwriting the stale one from COPY .)
+COPY --from=frontend /app/app/static/dist/output.css /app/app/static/dist/output.css
 
 # Create all directories and set permissions in a single layer
 RUN mkdir -p \
@@ -121,4 +134,5 @@ ENTRYPOINT ["/app/docker/entrypoint_fixed.sh"]
 
 # Run the application
 CMD ["python", "/app/start.py"]
+
 

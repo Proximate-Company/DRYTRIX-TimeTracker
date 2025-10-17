@@ -12,32 +12,25 @@
   function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
 
   function openModal(){
-    try {
-      const el = $('#commandPaletteModal');
-      if (!el) return;
-      const modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: 'static' });
-      modal.show();
-      // Focus input after show animation
-      setTimeout(() => $('#commandPaletteInput')?.focus(), 150);
-      refreshCommands();
-      renderList();
-    } catch(e) {}
+    const el = $('#commandPaletteModal');
+    if (!el) return;
+    el.classList.remove('hidden');
+    setTimeout(() => $('#commandPaletteInput')?.focus(), 50);
+    refreshCommands();
+    renderList();
   }
 
   function closeModal(){
-    try {
-      const el = $('#commandPaletteModal');
-      if (!el) return;
-      const modal = bootstrap.Modal.getOrCreateInstance(el);
-      modal.hide();
-      clearFilter();
-    } catch(e) {}
+    const el = $('#commandPaletteModal');
+    if (!el) return;
+    el.classList.add('hidden');
+    clearFilter();
   }
 
   // Timer helpers
   async function getActiveTimer(){
     try {
-      const res = await fetch('/api/timer/status');
+      const res = await fetch('/timer/status', { credentials: 'same-origin' });
       if (!res.ok) return null;
       const json = await res.json();
       return json && json.active ? json.timer : null;
@@ -53,7 +46,8 @@
     try {
       const active = await getActiveTimer();
       if (!active) { showToast('No active timer', 'warning'); return; }
-      const res = await fetch('/api/timer/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      const res = await fetch('/timer/stop', { method: 'POST', headers: { 'X-CSRF-Token': token }, credentials: 'same-origin' });
       if (res.ok) {
         showToast('Timer stopped', 'info');
       } else {
@@ -118,12 +112,14 @@
     const list = $('#commandPaletteList');
     if (!list) return;
     list.innerHTML = '';
+    // Ensure container has modern styling
+    list.className = 'flex flex-col max-h-96 overflow-y-auto divide-y divide-border-light dark:divide-border-dark';
     filtered.forEach((cmd, idx) => {
       const li = document.createElement('button');
       li.type = 'button';
-      li.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+      li.className = 'px-3 py-2 text-left flex justify-between items-center hover:bg-background-light dark:hover:bg-background-dark focus:outline-none focus:ring-2 focus:ring-primary';
       li.setAttribute('data-idx', String(idx));
-      li.innerHTML = `<span>${cmd.title}</span>${cmd.hint ? `<small class="text-muted">${cmd.hint}</small>` : ''}`;
+      li.innerHTML = `<span class="truncate">${cmd.title}</span>${cmd.hint ? `<span class="ml-3 text-xs text-text-muted-light dark:text-text-muted-dark">${cmd.hint}</span>` : ''}`;
       li.addEventListener('click', () => { closeModal(); setTimeout(() => cmd.action(), 50); });
       list.appendChild(li);
     });
@@ -131,8 +127,10 @@
   }
 
   function highlightSelected(){
-    $all('#commandPaletteList .list-group-item').forEach((el, idx) => {
-      el.classList.toggle('active', idx === selectedIdx);
+    $all('#commandPaletteList > button').forEach((el, idx) => {
+      const isActive = idx === selectedIdx;
+      el.classList.toggle('bg-background-light', isActive);
+      el.classList.toggle('dark:bg-background-dark', isActive);
     });
   }
 
@@ -185,7 +183,8 @@
 
   // Modal-specific keyboard handling
   document.addEventListener('keydown', (ev) => {
-    if (!$('#commandPaletteModal')?.classList.contains('show')) return;
+    const modal = $('#commandPaletteModal');
+    if (!modal || modal.classList.contains('hidden')) return;
     if (ev.key === 'Escape'){ ev.preventDefault(); closeModal(); return; }
     if (ev.key === 'ArrowDown'){ ev.preventDefault(); selectedIdx = Math.min(selectedIdx + 1, filtered.length - 1); highlightSelected(); return; }
     if (ev.key === 'ArrowUp'){ ev.preventDefault(); selectedIdx = Math.max(selectedIdx - 1, 0); highlightSelected(); return; }

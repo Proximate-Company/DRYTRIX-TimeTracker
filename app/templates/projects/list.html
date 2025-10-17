@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Projects</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">Manage your projects here.</p>
+    </div>
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('projects.create_project') }}" class="bg-primary text-white px-4 py-2 rounded-lg mt-4 md:mt-0">Create Project</a>
+    {% endif %}
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow mb-6">
+    <h2 class="text-lg font-semibold mb-4">Filter Projects</h2>
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+            <input type="text" name="search" id="search" value="{{ search or '' }}" class="form-input">
+        </div>
+        <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+            <select name="status" id="status" class="form-input">
+                <option value="all" {% if status == 'all' %}selected{% endif %}>All</option>
+                <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                <option value="archived" {% if status == 'archived' %}selected{% endif %}>Archived</option>
+            </select>
+        </div>
+        <div>
+            <label for="client" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Client</label>
+            <select name="client" id="client" class="form-input">
+                <option value="">All</option>
+                {% for client_name in clients %}
+                <option value="{{ client_name }}" {% if request.args.get('client') == client_name %}selected{% endif %}>{{ client_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="self-end">
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow overflow-x-auto">
+    <table class="w-full text-left">
+        <thead class="border-b border-border-light dark:border-border-dark">
+            <tr>
+                <th class="p-4">Name</th>
+                <th class="p-4">Client</th>
+                <th class="p-4">Status</th>
+                <th class="p-4">Billable</th>
+                <th class="p-4">Rate</th>
+                <th class="p-4">Budget</th>
+                <th class="p-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in projects %}
+            <tr class="border-b border-border-light dark:border-border-dark">
+                <td class="p-4">{{ project.name }}</td>
+                <td class="p-4">{{ project.client.name }}</td>
+                <td class="p-4">
+                    {% if project.status == 'active' %}
+                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">Active</span>
+                    {% else %}
+                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200">Archived</span>
+                    {% endif %}
+                </td>
+                <td class="p-4">
+                    {% if project.billable %}
+                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Billable</span>
+                    {% else %}
+                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">Non‑billable</span>
+                    {% endif %}
+                </td>
+                <td class="p-4">
+                    {% if project.hourly_rate %}
+                        <span class="px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">{{ '%.2f'|format(project.hourly_rate|float) }}/h</span>
+                    {% else %}
+                        <span class="text-text-muted-light dark:text-text-muted-dark">—</span>
+                    {% endif %}
+                </td>
+                <td class="p-4">
+                    {% if project.budget_amount %}
+                        {% set consumed = (project.budget_consumed_amount or 0.0) %}
+                        {% set total = project.budget_amount|float %}
+                        {% set pct = (consumed / total * 100) if total > 0 else 0 %}
+                        {% if pct >= 90 %}
+                            {% set badge_classes = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' %}
+                        {% elif pct >= 70 %}
+                            {% set badge_classes = 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' %}
+                        {% else %}
+                            {% set badge_classes = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' %}
+                        {% endif %}
+                        <span class="px-2 py-1 rounded-full text-xs font-medium {{ badge_classes }}">{{ pct|round(0) }}%</span>
+                    {% else %}
+                        <span class="text-text-muted-light dark:text-text-muted-dark">—</span>
+                    {% endif %}
+                </td>
+                <td class="p-4">
+                    <a href="{{ url_for('projects.view_project', project_id=project.id) }}" class="text-primary hover:underline">View</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="p-4 text-center text-text-muted-light dark:text-text-muted-dark">No projects found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

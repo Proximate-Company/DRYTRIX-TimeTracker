@@ -2,151 +2,99 @@
 {% block title %}{{ _('Edit Kanban Column') }}{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="mb-4">
-        <h2>
-          <i class="fas fa-edit text-primary"></i> {{ _('Edit Kanban Column') }}
-        </h2>
-        <p class="text-muted">{{ _('Modify column settings') }}</p>
-      </div>
-
-      <!-- Flash messages are globally converted to toasts in base.html -->
-
-      <div class="card">
-        <div class="card-body">
-          <form method="POST" action="{{ url_for('kanban.edit_column', column_id=column.id) }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div class="mb-3">
-              <label for="key" class="form-label">
-                {{ _('Column Key') }}
-              </label>
-              <input type="text" 
-                     class="form-control" 
-                     id="key" 
-                     value="{{ column.key }}" 
-                     disabled>
-              <small class="form-text text-muted">
-                {{ _('The key cannot be changed after creation') }}
-              </small>
-            </div>
-
-            <div class="mb-3">
-              <label for="label" class="form-label">
-                {{ _('Column Label') }} <span class="text-danger">*</span>
-              </label>
-              <input type="text" 
-                     class="form-control" 
-                     id="label" 
-                     name="label" 
-                     value="{{ column.label }}" 
-                     required 
-                     autofocus>
-              <small class="form-text text-muted">
-                {{ _('The display name shown on the kanban board') }}
-              </small>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="icon" class="form-label">
-                    {{ _('Icon Class') }}
-                  </label>
-                  <input type="text" 
-                         class="form-control" 
-                         id="icon" 
-                         name="icon" 
-                         value="{{ column.icon }}"
-                         placeholder="fas fa-circle">
-                  <small class="form-text text-muted">
-                    {{ _('Font Awesome icon class') }} 
-                    <a href="https://fontawesome.com/icons" target="_blank">{{ _('Browse icons') }}</a>
-                  </small>
-                  <div class="mt-2">
-                    <span class="badge bg-light text-dark">
-                      <i class="{{ column.icon }}"></i> {{ _('Preview') }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="color" class="form-label">
-                    {{ _('Color') }}
-                  </label>
-                  <select class="form-select" id="color" name="color">
-                    <option value="primary" {% if column.color == 'primary' %}selected{% endif %}>{{ _('Primary (Blue)') }}</option>
-                    <option value="secondary" {% if column.color == 'secondary' %}selected{% endif %}>{{ _('Secondary (Gray)') }}</option>
-                    <option value="success" {% if column.color == 'success' %}selected{% endif %}>{{ _('Success (Green)') }}</option>
-                    <option value="danger" {% if column.color == 'danger' %}selected{% endif %}>{{ _('Danger (Red)') }}</option>
-                    <option value="warning" {% if column.color == 'warning' %}selected{% endif %}>{{ _('Warning (Yellow)') }}</option>
-                    <option value="info" {% if column.color == 'info' %}selected{% endif %}>{{ _('Info (Cyan)') }}</option>
-                    <option value="dark" {% if column.color == 'dark' %}selected{% endif %}>{{ _('Dark') }}</option>
-                  </select>
-                  <small class="form-text text-muted">
-                    {{ _('Bootstrap color class for styling') }}
-                  </small>
-                </div>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" 
-                       type="checkbox" 
-                       id="is_complete_state" 
-                       name="is_complete_state"
-                       {% if column.is_complete_state %}checked{% endif %}>
-                <label class="form-check-label" for="is_complete_state">
-                  {{ _('Mark as Complete State') }}
-                </label>
-                <small class="form-text text-muted d-block">
-                  {{ _('Tasks moved to this column will be marked as completed') }}
-                </small>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" 
-                       type="checkbox" 
-                       id="is_active" 
-                       name="is_active"
-                       {% if column.is_active %}checked{% endif %}>
-                <label class="form-check-label" for="is_active">
-                  {{ _('Active') }}
-                </label>
-                <small class="form-text text-muted d-block">
-                  {{ _('Inactive columns are hidden from the kanban board') }}
-                </small>
-              </div>
-            </div>
-
-            <hr>
-
-            <div class="d-flex justify-content-between">
-              <a href="{{ url_for('kanban.list_columns') }}" class="btn btn-secondary">
-                <i class="fas fa-times"></i> {{ _('Cancel') }}
-              </a>
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> {{ _('Save Changes') }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {% if column.is_system %}
-      <div class="alert alert-warning mt-4">
-        <i class="fas fa-exclamation-triangle"></i>
-        <strong>{{ _('System Column:') }}</strong>
-        {{ _('This is a system column. You can customize its appearance but cannot delete it.') }}
-      </div>
-      {% endif %}
+<div class="px-4 sm:px-6 lg:px-8">
+  <div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold flex items-center gap-2">
+        <span class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white"><i class="fas fa-edit"></i></span>
+        {{ _('Edit Kanban Column') }}
+      </h2>
+      <p class="text-text-muted-light dark:text-text-muted-dark">{{ _('Modify column settings') }}</p>
     </div>
+
+    <div class="bg-card-light dark:bg-card-dark rounded-xl shadow ring-1 ring-border-light/60 dark:ring-border-dark/60">
+      <div class="p-6">
+        <form method="POST" action="{{ url_for('kanban.edit_column', column_id=column.id) }}" role="form" aria-labelledby="editFormTitle">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <h3 id="editFormTitle" class="sr-only">{{ _('Edit Kanban Column form') }}</h3>
+
+          <div class="mb-4">
+            <label for="key" class="block text-sm font-medium mb-1">{{ _('Column Key') }}</label>
+            <input type="text" id="key" value="{{ column.key }}" disabled class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-700 px-3 py-2 opacity-75 cursor-not-allowed">
+            <p class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('The key cannot be changed after creation') }}</p>
+          </div>
+
+          <div class="mb-4">
+            <label for="label" class="block text-sm font-medium mb-1">{{ _('Column Label') }} <span aria-hidden="true" class="text-red-600">*</span></label>
+            <input type="text" id="label" name="label" value="{{ column.label }}" required aria-required="true" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-700 px-3 py-2" autofocus>
+            <p class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('The display name shown on the kanban board') }}</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="icon" class="block text-sm font-medium mb-1">{{ _('Icon Class') }}</label>
+              <input type="text" id="icon" name="icon" value="{{ column.icon }}" placeholder="fas fa-circle" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-700 px-3 py-2">
+              <p class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">
+                {{ _('Font Awesome icon class') }}
+                <a href="https://fontawesome.com/icons" target="_blank" class="underline">{{ _('Browse icons') }}</a>
+              </p>
+              <div class="mt-2 inline-flex items-center gap-2 text-sm bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded px-2 py-1">
+                <i class="{{ column.icon }}"></i> <span>{{ _('Preview') }}</span>
+              </div>
+            </div>
+            <div>
+              <label for="color" class="block text-sm font-medium mb-1">{{ _('Color') }}</label>
+              <select id="color" name="color" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-700 px-3 py-2">
+                <option value="primary" {% if column.color == 'primary' %}selected{% endif %}>{{ _('Primary (Blue)') }}</option>
+                <option value="secondary" {% if column.color == 'secondary' %}selected{% endif %}>{{ _('Secondary (Gray)') }}</option>
+                <option value="success" {% if column.color == 'success' %}selected{% endif %}>{{ _('Success (Green)') }}</option>
+                <option value="danger" {% if column.color == 'danger' %}selected{% endif %}>{{ _('Danger (Red)') }}</option>
+                <option value="warning" {% if column.color == 'warning' %}selected{% endif %}>{{ _('Warning (Yellow)') }}</option>
+                <option value="info" {% if column.color == 'info' %}selected{% endif %}>{{ _('Info (Cyan)') }}</option>
+                <option value="dark" {% if column.color == 'dark' %}selected{% endif %}>{{ _('Dark') }}</option>
+              </select>
+              <p class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Bootstrap color class for styling') }}</p>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <div class="flex items-start gap-2">
+              <input type="checkbox" id="is_complete_state" name="is_complete_state" {% if column.is_complete_state %}checked{% endif %} class="mt-1" aria-describedby="completeHelp">
+              <div>
+                <label for="is_complete_state" class="text-sm font-medium">{{ _('Mark as Complete State') }}</label>
+                <p id="completeHelp" class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Tasks moved to this column will be marked as completed') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <div class="flex items-start gap-2">
+              <input type="checkbox" id="is_active" name="is_active" {% if column.is_active %}checked{% endif %} class="mt-1" aria-describedby="activeHelp">
+              <div>
+                <label for="is_active" class="text-sm font-medium">{{ _('Active') }}</label>
+                <p id="activeHelp" class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Inactive columns are hidden from the kanban board') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex items-center justify-between">
+            <a href="{{ url_for('kanban.list_columns') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-light dark:border-border-dark hover:bg-background-light dark:hover:bg-background-dark">
+              <i class="fas fa-times"></i> {{ _('Cancel') }}
+            </a>
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:opacity-90">
+              <i class="fas fa-save"></i> {{ _('Save Changes') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if column.is_system %}
+    <div class="mt-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-100 rounded-lg p-4 ring-1 ring-yellow-200/60 dark:ring-yellow-700/50">
+      <p class="flex items-start gap-2"><i class="fas fa-exclamation-triangle mt-1"></i> <span><strong>{{ _('System Column:') }}</strong> {{ _('This is a system column. You can customize its appearance but cannot delete it.') }}</span></p>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

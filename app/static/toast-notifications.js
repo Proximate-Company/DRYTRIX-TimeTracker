@@ -116,7 +116,7 @@ class ToastNotificationManager {
             closeBtn.className = 'toast-close';
             closeBtn.setAttribute('type', 'button');
             closeBtn.setAttribute('aria-label', 'Close notification');
-            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            closeBtn.innerHTML = '<i class="fas fa-xmark"></i>';
         }
 
         // Progress bar
