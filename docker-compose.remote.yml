@@ -57,7 +57,8 @@ services:
       - CSRF_COOKIE_NAME=${CSRF_COOKIE_NAME:-XSRF-TOKEN}
       - PREFERRED_URL_SCHEME=${PREFERRED_URL_SCHEME:-https}
     # Expose only internally; nginx publishes ports
-    ports: []
+    ports: 
+      - []
     volumes:
       - app_data_remote:/data
       - ./logs:/app/logs
