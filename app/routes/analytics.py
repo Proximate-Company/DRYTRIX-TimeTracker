@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import User, Project, TimeEntry, Settings, Task
 from datetime import datetime, timedelta
-from sqlalchemy import func, extract
+from sqlalchemy import func, extract, case
 import calendar
 
 analytics_bp = Blueprint('analytics', __name__)
@@ -449,7 +449,7 @@ def summary_with_comparison():
     current_query = db.session.query(
         func.sum(TimeEntry.duration_seconds).label('total_seconds'),
         func.count(TimeEntry.id).label('total_entries'),
-        func.sum(func.case((TimeEntry.billable == True, TimeEntry.duration_seconds), else_=0)).label('billable_seconds')
+        func.sum(case((TimeEntry.billable == True, TimeEntry.duration_seconds), else_=0)).label('billable_seconds')
     ).filter(
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,
@@ -460,7 +460,7 @@ def summary_with_comparison():
     prev_query = db.session.query(
         func.sum(TimeEntry.duration_seconds).label('total_seconds'),
         func.count(TimeEntry.id).label('total_entries'),
-        func.sum(func.case((TimeEntry.billable == True, TimeEntry.duration_seconds), else_=0)).label('billable_seconds')
+        func.sum(case((TimeEntry.billable == True, TimeEntry.duration_seconds), else_=0)).label('billable_seconds')
     ).filter(
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= prev_start_date,
@@ -559,7 +559,7 @@ def task_completion():
     project_query = db.session.query(
         Project.name,
         func.count(Task.id).label('total_tasks'),
-        func.sum(func.case((Task.status == 'done', 1), else_=0)).label('completed_tasks')
+        func.sum(case((Task.status == 'done', 1), else_=0)).label('completed_tasks')
     ).join(Task).filter(
         Task.created_at >= start_date,
         Project.status == 'active'
@@ -699,7 +699,7 @@ def insights():
         func.sum(TimeEntry.duration_seconds).label('total_seconds'),
         func.avg(TimeEntry.duration_seconds).label('avg_seconds'),
         func.count(TimeEntry.id).label('total_entries'),
-        func.sum(func.case((TimeEntry.billable == True, TimeEntry.duration_seconds), else_=0)).label('billable_seconds')
+        func.sum(case((TimeEntry.billable == True, TimeEntry.duration_seconds), else_=0)).label('billable_seconds')
     ).filter(
         TimeEntry.end_time.isnot(None),
         TimeEntry.start_time >= start_date,

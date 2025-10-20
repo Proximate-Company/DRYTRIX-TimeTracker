@@ -1,351 +1,131 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Tasks') }} - Time Tracker{% endblock %}
-
-{% block head_extra %}
-<!-- Prevent page caching for kanban board -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-{% endblock %}
-
 {% block content %}
-<div class="container-fluid">
-    {% from "_components.html" import page_header %}
-    {% set skeleton = request.args.get('loading') %}
-    {% set view = request.args.get('view', 'board') %}
-    <div class="row">
-        <div class="col-12">
-            {% set actions %}
-            <div class="d-flex align-items-center gap-2">
-                <a href="{{ url_for('tasks.list_tasks', view='board', search=search, status=status, priority=priority, project_id=project_id, assigned_to=assigned_to, overdue=1 if overdue else None) }}" class="btn-header btn-outline-primary {% if view != 'table' %}active{% endif %}">
-                    <i class="fas fa-columns"></i> {{ _('Board') }}
-                </a>
-                <a href="{{ url_for('tasks.list_tasks', view='table', search=search, status=status, priority=priority, project_id=project_id, assigned_to=assigned_to, overdue=1 if overdue else None) }}" class="btn-header btn-outline-primary {% if view == 'table' %}active{% endif %}">
-                    <i class="fas fa-table"></i> {{ _('Table') }}
-                </a>
-                <a href="{{ url_for('tasks.create_task') }}" class="btn-header btn-primary">
-                    <i class="fas fa-plus"></i> {{ _('New Task') }}
-                </a>
-            </div>
-            {% endset %}
-            {{ page_header('fas fa-tasks', _('Tasks'), _('Plan and track work') ~ ' • ' ~ (tasks|length) ~ ' ' ~ _('total'), actions) }}
-        </div>
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Tasks</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">Manage your tasks here.</p>
     </div>
-
-    
-
-    <!-- Summary Cards (Invoices-style) -->
-    <div class="row mb-4 stagger-animation">
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-0 shadow-sm h-100 summary-card scale-hover">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="summary-icon bg-primary bg-opacity-10 text-primary">
-                                <i class="fas fa-list-check"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">{{ _('To Do') }}</div>
-                            <div class="summary-value" data-count-up="{{ tasks|selectattr('status', 'equalto', 'todo')|list|length }}">0</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-0 shadow-sm h-100 summary-card scale-hover">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="summary-icon bg-warning bg-opacity-10 text-warning">
-                                <i class="fas fa-spinner"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">{{ _('In Progress') }}</div>
-                            <div class="summary-value" data-count-up="{{ tasks|selectattr('status', 'equalto', 'in_progress')|list|length }}">0</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-0 shadow-sm h-100 summary-card scale-hover">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="summary-icon bg-info bg-opacity-10 text-info">
-                                <i class="fas fa-user-check"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">{{ _('Review') }}</div>
-                            <div class="summary-value" data-count-up="{{ tasks|selectattr('status', 'equalto', 'review')|list|length }}">0</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-0 shadow-sm h-100 summary-card scale-hover">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="summary-icon bg-success bg-opacity-10 text-success">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="summary-label">{{ _('Completed') }}</div>
-                            <div class="summary-value" data-count-up="{{ tasks|selectattr('status', 'equalto', 'done')|list|length }}">0</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card mobile-card mb-4">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">
-                    <i class="fas fa-filter me-2 text-muted"></i>{{ _('Filter Tasks') }}
-                </h6>
-                <button type="button" class="btn btn-sm" id="toggleFilters" onclick="toggleFilterVisibility()" title="{{ _('Toggle Filters') }}">
-                    <i class="fas fa-chevron-up" id="filterToggleIcon"></i>
-                </button>
-            </div>
-        </div>
-        <div class="card-body" id="filterBody">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4 col-sm-6">
-                    <label for="search" class="form-label">{{ _('Search') }}</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search" name="search" 
-                               value="{{ search }}" placeholder="{{ _('Task name or description') }}">
-                    </div>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <label for="status" class="form-label">{{ _('Status') }}</label>
-                    <select class="form-select" id="status" name="status">
-                        <option value="">{{ _('All Statuses') }}</option>
-                        <option value="todo" {% if status == 'todo' %}selected{% endif %}>{{ _('To Do') }}</option>
-                        <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>{{ _('In Progress') }}</option>
-                        <option value="review" {% if status == 'review' %}selected{% endif %}>{{ _('Review') }}</option>
-                        <option value="done" {% if status == 'done' %}selected{% endif %}>{{ _('Done') }}</option>
-                        <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>{{ _('Cancelled') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <label for="priority" class="form-label">{{ _('Priority') }}</label>
-                    <select class="form-select" id="priority" name="priority">
-                        <option value="">{{ _('All Priorities') }}</option>
-                        <option value="low" {% if priority == 'low' %}selected{% endif %}>{{ _('Low') }}</option>
-                        <option value="medium" {% if priority == 'medium' %}selected{% endif %}>{{ _('Medium') }}</option>
-                        <option value="high" {% if priority == 'high' %}selected{% endif %}>{{ _('High') }}</option>
-                        <option value="urgent" {% if priority == 'urgent' %}selected{% endif %}>{{ _('Urgent') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <label for="project_id" class="form-label">{{ _('Project') }}</label>
-                    <select class="form-select" id="project_id" name="project_id">
-                        <option value="">{{ _('All Projects') }}</option>
-                        {% for project in projects %}
-                        <option value="{{ project.id }}" {% if project_id == project.id %}selected{% endif %}>
-                            {{ project.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <label for="assigned_to" class="form-label">{{ _('Assigned To') }}</label>
-                    <select class="form-select" id="assigned_to" name="assigned_to">
-                        <option value="">{{ _('All Users') }}</option>
-                        {% for user in users %}
-                        <option value="{{ user.id }}" {% if assigned_to == user.id %}selected{% endif %}>
-                            {{ user.display_name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6 d-flex align-items-end">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="1" id="overdue" name="overdue" {% if overdue %}checked{% endif %}>
-                        <label class="form-check-label" for="overdue">
-                            {{ _('Show overdue only') }}
-                        </label>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search me-2"></i>{{ _('Apply Filters') }}
-                        </button>
-                        <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>{{ _('Clear') }}
-                        </a>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card mobile-card mb-4">
-        <div class="card-body">
-    {% if tasks %}
-    {% if view == 'table' %}
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>{{ _('ID') }}</th>
-                    <th>{{ _('Task') }}</th>
-                    <th>{{ _('Project') }}</th>
-                    <th>{{ _('Status') }}</th>
-                    <th>{{ _('Priority') }}</th>
-                    <th>{{ _('Assignee') }}</th>
-                    <th>{{ _('Due') }}</th>
-                    <th>{{ _('Est.') }}</th>
-                    <th>{{ _('Progress') }}</th>
-                    <th class="text-end">{{ _('Actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for task in tasks %}
-                <tr class="{% if current_user.active_timer and current_user.active_timer.task_id == task.id %}table-active{% endif %}">
-                    <td>#{{ task.id }}</td>
-                    <td>
-                        <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="fw-semibold text-decoration-none">{{ task.name }}</a>
-                        {% if task.description %}
-                        <div class="text-muted small">{{ task.description[:90] }}{% if task.description|length > 90 %}...{% endif %}</div>
-                        {% endif %}
-                    </td>
-                    <td>{{ task.project.name if task.project else '-' }}</td>
-                    <td><span class="status-badge status-{{ task.status }}">{{ task.status_display }}</span></td>
-                    <td><span class="priority-badge priority-{{ task.priority }}">{{ task.priority_display }}</span></td>
-                    <td>{{ task.assigned_user.display_name if task.assigned_user else '-' }}</td>
-                    <td>{% if task.due_date %}{{ task.due_date.strftime('%Y-%m-%d') }}{% else %}-{% endif %}</td>
-                    <td>{% if task.estimated_hours %}{{ '%.1f'|format(task.estimated_hours) }}h{% else %}-{% endif %}</td>
-                    <td style="min-width:140px;">
-                        <div class="progress progress-thin">
-                            <div class="progress-bar" role="progressbar" style="width: {{ task.progress_percentage }}%"></div>
-                        </div>
-                    </td>
-                    <td class="text-end">
-                        <div class="btn-group" role="group">
-                            {% if current_user.active_timer and current_user.active_timer.task_id == task.id %}
-                            <form method="POST" action="{{ url_for('timer.stop_timer') }}" class="d-inline">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-action btn-action--danger touch-target" title="{{ _('Stop Timer') }}"><i class="fas fa-stop"></i></button>
-                            </form>
-                            {% else %}
-                            <form method="POST" action="{{ url_for('timer.start_timer') }}" class="d-inline">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="project_id" value="{{ task.project_id }}">
-                                <input type="hidden" name="task_id" value="{{ task.id }}">
-                                <button type="submit" class="btn btn-sm btn-action btn-action--success touch-target" title="{{ _('Start Timer') }}"><i class="fas fa-play"></i></button>
-                            </form>
-                            {% endif %}
-                            <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="btn btn-sm btn-action btn-action--view touch-target" title="{{ _('View Task') }}"><i class="fas fa-eye"></i></a>
-                            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-sm btn-action btn-action--edit touch-target" title="{{ _('Edit Task') }}"><i class="fas fa-pen"></i></a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    {% include 'tasks/_kanban.html' %}
-    {% endif %}
-    {% else %}
-    <!-- Empty State -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card mobile-card">
-                <div class="card-body text-center py-5">
-                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                        <i class="fas fa-tasks fa-2x text-muted"></i>
-                    </div>
-                    <h3 class="text-muted mb-3">{{ _('No tasks found') }}</h3>
-                    <p class="text-muted mb-4">{{ _('Try adjusting your filters or create your first task to get started.') }}</p>
-                    <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
-                        <a href="{{ url_for('tasks.create_task') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>{{ _('Create Your First Task') }}
-                        </a>
-                        <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>{{ _('Clear Filters') }}
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-        </div>
-    </div>
+    <a href="{{ url_for('tasks.create_task') }}" class="bg-primary text-white px-4 py-2 rounded-lg mt-4 md:mt-0">Create Task</a>
 </div>
 
-<!-- Modern styling now handled by global CSS in base.css -->
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow mb-6">
+    <h2 class="text-lg font-semibold mb-4">Filter Tasks</h2>
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-1">
+            <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+            <input type="text" name="search" id="search" value="{{ search or '' }}" class="form-input">
+        </div>
+        <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+            <select name="status" id="status" class="form-input">
+                <option value="">All</option>
+                <option value="todo" {% if status == 'todo' %}selected{% endif %}>To Do</option>
+                <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="review" {% if status == 'review' %}selected{% endif %}>Review</option>
+                <option value="done" {% if status == 'done' %}selected{% endif %}>Done</option>
+                <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+        <div>
+            <label for="priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+            <select name="priority" id="priority" class="form-input">
+                <option value="">All</option>
+                <option value="low" {% if priority == 'low' %}selected{% endif %}>Low</option>
+                <option value="medium" {% if priority == 'medium' %}selected{% endif %}>Medium</option>
+                <option value="high" {% if priority == 'high' %}selected{% endif %}>High</option>
+                <option value="urgent" {% if priority == 'urgent' %}selected{% endif %}>Urgent</option>
+            </select>
+        </div>
+        <div>
+            <label for="project_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Project</label>
+            <select name="project_id" id="project_id" class="form-input">
+                <option value="">All</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}" {% if project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="assigned_to" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assigned To</label>
+            <select name="assigned_to" id="assigned_to" class="form-input">
+                <option value="">All</option>
+                {% for user in users %}
+                <option value="{{ user.id }}" {% if assigned_to == user.id %}selected{% endif %}>{{ user.display_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex items-center pt-5">
+            <input type="checkbox" name="overdue" id="overdue" value="1" {% if overdue %}checked{% endif %} class="h-4 w-4 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            <label for="overdue" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Overdue only</label>
+        </div>
+        <div class="col-span-full flex justify-end">
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">Filter</button>
+        </div>
+    </form>
+</div>
 
-<style>
-/* Task list page-specific styles */
-.filter-collapsed {
-    display: none !important;
-}
-
-.filter-toggle-transition {
-    transition: var(--transition-slow);
-}
-</style>
-
-<script>
-function toggleFilterVisibility() {
-    const filterBody = document.getElementById('filterBody');
-    const toggleIcon = document.getElementById('filterToggleIcon');
-    const toggleButton = document.getElementById('toggleFilters');
-    
-    if (filterBody.classList.contains('filter-collapsed')) {
-        // Show filters
-        filterBody.classList.remove('filter-collapsed');
-        toggleIcon.className = 'fas fa-chevron-up';
-        toggleButton.title = '{{ _('Hide Filters') }}';
-        localStorage.setItem('taskFiltersVisible', 'true');
-    } else {
-        // Hide filters
-        filterBody.classList.add('filter-collapsed');
-        toggleIcon.className = 'fas fa-chevron-down';
-        toggleButton.title = '{{ _('Show Filters') }}';
-        localStorage.setItem('taskFiltersVisible', 'false');
-    }
-}
-
-// Initialize filter visibility on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const filterBody = document.getElementById('filterBody');
-    const toggleIcon = document.getElementById('filterToggleIcon');
-    const toggleButton = document.getElementById('toggleFilters');
-    
-    // Get saved state (default to visible)
-    const filtersVisible = localStorage.getItem('taskFiltersVisible') || 'true';
-    
-    if (filtersVisible === 'false') {
-        filterBody.classList.add('filter-collapsed');
-        toggleIcon.className = 'fas fa-chevron-down';
-        toggleButton.title = '{{ _('Show Filters') }}';
-    }
-    
-    // Add transition class after initial setup
-    setTimeout(() => {
-        filterBody.classList.add('filter-toggle-transition');
-    }, 100);
-});
-
-// Kanban column updates are handled by global socket in base.html
-console.log('Task list page loaded - listening for kanban updates via global socket');
-</script>
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow overflow-x-auto">
+    <table class="table table-zebra w-full text-left">
+        <thead class="border-b border-border-light dark:border-border-dark">
+            <tr>
+                <th class="p-4">Name</th>
+                <th class="p-4">Project</th>
+                <th class="p-4">Priority</th>
+                <th class="p-4">Status</th>
+                <th class="p-4 table-number">Due</th>
+                <th class="p-4 table-number">Progress</th>
+                <th class="p-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr class="border-b border-border-light dark:border-border-dark">
+                <td class="p-4">{{ task.name }}</td>
+                <td class="p-4">{{ task.project.name }}</td>
+                <td class="p-4">
+                    {% set p = task.priority %}
+                    {% set pcls = {'low':'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+                                   'medium':'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+                                   'high':'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                                   'urgent':'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}[p] if p in ['low','medium','high','urgent'] else 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' %}
+                    <span class="px-2 py-1 rounded-full text-xs font-medium {{ pcls }}">{{ task.priority_display }}</span>
+                </td>
+                <td class="p-4">
+                    {% set s = task.status %}
+                    {% set scls = {'todo':'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                                   'in_progress':'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+                                   'review':'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                                   'done':'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+                                   'cancelled':'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200'}[s] if s in ['todo','in_progress','review','done','cancelled'] else 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' %}
+                    <span class="px-2 py-1 rounded-full text-xs font-medium {{ scls }}">{{ task.status_display }}</span>
+                </td>
+                <td class="p-4 table-number">
+                    {% if task.due_date %}
+                        {% set overdue = task.is_overdue %}
+                        <span class="chip {{ 'chip-danger' if overdue else 'chip-neutral' }}">{{ task.due_date.strftime('%Y-%m-%d') }}</span>
+                    {% else %}
+                        <span class="text-text-muted-light dark:text-text-muted-dark">—</span>
+                    {% endif %}
+                </td>
+                <td class="p-4 table-number">
+                    {% set pct = task.progress_percentage or 0 %}
+                    <div class="w-28 h-2 bg-gray-200 dark:bg-gray-700 rounded">
+                        <div class="h-2 rounded {{ 'bg-emerald-500' if pct>=100 else 'bg-primary' }}" style="width: {{ [pct,100]|min }}%"></div>
+                    </div>
+                </td>
+                <td class="p-4">
+                    <a href="{{ url_for('tasks.view_task', task_id=task.id) }}" class="text-primary hover:underline">View</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="p-4 text-center text-text-muted-light dark:text-text-muted-dark">No tasks found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
+
+{% block content_after %}{% endblock %}

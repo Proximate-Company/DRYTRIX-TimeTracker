@@ -1,104 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Profile') }} - {{ app_name }}{% endblock %}
-
 {% block content %}
-{% from "_components.html" import page_header %}
-<div class="row">
-	<div class="col-12">
-		{% set actions %}
-		<a href="{{ url_for('auth.edit_profile') }}" class="btn-header btn-outline-primary">
-			<i class="fas fa-edit"></i> {{ _('Edit Profile') }}
-		</a>
-		<button id="theme-toggle" class="btn-header btn-outline-primary" type="button">
-			<i class="fas fa-moon"></i> {{ _('Toggle Theme') }}
-		</button>
-		{% endset %}
-		{{ page_header('fas fa-user-circle', _('Your Profile'), _('Manage your account details'), actions) }}
-	</div>
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Profile</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">View your account details below.</p>
+    </div>
+    <a href="{{ url_for('auth.edit_profile') }}" class="bg-primary text-white px-4 py-2 rounded-lg mt-4 md:mt-0">Edit Profile</a>
 </div>
-<div class="row justify-content-center">
-	<div class="col-md-8">
-		<div class="card">
-			<div class="card-header"><i class="fas fa-id-card me-2"></i> {{ _('Profile Details') }}</div>
-			<div class="card-body">
-				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">{{ _('Username') }}</div>
-					<div class="col-sm-8"><strong>{{ current_user.username }}</strong></div>
-				</div>
-				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">{{ _('Full name') }}</div>
-					<div class="col-sm-8">{{ current_user.full_name or '—' }}</div>
-				</div>
-				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">{{ _('Role') }}</div>
-					<div class="col-sm-8">
-						<span class="badge bg-{{ 'primary' if current_user.is_admin else 'secondary' }}">
-							{{ current_user.role|capitalize }}
-						</span>
-					</div>
-				</div>
-				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">{{ _('Member since') }}</div>
-					<div class="col-sm-8">{{ current_user.created_at.strftime('%Y-%m-%d %H:%M') if current_user.created_at else '—' }}</div>
-				</div>
-				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">{{ _('Last login') }}</div>
-					<div class="col-sm-8">{{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else '—' }}</div>
-				</div>
-				<div class="row mb-3">
-					<div class="col-sm-4 text-muted">{{ _('Language') }}</div>
-					<div class="col-sm-8">{{ current_language_label }}</div>
-				</div>
-				<div class="row">
-					<div class="col-sm-4 text-muted">{{ _('Total hours') }}</div>
-					<div class="col-sm-8"><span class="badge bg-success">{{ current_user.total_hours }}</span></div>
-				</div>
-			</div>
-		</div>
-	</div>
+
+<div class="bg-card-light dark:bg-card-dark p-8 rounded-lg shadow">
+    <div class="space-y-6">
+        <div>
+            <h2 class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">Username</h2>
+            <p class="mt-1 text-lg">{{ current_user.username }}</p>
+        </div>
+        <div class="border-t border-border-light dark:border-border-dark"></div>
+        <div>
+            <h2 class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">Role</h2>
+            <p class="mt-1 text-lg">{{ current_user.role | capitalize }}</p>
+        </div>
+        <div class="border-t border-border-light dark:border-border-dark"></div>
+        <div>
+            <h2 class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">Member Since</h2>
+            <p class="mt-1 text-lg">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+        </div>
+        <div class="border-t border-border-light dark:border-border-dark"></div>
+        <div>
+            <h2 class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark">Last Login</h2>
+            <p class="mt-1 text-lg">{{ current_user.last_login.strftime('%B %d, %Y at %I:%M %p') if current_user.last_login else 'Never' }}</p>
+        </div>
+    </div>
 </div>
-{% endblock %}
-
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-	const storageKey = 'tt-theme';
-	const btn = document.getElementById('theme-toggle');
-	const meta = document.getElementById('meta-theme-color');
-	if (!btn) return;
-
-	function applyTheme(theme) {
-		document.documentElement.setAttribute('data-theme', theme);
-		if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b1220' : '#3b82f6');
-		const icon = btn.querySelector('i');
-		if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-	}
-
-	function currentTheme() {
-		return document.documentElement.getAttribute('data-theme') || 'light';
-	}
-
-	async function saveThemeToUser(value) {
-		try {
-			await fetch('{{ url_for("auth.update_theme_preference") }}', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ theme: value })
-			});
-		} catch (e) {}
-	}
-
-	// Initialize icon state
-	applyTheme(currentTheme());
-
-	btn.addEventListener('click', async function() {
-		const next = currentTheme() === 'dark' ? 'light' : 'dark';
-		localStorage.setItem(storageKey, next);
-		applyTheme(next);
-		await saveThemeToUser(next);
-	});
-});
-</script>
 {% endblock %}

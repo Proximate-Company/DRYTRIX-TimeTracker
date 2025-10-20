@@ -55,6 +55,7 @@ Successfully implemented custom kanban board columns functionality for the TimeT
 ### Documentation
 - `KANBAN_CUSTOMIZATION.md` - Comprehensive feature documentation
 - `IMPLEMENTATION_SUMMARY.md` - This file
+ - UI polish: Task create/edit pages tips redesigned; unified dark-mode handling for editor
 
 ## Files Modified
 

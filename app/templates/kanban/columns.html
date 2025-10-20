@@ -9,100 +9,85 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h2>
-        <i class="fas fa-columns text-primary"></i> {{ _('Manage Kanban Columns') }}
-      </h2>
-      <p class="text-muted">{{ _('Customize your kanban board columns and task states') }}</p>
+<div class="px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold flex items-center gap-2">
+          <span class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white"><i class="fas fa-columns"></i></span>
+          {{ _('Manage Kanban Columns') }}
+        </h2>
+        <p class="text-text-muted-light dark:text-text-muted-dark">{{ _('Customize your kanban board columns and task states') }}</p>
+      </div>
+      <a href="{{ url_for('kanban.create_column') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:opacity-90">
+        <i class="fas fa-plus"></i> {{ _('Add Column') }}
+      </a>
     </div>
-    <a href="{{ url_for('kanban.create_column') }}" class="btn btn-primary">
-      <i class="fas fa-plus"></i> {{ _('Add Column') }}
-    </a>
-  </div>
 
-  <!-- Flash messages are globally converted to toasts in base.html -->
+    <!-- Flash messages are globally converted to toasts in base.html -->
 
-  <div class="card">
-    <div class="card-body">
-      <div class="table-responsive">
-        <table class="table table-hover">
+    <div class="bg-card-light dark:bg-card-dark rounded-xl shadow ring-1 ring-border-light/60 dark:ring-border-dark/60">
+      <div class="p-0 overflow-x-auto">
+        <table class="min-w-full divide-y divide-border-light dark:divide-border-dark" role="table" aria-label="{{ _('Kanban columns list') }}">
           <thead>
-            <tr>
-              <th width="50">#</th>
-              <th width="120">{{ _('Key') }}</th>
-              <th>{{ _('Label') }}</th>
-              <th width="150">{{ _('Icon') }}</th>
-              <th width="100">{{ _('Color') }}</th>
-              <th width="100">{{ _('Status') }}</th>
-              <th width="120">{{ _('Complete?') }}</th>
-              <th width="100">{{ _('System') }}</th>
-              <th width="200">{{ _('Actions') }}</th>
+            <tr class="text-left text-sm">
+              <th scope="col" class="px-4 py-3 w-12">#</th>
+              <th scope="col" class="px-4 py-3 w-32">{{ _('Key') }}</th>
+              <th scope="col" class="px-4 py-3">{{ _('Label') }}</th>
+              <th scope="col" class="px-4 py-3 w-40">{{ _('Icon') }}</th>
+              <th scope="col" class="px-4 py-3 w-28">{{ _('Color') }}</th>
+              <th scope="col" class="px-4 py-3 w-28">{{ _('Status') }}</th>
+              <th scope="col" class="px-4 py-3 w-32">{{ _('Complete?') }}</th>
+              <th scope="col" class="px-4 py-3 w-28">{{ _('System') }}</th>
+              <th scope="col" class="px-4 py-3 w-52">{{ _('Actions') }}</th>
             </tr>
           </thead>
-          <tbody id="columnsList">
+          <tbody id="columnsList" role="rowgroup" aria-live="polite">
             {% for column in columns %}
-            <tr data-column-id="{{ column.id }}">
-              <td>
-                <i class="fas fa-grip-vertical text-muted" style="cursor: move;"></i>
+            <tr data-column-id="{{ column.id }}" role="row">
+              <td class="px-4 py-3 align-middle" aria-label="Reorder">
+                <button type="button" class="text-text-muted-light dark:text-text-muted-dark" aria-label="{{ _('Drag to reorder') }}" title="{{ _('Drag to reorder') }}">
+                  <i class="fas fa-grip-vertical" style="cursor: move;"></i>
+                </button>
               </td>
-              <td>
-                <code>{{ column.key }}</code>
-              </td>
-              <td>
-                <strong>{{ column.label }}</strong>
-              </td>
-              <td>
-                <i class="{{ column.icon }}"></i>
-                <span class="text-muted small">{{ column.icon }}</span>
-              </td>
-              <td>
-                <span class="badge bg-{{ column.color }}">{{ column.color }}</span>
-              </td>
-              <td>
+              <td class="px-4 py-3"><code>{{ column.key }}</code></td>
+              <td class="px-4 py-3"><strong>{{ column.label }}</strong></td>
+              <td class="px-4 py-3"><i class="{{ column.icon }}"></i> <span class="text-text-muted-light dark:text-text-muted-dark text-xs">{{ column.icon }}</span></td>
+              <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-1 rounded text-xs bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark">{{ column.color }}</span></td>
+              <td class="px-4 py-3">
                 {% if column.is_active %}
-                  <span class="badge bg-success">{{ _('Active') }}</span>
+                  <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">{{ _('Active') }}</span>
                 {% else %}
-                  <span class="badge bg-secondary">{{ _('Inactive') }}</span>
+                  <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">{{ _('Inactive') }}</span>
                 {% endif %}
               </td>
-              <td>
+              <td class="px-4 py-3">
                 {% if column.is_complete_state %}
-                  <i class="fas fa-check-circle text-success"></i> {{ _('Yes') }}
+                  <span class="inline-flex items-center gap-1 text-sm text-green-700 dark:text-green-300"><i class="fas fa-check-circle"></i> {{ _('Yes') }}</span>
                 {% else %}
-                  <i class="fas fa-circle text-muted"></i> {{ _('No') }}
+                  <span class="inline-flex items-center gap-1 text-sm text-text-muted-light dark:text-text-muted-dark"><i class="fas fa-circle"></i> {{ _('No') }}</span>
                 {% endif %}
               </td>
-              <td>
+              <td class="px-4 py-3">
                 {% if column.is_system %}
-                  <span class="badge bg-info">{{ _('System') }}</span>
+                  <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ _('System') }}</span>
                 {% else %}
-                  <span class="badge bg-light text-dark">{{ _('Custom') }}</span>
+                  <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">{{ _('Custom') }}</span>
                 {% endif %}
               </td>
-              <td>
-                <div class="btn-group btn-group-sm">
-                  <a href="{{ url_for('kanban.edit_column', column_id=column.id) }}" 
-                     class="btn btn-outline-primary" 
-                     title="{{ _('Edit') }}">
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <a href="{{ url_for('kanban.edit_column', column_id=column.id) }}" class="inline-flex items-center gap-1 px-2 py-1 rounded border border-border-light dark:border-border-dark hover:bg-background-light dark:hover:bg-background-dark" title="{{ _('Edit') }}" aria-label="{{ _('Edit column') }}">
                     <i class="fas fa-edit"></i>
                   </a>
-                  <form method="POST" 
-                        action="{{ url_for('kanban.toggle_column', column_id=column.id) }}" 
-                        class="d-inline">
+                  <form method="POST" action="{{ url_for('kanban.toggle_column', column_id=column.id) }}" class="inline" aria-label="{{ _('Toggle active state') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" 
-                            class="btn btn-outline-{{ 'secondary' if column.is_active else 'success' }}" 
-                            title="{{ _('Deactivate') if column.is_active else _('Activate') }}">
+                    <button type="submit" class="inline-flex items-center gap-1 px-2 py-1 rounded border border-border-light dark:border-border-dark hover:bg-background-light dark:hover:bg-background-dark" title="{{ _('Deactivate') if column.is_active else _('Activate') }}">
                       <i class="fas fa-{{ 'eye-slash' if column.is_active else 'eye' }}"></i>
                     </button>
                   </form>
                   {% if not column.is_system %}
-                  <button type="button" 
-                          class="btn btn-outline-danger" 
-                          title="{{ _('Delete') }}"
-                          onclick="showDeleteModal({{ column.id }}, '{{ column.label }}', '{{ column.key }}')">
+                  <button type="button" class="inline-flex items-center gap-1 px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30" title="{{ _('Delete') }}" onclick="showDeleteModal({{ column.id }}, '{{ column.label }}', '{{ column.key }}')">
                     <i class="fas fa-trash"></i>
                   </button>
                   {% endif %}
@@ -115,23 +100,59 @@
       </div>
 
       {% if not columns %}
-      <div class="text-center py-5">
-        <i class="fas fa-columns fa-3x text-muted mb-3"></i>
-        <p class="text-muted">{{ _('No kanban columns found. Create your first column to get started.') }}</p>
+      <div class="text-center py-8">
+        <i class="fas fa-columns fa-3x text-text-muted-light dark:text-text-muted-dark mb-3"></i>
+        <p class="text-text-muted-light dark:text-text-muted-dark">{{ _('No kanban columns found. Create your first column to get started.') }}</p>
       </div>
       {% endif %}
     </div>
-  </div>
 
-  <div class="alert alert-info mt-4">
-    <i class="fas fa-info-circle"></i>
-    <strong>{{ _('Tips:') }}</strong>
-    <ul class="mb-0 mt-2">
-      <li>{{ _('Drag and drop rows to reorder columns') }}</li>
-      <li>{{ _('System columns (todo, in_progress, done) cannot be deleted but can be customized') }}</li>
-      <li>{{ _('Columns marked as "Complete" will mark tasks as completed when dragged to that column') }}</li>
-      <li>{{ _('Inactive columns are hidden from the kanban board but tasks with that status remain accessible') }}</li>
-    </ul>
+    <div class="mt-4 bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 rounded-lg p-4 ring-1 ring-blue-200/60 dark:ring-blue-700/50">
+      <p class="flex items-start gap-2"><i class="fas fa-info-circle mt-1"></i> <span><strong>{{ _('Tips:') }}</strong></span></p>
+      <ul class="list-disc pl-6 mt-2 text-sm">
+        <li>{{ _('Drag and drop rows to reorder columns') }}</li>
+        <li>{{ _('System columns (todo, in_progress, done) cannot be deleted but can be customized') }}</li>
+        <li>{{ _('Columns marked as "Complete" will mark tasks as completed when dragged to that column') }}</li>
+        <li>{{ _('Inactive columns are hidden from the kanban board but tasks with that status remain accessible') }}</li>
+      </ul>
+<!-- Accessible Tailwind Modal for Delete Confirmation -->
+<div id="deleteColumnModal" class="hidden fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+  <div class="absolute inset-0 bg-black/50" onclick="hideDeleteModal()"></div>
+  <div class="relative max-w-lg mx-auto mt-24 bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark rounded-lg shadow-xl ring-1 ring-border-light/60 dark:ring-border-dark/60">
+    <div class="p-4 border-b border-border-light dark:border-border-dark flex items-center justify-between">
+      <h5 id="deleteModalTitle" class="text-lg font-semibold flex items-center gap-2">
+        <i class="fas fa-trash text-danger"></i> {{ _('Delete Kanban Column') }}
+      </h5>
+      <button type="button" class="px-2 py-1 hover:bg-background-light dark:hover:bg-background-dark rounded" aria-label="{{ _('Close') }}" onclick="hideDeleteModal()">&times;</button>
+    </div>
+    <div class="p-4">
+      <div class="bg-yellow-50 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-100 rounded-lg p-3 ring-1 ring-yellow-200/60 dark:ring-yellow-700/50 flex items-start gap-2">
+        <i class="fas fa-exclamation-triangle mt-1"></i>
+        <div>
+          <strong>{{ _('Warning:') }}</strong> {{ _('This action cannot be undone.') }}
+        </div>
+      </div>
+      <p class="mt-4">{{ _('Are you sure you want to delete the column?') }}</p>
+      <p class="text-text-muted-light dark:text-text-muted-dark mt-2">
+        <small>{{ _('Key:') }} <code id="deleteColumnKey"></code></small>
+      </p>
+      <p class="text-text-muted-light dark:text-text-muted-dark mt-2">
+        <small>{{ _('Note: Tasks with this status will remain accessible but the column will no longer appear on the kanban board.') }}</small>
+      </p>
+    </div>
+    <div class="p-4 border-t border-border-light dark:border-border-dark flex items-center justify-between">
+      <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded border border-border-light dark:border-border-dark hover:bg-background-light dark:hover:bg-background-dark" onclick="hideDeleteModal()">
+        <i class="fas fa-times"></i> {{ _('Cancel') }}
+      </button>
+      <form method="POST" id="deleteColumnForm" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 rounded bg-danger text-white hover:opacity-90">
+          <i class="fas fa-trash"></i> {{ _('Delete Column') }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
   </div>
 </div>
 
@@ -177,30 +198,22 @@
 <script>
 // Show delete modal
 function showDeleteModal(columnId, label, key) {
-  const labelEl = document.getElementById('deleteColumnLabel');
   const keyEl = document.getElementById('deleteColumnKey');
   const formEl = document.getElementById('deleteColumnForm');
-  
-  if (labelEl) labelEl.textContent = label;
-  if (keyEl) keyEl.textContent = key;
+  if (keyEl) keyEl.textContent = key || '';
   if (formEl) formEl.action = "{{ url_for('kanban.delete_column', column_id=0) }}".replace('0', columnId);
-  
   const modal = document.getElementById('deleteColumnModal');
-  if (modal) new bootstrap.Modal(modal).show();
+  if (modal) modal.classList.remove('hidden');
 }
 
-// Loading state on delete submit
-document.addEventListener('DOMContentLoaded', function() {
-  const deleteForm = document.getElementById('deleteColumnForm');
-  if (deleteForm) {
-    deleteForm.addEventListener('submit', function() {
-      const btn = deleteForm.querySelector('button[type="submit"]');
-      if (btn) {
-        btn.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"><span class="visually-hidden">Loading...</span></div>Deleting...';
-        btn.disabled = true;
-      }
-    });
-  }
+function hideDeleteModal(){
+  const modal = document.getElementById('deleteColumnModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+// Close on Escape
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') hideDeleteModal();
 });
 
 // Enable drag-and-drop reordering
@@ -237,6 +250,11 @@ if (tbody) {
           } else {
             try { showToast(data.message || '{{ _('Columns reordered successfully') }}', 'success'); } catch(_) {}
           }
+          // Announce to screen readers
+          try {
+            const live = document.getElementById('columnsList');
+            if (live) live.setAttribute('aria-busy', 'false');
+          } catch(_) {}
           // Broadcast to other tabs as a fallback (if Socket.IO not connected there)
           try {
             if (window._kanbanBroadcastChannel) {

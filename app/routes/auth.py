@@ -40,7 +40,7 @@ def login():
             
             if not username:
                 flash(_('Username is required'), 'error')
-                return render_template('auth/login.html')
+                return render_template('auth/login.html', allow_self_register=Config.ALLOW_SELF_REGISTER, auth_method=auth_method)
             
             # Normalize admin usernames from config
             try:
@@ -62,12 +62,12 @@ def login():
                     if not safe_commit('self_register_user', {'username': username}):
                         current_app.logger.error("Self-registration failed for '%s' due to DB error", username)
                         flash(_('Could not create your account due to a database error. Please try again later.'), 'error')
-                        return render_template('auth/login.html')
+                        return render_template('auth/login.html', allow_self_register=Config.ALLOW_SELF_REGISTER, auth_method=auth_method)
                     current_app.logger.info("Created new user '%s'", username)
                     flash(_('Welcome! Your account has been created.'), 'success')
                 else:
                     flash(_('User not found. Please contact an administrator.'), 'error')
-                    return render_template('auth/login.html')
+                    return render_template('auth/login.html', allow_self_register=Config.ALLOW_SELF_REGISTER, auth_method=auth_method)
             else:
                 # If existing user matches admin usernames, ensure admin role
                 if username in admin_usernames and user.role != 'admin':
@@ -75,12 +75,12 @@ def login():
                     if not safe_commit('promote_admin_user', {'username': username}):
                         current_app.logger.error("Failed to promote '%s' to admin due to DB error", username)
                         flash(_('Could not update your account role due to a database error.'), 'error')
-                        return render_template('auth/login.html')
+                        return render_template('auth/login.html', allow_self_register=Config.ALLOW_SELF_REGISTER, auth_method=auth_method)
             
             # Check if user is active
             if not user.is_active:
                 flash(_('Account is disabled. Please contact an administrator.'), 'error')
-                return render_template('auth/login.html')
+                return render_template('auth/login.html', allow_self_register=Config.ALLOW_SELF_REGISTER, auth_method=auth_method)
             
             # Log in the user
             login_user(user, remember=True)
@@ -98,9 +98,9 @@ def login():
         except Exception as e:
             current_app.logger.exception("Login error: %s", e)
             flash(_('Unexpected error during login. Please try again or check server logs.'), 'error')
-            return render_template('auth/login.html')
+            return render_template('auth/login.html', allow_self_register=Config.ALLOW_SELF_REGISTER, auth_method=auth_method)
     
-    return render_template('auth/login.html')
+    return render_template('auth/login.html', allow_self_register=Config.ALLOW_SELF_REGISTER, auth_method=auth_method)
 
 @auth_bp.route('/logout')
 @login_required
@@ -118,22 +118,24 @@ def logout():
     flash(_('Goodbye, %(username)s!', username=username), 'info')
 
     if auth_method in ('oidc', 'both'):
-        client = oauth.create_client('oidc')
-        if client:
-            try:
-                # Build end-session URL if provider supports it
-                metadata = client.load_server_metadata()
-                end_session_endpoint = metadata.get('end_session_endpoint') or metadata.get('revocation_endpoint')
-                if end_session_endpoint:
-                    params = {}
-                    if id_token:
-                        params['id_token_hint'] = id_token
-                    post_logout = getattr(Config, 'OIDC_POST_LOGOUT_REDIRECT_URI', None) or url_for('auth.login', _external=True)
-                    params['post_logout_redirect_uri'] = post_logout
-                    from urllib.parse import urlencode
-                    return redirect(f"{end_session_endpoint}?{urlencode(params)}")
-            except Exception:
-                pass
+        # Only perform RP-Initiated Logout if OIDC_POST_LOGOUT_REDIRECT_URI is explicitly configured
+        post_logout = getattr(Config, 'OIDC_POST_LOGOUT_REDIRECT_URI', None)
+        if post_logout:
+            client = oauth.create_client('oidc')
+            if client:
+                try:
+                    # Build end-session URL if provider supports it
+                    metadata = client.load_server_metadata()
+                    end_session_endpoint = metadata.get('end_session_endpoint') or metadata.get('revocation_endpoint')
+                    if end_session_endpoint:
+                        params = {}
+                        if id_token:
+                            params['id_token_hint'] = id_token
+                        params['post_logout_redirect_uri'] = post_logout
+                        from urllib.parse import urlencode
+                        return redirect(f"{end_session_endpoint}?{urlencode(params)}")
+                except Exception:
+                    pass
 
     return redirect(url_for('auth.login'))
 

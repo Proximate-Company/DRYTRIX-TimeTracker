@@ -2,128 +2,83 @@
 {% block title %}{{ _('Create Kanban Column') }}{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="mb-4">
-        <h2>
-          <i class="fas fa-plus-circle text-primary"></i> {{ _('Create Kanban Column') }}
-        </h2>
-        <p class="text-muted">{{ _('Add a new column to your kanban board') }}</p>
-      </div>
+<div class="px-4 sm:px-6 lg:px-8">
+  <div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold flex items-center gap-2">
+        <span class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white"><i class="fas fa-plus-circle"></i></span>
+        {{ _('Create Kanban Column') }}
+      </h2>
+      <p class="text-text-muted-light dark:text-text-muted-dark">{{ _('Add a new column to your kanban board') }}</p>
+    </div>
 
-      <!-- Flash messages are globally converted to toasts in base.html -->
+    <div class="bg-card-light dark:bg-card-dark rounded-xl shadow ring-1 ring-border-light/60 dark:ring-border-dark/60">
+      <div class="p-6">
+        <form method="POST" action="{{ url_for('kanban.create_column') }}" role="form" aria-labelledby="formTitle">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-      <div class="card">
-        <div class="card-body">
-          <form method="POST" action="{{ url_for('kanban.create_column') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div class="mb-3">
-              <label for="label" class="form-label">
-                {{ _('Column Label') }} <span class="text-danger">*</span>
-              </label>
-              <input type="text" 
-                     class="form-control" 
-                     id="label" 
-                     name="label" 
-                     required 
-                     placeholder="{{ _('e.g., In Review, Blocked, Testing') }}"
-                     autofocus>
-              <small class="form-text text-muted">
-                {{ _('The display name shown on the kanban board') }}
-              </small>
+          <h3 id="formTitle" class="sr-only">{{ _('Create Kanban Column form') }}</h3>
+
+          <div class="mb-4">
+            <label for="label" class="block text-sm font-medium mb-1">{{ _('Column Label') }} <span aria-hidden="true" class="text-red-600">*</span></label>
+            <input type="text" id="label" name="label" required aria-required="true" autocomplete="off" placeholder="{{ _('e.g., In Review, Blocked, Testing') }}" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-700 px-3 py-2" autofocus>
+            <p class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('The display name shown on the kanban board') }}</p>
+          </div>
+
+          <div class="mb-4">
+            <label for="key" class="block text-sm font-medium mb-1">{{ _('Column Key') }} <span aria-hidden="true" class="text-red-600">*</span></label>
+            <input type="text" id="key" name="key" required pattern="[a-z0-9_]+" aria-describedby="keyHelp" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-700 px-3 py-2" placeholder="{{ _('e.g., in_review, blocked, testing') }}">
+            <p id="keyHelp" class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Unique identifier (lowercase, no spaces, use underscores). Auto-generated from label if empty.') }}</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="icon" class="block text-sm font-medium mb-1">{{ _('Icon Class') }}</label>
+              <input type="text" id="icon" name="icon" value="fas fa-circle" placeholder="fas fa-circle" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-700 px-3 py-2">
+              <p class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">
+                {{ _('Font Awesome icon class') }}
+                <a href="https://fontawesome.com/icons" target="_blank" class="underline">{{ _('Browse icons') }}</a>
+              </p>
             </div>
-
-            <div class="mb-3">
-              <label for="key" class="form-label">
-                {{ _('Column Key') }} <span class="text-danger">*</span>
-              </label>
-              <input type="text" 
-                     class="form-control" 
-                     id="key" 
-                     name="key" 
-                     required 
-                     pattern="[a-z0-9_]+" 
-                     placeholder="{{ _('e.g., in_review, blocked, testing') }}">
-              <small class="form-text text-muted">
-                {{ _('Unique identifier (lowercase, no spaces, use underscores). Auto-generated from label if empty.') }}
-              </small>
+            <div>
+              <label for="color" class="block text-sm font-medium mb-1">{{ _('Color') }}</label>
+              <select id="color" name="color" class="w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-700 px-3 py-2">
+                <option value="primary">{{ _('Primary (Blue)') }}</option>
+                <option value="secondary" selected>{{ _('Secondary (Gray)') }}</option>
+                <option value="success">{{ _('Success (Green)') }}</option>
+                <option value="danger">{{ _('Danger (Red)') }}</option>
+                <option value="warning">{{ _('Warning (Yellow)') }}</option>
+                <option value="info">{{ _('Info (Cyan)') }}</option>
+                <option value="dark">{{ _('Dark') }}</option>
+              </select>
+              <p class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Bootstrap color class for styling') }}</p>
             </div>
+          </div>
 
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="icon" class="form-label">
-                    {{ _('Icon Class') }}
-                  </label>
-                  <input type="text" 
-                         class="form-control" 
-                         id="icon" 
-                         name="icon" 
-                         value="fas fa-circle"
-                         placeholder="fas fa-circle">
-                  <small class="form-text text-muted">
-                    {{ _('Font Awesome icon class') }} 
-                    <a href="https://fontawesome.com/icons" target="_blank">{{ _('Browse icons') }}</a>
-                  </small>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="color" class="form-label">
-                    {{ _('Color') }}
-                  </label>
-                  <select class="form-select" id="color" name="color">
-                    <option value="primary">{{ _('Primary (Blue)') }}</option>
-                    <option value="secondary" selected>{{ _('Secondary (Gray)') }}</option>
-                    <option value="success">{{ _('Success (Green)') }}</option>
-                    <option value="danger">{{ _('Danger (Red)') }}</option>
-                    <option value="warning">{{ _('Warning (Yellow)') }}</option>
-                    <option value="info">{{ _('Info (Cyan)') }}</option>
-                    <option value="dark">{{ _('Dark') }}</option>
-                  </select>
-                  <small class="form-text text-muted">
-                    {{ _('Bootstrap color class for styling') }}
-                  </small>
-                </div>
+          <div class="mt-4">
+            <div class="flex items-start gap-2">
+              <input type="checkbox" id="is_complete_state" name="is_complete_state" class="mt-1" aria-describedby="completeHelp">
+              <div>
+                <label for="is_complete_state" class="text-sm font-medium">{{ _('Mark as Complete State') }}</label>
+                <p id="completeHelp" class="mt-1 text-xs text-text-muted-light dark:text-text-muted-dark">{{ _('Tasks moved to this column will be marked as completed') }}</p>
               </div>
             </div>
+          </div>
 
-            <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" 
-                       type="checkbox" 
-                       id="is_complete_state" 
-                       name="is_complete_state">
-                <label class="form-check-label" for="is_complete_state">
-                  {{ _('Mark as Complete State') }}
-                </label>
-                <small class="form-text text-muted d-block">
-                  {{ _('Tasks moved to this column will be marked as completed') }}
-                </small>
-              </div>
-            </div>
-
-            <hr>
-
-            <div class="d-flex justify-content-between">
-              <a href="{{ url_for('kanban.list_columns') }}" class="btn btn-secondary">
-                <i class="fas fa-times"></i> {{ _('Cancel') }}
-              </a>
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> {{ _('Create Column') }}
-              </button>
-            </div>
-          </form>
-        </div>
+          <div class="mt-6 flex items-center justify-between">
+            <a href="{{ url_for('kanban.list_columns') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-light dark:border-border-dark hover:bg-background-light dark:hover:bg-background-dark">
+              <i class="fas fa-times"></i> {{ _('Cancel') }}
+            </a>
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:opacity-90">
+              <i class="fas fa-save"></i> {{ _('Create Column') }}
+            </button>
+          </div>
+        </form>
       </div>
+    </div>
 
-      <div class="alert alert-info mt-4">
-        <i class="fas fa-info-circle"></i>
-        <strong>{{ _('Note:') }}</strong>
-        {{ _('The column will be added at the end of the board. You can reorder columns later from the management page.') }}
-      </div>
+    <div class="mt-4 bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 rounded-lg p-4 ring-1 ring-blue-200/60 dark:ring-blue-700/50">
+      <p class="flex items-start gap-2"><i class="fas fa-info-circle mt-1"></i> <span><strong>{{ _('Note:') }}</strong> {{ _('The column will be added at the end of the board. You can reorder columns later from the management page.') }}</span></p>
     </div>
   </div>
 </div>

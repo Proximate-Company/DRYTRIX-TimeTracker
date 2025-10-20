@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Invoice {{ invoice.invoice_number }}</h1>
+    <div>
+        <a href="{{ url_for('invoices.edit_invoice', invoice_id=invoice.id) }}" class="bg-primary text-white px-4 py-2 rounded-lg">Edit</a>
+        <a href="{{ url_for('invoices.export_invoice_pdf', invoice_id=invoice.id) }}" class="bg-secondary text-white px-4 py-2 rounded-lg">Export PDF</a>
+        <a href="{{ url_for('invoices.record_payment', invoice_id=invoice.id) }}" class="bg-green-500 text-white px-4 py-2 rounded-lg">Record Payment</a>
+    </div>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <h2 class="text-lg font-semibold">Client</h2>
+            <p>{{ invoice.client_name }}</p>
+            <p>{{ invoice.client_email }}</p>
+            <p>{{ invoice.client_address }}</p>
+        </div>
+        <div>
+            <h2 class="text-lg font-semibold">Details</h2>
+            <p><strong>Issue Date:</strong> {{ invoice.issue_date.strftime('%Y-%m-%d') }}</p>
+            <p><strong>Due Date:</strong> {{ invoice.due_date.strftime('%Y-%m-%d') }}</p>
+            <p><strong>Status:</strong> {{ invoice.status }}</p>
+        </div>
+    </div>
+
+    <div class="mt-6">
+        <h2 class="text-lg font-semibold mb-4">Items</h2>
+        <table class="w-full text-left">
+            <thead>
+                <tr>
+                    <th class="p-2">Description</th>
+                    <th class="p-2">Quantity</th>
+                    <th class="p-2">Unit Price</th>
+                    <th class="p-2">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items %}
+                <tr class="border-b border-border-light dark:border-border-dark">
+                    <td class="p-2">{{ item.description }}</td>
+                    <td class="p-2">{{ "%.2f"|format(item.quantity) }}</td>
+                    <td class="p-2">{{ "%.2f"|format(item.unit_price) }}</td>
+                    <td class="p-2">{{ "%.2f"|format(item.total_amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-6 flex justify-end">
+        <div class="w-full md:w-1/3">
+            <div class="flex justify-between">
+                <span>Subtotal</span>
+                <span>{{ "%.2f"|format(invoice.subtotal) }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span>Tax ({{ "%.2f"|format(invoice.tax_rate) }}%)</span>
+                <span>{{ "%.2f"|format(invoice.tax_amount) }}</span>
+            </div>
+            <div class="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>{{ "%.2f"|format(invoice.total_amount) }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

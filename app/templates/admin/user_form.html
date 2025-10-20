@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">{{ 'Edit User' if user else 'Create User' }}</h1>
+        <p class="text-text-muted-light dark:text-text-muted-dark">
+            {{ 'Update the details for %s.'|format(user.username) if user else 'Create a new user account.' }}
+        </p>
+    </div>
+</div>
+
+<div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                <input type="text" name="username" id="username" value="{{ user.username if user else '' }}" required class="form-input">
+            </div>
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+                <select name="role" id="role" class="form-input">
+                    <option value="user" {% if user and user.role == 'user' %}selected{% endif %}>User</option>
+                    <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+            {% if user %}
+            <div class="flex items-center">
+                <input type="checkbox" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %} class="h-4 w-4 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <label for="is_active" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Active</label>
+            </div>
+            {% endif %}
+        </div>
+        <div class="mt-8 border-t border-border-light dark:border-border-dark pt-6 flex justify-end">
+            <a href="{{ url_for('admin.list_users') }}" class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-lg mr-4">Cancel</a>
+            <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg">Save</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -50,7 +50,9 @@ OIDC_GROUPS_CLAIM=groups
 OIDC_ADMIN_GROUP=timetracker-admins      # If your IdP issues a groups claim
 OIDC_ADMIN_EMAILS=alice@company.com,bob@company.com
 
-# Optional logout behavior
+# Optional: RP-Initiated Logout (set only if your provider supports end_session_endpoint)
+# If unset, users will be logged out locally and redirected to TimeTracker's login page.
+# If set, TimeTracker will redirect to the provider's logout endpoint after local logout.
 OIDC_POST_LOGOUT_REDIRECT_URI=https://your-app.example.com/
 ```
 
@@ -134,8 +136,9 @@ services:
 - “User is not admin”
   - Verify `OIDC_ADMIN_GROUP` matches the group claim value, or add the user’s email to `OIDC_ADMIN_EMAILS`.
 
-- “Logout keeps me signed in”
-  - Not all IdPs support end-session. If supported, we redirect to the provider’s end-session endpoint with `post_logout_redirect_uri`.
+- "Logout keeps me signed in" or "Logout redirects to provider error page"
+  - Not all IdPs support RP-Initiated Logout (end-session). If your provider doesn't support it (e.g., Authelia), **do not set** `OIDC_POST_LOGOUT_REDIRECT_URI`. TimeTracker will then perform local logout only and redirect to the login page.
+  - If your provider supports end-session and you want to log out from the IdP too, set `OIDC_POST_LOGOUT_REDIRECT_URI` to your desired post-logout landing page.
 
 ### 9) Routes Reference
 
