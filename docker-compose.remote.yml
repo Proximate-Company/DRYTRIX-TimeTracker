@@ -58,7 +58,8 @@ services:
       - PREFERRED_URL_SCHEME=${PREFERRED_URL_SCHEME:-https}
     # Expose only internally; nginx publishes ports
     ports: 
-      - []
+      - "80:80"
+      - "443:443"
     volumes:
       - app_data_remote:/data
       - ./logs:/app/logs
